@@ -903,45 +903,72 @@ function processRocketGameEnd() {
 
   // Обрабатываем выплаты для реальных игроков
   rocketGame.players.forEach(player => {
-    if (!player.isBot && player.cashedOut) {
+    if (!player.isBot) {
       const user = users.findOne({ telegram_id: parseInt(player.userId) });
       if (user) {
-        const winAmount = player.betAmount * player.cashoutMultiplier;
-        
-        if (player.demoMode) {
-          users.update({
-            ...user,
-            demo_balance: user.demo_balance + winAmount
+        if (player.cashedOut) {
+          // Игрок выиграл - выплачиваем выигрыш
+          const winAmount = player.betAmount * player.cashoutMultiplier;
+          
+          if (player.demoMode) {
+            users.update({
+              ...user,
+              demo_balance: user.demo_balance + winAmount
+            });
+            updateCasinoDemoBank(-winAmount);
+          } else {
+            users.update({
+              ...user,
+              main_balance: user.main_balance + winAmount
+            });
+            updateCasinoBank(-winAmount);
+          }
+
+          // Записываем транзакцию
+          transactions.insert({
+            user_id: user.$loki,
+            amount: winAmount,
+            type: 'rocket_win',
+            status: 'completed',
+            demo_mode: player.demoMode,
+            game_id: gameRecord.$loki,
+            created_at: new Date()
+          });
+
+          // Сохраняем ставку
+          rocketBets.insert({
+            game_id: gameRecord.$loki,
+            user_id: user.$loki,
+            bet_amount: player.betAmount,
+            cashout_multiplier: player.cashoutMultiplier,
+            win_amount: winAmount,
+            demo_mode: player.demoMode,
+            created_at: new Date()
           });
         } else {
-          users.update({
-            ...user,
-            main_balance: user.main_balance + winAmount
+          // Игрок проиграл - ставка остается в банке казино (уже была добавлена при ставке)
+          // Записываем проигрышную транзакцию
+          transactions.insert({
+            user_id: user.$loki,
+            amount: -player.betAmount,
+            type: 'rocket_loss',
+            status: 'completed',
+            demo_mode: player.demoMode,
+            game_id: gameRecord.$loki,
+            created_at: new Date()
           });
-          updateCasinoBank(-winAmount);
+
+          // Сохраняем проигрышную ставку
+          rocketBets.insert({
+            game_id: gameRecord.$loki,
+            user_id: user.$loki,
+            bet_amount: player.betAmount,
+            cashout_multiplier: null,
+            win_amount: 0,
+            demo_mode: player.demoMode,
+            created_at: new Date()
+          });
         }
-
-        // Записываем транзакцию
-        transactions.insert({
-          user_id: user.$loki,
-          amount: winAmount,
-          type: 'rocket_win',
-          status: 'completed',
-          demo_mode: player.demoMode,
-          game_id: gameRecord.$loki,
-          created_at: new Date()
-        });
-
-        // Сохраняем ставку
-        rocketBets.insert({
-          game_id: gameRecord.$loki,
-          user_id: user.$loki,
-          bet_amount: player.betAmount,
-          cashout_multiplier: player.cashoutMultiplier,
-          win_amount: winAmount,
-          demo_mode: player.demoMode,
-          created_at: new Date()
-        });
       }
     }
   });
