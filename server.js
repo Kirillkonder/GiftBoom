@@ -23,7 +23,7 @@ const dbPath = process.env.NODE_ENV === 'production' ?
 
 // LokiJS база данных
 let db;
-let users, transactions, casinoBank, casinoDemoBank, adminLogs, minesGames, rocketGames, rocketBets;
+let users, transactions, casinoBank, adminLogs, minesGames, rocketGames, rocketBets;
 
 // WebSocket сервер для ракетки
 const server = app.listen(PORT, () => {
@@ -48,140 +48,17 @@ let rtpSystem = {
     dailyDeposits: 0,      // Общие депозиты за день
     dailyPayouts: 0,       // Общие выплаты за день
     currentRTP: 0,         // Текущий RTP в процентах
-    targetRTP: 65,         // Целевой RTP 65% (оптимальный для казино)
+    targetRTP: 70,         // Целевой RTP 70% (увеличено с 60%)
     lastResetDate: new Date().toDateString()
   },
   demoBank: {
     dailyDeposits: 0,
     dailyPayouts: 0,
     currentRTP: 0,
-    targetRTP: 75,         // Демо более щедрый для привлечения
+    targetRTP: 70,         // Целевой RTP 70% (увеличено с 60%)
     lastResetDate: new Date().toDateString()
   }
 };
-
-// Система профилирования игроков для психологического управления
-let playerProfiles = new Map(); // telegramId -> profile
-
-// Создание/обновление профиля игрока
-function updatePlayerProfile(telegramId, betAmount, result, demoMode) {
-  const key = `${telegramId}_${demoMode ? 'demo' : 'real'}`;
-  
-  if (!playerProfiles.has(key)) {
-    playerProfiles.set(key, {
-      totalBets: 0,
-      totalWins: 0,
-      totalLosses: 0,
-      avgBetSize: 0,
-      maxBet: 0,
-      winStreak: 0,
-      lossStreak: 0,
-      lastResults: [],
-      riskLevel: 'unknown', // unknown, conservative, moderate, aggressive
-      hookLevel: 0, // 0-100, уровень "подсадки"
-      lastActivity: new Date(),
-      betProgression: [], // история размеров ставок
-      emotionalState: 'neutral' // neutral, excited, frustrated, hooked
-    });
-  }
-  
-  const profile = playerProfiles.get(key);
-  profile.totalBets++;
-  profile.avgBetSize = (profile.avgBetSize * (profile.totalBets - 1) + betAmount) / profile.totalBets;
-  profile.maxBet = Math.max(profile.maxBet, betAmount);
-  profile.lastActivity = new Date();
-  profile.betProgression.push(betAmount);
-  
-  // Ограничиваем историю ставок
-  if (profile.betProgression.length > 20) {
-    profile.betProgression.shift();
-  }
-  
-  if (result === 'win') {
-    profile.totalWins++;
-    profile.winStreak++;
-    profile.lossStreak = 0;
-  } else if (result === 'loss') {
-    profile.totalLosses++;
-    profile.lossStreak++;
-    profile.winStreak = 0;
-  }
-  
-  // Добавляем результат в историю
-  profile.lastResults.unshift({result, betAmount, timestamp: new Date()});
-  if (profile.lastResults.length > 15) {
-    profile.lastResults.pop();
-  }
-  
-  // Определяем уровень риска игрока
-  if (profile.totalBets >= 5) {
-    if (profile.avgBetSize >= 1.0) {
-      profile.riskLevel = 'aggressive';
-    } else if (profile.avgBetSize >= 0.3) {
-      profile.riskLevel = 'moderate'; 
-    } else {
-      profile.riskLevel = 'conservative';
-    }
-  }
-  
-  // Рассчитываем уровень подсадки
-  calculateHookLevel(profile);
-  
-  // Определяем эмоциональное состояние
-  updateEmotionalState(profile);
-  
-  playerProfiles.set(key, profile);
-}
-
-// Расчет уровня "подсадки" игрока
-function calculateHookLevel(profile) {
-  let hookLevel = 0;
-  
-  // Частота игры (больше игр = больше подсадки)
-  hookLevel += Math.min(profile.totalBets * 2, 30);
-  
-  // Прогрессия ставок (увеличение ставок = признак азарта)
-  if (profile.betProgression.length >= 5) {
-    const recent = profile.betProgression.slice(-5);
-    const early = profile.betProgression.slice(0, 5);
-    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const earlyAvg = early.reduce((a, b) => a + b, 0) / early.length;
-    
-    if (recentAvg > earlyAvg * 1.5) {
-      hookLevel += 25; // Сильно увеличивает ставки = сильная подсадка
-    } else if (recentAvg > earlyAvg * 1.2) {
-      hookLevel += 15; // Умеренное увеличение
-    }
-  }
-  
-  // Длительные сессии
-  if (profile.totalBets >= 20) hookLevel += 20;
-  
-  // Соотношение выигрышей к проигрышам
-  const winRate = profile.totalWins / (profile.totalWins + profile.totalLosses);
-  if (winRate < 0.3) hookLevel += 15; // Много проигрывает, но продолжает
-  
-  profile.hookLevel = Math.min(hookLevel, 100);
-}
-
-// Обновление эмоционального состояния
-function updateEmotionalState(profile) {
-  if (profile.winStreak >= 3) {
-    profile.emotionalState = 'excited';
-  } else if (profile.lossStreak >= 4) {
-    profile.emotionalState = 'frustrated';
-  } else if (profile.hookLevel >= 60) {
-    profile.emotionalState = 'hooked';
-  } else {
-    profile.emotionalState = 'neutral';
-  }
-}
-
-// Получение профиля игрока
-function getPlayerProfile(telegramId, demoMode) {
-  const key = `${telegramId}_${demoMode ? 'demo' : 'real'}`;
-  return playerProfiles.get(key) || null;
-}
 
 // Боты для ракетки
 const rocketBots = [
@@ -394,32 +271,23 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 65,  // Оптимизировано для прибыльности
+            targetRTP: 70,  // Увеличено до 70%
             lastResetDate: today
         };
         
         // Сбрасываем также счетчики паттернов при дневном сбросе
         lastResults = [];
-        antiPatternSystem = {
-            lastHighWins: 0,
-            lastLowWins: 0,
-            randomSeed: Math.random() * 10000,
-            sessionBias: Math.random(),
-            microCycles: 0,
-            lastPlayerTypes: []
+        psychologySystem = {
+            lastHighWins: 0,    
+            lastLowWins: 0,     
+            randomSeed: Math.random() * 1000,
+            heatupPhase: false,  
+            trapMode: false,     
+            consecutiveSmallWins: 0, 
+            lastBigBetResult: null   
         };
         
-        // Очищаем старые профили игроков (старше 7 дней)
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        
-        for (const [key, profile] of playerProfiles.entries()) {
-            if (profile.lastActivity < weekAgo) {
-                playerProfiles.delete(key);
-            }
-        }
-        
-        console.log('🔄 Сброшены дневные статистики RTP, паттерны и старые профили игроков');
+        console.log('Сброшены дневные статистики RTP и счетчики паттернов');
     }
     
     if (rtpSystem.demoBank.lastResetDate !== today) {
@@ -427,11 +295,10 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 75,  // Демо более щедрый
+            targetRTP: 70,  // Увеличено до 70%
             lastResetDate: today
         };
     }
-}
 }
 
 // Функция расчета текущего RTP
@@ -453,492 +320,311 @@ function updateRTPStats(bankType, deposit, payout) {
     console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
 }
 
-// НОВЫЙ ПСИХОЛОГИЧЕСКИ ХИТРЫЙ АЛГОРИТМ с профилированием игроков
-
-// Усложненная система защиты от паттернов
+// НОВЫЙ ПСИХОЛОГИЧЕСКИЙ АЛГОРИТМ - подлавливаем игроков на азарте
 let lastResults = []; // Память последних результатов
-let antiPatternSystem = {
-    lastHighWins: 0,    
-    lastLowWins: 0,     
-    randomSeed: Math.random() * 10000,
-    sessionBias: Math.random(), // Смещение для всей сессии
-    microCycles: 0, // Микроциклы для дополнительной непредсказуемости
-    lastPlayerTypes: [] // История типов игроков (conservative/aggressive)
+let playerBetHistory = new Map(); // История ставок каждого игрока
+
+// Психологическая система управления
+let psychologySystem = {
+    lastHighWins: 0,    // Счетчик последовательных высоких выигрышей  
+    lastLowWins: 0,     // Счетчик последовательных низких выигрышей
+    randomSeed: Math.random() * 1000, // Случайное семя для непредсказуемости
+    
+    // Новые психологические параметры
+    heatupPhase: false,  // Фаза "подогрева" - даем выигрыши на малых ставках
+    trapMode: false,     // Режим "ловушки" - ждем большую ставку для слива
+    consecutiveSmallWins: 0, // Подряд выигрышей на малых ставках
+    lastBigBetResult: null   // Результат последней большой ставки
 };
 
-// Более сложный генератор случайных чисел
-function getAdvancedRandom(seed = 0) {
-    const baseSeed = antiPatternSystem.randomSeed + seed;
-    const sessionFactor = antiPatternSystem.sessionBias;
-    const timeFactor = (Date.now() % 86400000) / 86400000; // Время дня как фактор
-    const cycleFactor = Math.sin(antiPatternSystem.microCycles * 0.1);
-    
-    return ((baseSeed * 9301 + 49297) % 233280 / 233280 + 
-            Math.random() + 
-            sessionFactor * 0.3 + 
-            timeFactor * 0.2 + 
-            cycleFactor * 0.1) % 1;
+// Генерируем случайное число с учетом семени и психологии
+function getSeededRandom() {
+    return (psychologySystem.randomSeed / 233280 + Math.random()) / 2;
 }
 
-// Психологический анализ ситуации
-function analyzePlayerPsychology(players) {
-    const analysis = {
-        shouldHookSmallBetters: false,
-        shouldPunishLargeBetters: false,
-        aggressionLevel: 0, // 0-10
-        manipulationStrategy: 'neutral', // neutral, hook, punish, balance
-        riskFactor: 1.0
+// Обновляем историю ставок игрока
+function updatePlayerBetHistory(userId, betAmount, result) {
+    if (!playerBetHistory.has(userId)) {
+        playerBetHistory.set(userId, []);
+    }
+    
+    const history = playerBetHistory.get(userId);
+    history.unshift({ bet: betAmount, result: result, timestamp: Date.now() });
+    
+    // Храним только последние 20 ставок
+    if (history.length > 20) {
+        history.pop();
+    }
+}
+
+// Анализ паттерна ставок игрока - определяем, стоит ли его "подогреть"
+function analyzePlayerPattern(userId, currentBet) {
+    const history = playerBetHistory.get(userId) || [];
+    
+    const recentBets = history.slice(0, 5); // Последние 5 ставок
+    const smallBets = recentBets.filter(h => h.bet < 0.5).length;
+    const recentWins = recentBets.filter(h => h.result >= 2.0).length;
+    
+    return {
+        isNewPlayer: history.length < 3,           // Новый игрок
+        preferSmallBets: smallBets >= 3,           // Предпочитает малые ставки  
+        recentlyWon: recentWins >= 2,              // Недавно выигрывал
+        currentBetSize: currentBet < 0.5 ? 'small' : currentBet < 2.0 ? 'medium' : 'big',
+        increasedBet: history.length > 0 && currentBet > history[0].bet * 1.5  // Увеличил ставку
     };
+}
+
+// Определяем психологическую стратегию
+function getPsychologyStrategy(totalBet, players) {
+    const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
     
-    let smallBetters = [];
-    let largeBetters = [];
-    let hookedPlayers = [];
-    let frustratedPlayers = [];
+    if (realPlayers.length === 0) return 'neutral';
     
-    players.forEach(player => {
-        if (player.isBot) return;
+    // Анализируем каждого игрока
+    let shouldHeatup = false;
+    let shouldTrap = false;
+    
+    realPlayers.forEach(player => {
+        const pattern = analyzePlayerPattern(player.userId, player.betAmount);
         
-        const profile = getPlayerProfile(player.userId, player.demoMode);
-        
-        if (player.betAmount < 0.5) {
-            smallBetters.push({player, profile});
-        } else if (player.betAmount >= 1.0) {
-            largeBetters.push({player, profile});
+        // Стратегия подогрева: новые игроки или те, кто ставит мало
+        if (pattern.isNewPlayer || (pattern.preferSmallBets && pattern.currentBetSize === 'small')) {
+            shouldHeatup = true;
         }
         
-        if (profile) {
-            if (profile.hookLevel >= 50) {
-                hookedPlayers.push({player, profile});
-            }
-            if (profile.emotionalState === 'frustrated') {
-                frustratedPlayers.push({player, profile});
-            }
+        // Стратегия ловушки: игрок увеличил ставку после выигрышей
+        if (pattern.recentlyWon && pattern.increasedBet && pattern.currentBetSize !== 'small') {
+            shouldTrap = true;
         }
     });
     
-    // Стратегия подсадки малых игроков
-    if (smallBetters.length > 0 && largeBetters.length === 0) {
-        // Только малые ставки - даем выигрыши для подсадки
-        analysis.shouldHookSmallBetters = true;
-        analysis.manipulationStrategy = 'hook';
-        analysis.aggressionLevel = 2;
-    }
-    
-    // Стратегия против крупных игроков  
-    if (largeBetters.length > 0) {
-        // Есть крупные ставки - больше вероятность слива
-        analysis.shouldPunishLargeBetters = true;
-        analysis.manipulationStrategy = 'punish';
-        analysis.aggressionLevel = 7;
-        
-        // Но если игрок сильно фрустрирован, иногда даем выигрыш чтобы не потерять
-        const veryFrustratedLarge = largeBetters.some(({profile}) => 
-            profile && profile.lossStreak >= 6
-        );
-        if (veryFrustratedLarge && getAdvancedRandom() < 0.25) {
-            analysis.aggressionLevel = 4; // Снижаем агрессию
-        }
-    }
-    
-    // Смешанная стратегия
-    if (smallBetters.length > 0 && largeBetters.length > 0) {
-        analysis.manipulationStrategy = 'balance';
-        analysis.aggressionLevel = 5;
-        
-        // Если много подсаженных игроков, можем быть агрессивнее
-        if (hookedPlayers.length >= 2) {
-            analysis.aggressionLevel = 7;
-        }
-    }
-    
-    return analysis;
-}
-
-// Генерация краш-поинта для подсадки малых игроков
-function generateHookingCrashPoint(totalBet, profiles) {
-    const random = getAdvancedRandom();
-    
-    // Анализируем профили для определения стратегии
-    let shouldGiveBigWin = false;
-    let newPlayerCount = 0;
-    
-    profiles.forEach(profile => {
-        if (!profile || profile.totalBets <= 3) {
-            newPlayerCount++;
-        }
-    });
-    
-    // Новых игроков подсаживаем особенно щедро
-    if (newPlayerCount > 0 && random < 0.6) {
-        shouldGiveBigWin = true;
-    }
-    
-    // Фрустрированным игрокам иногда даем надежду
-    const frustratedCount = profiles.filter(p => 
-        p && p.emotionalState === 'frustrated'
-    ).length;
-    
-    if (frustratedCount > 0 && random < 0.4) {
-        shouldGiveBigWin = true;
-    }
-    
-    // Избегаем слишком очевидных паттернов
-    if (shouldAvoidPattern('high')) {
-        shouldGiveBigWin = false;
-    }
-    
-    if (shouldGiveBigWin) {
-        // Большие выигрыши для подсадки
-        if (random < 0.3) return Math.random() * 3.0 + 4.0;  // 4x-7x
-        if (random < 0.6) return Math.random() * 8.0 + 7.0;  // 7x-15x  
-        return Math.random() * 15.0 + 15.0; // 15x-30x ДЖЕКПОТ!
+    // Обновляем состояние системы
+    if (shouldHeatup && !shouldTrap) {
+        psychologySystem.heatupPhase = true;
+        psychologySystem.trapMode = false;
+        return 'heatup'; // Подогреваем
+    } else if (shouldTrap) {
+        psychologySystem.trapMode = true;  
+        psychologySystem.heatupPhase = false;
+        return 'trap'; // Ловушка
     } else {
-        // Умеренные выигрыши
-        if (random < 0.15) return Math.random() * 0.2 + 1.0;  // 1.0x-1.2x
-        if (random < 0.40) return Math.random() * 1.0 + 1.5;  // 1.5x-2.5x
-        if (random < 0.75) return Math.random() * 2.0 + 2.5;  // 2.5x-4.5x
-        return Math.random() * 4.0 + 5.0; // 5x-9x
+        return 'balanced'; // Обычная игра
     }
 }
 
-// Генерация краш-поинта для наказания крупных игроков
-function generatePunishingCrashPoint(totalBet, profiles) {
-    const random = getAdvancedRandom();
-    
-    // Анализ агрессивности крупных игроков
-    let maxBetPlayer = null;
-    let maxBet = 0;
-    
-    profiles.forEach(profile => {
-        if (profile && profile.maxBet > maxBet) {
-            maxBet = profile.maxBet;
-            maxBetPlayer = profile;
-        }
-    });
-    
-    // Особо крупных игроков наказываем сильнее
-    let aggressionMultiplier = 1.0;
-    if (totalBet >= 5.0) aggressionMultiplier = 1.5;
-    if (totalBet >= 10.0) aggressionMultiplier = 2.0;
-    
-    // Но избегаем слишком очевидного паттерна проигрышей
-    if (shouldAvoidPattern('low')) {
-        aggressionMultiplier *= 0.6;
-    }
-    
-    const adjustedRandom = random * aggressionMultiplier;
-    
-    if (adjustedRandom < 0.65) {
-        // Высокая вероятность проигрыша для крупных ставок
-        return Math.random() * 0.25 + 1.00; // 1.00x-1.25x
-    } else if (adjustedRandom < 0.85) {
-        // Малые выигрыши  
-        return Math.random() * 0.8 + 1.3; // 1.3x-2.1x
-    } else if (adjustedRandom < 0.95) {
-        // Средние выигрыши
-        return Math.random() * 2.0 + 2.5; // 2.5x-4.5x
-    } else {
-        // Редкие крупные выигрыши для поддержания интереса
-        return Math.random() * 8.0 + 6.0; // 6x-14x
-    }
-}
-
-// Сбалансированная генерация для смешанных ставок
-function generateBalancedManipulativeCrashPoint(totalBet, profiles, analysis) {
-    const random = getAdvancedRandom();
-    
-    // Учитываем общий анализ ситуации
-    let baseChance = 0.4; // Базовый шанс проигрыша
-    
-    // Корректируем в зависимости от уровня агрессии
-    baseChance += (analysis.aggressionLevel - 5) * 0.05;
-    
-    // Учитываем состояние RTP
-    const currentRTP = rtpSystem.realBank.currentRTP || rtpSystem.demoBank.currentRTP;
-    if (currentRTP < 60) baseChance -= 0.1; // Если RTP низкий, даем больше выигрышей
-    if (currentRTP > 75) baseChance += 0.15; // Если RTP высокий, больше проигрышей
-    
-    // Защита от паттернов
-    if (shouldAvoidPattern('low')) baseChance -= 0.2;
-    if (shouldAvoidPattern('high')) baseChance += 0.1;
-    
-    if (random < baseChance) {
-        // Проигрыш
-        return Math.random() * 0.3 + 1.0; // 1.0x-1.3x
-    } else if (random < baseChance + 0.3) {
-        // Малый выигрыш
-        return Math.random() * 1.0 + 1.5; // 1.5x-2.5x
-    } else if (random < baseChance + 0.5) {
-        // Средний выигрыш  
-        return Math.random() * 2.5 + 3.0; // 3x-5.5x
-    } else {
-        // Крупный выигрыш
-        return Math.random() * 10.0 + 6.0; // 6x-16x
-    }
-}
-
-
-// Обновляем систему защиты от паттернов
-function updateAntiPatternSystem(crashPoint) {
-    // Добавляем результат в историю
-    lastResults.unshift(crashPoint);
-    if (lastResults.length > 10) {
-        lastResults.pop(); // Храним только последние 10 результатов
-    }
-    
-    // Обновляем счетчики паттернов
-    if (crashPoint >= 4.0) {
-        antiPatternSystem.lastHighWins++;
-        antiPatternSystem.lastLowWins = 0;
-    } else if (crashPoint <= 1.5) {
-        antiPatternSystem.lastLowWins++;
-        antiPatternSystem.lastHighWins = 0;
-    } else {
-        antiPatternSystem.lastHighWins = 0;
-        antiPatternSystem.lastLowWins = 0;
-    }
-    
-    // Обновляем случайное семя для дополнительной непредсказуемости
-    antiPatternSystem.randomSeed = (antiPatternSystem.randomSeed * 9301 + 49297) % 233280;
-}
-
-// Генерация среднего выигрыша для избежания паттернов
-function generateMiddleWinCrashPoint(totalBet) {
-    const random = getAdvancedRandom() * 100;
-    
-    if (totalBet >= 0.7) {
-        return Math.random() * 2.0 + 2.0; // 2.0x - 4.0x средние выигрыши (улучшено)
-    } else {
-        return Math.random() * 3.0 + 2.5; // 2.5x - 5.5x для малых ставок (значительно улучшено)
-    }
-}
-
-// Генерация для ботов с красивыми результатами
-function generateRandomBotCrashPoint() {
-    const random = getAdvancedRandom() * 100;
-    
-    if (random < 25) return Math.random() * 2 + 2; // 2x - 4x
-    if (random < 50) return Math.random() * 4 + 4; // 4x - 8x
-    if (random < 75) return Math.random() * 8 + 8; // 8x - 16x
-    if (random < 90) return Math.random() * 15 + 15; // 15x - 30x
-    return Math.random() * 30 + 30; // 30x - 60x (иногда очень высокие для красоты)
-}
-
-// Генерация краш-поинта с защитой от паттернов (выигрышный)
-function generateAntiPatternWinningCrashPoint(totalBet) {
-    // Если было много высоких выигрышей - даем средний
-    if (shouldAvoidPattern('high')) {
-        return generateMiddleWinCrashPoint(totalBet);
-    }
-    
-    const random = getAdvancedRandom() * 100;
-    const bonusChance = antiPatternSystem.lastLowWins * 15; // Бонус за предыдущие проигрыши
-    
-    // Учитываем размер ставки с улучшенной системой для малых ставок
-    if (totalBet >= 0.7) { // Большие ставки - более консервативно
-        if (random < 20 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый выигрыш 1.0-1.4x
-        if (random < 45 + bonusChance) return Math.random() * 0.8 + 1.8; // Средний 1.8-2.6x  
-        if (random < 75 + bonusChance) return Math.random() * 2.0 + 3.0; // Большой 3.0-5.0x
-        return Math.random() * 15.0 + 5.0; // Крупный 5.0-20x
-    } else { // Малые ставки (0.1-0.6) - БОЛЬШЕ ШАНСОВ НА ВЫСОКИЕ МНОЖИТЕЛИ
-        if (random < 10 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый 1.0-1.4x
-        if (random < 30 + bonusChance) return Math.random() * 1.0 + 2.0; // Средний 2.0-3.0x
-        if (random < 60 + bonusChance) return Math.random() * 5.0 + 4.0; // Большой 4.0-9.0x  
-        return Math.random() * 25.0 + 10.0; // КРУПНЫЙ 10.0-35x (увеличено для малых ставок!)
-    }
-}
-
-// Генерация сбалансированного краш-поинта с защитой от паттернов
-function generateAntiPatternBalancedCrashPoint(totalBet) {
-    const random = getAdvancedRandom() * 100;
-    
-    // Если был паттерн проигрышей - увеличиваем шанс выигрыша
-    const winBonus = antiPatternSystem.lastLowWins * 10;
-    // Если был паттерн выигрышей - уменьшаем шанс высокого выигрыша
-    const highWinPenalty = antiPatternSystem.lastHighWins * 15;
-    
-    if (totalBet >= 0.7) {
-        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
-        if (random < 55 - winBonus) return Math.random() * 0.6 + 1.0;   // Малый
-        if (random < 75 - winBonus) return Math.random() * 1.0 + 2.0;   // Средний
-        if (random < 90 - highWinPenalty) return Math.random() * 3.0 + 4.0; // Большой
-        return Math.random() * 18.0 + 7.0; // Крупный 7.0-25x
-    } else {
-        if (random < 25 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш (уменьшено)
-        if (random < 40 - winBonus) return Math.random() * 0.8 + 1.2;   // Малый
-        if (random < 60 - winBonus) return Math.random() * 2.0 + 2.5;   // Средний  
-        if (random < 85 - highWinPenalty) return Math.random() * 8.0 + 5.0; // Большой
-        return Math.random() * 30.0 + 15.0; // КРУПНЫЙ 15.0-45x для малых ставок!
-    }
-}
-
-// Генерация проигрышного краш-поинта с защитой от паттернов
-function generateAntiPatternLosingCrashPoint(totalBet) {
-    // Если было много проигрышей подряд - даем средний выигрыш
-    if (shouldAvoidPattern('low')) {
-        return generateMiddleWinCrashPoint(totalBet);
-    }
-    
-    const random = getAdvancedRandom() * 100;
-    
-    if (totalBet >= 0.7) {
-        if (random < 60) return Math.random() * 0.15 + 1.00; // 60% проигрыш (снижено с 75%)
-        if (random < 75) return Math.random() * 0.6 + 1.0;   // 15% малый
-        if (random < 88) return Math.random() * 1.0 + 2.0;   // 13% средний
-        return Math.random() * 6.0 + 4.0; // 12% большой (улучшено)
-    } else {
-        if (random < 50) return Math.random() * 0.15 + 1.00; // 50% проигрыш (снижено с 65%)
-        if (random < 65) return Math.random() * 0.8 + 1.2;   // 15% малый
-        if (random < 80) return Math.random() * 2.0 + 2.5;   // 15% средний
-        return Math.random() * 12.0 + 6.0; // 20% большой (значительно улучшено для малых ставок)
-    }
-}
-
-// Обновленная функция проверки паттернов
+// Проверяем, нужно ли избегать паттерна
 function shouldAvoidPattern(type) {
-    // Более сложная логика избежания паттернов
-    if (type === 'high') {
-        // Избегаем более 2 подряд высоких выигрышей
-        if (antiPatternSystem.lastHighWins >= 2) return true;
-        
-        // Дополнительная проверка на основе истории
-        const recentHighs = lastResults.slice(0, 5).filter(r => r >= 4.0).length;
-        if (recentHighs >= 3) return true;
+    if (type === 'high' && psychologySystem.lastHighWins >= 2) {
+        return true; // Избегаем третий подряд высокий выигрыш
     }
-    
-    if (type === 'low') {
-        // Избегаем более 4 подряд низких результатов  
-        if (antiPatternSystem.lastLowWins >= 4) return true;
-        
-        // Проверяем на слишком много проигрышей подряд
-        const recentLows = lastResults.slice(0, 6).filter(r => r <= 1.5).length;
-        if (recentLows >= 5) return true;
+    if (type === 'low' && psychologySystem.lastLowWins >= 4) {
+        return true; // Избегаем пятый подряд низкий результат
     }
-    
     return false;
 }
 
-// Дополнительные функции для более хитрого алгоритма
+// Обновляем систему защиты от паттернов (старая версия - удалена)
 
-// Анализ "жадности" игрока по истории ставок
-function analyzePlayerGreed(profile) {
-    if (!profile || profile.betProgression.length < 3) return 'unknown';
-    
-    const recent = profile.betProgression.slice(-3);
-    const increase = recent[2] - recent[0];
-    
-    if (increase > profile.avgBetSize * 0.5) return 'greedy'; // Резко увеличивает ставки
-    if (increase > profile.avgBetSize * 0.2) return 'moderate';
-    return 'conservative';
-}
+// ПСИХОЛОГИЧЕСКИЕ ФУНКЦИИ ГЕНЕРАЦИИ КРАШ-ПОИНТОВ
 
-// Определение момента для "крючка" - когда игрок готов увеличить ставку
-function isReadyForHook(profile) {
-    if (!profile) return false;
+// Функция подогрева - даем выигрыши на малых ставках
+function generateHeatupCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
     
-    // Если игрок уже на крючке - можем быть агрессивнее
-    if (profile.hookLevel >= 70) return false;
+    console.log(`🔥 ПОДОГРЕВ: ставка ${totalBet}, генерируем выигрышный результат`);
     
-    // Если недавно выиграл и может увеличить ставку
-    if (profile.winStreak >= 2 && profile.totalBets >= 5) return true;
-    
-    // Если фрустрирован, но еще играет - хороший момент для подсадки
-    if (profile.emotionalState === 'frustrated' && profile.lossStreak <= 5) return true;
-    
-    return false;
-}
-
-// Расчет "налога на жадность" - чем жаднее игрок, тем меньше шансов
-function calculateGreedPenalty(profiles, totalBet) {
-    let penalty = 0;
-    
-    profiles.forEach(profile => {
-        if (!profile) return;
-        
-        const greed = analyzePlayerGreed(profile);
-        if (greed === 'greedy' && totalBet >= 1.0) {
-            penalty += 0.15; // 15% штраф за жадность на крупных ставках
-        } else if (greed === 'moderate' && totalBet >= 2.0) {
-            penalty += 0.08; // 8% штраф за умеренную жадность
-        }
-    });
-    
-    return Math.min(penalty, 0.4); // Максимум 40% штрафа
-}
-function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
-    // Если банк пустой или очень маленький - пополняем, но не слишком агрессивно
-    if (bankBalance < 50) {
-        console.log(`Реальный банк критически мал (${bankBalance}), умеренное пополнение`);
-        // 70% шанс слива при критически малом банке (снижено с 90%)
-        if (getAdvancedRandom() < 0.70) {
-            return Math.random() * 0.2 + 1.00; // 1.00x - 1.20x (улучшено)
-        }
-        // 30% небольшие и средние выигрыши для баланса
-        return Math.random() * 1.5 + 1.5; // 1.5x - 3.0x (улучшено)
-    }
-    // Если банк маленький - продолжаем пополнять, но мягче
-    else if (bankBalance < 200) {
-        console.log(`Реальный банк мал (${bankBalance}), мягкое пополнение`);
-        // Избегаем слишком очевидного паттерна
-        if (shouldAvoidPattern('low')) {
-            return generateMiddleWinCrashPoint(totalBet);
-        }
-        // 65% шанс слива при малом банке (снижено с 80%)
-        if (getAdvancedRandom() < 0.65) {
-            return Math.random() * 0.25 + 1.00; // 1.00x - 1.25x (улучшено)
-        }
-        // 35% небольшие и средние выигрыши (увеличено с 20%)
-        return Math.random() * 1.0 + 1.5; // 1.5x - 2.5x (улучшено)
-    }
-    
-    const currentRTP = rtpStats.currentRTP;
-    const targetRTP = rtpStats.targetRTP;
-    
-    // Добавляем дополнительную случайность к границам RTP
-    const rtpVariance = (getAdvancedRandom() - 0.5) * 10; // ±5% случайное отклонение
-    const adjustedTargetRTP = targetRTP + rtpVariance;
-    
-    // Если RTP значительно ниже цели - увеличиваем шансы на выигрыш
-    if (currentRTP < adjustedTargetRTP - 10) {
-        return generateAntiPatternWinningCrashPoint(totalBet);
-    }
-    // Если RTP приближается к цели - балансируем с учетом паттернов
-    else if (currentRTP < adjustedTargetRTP + 5) {
-        return generateAntiPatternBalancedCrashPoint(totalBet);
-    }
-    // Если RTP превышает цель - больше проигрышей, но избегаем паттернов
-    else {
-        return generateAntiPatternLosingCrashPoint(totalBet);
-    }
-}
-
-// Непредсказуемый алгоритм для демо банка
-function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats) {
-    const currentRTP = rtpStats.currentRTP;
-    const targetRTP = rtpStats.targetRTP;
-    
-    // Добавляем случайность к границам RTP
-    const rtpVariance = (getAdvancedRandom() - 0.5) * 8;
-    const adjustedTargetRTP = targetRTP + rtpVariance;
-    
-    if (currentRTP < adjustedTargetRTP - 8) {
-        return generateAntiPatternWinningCrashPoint(totalBet);
-    } else if (currentRTP < adjustedTargetRTP + 3) {
-        return generateAntiPatternBalancedCrashPoint(totalBet);
+    if (totalBet < 0.5) {
+        // Малые ставки - очень щедро!
+        if (random < 15) return Math.random() * 0.3 + 1.2; // 15% мини-выигрыш 1.2-1.5x
+        if (random < 45) return Math.random() * 1.5 + 2.0; // 30% средний 2.0-3.5x
+        if (random < 75) return Math.random() * 3.0 + 4.0; // 30% хороший 4.0-7.0x
+        return Math.random() * 15.0 + 8.0; // 25% отличный 8.0-23x
+    } else if (totalBet < 2.0) {
+        // Средние ставки - щедро, но не слишком
+        if (random < 25) return Math.random() * 0.5 + 1.2; // 25% мини 1.2-1.7x
+        if (random < 60) return Math.random() * 1.0 + 2.0; // 35% средний 2.0-3.0x
+        if (random < 85) return Math.random() * 2.0 + 3.5; // 25% хороший 3.5-5.5x
+        return Math.random() * 8.0 + 6.0; // 15% отличный 6.0-14x
     } else {
-        return generateAntiPatternLosingCrashPoint(totalBet);
+        // Большие ставки - умеренно
+        if (random < 40) return Math.random() * 0.3 + 1.2; // 40% мини
+        if (random < 70) return Math.random() * 0.8 + 2.0; // 30% средний
+        if (random < 90) return Math.random() * 1.5 + 3.0; // 20% хороший
+        return Math.random() * 5.0 + 5.0; // 10% отличный
     }
 }
 
-function generateCrashPoint(players = []) {
+// Функция ловушки - сливаем после подогрева
+function generateTrapCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    console.log(`🪤 ЛОВУШКА: ставка ${totalBet}, сливаем после подогрева`);
+    
+    if (totalBet < 0.5) {
+        // Малые ставки - все еще даем шанс (чтобы не спугнуть)
+        if (random < 60) return Math.random() * 0.2 + 1.0; // 60% слив 1.0-1.2x
+        if (random < 80) return Math.random() * 0.8 + 1.5; // 20% мини 1.5-2.3x
+        return Math.random() * 2.0 + 2.5; // 20% средний 2.5-4.5x
+    } else if (totalBet < 2.0) {
+        // Средние ставки - больше сливов
+        if (random < 75) return Math.random() * 0.15 + 1.0; // 75% слив 1.0-1.15x
+        if (random < 90) return Math.random() * 0.5 + 1.3; // 15% мини 1.3-1.8x
+        return Math.random() * 1.0 + 2.0; // 10% средний 2.0-3.0x  
+    } else {
+        // Большие ставки - жестко сливаем!
+        if (random < 85) return Math.random() * 0.1 + 1.0; // 85% жесткий слив 1.0-1.1x
+        if (random < 95) return Math.random() * 0.3 + 1.2; // 10% мини 1.2-1.5x
+        return Math.random() * 1.0 + 1.8; // 5% средний 1.8-2.8x
+    }
+}
+
+// Сбалансированная функция с учетом психологии
+function generatePsychologyBalancedCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    // Учитываем размер ставки в балансированной стратегии
+    if (totalBet < 0.5) {
+        // Малые ставки - слегка в пользу игрока
+        if (random < 35) return Math.random() * 0.2 + 1.0; // 35% слив
+        if (random < 60) return Math.random() * 0.8 + 1.5; // 25% мини
+        if (random < 80) return Math.random() * 1.5 + 2.5; // 20% средний
+        return Math.random() * 6.0 + 4.0; // 20% хороший
+    } else if (totalBet < 2.0) {
+        // Средние ставки - нейтрально
+        if (random < 50) return Math.random() * 0.15 + 1.0; // 50% слив
+        if (random < 75) return Math.random() * 0.8 + 1.5; // 25% мини
+        if (random < 90) return Math.random() * 1.2 + 2.5; // 15% средний
+        return Math.random() * 4.0 + 4.0; // 10% хороший
+    } else {
+        // Большие ставки - в пользу казино
+        if (random < 65) return Math.random() * 0.15 + 1.0; // 65% слив
+        if (random < 85) return Math.random() * 0.6 + 1.3; // 20% мини
+        if (random < 95) return Math.random() * 1.0 + 2.0; // 10% средний
+        return Math.random() * 3.0 + 3.5; // 5% хороший
+    }
+}
+
+// НОВЫЙ ПСИХОЛОГИЧЕСКИЙ АЛГОРИТМ - основная функция генерации
+function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats, players = []) {
     resetDailyRTP();
     
-    // Обновляем микроциклы для дополнительной непредсказуемости
-    antiPatternSystem.microCycles++;
-    if (antiPatternSystem.microCycles > 1000) {
-        antiPatternSystem.microCycles = 0;
-        antiPatternSystem.sessionBias = Math.random(); // Новое смещение сессии
+    // Определяем психологическую стратегию
+    const strategy = getPsychologyStrategy(totalBet, players);
+    
+    console.log(`💰 Реальный банк: ${bankBalance}, стратегия: ${strategy}, ставка: ${totalBet}`);
+    
+    // Если банк критически мал - пополняем, но с учетом психологии
+    if (bankBalance < 50) {
+        console.log(`⚠️ Критически малый банк (${bankBalance}), пополняем`);
+        
+        if (strategy === 'heatup' && totalBet < 0.5) {
+            // Даем небольшой выигрыш даже при малом банке для подогрева
+            if (getSeededRandom() < 0.3) {
+                return Math.random() * 1.0 + 1.5; // 30% шанс на 1.5-2.5x
+            }
+        }
+        
+        // Основной слив при малом банке
+        if (getSeededRandom() < 0.75) {
+            return Math.random() * 0.15 + 1.00; // 75% слив 1.0-1.15x
+        }
+        return Math.random() * 0.5 + 1.2; // 25% мини выигрыш
     }
+    
+    // Если банк мал - пополняем мягче
+    if (bankBalance < 200) {
+        console.log(`⚠️ Малый банк (${bankBalance}), мягкое пополнение`);
+        
+        if (strategy === 'heatup') {
+            // В режиме подогрева даем больше шансов
+            if (getSeededRandom() < 0.5) {
+                return generateHeatupCrashPoint(totalBet);
+            }
+        }
+        
+        // Обычный слив при малом банке  
+        if (getSeededRandom() < 0.65) {
+            return Math.random() * 0.2 + 1.00; // 65% слив
+        }
+        return Math.random() * 1.5 + 1.5; // 35% средний выигрыш
+    }
+    
+    // Основная психологическая логика
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    const rtpVariance = (getSeededRandom() - 0.5) * 8;
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    // Выбираем алгоритм в зависимости от стратегии
+    switch (strategy) {
+        case 'heatup':
+            // Подогреваем - даем выигрыши
+            psychologySystem.consecutiveSmallWins++;
+            return generateHeatupCrashPoint(totalBet);
+            
+        case 'trap':
+            // Ловушка - сливаем после подогрева
+            psychologySystem.consecutiveSmallWins = 0;
+            return generateTrapCrashPoint(totalBet);
+            
+        case 'balanced':
+        default:
+            // Обычная логика с учетом RTP и психологии
+            if (currentRTP < adjustedTargetRTP - 10) {
+                return generatePsychologyBalancedCrashPoint(totalBet);
+            } else if (currentRTP < adjustedTargetRTP + 5) {
+                return generatePsychologyBalancedCrashPoint(totalBet);
+            } else {
+                // RTP превышен - больше сливов, но учитываем размер ставки
+                if (totalBet < 0.5) {
+                    return generatePsychologyBalancedCrashPoint(totalBet); // Малые ставки - щадим
+                } else {
+                    return generateTrapCrashPoint(totalBet); // Большие ставки - сливаем
+                }
+            }
+    }
+}
+
+// НОВЫЙ АЛГОРИТМ ДЛЯ ДЕМО БАНКА - более щадящий
+function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats, players = []) {
+    const strategy = getPsychologyStrategy(totalBet, players);
+    
+    console.log(`🎮 Демо банк, стратегия: ${strategy}, ставка: ${totalBet}`);
+    
+    // Демо банк более щедрый - RTP выше
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP + 5; // +5% к целевому RTP для демо
+    const rtpVariance = (getSeededRandom() - 0.5) * 6;
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    switch (strategy) {
+        case 'heatup':
+            return generateHeatupCrashPoint(totalBet);
+            
+        case 'trap':
+            // В демо режиме ловушки мягче
+            const random = getSeededRandom() * 100;
+            if (totalBet < 1.0) {
+                // Малые ставки в демо - очень щадим
+                if (random < 40) return Math.random() * 0.3 + 1.0; // 40% слив
+                return generatePsychologyBalancedCrashPoint(totalBet);
+            } else {
+                return generateTrapCrashPoint(totalBet);
+            }
+            
+        case 'balanced':
+        default:
+            if (currentRTP < adjustedTargetRTP - 5) {
+                return generateHeatupCrashPoint(totalBet); // Даем выигрыши
+            } else {
+                return generatePsychologyBalancedCrashPoint(totalBet);
+            }
+    }
+}
+
+// ГЛАВНАЯ ФУНКЦИЯ ГЕНЕРАЦИИ С ПСИХОЛОГИЧЕСКИМ АЛГОРИТМОМ
+function generateCrashPoint(players = []) {
+    resetDailyRTP();
     
     // Администраторы (могут играть на демо балансе)
     const adminIds = [
@@ -964,101 +650,173 @@ function generateCrashPoint(players = []) {
     const totalRealBet = effectiveRealPlayers.reduce((sum, p) => sum + p.betAmount, 0);
     const totalDemoBet = effectiveDemoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
     
-    // Получаем банки
+    // Получаем состояние банков
     const realBank = getCasinoBank();
     const demoBank = getCasinoDemoBank();
     
-    // НОВАЯ ПСИХОЛОГИЧЕСКАЯ ЛОГИКА
+    // Основная психологическая логика
     let crashPoint = 1.00;
-    let activePlayers = [];
-    let bankType = '';
-    let totalBet = 0;
     
     if (totalRealBet > 0) {
-        activePlayers = effectiveRealPlayers;
-        bankType = 'realBank';
-        totalBet = totalRealBet;
+        // Передаем игроков для психологического анализа
+        crashPoint = generateUnpredictableRealBankCrashPoint(
+            totalRealBet, 
+            realBank.total_balance, 
+            rtpSystem.realBank,
+            effectiveRealPlayers
+        );
+        
+        // Обновляем историю ставок реальных игроков
+        effectiveRealPlayers.forEach(player => {
+            updatePlayerBetHistory(player.userId, player.betAmount, crashPoint);
+        });
+        
     } else if (totalDemoBet > 0) {
-        activePlayers = effectiveDemoPlayers;
-        bankType = 'demoBank';
-        totalBet = totalDemoBet;
+        // Демо игроки
+        crashPoint = generateUnpredictableDemoBankCrashPoint(
+            totalDemoBet, 
+            rtpSystem.demoBank,
+            effectiveDemoPlayers
+        );
+        
+        // Обновляем историю ставок демо игроков
+        effectiveDemoPlayers.forEach(player => {
+            updatePlayerBetHistory(player.userId, player.betAmount, crashPoint);
+        });
+        
     } else {
-        // Только боты - красивый случайный краш
+        // Только боты - случайный краш для красоты
         crashPoint = generateRandomBotCrashPoint();
-        updateAntiPatternSystem(crashPoint);
-        return Math.max(1.00, crashPoint);
     }
     
-    // Получаем профили игроков
-    const playerProfiles = activePlayers.map(player => {
-        return getPlayerProfile(player.userId, player.demoMode);
-    });
+    // Обновляем психологическую систему
+    updatePsychologySystem(crashPoint, totalRealBet + totalDemoBet);
     
-    // Психологический анализ ситуации
-    const psychology = analyzePlayerPsychology(activePlayers);
-    
-    // Определяем стратегию генерации на основе анализа
-    switch (psychology.manipulationStrategy) {
-        case 'hook':
-            // Подсаживаем малых игроков
-            crashPoint = generateHookingCrashPoint(totalBet, playerProfiles);
-            console.log(`🎣 ПОДСАДКА малых игроков (${totalBet} TON), краш: ${crashPoint.toFixed(2)}x`);
-            break;
-            
-        case 'punish':
-            // Наказываем крупных игроков  
-            crashPoint = generatePunishingCrashPoint(totalBet, playerProfiles);
-            console.log(`💸 НАКАЗАНИЕ крупных игроков (${totalBet} TON), краш: ${crashPoint.toFixed(2)}x`);
-            break;
-            
-        case 'balance':
-            // Сбалансированный подход
-            crashPoint = generateBalancedManipulativeCrashPoint(totalBet, playerProfiles, psychology);
-            console.log(`⚖️ БАЛАНС смешанных ставок (${totalBet} TON), краш: ${crashPoint.toFixed(2)}x`);
-            break;
-            
-        default:
-            // Fallback на старую логику
-            if (bankType === 'realBank') {
-                crashPoint = generateUnpredictableRealBankCrashPoint(totalBet, realBank.total_balance, rtpSystem.realBank);
-            } else {
-                crashPoint = generateUnpredictableDemoBankCrashPoint(totalBet, rtpSystem.demoBank, demoBank.total_balance);
-            }
-    }
-    
-    // Финальная проверка и корректировка
-    crashPoint = Math.max(1.00, crashPoint);
-    
-    // Обновляем профили игроков с результатами
-    const isWin = crashPoint >= 1.2; // Условная граница выигрыша
-    activePlayers.forEach(player => {
-        const result = isWin ? 'win' : 'loss';
-        updatePlayerProfile(player.userId, player.betAmount, result, player.demoMode);
-    });
-    
-    // Записываем результат в историю для анализа паттернов
-    updateAntiPatternSystem(crashPoint);
-    
-    // Обновляем семя для следующего раунда
-    antiPatternSystem.randomSeed = (antiPatternSystem.randomSeed * 16807) % 2147483647;
-    
-    return crashPoint;
+    return Math.max(1.00, crashPoint);
 }
 
+// Обновляем психологическую систему после каждой игры
+function updatePsychologySystem(crashPoint, totalBet) {
+    // Добавляем результат в историю
+    lastResults.unshift(crashPoint);
+    if (lastResults.length > 15) {
+        lastResults.pop(); // Храним только последние 15 результатов
+    }
+    
+    // Обновляем счетчики паттернов
+    if (crashPoint >= 4.0) {
+        psychologySystem.lastHighWins++;
+        psychologySystem.lastLowWins = 0;
+    } else if (crashPoint <= 1.3) {
+        psychologySystem.lastLowWins++;
+        psychologySystem.lastHighWins = 0;
+    } else {
+        psychologySystem.lastHighWins = 0;
+        psychologySystem.lastLowWins = 0;
+    }
+    
+    // Обновляем случайное семя для дополнительной непредсказуемости
+    psychologySystem.randomSeed = (psychologySystem.randomSeed * 9301 + 49297) % 233280;
+    
+    // Логируем для анализа
+    console.log(`🎲 Результат: ${crashPoint.toFixed(2)}x, ставка: ${totalBet}, система: подряд высоких: ${psychologySystem.lastHighWins}, подряд низких: ${psychologySystem.lastLowWins}`);
+}
 
+// Генерация для ботов с красивыми результатами
+function generateRandomBotCrashPoint() {
+    const random = getSeededRandom() * 100;
+    
+    if (random < 25) return Math.random() * 2 + 2; // 2x - 4x
+    if (random < 50) return Math.random() * 4 + 4; // 4x - 8x
+    if (random < 75) return Math.random() * 8 + 8; // 8x - 16x
+    if (random < 90) return Math.random() * 15 + 15; // 15x - 30x
+    return Math.random() * 30 + 30; // 30x - 60x (иногда очень высокие для красоты)
+}
 
+// УДАЛЕНЫ СТАРЫЕ ДУБЛИРУЮЩИЕСЯ ФУНКЦИИ - ИСПОЛЬЗУЕМ ТОЛЬКО НОВЫЙ ПСИХОЛОГИЧЕСКИЙ АЛГОРИТМ
 
+// УДАЛЕНА СТАРАЯ ВЕРСИЯ ДЕМО ФУНКЦИИ - ИСПОЛЬЗУЕТСЯ НОВАЯ ВЫШЕ
 
+// Генерация для ботов с красивыми результатами
+function generateRandomBotCrashPoint() {
+    const random = getSeededRandom() * 100;
+    
+    if (random < 25) return Math.random() * 2 + 2; // 2x - 4x
+    if (random < 50) return Math.random() * 4 + 4; // 4x - 8x
+    if (random < 75) return Math.random() * 8 + 8; // 8x - 16x
+    if (random < 90) return Math.random() * 15 + 15; // 15x - 30x
+    return Math.random() * 30 + 30; // 30x - 60x (иногда очень высокие для красоты)
+}
 
+// НОВЫЕ ФУНКЦИИ С ЗАЩИТОЙ ОТ ПАТТЕРНОВ
 
-// Генерация проигрышного краш-поинта с защитой от паттернов
+// Генерация среднего выигрыша для избежания паттернов
+function generateMiddleWinCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    if (totalBet >= 0.7) {
+        return Math.random() * 2.0 + 2.0; // 2.0x - 4.0x средние выигрыши (улучшено)
+    } else {
+        return Math.random() * 3.0 + 2.5; // 2.5x - 5.5x для малых ставок (значительно улучшено)
+    }
+}
+
+// Генерация краш-поинта с защитой от паттернов (выигрышный) - ИСПРАВЛЕНО
+function generateAntiPatternWinningCrashPoint(totalBet) {
+    // Если было много высоких выигрышей - даем средний
+    if (shouldAvoidPattern('high')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
+    const bonusChance = psychologySystem.lastLowWins * 15; // Бонус за предыдущие проигрыши
+    
+    // Учитываем размер ставки с дополнительной случайностью
+    if (totalBet >= 0.7) { // Большие ставки
+        if (random < 25 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый выигрыш 1.0-1.4x
+        if (random < 55 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний 1.8-2.3x  
+        if (random < 80 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой 4.0-5.2x
+        return Math.random() * 9.8 + 5.2; // Крупный 5.2-15x
+    } else { // Малые ставки (0.1-0.6)
+        if (random < 15 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый
+        if (random < 40 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний
+        if (random < 70 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой  
+        return Math.random() * 9.8 + 5.2; // Крупный
+    }
+}
+
+// Генерация сбалансированного краш-поинта с защитой от паттернов - ИСПРАВЛЕНО
+function generateAntiPatternBalancedCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    // Если был паттерн проигрышей - увеличиваем шанс выигрыша
+    const winBonus = psychologySystem.lastLowWins * 10;
+    // Если был паттерн выигрышей - уменьшаем шанс высокого выигрыша
+    const highWinPenalty = psychologySystem.lastHighWins * 15;
+    
+    if (totalBet >= 0.7) {
+        if (random < 45 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 65 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 80 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний
+        if (random < 93 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
+    } else {
+        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 55 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 75 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний  
+        if (random < 92 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
+    }
+}
+
+// Генерация проигрышного краш-поинта с защитой от паттернов - ИСПРАВЛЕНО  
 function generateAntiPatternLosingCrashPoint(totalBet) {
     // Если было много проигрышей подряд - даем средний выигрыш
     if (shouldAvoidPattern('low')) {
         return generateMiddleWinCrashPoint(totalBet);
     }
     
-    const random = getAdvancedRandom() * 100;
+    const random = getSeededRandom() * 100;
     
     if (totalBet >= 0.7) {
         if (random < 75) return Math.random() * 0.15 + 1.00; // 75% проигрыш (уменьшено с 80%)
@@ -2234,7 +1992,7 @@ async function startServer() {
     resetDailyRTP(); // Инициализируем RTP систему
     startRocketGame(); // Запускаем игру ракетка
     console.log(`TON Casino Server started on port ${PORT}`);
-    console.log(`🎰 RTP система инициализирована. Психологический алгоритм активен. Реал: 65%, Демо: 75%`);
+    console.log(`RTP система инициализирована. Целевой RTP: 60%`);
 }
 
 // Крон задача для сброса RTP каждый день в 00:00
