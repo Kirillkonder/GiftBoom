@@ -48,14 +48,14 @@ let rtpSystem = {
     dailyDeposits: 0,      // Общие депозиты за день
     dailyPayouts: 0,       // Общие выплаты за день
     currentRTP: 0,         // Текущий RTP в процентах
-    targetRTP: 30,         // Целевой RTP 30%
+    targetRTP: 60,         // Целевой RTP 60%
     lastResetDate: new Date().toDateString()
   },
   demoBank: {
     dailyDeposits: 0,
     dailyPayouts: 0,
     currentRTP: 0,
-    targetRTP: 30,
+    targetRTP: 60,
     lastResetDate: new Date().toDateString()
   }
 };
@@ -271,7 +271,7 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 30,
+            targetRTP: 60,
             lastResetDate: today
         };
         
@@ -291,7 +291,7 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 30,
+            targetRTP: 60,
             lastResetDate: today
         };
     }
@@ -316,7 +316,7 @@ function updateRTPStats(bankType, deposit, payout) {
     console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
 }
 
-// НОВЫЙ НЕПРЕДСКАЗУЕМЫЙ АЛГОРИТМ с RTP 30% и защитой от паттернов
+// НОВЫЙ НЕПРЕДСКАЗУЕМЫЙ АЛГОРИТМ с RTP 60% и защитой от паттернов
 let lastResults = []; // Память последних результатов
 let antiPatternSystem = {
     lastHighWins: 0,    // Счетчик последовательных высоких выигрышей  
@@ -457,17 +457,29 @@ function generateAntiPatternLosingCrashPoint(totalBet) {
 
 // Непредсказуемый алгоритм для реального банка
 function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
-    // Если банк пустой или маленький - сначала пополняем его
-    if (bankBalance < 100) {
+    // Если банк пустой или очень маленький - агрессивно пополняем его
+    if (bankBalance < 50) {
+        console.log(`Реальный банк критически мал (${bankBalance}), агрессивное пополнение`);
+        // 90% шанс слива при критически малом банке
+        if (getSeededRandom() < 0.90) {
+            return Math.random() * 0.1 + 1.00; // 1.00x - 1.10x (почти гарантированный проигрыш)
+        }
+        // 10% небольшие выигрыши для избежания очевидности
+        return Math.random() * 0.3 + 1.1; // 1.1x - 1.4x
+    }
+    // Если банк маленький - продолжаем пополнять
+    else if (bankBalance < 200) {
         console.log(`Реальный банк мал (${bankBalance}), пополняем банк`);
-        // Но избегаем слишком очевидного паттерна
+        // Избегаем слишком очевидного паттерна
         if (shouldAvoidPattern('low')) {
             return generateMiddleWinCrashPoint(totalBet);
         }
-        // 75% шанс слива при малом банке (уменьшено с 85%)
-        if (getSeededRandom() < 0.75) {
+        // 80% шанс слива при малом банке
+        if (getSeededRandom() < 0.80) {
             return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
         }
+        // 20% малые выигрыши
+        return Math.random() * 0.4 + 1.0; // 1.0x - 1.4x
     }
     
     const currentRTP = rtpStats.currentRTP;
@@ -546,7 +558,7 @@ function generateCrashPoint(players = []) {
     if (totalRealBet > 0) {
         crashPoint = generateUnpredictableRealBankCrashPoint(totalRealBet, realBank.total_balance, rtpSystem.realBank);
     } else if (totalDemoBet > 0) {
-        crashPoint = generateUnpredictableDemoBankCrashPoint(totalDemoBet, rtpSystem.demoBank);
+        crashPoint = generateUnpredictableDemoBankCrashPoint(totalDemoBet, rtpSystem.demoBank, demoBank.total_balance);
     } else {
         // Только боты - случайный краш для красоты
         crashPoint = generateRandomBotCrashPoint();
@@ -635,7 +647,36 @@ function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats
 }
 
 // Непредсказуемый алгоритм для демо банка
-function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats) {
+function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats, demoBankBalance = 10000) {
+    // Получаем состояние демо банка для анализа
+    const demoBank = getCasinoDemoBank();
+    const currentDemoBankBalance = demoBank ? demoBank.total_balance : demoBankBalance;
+    
+    // Если демо банк истощен - пополняем его за счет игроков
+    if (currentDemoBankBalance < 1000) {
+        console.log(`Демо банк мал (${currentDemoBankBalance}), агрессивное пополнение`);
+        // 85% шанс слива при критически малом демо банке
+        if (getSeededRandom() < 0.85) {
+            return Math.random() * 0.1 + 1.00; // 1.00x - 1.10x (почти гарантированный проигрыш)
+        }
+        // 15% небольшие выигрыши для маскировки
+        return Math.random() * 0.3 + 1.1; // 1.1x - 1.4x
+    }
+    // Если демо банк низкий - продолжаем пополнять
+    else if (currentDemoBankBalance < 3000) {
+        console.log(`Демо банк низкий (${currentDemoBankBalance}), пополняем банк`);
+        // Избегаем слишком очевидного паттерна
+        if (shouldAvoidPattern('low')) {
+            return generateMiddleWinCrashPoint(totalBet);
+        }
+        // 75% шанс слива при низком демо банке
+        if (getSeededRandom() < 0.75) {
+            return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
+        }
+        // 25% малые выигрыши
+        return Math.random() * 0.4 + 1.0; // 1.0x - 1.4x
+    }
+    
     const currentRTP = rtpStats.currentRTP;
     const targetRTP = rtpStats.targetRTP;
     
@@ -1877,7 +1918,7 @@ async function startServer() {
     resetDailyRTP(); // Инициализируем RTP систему
     startRocketGame(); // Запускаем игру ракетка
     console.log(`TON Casino Server started on port ${PORT}`);
-    console.log(`RTP система инициализирована. Целевой RTP: 30%`);
+    console.log(`RTP система инициализирована. Целевой RTP: 60%`);
 }
 
 // Крон задача для сброса RTP каждый день в 00:00
