@@ -23,7 +23,7 @@ const dbPath = process.env.NODE_ENV === 'production' ?
 
 // LokiJS база данных
 let db;
-let users, transactions, casinoBank, casinoDemoBank, adminLogs, minesGames, rocketGames, rocketBets;
+let users, transactions, casinoBank, adminLogs, minesGames, rocketGames, rocketBets;
 
 // WebSocket сервер для ракетки
 const server = app.listen(PORT, () => {
@@ -39,9 +39,7 @@ let rocketGame = {
   startTime: null,
   crashPoint: null,
   players: [],
-  history: [],
-  timeLeft: 0,
-  endBetTime: null
+  history: []
 };
 
 // RTP система - отслеживание доходности за день
@@ -50,14 +48,14 @@ let rtpSystem = {
     dailyDeposits: 0,      // Общие депозиты за день
     dailyPayouts: 0,       // Общие выплаты за день
     currentRTP: 0,         // Текущий RTP в процентах
-    targetRTP: 70,         // Целевой RTP 70%
+    targetRTP: 60,         // Целевой RTP 60%
     lastResetDate: new Date().toDateString()
   },
   demoBank: {
     dailyDeposits: 0,
     dailyPayouts: 0,
     currentRTP: 0,
-    targetRTP: 70,
+    targetRTP: 60,
     lastResetDate: new Date().toDateString()
   }
 };
@@ -69,19 +67,6 @@ const rocketBots = [
   { name: "Bot_3", minBet: 0.5, maxBet: 5, risk: "low" }
 ];
 
-// Система защиты от паттернов
-let antiPatternSystem = {
-    lastHighWins: 0,
-    lastLowWins: 0,
-    randomSeed: Math.random() * 1000
-};
-
-let lastResults = [];
-let Xa = []; 
-let Yb = {
-    c: 0, d: 0, e: Math.random() * 1337
-};
-
 function initDatabase() {
     return new Promise((resolve) => {
         db = new Loki(dbPath, {
@@ -90,7 +75,7 @@ function initDatabase() {
                 users = db.getCollection('users');
                 transactions = db.getCollection('transactions');
                 casinoBank = db.getCollection('casino_bank');
-                casinoDemoBank = db.getCollection('casino_demo_bank');
+                casinoDemoBank = db.getCollection('casino_demo_bank'); // Новая коллекция
                 adminLogs = db.getCollection('admin_logs');
                 minesGames = db.getCollection('mines_games');
                 rocketGames = db.getCollection('rocket_games');
@@ -129,10 +114,11 @@ function initDatabase() {
                     });
                 }
 
+                // Добавляем демо-банк казино
                 if (!casinoDemoBank) {
                     casinoDemoBank = db.addCollection('casino_demo_bank');
                     casinoDemoBank.insert({
-                        total_balance: 10000,
+                        total_balance: 10000, // 10000 TON демо-банк
                         owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
                         created_at: new Date(),
                         updated_at: new Date()
@@ -259,6 +245,7 @@ function generateMinesGame(minesCount) {
   };
 }
 
+// 🔥 НОВАЯ ФУНКЦИЯ МНОЖИТЕЛЕЙ КАК В 1WIN
 function calculateMultiplier(openedCells, displayedMines) {
   const multipliers = {
     3: [1.00, 1.07, 1.14, 1.23, 1.33, 1.45, 1.59, 1.75, 1.95, 2.18, 2.47, 2.83, 3.28, 3.86, 4.62, 5.63, 7.00, 8.92, 11.67, 15.83, 22.50, 34.00, 56.67, 113.33],
@@ -275,7 +262,7 @@ function calculateMultiplier(openedCells, displayedMines) {
   return mineMultipliers ? mineMultipliers[mineMultipliers.length - 1] * 2 : 1.00;
 }
 
-// Функция для сброса дневного RTP
+// Функция для сброса дневного RTP (вызывается каждый день)
 function resetDailyRTP() {
     const today = new Date().toDateString();
     
@@ -284,16 +271,19 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 70,
+            targetRTP: 60,
             lastResetDate: today
         };
         
+        // Сбрасываем также счетчики паттернов при дневном сбросе
         lastResults = [];
         antiPatternSystem = {
             lastHighWins: 0,
             lastLowWins: 0,
             randomSeed: Math.random() * 1000
         };
+        
+        console.log('Сброшены дневные статистики RTP и счетчики паттернов');
     }
     
     if (rtpSystem.demoBank.lastResetDate !== today) {
@@ -301,7 +291,7 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 70,
+            targetRTP: 60,
             lastResetDate: today
         };
     }
@@ -316,233 +306,240 @@ function calculateCurrentRTP(bankType) {
 
 // Функция обновления RTP статистики
 function updateRTPStats(bankType, deposit, payout) {
-    resetDailyRTP();
+    resetDailyRTP(); // Проверяем, нужно ли сбросить дневную статистику
     
     const bank = rtpSystem[bankType];
     bank.dailyDeposits += deposit;
     bank.dailyPayouts += payout;
     bank.currentRTP = calculateCurrentRTP(bankType);
+    
+    console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
 }
 
-// RTP алгоритмы
-function Zf() {
-    return (Yb.e / 42069 + Math.random()) / 2;
+// НОВЫЙ НЕПРЕДСКАЗУЕМЫЙ АЛГОРИТМ с RTP 60% и защитой от паттернов
+let lastResults = []; // Память последних результатов
+let antiPatternSystem = {
+    lastHighWins: 0,    // Счетчик последовательных высоких выигрышей  
+    lastLowWins: 0,     // Счетчик последовательных низких выигрышей
+    randomSeed: Math.random() * 1000 // Случайное семя для непредсказуемости
+};
+
+// Генерируем случайное число с учетом семени
+function getSeededRandom() {
+    return (antiPatternSystem.randomSeed / 233280 + Math.random()) / 2;
 }
 
-function Wg(t) {
-    if (t === 'h' && Yb.c >= 2) return true;
-    if (t === 'l' && Yb.d >= 3) return true;
+// Проверяем, нужно ли избегать паттерна
+function shouldAvoidPattern(type) {
+    if (type === 'high' && antiPatternSystem.lastHighWins >= 2) {
+        return true; // Избегаем третий подряд высокий выигрыш
+    }
+    if (type === 'low' && antiPatternSystem.lastLowWins >= 3) {
+        return true; // Избегаем четвертый подряд низкий результат
+    }
     return false;
 }
 
-function Vh(pt) {
-    Xa.unshift(pt);
-    if (Xa.length > 10) Xa.pop();
-    
-    if (pt >= 4.0) {
-        Yb.c++; Yb.d = 0;
-    } else if (pt <= 1.5) {
-        Yb.d++; Yb.c = 0;
-    } else {
-        Yb.c = 0; Yb.d = 0;
-    }
-    
-    Yb.e = (Yb.e * 9301 + 49297) % 233280;
-}
-
-function Ui(amt) {
-    const r = Zf() * 100;
-    const mb = amt <= 5.0 ? 35 : 15;
-    
-    if (r < mb) return Zf() * 9.8 + 25.2;
-    if (r < 45) return Zf() * 14.8 + 5.2;
-    if (r < 70) return Zf() * 2.5 + 2.5;
-    return Zf() * 0.8 + 1.2;
-}
-
-function Tj() {
-    const r = Zf() * 100;
-    if (r < 25) return Zf() * 18 + 12;
-    if (r < 50) return Zf() * 8 + 4;
-    if (r < 75) return Zf() * 2 + 2;
-    return Zf() * 0.5 + 1.5;
-}
-
-function Sk(amt) {
-    if (Wg('h')) return Tj();
-    
-    const r = Zf() * 100;
-    const bb = Yb.d * 12;
-    const mb = amt <= 3.0 ? 25 : 8;
-    
-    if (r < mb + bb) return Zf() * 19.8 + 10.2;
-    if (r < 40 + bb) return Zf() * 6 + 4;
-    if (r < 70 + bb) return Zf() * 2.2 + 2.8;
-    return Zf() * 0.6 + 1.4;
-}
-
-function Rj(amt) {
-    const r = Zf() * 100;
-    const wb = Yb.d * 8;
-    const hp = Yb.c * 12;
-    const mb = amt <= 2.0 ? 20 : 5;
-    
-    if (r < 30 - wb) return Zf() * 0.15 + 1.00;
-    if (r < 50 - wb) return Zf() * 0.5 + 1.1;
-    if (r < 75 - wb) return Zf() * 1.3 + 1.7;
-    if (r < 88 - hp + mb) return Zf() * 3.8 + 3.2;
-    return Zf() * 22.8 + 7.2;
-}
-
-function Qi(amt) {
-    if (Wg('l')) return Tj();
-    
-    const r = Zf() * 100;
-    const mb = amt <= 1.0 ? 15 : 3;
-    
-    if (r < 65) return Zf() * 0.15 + 1.00;
-    if (r < 80) return Zf() * 0.4 + 1.0;
-    if (r < 92) return Zf() * 0.6 + 1.6;
-    if (r < 97 + mb) return Zf() * 2.4 + 2.6;
-    return Zf() * 17.4 + 12.6;
-}
-
-function Nk(totalBet, bankBalance, rtpStats) {
-    if (bankBalance < 50) {
-        if (Math.random() < 0.90) {
-            return Math.random() * 0.1 + 1.00;
-        }
-        return Math.random() * 0.3 + 1.1;
-    }
-    else if (bankBalance < 200) {
-        if (Math.random() < 0.80) {
-            return Math.random() * 0.15 + 1.00;
-        }
-        return Math.random() * 0.4 + 1.0;
-    }
-    
-    const currentRTP = rtpStats.currentRTP;
-    const targetRTP = rtpStats.targetRTP;
-    const rtpVariance = (Math.random() - 0.5) * 10;
-    const adjustedTargetRTP = targetRTP + rtpVariance;
-    
-    if (currentRTP < adjustedTargetRTP - 8) {
-        return generateAntiPatternWinningCrashPoint(totalBet);
-    }
-    else if (currentRTP < adjustedTargetRTP + 3) {
-        return generateAntiPatternBalancedCrashPoint(totalBet);
-    }
-    else {
-        return generateAntiPatternLosingCrashPoint(totalBet);
-    }
-}
-
-function Oj() {
-    return Math.random() * 15 + 1.5;
-}
-
+// Обновляем систему защиты от паттернов
 function updateAntiPatternSystem(crashPoint) {
-    Vh(crashPoint);
-}
-
-function getSeededRandom() {
-    return Zf();
-}
-
-function shouldAvoidPattern(type) {
-    return Wg(type === 'high' ? 'h' : 'l');
-}
-
-function generateRandomBotCrashPoint() {
-    const random = getSeededRandom() * 100;
+    // Добавляем результат в историю
+    lastResults.unshift(crashPoint);
+    if (lastResults.length > 10) {
+        lastResults.pop(); // Храним только последние 10 результатов
+    }
     
-    if (random < 30) return Math.random() * 3 + 2;
-    if (random < 60) return Math.random() * 4 + 5;
-    if (random < 85) return Math.random() * 6 + 9;
-    return Math.random() * 15 + 15;
+    // Обновляем счетчики паттернов
+    if (crashPoint >= 4.0) {
+        antiPatternSystem.lastHighWins++;
+        antiPatternSystem.lastLowWins = 0;
+    } else if (crashPoint <= 1.5) {
+        antiPatternSystem.lastLowWins++;
+        antiPatternSystem.lastHighWins = 0;
+    } else {
+        antiPatternSystem.lastHighWins = 0;
+        antiPatternSystem.lastLowWins = 0;
+    }
+    
+    // Обновляем случайное семя для дополнительной непредсказуемости
+    antiPatternSystem.randomSeed = (antiPatternSystem.randomSeed * 9301 + 49297) % 233280;
 }
 
+// Генерация среднего выигрыша для избежания паттернов
 function generateMiddleWinCrashPoint(totalBet) {
     const random = getSeededRandom() * 100;
     
     if (totalBet >= 0.7) {
-        return Math.random() * 1.0 + 1.5;
+        return Math.random() * 1.0 + 1.5; // 1.5x - 2.5x средние выигрыши
     } else {
-        return Math.random() * 1.2 + 1.4;
+        return Math.random() * 1.2 + 1.4; // 1.4x - 2.6x для малых ставок
     }
 }
 
+// Генерация для ботов с красивыми результатами
+function generateRandomBotCrashPoint() {
+    const random = getSeededRandom() * 100;
+    
+    if (random < 30) return Math.random() * 3 + 2; // 2x - 5x
+    if (random < 60) return Math.random() * 4 + 5; // 5x - 9x
+    if (random < 85) return Math.random() * 6 + 9; // 9x - 15x
+    return Math.random() * 15 + 15; // 15x - 30x
+}
+
+// Генерация краш-поинта с защитой от паттернов (выигрышный)
 function generateAntiPatternWinningCrashPoint(totalBet) {
+    // Если было много высоких выигрышей - даем средний
     if (shouldAvoidPattern('high')) {
         return generateMiddleWinCrashPoint(totalBet);
     }
     
     const random = getSeededRandom() * 100;
-    const bonusChance = antiPatternSystem.lastLowWins * 15;
+    const bonusChance = antiPatternSystem.lastLowWins * 15; // Бонус за предыдущие проигрыши
     
-    if (totalBet >= 0.7) {
-        if (random < 25 + bonusChance) return Math.random() * 0.4 + 1.0;
-        if (random < 55 + bonusChance) return Math.random() * 0.5 + 1.8;
-        if (random < 80 + bonusChance) return Math.random() * 1.2 + 4.0;
-        return Math.random() * 9.8 + 5.2;
-    } else {
-        if (random < 15 + bonusChance) return Math.random() * 0.4 + 1.0;
-        if (random < 40 + bonusChance) return Math.random() * 0.5 + 1.8;
-        if (random < 70 + bonusChance) return Math.random() * 1.2 + 4.0;
-        return Math.random() * 9.8 + 5.2;
+    // Учитываем размер ставки с дополнительной случайностью
+    if (totalBet >= 0.7) { // Большие ставки
+        if (random < 25 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый выигрыш 1.0-1.4x
+        if (random < 55 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний 1.8-2.3x  
+        if (random < 80 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой 4.0-5.2x
+        return Math.random() * 9.8 + 5.2; // Крупный 5.2-15x
+    } else { // Малые ставки (0.1-0.6)
+        if (random < 15 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый
+        if (random < 40 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний
+        if (random < 70 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой  
+        return Math.random() * 9.8 + 5.2; // Крупный
     }
 }
 
+// Генерация сбалансированного краш-поинта с защитой от паттернов
 function generateAntiPatternBalancedCrashPoint(totalBet) {
     const random = getSeededRandom() * 100;
+    
+    // Если был паттерн проигрышей - увеличиваем шанс выигрыша
     const winBonus = antiPatternSystem.lastLowWins * 10;
+    // Если был паттерн выигрышей - уменьшаем шанс высокого выигрыша
     const highWinPenalty = antiPatternSystem.lastHighWins * 15;
     
     if (totalBet >= 0.7) {
-        if (random < 45 - winBonus) return Math.random() * 0.15 + 1.00;
-        if (random < 65 - winBonus) return Math.random() * 0.4 + 1.0;
-        if (random < 80 - winBonus) return Math.random() * 0.5 + 1.8;
-        return Math.random() * 1.2 + 4.0;
+        if (random < 45 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 65 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 80 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний
+        if (random < 93 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
     } else {
-        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00;
-        if (random < 55 - winBonus) return Math.random() * 0.4 + 1.0;
-        if (random < 75 - winBonus) return Math.random() * 0.5 + 1.8;
-        return Math.random() * 1.5 + 3.5;
+        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 55 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 75 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний  
+        if (random < 92 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
     }
 }
 
+// Генерация проигрышного краш-поинта с защитой от паттернов
 function generateAntiPatternLosingCrashPoint(totalBet) {
+    // Если было много проигрышей подряд - даем средний выигрыш
+    if (shouldAvoidPattern('low')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
     const random = getSeededRandom() * 100;
-    const randomBonus = antiPatternSystem.lastLowWins * 5;
     
     if (totalBet >= 0.7) {
-        if (random < 70 - randomBonus) return Math.random() * 0.15 + 1.00;
-        if (random < 85 - randomBonus) return Math.random() * 0.4 + 1.0;
-        if (random < 95 - randomBonus) return Math.random() * 0.5 + 1.8;
-        return Math.random() * 1.2 + 4.0;
+        if (random < 75) return Math.random() * 0.15 + 1.00; // 75% проигрыш
+        if (random < 88) return Math.random() * 0.4 + 1.0;   // 13% малый
+        if (random < 96) return Math.random() * 0.5 + 1.8;   // 8% средний
+        return Math.random() * 1.2 + 4.0; // 4% большой
     } else {
-        if (random < 65 - randomBonus) return Math.random() * 0.15 + 1.00;
-        if (random < 80 - randomBonus) return Math.random() * 0.4 + 1.0;
-        if (random < 92 - randomBonus) return Math.random() * 0.5 + 1.8;
-        return Math.random() * 1.5 + 3.5;
+        if (random < 65) return Math.random() * 0.15 + 1.00; // 65% проигрыш
+        if (random < 80) return Math.random() * 0.4 + 1.0;   // 15% малый
+        if (random < 92) return Math.random() * 0.5 + 1.8;   // 12% средний
+        return Math.random() * 1.2 + 4.0; // 8% большой
+    }
+}
+
+// Непредсказуемый алгоритм для реального банка
+function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
+    // Если банк пустой или очень маленький - агрессивно пополняем его
+    if (bankBalance < 50) {
+        console.log(`Реальный банк критически мал (${bankBalance}), агрессивное пополнение`);
+        // 90% шанс слива при критически малом банке
+        if (getSeededRandom() < 0.90) {
+            return Math.random() * 0.1 + 1.00; // 1.00x - 1.10x (почти гарантированный проигрыш)
+        }
+        // 10% небольшие выигрыши для избежания очевидности
+        return Math.random() * 0.3 + 1.1; // 1.1x - 1.4x
+    }
+    // Если банк маленький - продолжаем пополнять
+    else if (bankBalance < 200) {
+        console.log(`Реальный банк мал (${bankBalance}), пополняем банк`);
+        // Избегаем слишком очевидного паттерна
+        if (shouldAvoidPattern('low')) {
+            return generateMiddleWinCrashPoint(totalBet);
+        }
+        // 80% шанс слива при малом банке
+        if (getSeededRandom() < 0.80) {
+            return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
+        }
+        // 20% малые выигрыши
+        return Math.random() * 0.4 + 1.0; // 1.0x - 1.4x
+    }
+    
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Добавляем дополнительную случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 10; // ±5% случайное отклонение
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    // Если RTP значительно ниже цели - увеличиваем шансы на выигрыш
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    }
+    // Если RTP приближается к цели - балансируем с учетом паттернов
+    else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
+    }
+    // Если RTP превышает цель - больше проигрышей, но избегаем паттернов
+    else {
+        return generateAntiPatternLosingCrashPoint(totalBet);
+    }
+}
+
+// Непредсказуемый алгоритм для демо банка
+function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats) {
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Добавляем случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 8;
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    } else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
+    } else {
+        return generateAntiPatternLosingCrashPoint(totalBet);
     }
 }
 
 function generateCrashPoint(players = []) {
     resetDailyRTP();
     
+    // Администраторы (могут играть на демо балансе)
     const adminIds = [
         parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
         1135073023
     ];
     
+    // Фильтруем игроков: исключаем ставки админов если есть реальные игроки
     const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
     const realNonAdminPlayers = realPlayers.filter(p => !adminIds.includes(parseInt(p.userId)));
     const demoPlayers = players.filter(p => !p.isBot && p.demoMode);
     
+    // Если есть хотя бы один реальный игрок (не админ), исключаем ставки админов
     let effectivePlayers = [...players];
     if (realNonAdminPlayers.length > 0) {
         effectivePlayers = players.filter(p => p.isBot || !adminIds.includes(parseInt(p.userId)));
+        console.log(`Исключены ставки админов: есть ${realNonAdminPlayers.length} реальных игроков`);
     }
     
     const effectiveRealPlayers = effectivePlayers.filter(p => !p.isBot && !p.demoMode);
@@ -551,39 +548,267 @@ function generateCrashPoint(players = []) {
     const totalRealBet = effectiveRealPlayers.reduce((sum, p) => sum + p.betAmount, 0);
     const totalDemoBet = effectiveDemoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
     
+    // Получаем состояние банков
     const realBank = getCasinoBank();
     const demoBank = getCasinoDemoBank();
     
+    // Основная логика с защитой от паттернов
     let crashPoint = 1.00;
     
     if (totalRealBet > 0) {
-        crashPoint = Nk(totalRealBet, realBank.total_balance, rtpSystem.realBank);
+        crashPoint = generateUnpredictableRealBankCrashPoint(totalRealBet, realBank.total_balance, rtpSystem.realBank);
     } else if (totalDemoBet > 0) {
-        crashPoint = Nk(totalDemoBet, demoBank.total_balance, rtpSystem.demoBank);
+        crashPoint = generateUnpredictableDemoBankCrashPoint(totalDemoBet, rtpSystem.demoBank, demoBank.total_balance);
     } else {
-        crashPoint = Oj();
+        // Только боты - случайный краш для красоты
+        crashPoint = generateRandomBotCrashPoint();
     }
     
-    Vh(crashPoint);
+    // Записываем результат в историю для анализа паттернов
+    updateAntiPatternSystem(crashPoint);
     
     return Math.max(1.00, crashPoint);
 }
 
+// Обновляем систему защиты от паттернов
+function updateAntiPatternSystem(crashPoint) {
+    // Добавляем результат в историю
+    lastResults.unshift(crashPoint);
+    if (lastResults.length > 10) {
+        lastResults.pop(); // Храним только последние 10 результатов
+    }
+    
+    // Обновляем счетчики паттернов
+    if (crashPoint >= 4.0) {
+        antiPatternSystem.lastHighWins++;
+        antiPatternSystem.lastLowWins = 0;
+    } else if (crashPoint <= 1.5) {
+        antiPatternSystem.lastLowWins++;
+        antiPatternSystem.lastHighWins = 0;
+    } else {
+        antiPatternSystem.lastHighWins = 0;
+        antiPatternSystem.lastLowWins = 0;
+    }
+    
+    // Обновляем случайное семя для дополнительной непредсказуемости
+    antiPatternSystem.randomSeed = (antiPatternSystem.randomSeed * 9301 + 49297) % 233280;
+}
+
+// Генерируем случайное число с учетом семени
+function getSeededRandom() {
+    return (antiPatternSystem.randomSeed / 233280 + Math.random()) / 2;
+}
+
+// Проверяем, нужно ли избегать паттерна
+function shouldAvoidPattern(type) {
+    if (type === 'high' && antiPatternSystem.lastHighWins >= 2) {
+        return true; // Избегаем третий подряд высокий выигрыш
+    }
+    if (type === 'low' && antiPatternSystem.lastLowWins >= 3) {
+        return true; // Избегаем четвертый подряд низкий результат
+    }
+    return false;
+}
+
+// Непредсказуемый алгоритм для реального банка
+function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
+    // Если банк пустой или маленький - сначала пополняем его
+    if (bankBalance < 100) {
+        console.log(`Реальный банк мал (${bankBalance}), пополняем банк`);
+        // Но избегаем слишком очевидного паттерна
+        if (shouldAvoidPattern('low')) {
+            return generateMiddleWinCrashPoint(totalBet);
+        }
+        // 75% шанс слива при малом банке (уменьшено с 85%)
+        if (getSeededRandom() < 0.75) {
+            return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
+        }
+    }
+    
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Добавляем дополнительную случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 10; // ±5% случайное отклонение
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    // Если RTP значительно ниже цели - увеличиваем шансы на выигрыш
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    }
+    // Если RTP приближается к цели - балансируем с учетом паттернов
+    else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
+    }
+    // Если RTP превышает цель - больше проигрышей, но избегаем паттернов
+    else {
+        return generateAntiPatternLosingCrashPoint(totalBet);
+    }
+}
+
+// Непредсказуемый алгоритм для демо банка
+function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats, demoBankBalance = 10000) {
+    // Получаем состояние демо банка для анализа
+    const demoBank = getCasinoDemoBank();
+    const currentDemoBankBalance = demoBank ? demoBank.total_balance : demoBankBalance;
+    
+    // Если демо банк истощен - пополняем его за счет игроков
+    if (currentDemoBankBalance < 1000) {
+        console.log(`Демо банк мал (${currentDemoBankBalance}), агрессивное пополнение`);
+        // 85% шанс слива при критически малом демо банке
+        if (getSeededRandom() < 0.85) {
+            return Math.random() * 0.1 + 1.00; // 1.00x - 1.10x (почти гарантированный проигрыш)
+        }
+        // 15% небольшие выигрыши для маскировки
+        return Math.random() * 0.3 + 1.1; // 1.1x - 1.4x
+    }
+    // Если демо банк низкий - продолжаем пополнять
+    else if (currentDemoBankBalance < 3000) {
+        console.log(`Демо банк низкий (${currentDemoBankBalance}), пополняем банк`);
+        // Избегаем слишком очевидного паттерна
+        if (shouldAvoidPattern('low')) {
+            return generateMiddleWinCrashPoint(totalBet);
+        }
+        // 75% шанс слива при низком демо банке
+        if (getSeededRandom() < 0.75) {
+            return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
+        }
+        // 25% малые выигрыши
+        return Math.random() * 0.4 + 1.0; // 1.0x - 1.4x
+    }
+    
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Добавляем случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 8;
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    } else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
+    } else {
+        return generateAntiPatternLosingCrashPoint(totalBet);
+    }
+}
+
+// Генерация для ботов с красивыми результатами
+function generateRandomBotCrashPoint() {
+    const random = getSeededRandom() * 100;
+    
+    if (random < 30) return Math.random() * 3 + 2; // 2x - 5x
+    if (random < 60) return Math.random() * 4 + 5; // 5x - 9x
+    if (random < 85) return Math.random() * 6 + 9; // 9x - 15x
+    return Math.random() * 15 + 15; // 15x - 30x
+}
+
+// НОВЫЕ ФУНКЦИИ С ЗАЩИТОЙ ОТ ПАТТЕРНОВ
+
+// Генерация среднего выигрыша для избежания паттернов
+function generateMiddleWinCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    if (totalBet >= 0.7) {
+        return Math.random() * 1.0 + 1.5; // 1.5x - 2.5x средние выигрыши
+    } else {
+        return Math.random() * 1.2 + 1.4; // 1.4x - 2.6x для малых ставок
+    }
+}
+
+// Генерация краш-поинта с защитой от паттернов (выигрышный)
+function generateAntiPatternWinningCrashPoint(totalBet) {
+    // Если было много высоких выигрышей - даем средний
+    if (shouldAvoidPattern('high')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
+    const bonusChance = antiPatternSystem.lastLowWins * 15; // Бонус за предыдущие проигрыши
+    
+    // Учитываем размер ставки с дополнительной случайностью
+    if (totalBet >= 0.7) { // Большие ставки
+        if (random < 25 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый выигрыш 1.0-1.4x
+        if (random < 55 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний 1.8-2.3x  
+        if (random < 80 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой 4.0-5.2x
+        return Math.random() * 9.8 + 5.2; // Крупный 5.2-15x
+    } else { // Малые ставки (0.1-0.6)
+        if (random < 15 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый
+        if (random < 40 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний
+        if (random < 70 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой  
+        return Math.random() * 9.8 + 5.2; // Крупный
+    }
+}
+
+// Генерация сбалансированного краш-поинта с защитой от паттернов
+function generateAntiPatternBalancedCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    // Если был паттерн проигрышей - увеличиваем шанс выигрыша
+    const winBonus = antiPatternSystem.lastLowWins * 10;
+    // Если был паттерн выигрышей - уменьшаем шанс высокого выигрыша
+    const highWinPenalty = antiPatternSystem.lastHighWins * 15;
+    
+    if (totalBet >= 0.7) {
+        if (random < 45 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 65 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 80 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний
+        if (random < 93 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
+    } else {
+        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 55 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 75 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний  
+        if (random < 92 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
+    }
+}
+
+// Генерация проигрышного краш-поинта с защитой от паттернов
+function generateAntiPatternLosingCrashPoint(totalBet) {
+    // Если было много проигрышей подряд - даем средний выигрыш
+    if (shouldAvoidPattern('low')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
+    
+    if (totalBet >= 0.7) {
+        if (random < 75) return Math.random() * 0.15 + 1.00; // 75% проигрыш (уменьшено с 80%)
+        if (random < 88) return Math.random() * 0.4 + 1.0;   // 13% малый
+        if (random < 96) return Math.random() * 0.5 + 1.8;   // 8% средний
+        return Math.random() * 1.2 + 4.0; // 4% большой
+    } else {
+        if (random < 65) return Math.random() * 0.15 + 1.00; // 65% проигрыш (уменьшено с 70%)
+        if (random < 80) return Math.random() * 0.4 + 1.0;   // 15% малый
+        if (random < 92) return Math.random() * 0.5 + 1.8;   // 12% средний
+        return Math.random() * 1.2 + 4.0; // 8% большой
+    }
+}
+
 // Rocket Game Main Functions
+
 function startRocketGame() {
     if (rocketGame.status !== 'waiting') return;
 
     rocketGame.status = 'counting';
     rocketGame.multiplier = 1.00;
     rocketGame.startTime = Date.now();
-    rocketGame.endBetTime = Date.now() + 5000;
+    rocketGame.endBetTime = Date.now() + 5000; // 5 секунд на ставки
     rocketGame.players = [];
     
+    // Генерируем crashPoint после завершения времени на ставки
     setTimeout(() => {
+        // Передаем всех игроков для анализа
         rocketGame.crashPoint = generateCrashPoint(rocketGame.players);
         console.log(`Краш-поинт: ${rocketGame.crashPoint.toFixed(2)}x`);
+        
+        // Выводим RTP статистику
+        console.log(`Реальный банк RTP: ${rtpSystem.realBank.currentRTP.toFixed(2)}%`);
+        console.log(`Демо банк RTP: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
     }, 5000);
 
+    // Добавляем ставки ботов
     rocketBots.forEach(bot => {
         const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
         const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
@@ -600,9 +825,11 @@ function startRocketGame() {
         });
     });
 
+    // ФИКС: Отправляем начальное значение 5 секунд
     rocketGame.timeLeft = 5;
     broadcastRocketUpdate();
 
+    // Запускаем синхронизацию времени каждую секунду
     const syncInterval = setInterval(() => {
         if (rocketGame.status !== 'counting') {
             clearInterval(syncInterval);
@@ -622,10 +849,12 @@ function startRocketGame() {
     }, 1000);
 }
 
+
+// server.js - исправленная функция startRocketFlight
 function startRocketFlight() {
   const startTime = Date.now();
-  let baseSpeed = 0.1;
-  let acceleration = 0.05;
+  let baseSpeed = 0.1; // Базовая скорость
+  let acceleration = 0.05; // Ускорение
   
   const flightInterval = setInterval(() => {
     if (rocketGame.status !== 'flying') {
@@ -634,8 +863,12 @@ function startRocketFlight() {
     }
 
     const elapsed = (Date.now() - startTime) / 1000;
+    
+    // Экспоненциальное увеличение множителя с ускорением
+    // Чем больше времени прошло, тем быстрее растет множитель
     rocketGame.multiplier = 1.00 + (elapsed * baseSpeed * Math.exp(elapsed * acceleration));
 
+    // Проверяем автоматический вывод у ботов
     rocketGame.players.forEach(player => {
       if (player.isBot && !player.cashedOut && rocketGame.multiplier >= player.autoCashout) {
         player.cashedOut = true;
@@ -643,6 +876,7 @@ function startRocketFlight() {
       }
     });
 
+    // Проверяем, достигли ли точки краша
     if (rocketGame.multiplier >= rocketGame.crashPoint) {
       rocketGame.status = 'crashed';
       clearInterval(flightInterval);
@@ -650,10 +884,13 @@ function startRocketFlight() {
     }
 
     broadcastRocketUpdate();
-  }, 100);
+  }, 100); // Обновляем каждые 100ms
 }
 
+
+// server.js - исправленная функция processRocketGameEnd
 function processRocketGameEnd() {
+  // Сохраняем игру в историю
   const gameRecord = rocketGames.insert({
     crashPoint: rocketGame.crashPoint,
     maxMultiplier: rocketGame.multiplier,
@@ -664,19 +901,18 @@ function processRocketGameEnd() {
     totalPayouts: rocketGame.players.reduce((sum, p) => sum + (p.cashedOut ? p.winAmount : 0), 0)
   });
 
+  // Обрабатываем выплаты для реальных игроков
   rocketGame.players.forEach(player => {
     if (!player.isBot && player.cashedOut) {
       const user = users.findOne({ telegram_id: parseInt(player.userId) });
       if (user) {
-        const cashoutMultiplier = player.cashoutMultiplier || rocketGame.multiplier;
-        const winAmount = player.betAmount * cashoutMultiplier;
+        const winAmount = player.betAmount * player.cashoutMultiplier;
         
         if (player.demoMode) {
           users.update({
             ...user,
             demo_balance: user.demo_balance + winAmount
           });
-          updateCasinoDemoBank(-winAmount);
         } else {
           users.update({
             ...user,
@@ -685,6 +921,7 @@ function processRocketGameEnd() {
           updateCasinoBank(-winAmount);
         }
 
+        // Записываем транзакцию
         transactions.insert({
           user_id: user.$loki,
           amount: winAmount,
@@ -695,11 +932,12 @@ function processRocketGameEnd() {
           created_at: new Date()
         });
 
+        // Сохраняем ставку
         rocketBets.insert({
           game_id: gameRecord.$loki,
           user_id: user.$loki,
           bet_amount: player.betAmount,
-          cashout_multiplier: cashoutMultiplier,
+          cashout_multiplier: player.cashoutMultiplier,
           win_amount: winAmount,
           demo_mode: player.demoMode,
           created_at: new Date()
@@ -708,6 +946,7 @@ function processRocketGameEnd() {
     }
   });
 
+  // Добавляем в историю
   rocketGame.history.unshift({
     crashPoint: rocketGame.crashPoint,
     multiplier: rocketGame.multiplier
@@ -719,6 +958,7 @@ function processRocketGameEnd() {
 
   broadcastRocketUpdate();
 
+  // Через 5 секунд начинаем новую игру
   setTimeout(() => {
     rocketGame.status = 'waiting';
     rocketGame.multiplier = 1.00;
@@ -740,10 +980,11 @@ function broadcastRocketUpdate() {
         }
     });
 }
-
+// WebSocket обработчик
 wss.on('connection', function connection(ws) {
   console.log('Rocket game client connected');
   
+  // Отправляем текущее состояние игры при подключении
   ws.send(JSON.stringify({
     type: 'rocket_update',
     game: rocketGame
@@ -754,13 +995,14 @@ wss.on('connection', function connection(ws) {
   });
 });
 
-// API Routes
+// API: Аутентификация админа
 app.post('/api/admin/login', async (req, res) => {
     const { telegramId, password } = req.body;
     
+    // Список разрешенных администраторов
     const allowedAdmins = [
         parseInt(process.env.OWNER_TELEGRAM_ID), 
-        1135073023
+        1135073023 // второй администратор
     ];
     
     const isAdmin = allowedAdmins.includes(parseInt(telegramId)) && 
@@ -774,12 +1016,14 @@ app.post('/api/admin/login', async (req, res) => {
     }
 });
 
+// API: Получить данные админки
 app.get('/api/admin/dashboard/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
 
+    // Разрешаем доступ обоим администраторам
     const allowedAdmins = [
         parseInt(process.env.OWNER_TELEGRAM_ID), 
-        1135073023
+        1135073023 // второй администратор
     ];
     
     if (!allowedAdmins.includes(telegramId)) {
@@ -808,6 +1052,7 @@ app.get('/api/admin/dashboard/:telegramId', async (req, res) => {
     }
 });
 
+// API: Вывод прибыли владельцу
 app.post('/api/admin/withdraw-profit', async (req, res) => {
     const { telegramId, amount } = req.body;
 
@@ -822,6 +1067,7 @@ app.post('/api/admin/withdraw-profit', async (req, res) => {
             return res.status(400).json({ error: 'Недостаточно средств в банке казино' });
         }
 
+        // Выводим через Crypto Pay
         const transfer = await cryptoPayRequest('transfer', {
             user_id: telegramId,
             asset: 'TON',
@@ -831,6 +1077,7 @@ app.post('/api/admin/withdraw-profit', async (req, res) => {
 
         if (transfer.ok && transfer.result) {
             updateCasinoBank(-amount);
+            
             logAdminAction('withdraw_profit', telegramId, { amount: amount });
             
             res.json({
@@ -883,6 +1130,7 @@ app.post('/api/admin/add-demo-balance', async (req, res) => {
     }
 });
 
+// API: Получить историю транзакций
 app.get('/api/admin/transactions/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
 
@@ -907,6 +1155,7 @@ app.get('/api/admin/transactions/:telegramId', async (req, res) => {
     }
 });
 
+// API: Получить историю игр Mines
 app.get('/api/admin/mines-games/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
 
@@ -931,6 +1180,7 @@ app.get('/api/admin/mines-games/:telegramId', async (req, res) => {
     }
 });
 
+// API: Получить историю игр Rocket
 app.get('/api/admin/rocket-games/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
 
@@ -951,6 +1201,7 @@ app.get('/api/admin/rocket-games/:telegramId', async (req, res) => {
     }
 });
 
+// API: Получить историю ставок Rocket
 app.get('/api/admin/rocket-bets/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
 
@@ -976,6 +1227,7 @@ app.get('/api/admin/rocket-bets/:telegramId', async (req, res) => {
     }
 });
 
+// API: Получить всех пользователей
 app.get('/api/admin/users/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
 
@@ -995,6 +1247,7 @@ app.get('/api/admin/users/:telegramId', async (req, res) => {
     }
 });
 
+// API: Создать инвойс для депозита
 app.post('/api/create-invoice', async (req, res) => {
     const { telegramId, amount, demoMode } = req.body;
 
@@ -1021,6 +1274,7 @@ app.post('/api/create-invoice', async (req, res) => {
         }, demoMode);
 
         if (invoice.ok && invoice.result) {
+            // Сохраняем транзакцию как ожидающую
             transactions.insert({
                 user_id: user.$loki,
                 amount: amount,
@@ -1045,6 +1299,7 @@ app.post('/api/create-invoice', async (req, res) => {
     }
 });
 
+// API: Проверить статус инвойса
 app.post('/api/check-invoice', async (req, res) => {
     const { invoiceId, demoMode } = req.body;
 
@@ -1057,6 +1312,7 @@ app.post('/api/check-invoice', async (req, res) => {
             const invoiceData = invoice.result.items[0];
             
             if (invoiceData.status === 'paid') {
+                // Находим транзакцию и обновляем баланс
                 const transaction = transactions.findOne({ invoice_id: invoiceId });
                 
                 if (transaction && transaction.status === 'pending') {
@@ -1067,7 +1323,6 @@ app.post('/api/check-invoice', async (req, res) => {
                             ...user,
                             demo_balance: user.demo_balance + transaction.amount
                         });
-                        updateCasinoDemoBank(transaction.amount);
                     } else {
                         users.update({
                             ...user,
@@ -1076,6 +1331,7 @@ app.post('/api/check-invoice', async (req, res) => {
                         updateCasinoBank(transaction.amount);
                     }
 
+                    // Обновляем статус транзакции
                     transactions.update({
                         ...transaction,
                         status: 'completed',
@@ -1088,7 +1344,7 @@ app.post('/api/check-invoice', async (req, res) => {
                         amount: transaction.amount
                     });
                 } else {
-                    res.json({ success: false, status: 'already_processed' });
+                    res.json({ success: false, status: 'not_found' });
                 }
             } else {
                 res.json({ success: true, status: invoiceData.status });
@@ -1102,6 +1358,7 @@ app.post('/api/check-invoice', async (req, res) => {
     }
 });
 
+// API: Создать вывод средств
 app.post('/api/create-withdrawal', async (req, res) => {
     const { telegramId, amount, address, demoMode } = req.body;
 
@@ -1119,6 +1376,7 @@ app.post('/api/create-withdrawal', async (req, res) => {
         }
 
         if (demoMode) {
+            // Для демо режима просто списываем баланс
             users.update({
                 ...user,
                 demo_balance: user.demo_balance - amount
@@ -1140,6 +1398,7 @@ app.post('/api/create-withdrawal', async (req, res) => {
                 new_balance: user.demo_balance - amount
             });
         } else {
+            // Для реального режима создаем вывод через Crypto Pay
             const transfer = await cryptoPayRequest('transfer', {
                 user_id: telegramId,
                 asset: 'TON',
@@ -1148,6 +1407,7 @@ app.post('/api/create-withdrawal', async (req, res) => {
             }, false);
 
             if (transfer.ok && transfer.result) {
+                // Обновляем баланс пользователя и банк казино
                 users.update({
                     ...user,
                     main_balance: user.main_balance - amount
@@ -1182,18 +1442,21 @@ app.post('/api/create-withdrawal', async (req, res) => {
     }
 });
 
+// API: Получить баланс пользователя
 app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
+    // Только эти два пользователя могут использовать демо режим
     const isAdminUser = telegramId === 842428912 || telegramId === 1135073023;
 
     try {
         const user = users.findOne({ telegram_id: telegramId });
         
         if (!user) {
+            // Создаем нового пользователя если не найден
             const newUser = users.insert({
                 telegram_id: telegramId,
                 main_balance: 0,
-                demo_balance: isAdminUser ? 1000 : 0,
+                demo_balance: isAdminUser ? 1000 : 0, // Демо баланс только для админов
                 created_at: new Date(),
                 demo_mode: false,
                 is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
@@ -1219,6 +1482,7 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
     }
 });
 
+// API: Переключить демо режим (только для админов)
 app.post('/api/user/toggle-demo-mode', async (req, res) => {
     const { telegramId } = req.body;
 
@@ -1229,6 +1493,7 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Проверяем, что это админ (только эти два ID могут использовать демо режим)
         if (parseInt(telegramId) !== 842428912 && parseInt(telegramId) !== 1135073023) {
             return res.status(403).json({ error: 'Demo mode not available' });
         }
@@ -1237,6 +1502,8 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
             ...user,
             demo_mode: !user.demo_mode
         });
+
+        console.log(`Пользователь ${telegramId} переключил демо режим: ${!user.demo_mode}`);
 
         res.json({
             success: true,
@@ -1248,6 +1515,7 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
     }
 });
 
+// API: Начать игру Mines
 app.post('/api/mines/start', async (req, res) => {
     const { telegramId, betAmount, minesCount, demoMode } = req.body;
 
@@ -1264,6 +1532,7 @@ app.post('/api/mines/start', async (req, res) => {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
 
+        // Создаем игру
         const game = minesGames.insert({
             user_id: user.$loki,
             bet_amount: betAmount,
@@ -1276,20 +1545,19 @@ app.post('/api/mines/start', async (req, res) => {
             created_at: new Date()
         });
 
-        if (demoMode) {
-            users.update({
-                ...user,
-                demo_balance: user.demo_balance - betAmount
-            });
-            updateCasinoDemoBank(betAmount);
-        } else {
-            users.update({
-                ...user,
-                main_balance: user.main_balance - betAmount
-            });
-            updateCasinoBank(betAmount);
-        }
-
+        // Списываем ставку
+       if (demoMode) {
+    users.update({
+        ...user,
+        demo_balance: user.demo_balance - betAmount
+    });
+} else {
+    users.update({
+        ...user,
+        main_balance: user.main_balance - betAmount
+    });
+    updateCasinoBank(betAmount); // Реальный банк
+}
         res.json({
             success: true,
             game_id: game.$loki,
@@ -1301,6 +1569,7 @@ app.post('/api/mines/start', async (req, res) => {
     }
 });
 
+// API: Открыть ячейку в Mines
 app.post('/api/mines/open', async (req, res) => {
     const { gameId, cellIndex, telegramId } = req.body;
 
@@ -1316,10 +1585,7 @@ app.post('/api/mines/open', async (req, res) => {
             return res.status(400).json({ error: 'Game already finished' });
         }
 
-        if (game.revealed_cells.includes(cellIndex)) {
-            return res.status(400).json({ error: 'Ячейка уже открыта' });
-        }
-
+        // Генерируем мины если еще не сгенерированы
         if (!game.mines) {
             const mines = [];
             while (mines.length < game.mines_count) {
@@ -1335,6 +1601,7 @@ app.post('/api/mines/open', async (req, res) => {
             game.mines = mines;
         }
 
+        // Проверяем, попал ли на мину
         if (game.mines.includes(cellIndex)) {
             minesGames.update({
                 ...game,
@@ -1350,6 +1617,7 @@ app.post('/api/mines/open', async (req, res) => {
                 multiplier: 0
             });
         } else {
+            // Добавляем открытую ячейку
             const revealedCells = [...game.revealed_cells, cellIndex];
             const multiplier = calculateMultiplier(revealedCells.length, game.mines_count);
 
@@ -1373,6 +1641,7 @@ app.post('/api/mines/open', async (req, res) => {
     }
 });
 
+// API: Забрать выигрыш в Mines
 app.post('/api/mines/cashout', async (req, res) => {
     const { gameId, telegramId } = req.body;
 
@@ -1384,12 +1653,13 @@ app.post('/api/mines/cashout', async (req, res) => {
             return res.status(404).json({ error: 'Game or user not found' });
         }
 
-        if (game.game_over || game.win) {
-            return res.status(400).json({ error: 'Игра уже завершена или выигрыш уже забран' });
+        if (game.game_over) {
+            return res.status(400).json({ error: 'Game already finished' });
         }
 
         const winAmount = game.bet_amount * game.current_multiplier;
 
+        // Завершаем игру
         minesGames.update({
             ...game,
             game_over: true,
@@ -1397,19 +1667,20 @@ app.post('/api/mines/cashout', async (req, res) => {
             win_amount: winAmount
         });
 
+        // Начисляем выигрыш
         if (game.demo_mode) {
-            users.update({
-                ...user,
-                demo_balance: user.demo_balance + winAmount
-            });
-            updateCasinoDemoBank(-winAmount);
-        } else {
-            users.update({
-                ...user,
-                main_balance: user.main_balance + winAmount
-            });
-            updateCasinoBank(-winAmount);
-        }
+    users.update({
+        ...user,
+        demo_balance: user.demo_balance + winAmount
+    });
+    updateCasinoDemoBank(-winAmount); // Демо-банк
+} else {
+    users.update({
+        ...user,
+        main_balance: user.main_balance + winAmount
+    });
+    updateCasinoBank(-winAmount); // Реальный банк
+}
 
         res.json({
             success: true,
@@ -1423,6 +1694,7 @@ app.post('/api/mines/cashout', async (req, res) => {
     }
 });
 
+// API: Сделать ставку в Rocket
 app.post('/api/rocket/bet', async (req, res) => {
     const { telegramId, betAmount, demoMode } = req.body;
 
@@ -1433,6 +1705,7 @@ app.post('/api/rocket/bet', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // ПРОВЕРКА: Уже есть ставка от этого пользователя
         const existingBet = rocketGame.players.find(p => 
            p.userId == telegramId && !p.isBot
         );
@@ -1441,6 +1714,7 @@ app.post('/api/rocket/bet', async (req, res) => {
             return res.status(400).json({ error: 'Вы уже сделали ставку в этом раунде' });
         }
 
+        // ПРОВЕРКА: Время для ставок истекло
         if (rocketGame.status !== 'counting' || Date.now() > rocketGame.endBetTime) {
             return res.status(400).json({ error: 'Время для ставок закончилось' });
         }
@@ -1451,19 +1725,18 @@ app.post('/api/rocket/bet', async (req, res) => {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
 
-        const currentUser = users.findOne({ telegram_id: parseInt(telegramId) });
-        const currentBalance = demoMode ? currentUser.demo_balance : currentUser.main_balance;
-        
-        if (currentBalance < betAmount) {
-            return res.status(400).json({ error: 'Недостаточно средств (баланс изменился)' });
+        if (rocketGame.status !== 'counting') {
+            return res.status(400).json({ error: 'Ставки не принимаются' });
         }
 
+        // Списываем ставку и обновляем RTP статистику
         if (demoMode) {
             users.update({
                 ...user,
                 demo_balance: user.demo_balance - betAmount
             });
-            updateCasinoDemoBank(betAmount);
+            updateCasinoDemoBank(-betAmount); // ИСПРАВЛЕНО: было betAmount, теперь -betAmount
+            // Обновляем RTP статистику для демо банка
             updateRTPStats('demoBank', betAmount, 0);
         } else {
             users.update({
@@ -1471,9 +1744,11 @@ app.post('/api/rocket/bet', async (req, res) => {
                 main_balance: user.main_balance - betAmount
             });
             updateCasinoBank(betAmount);
+            // Обновляем RTP статистику для реального банка
             updateRTPStats('realBank', betAmount, 0);
         }
 
+        // Добавляем игрока в текущую игру
         const player = {
             userId: telegramId,
             name: `User_${telegramId}`,
@@ -1499,6 +1774,7 @@ app.post('/api/rocket/bet', async (req, res) => {
     }
 });
 
+// API: Забрать выигрыш в Rocket
 app.post('/api/rocket/cashout', async (req, res) => {
     const { telegramId } = req.body;
 
@@ -1513,16 +1789,14 @@ app.post('/api/rocket/cashout', async (req, res) => {
             return res.status(400).json({ error: 'Нельзя забрать выигрыш сейчас' });
         }
 
+        // Находим игрока
         const player = rocketGame.players.find(p => p.userId == telegramId && !p.isBot);
         
         if (!player || player.cashedOut) {
             return res.status(400).json({ error: 'Игрок не найден или уже забрал выигрыш' });
         }
 
-        if (player.cashedOut === true) {
-            return res.status(400).json({ error: 'Выигрыш уже забран' });
-        }
-
+        // Начисляем выигрыш и обновляем RTP статистику
         const winAmount = player.betAmount * rocketGame.multiplier;
         
         if (player.demoMode) {
@@ -1531,6 +1805,7 @@ app.post('/api/rocket/cashout', async (req, res) => {
                 demo_balance: user.demo_balance + winAmount
             });
             updateCasinoDemoBank(-winAmount);
+            // Обновляем RTP статистику для демо банка (только выплата)
             updateRTPStats('demoBank', 0, winAmount);
         } else {
             users.update({
@@ -1538,13 +1813,16 @@ app.post('/api/rocket/cashout', async (req, res) => {
                 main_balance: user.main_balance + winAmount
             });
             updateCasinoBank(-winAmount);
+            // Обновляем RTP статистику для реального банка (только выплата)
             updateRTPStats('realBank', 0, winAmount);
         }
 
+        // Обновляем данные игрока
         player.cashedOut = true;
         player.cashoutMultiplier = rocketGame.multiplier;
         player.winAmount = winAmount;
 
+        // Сохраняем транзакцию сразу
         transactions.insert({
             user_id: user.$loki,
             amount: winAmount,
@@ -1568,6 +1846,7 @@ app.post('/api/rocket/cashout', async (req, res) => {
     }
 });
 
+// API: Получить историю Rocket
 app.get('/api/rocket/history', async (req, res) => {
     try {
         res.json(rocketGame.history.slice(0, 20));
@@ -1577,6 +1856,7 @@ app.get('/api/rocket/history', async (req, res) => {
     }
 });
 
+// API: Получить текущую игру Rocket
 app.get('/api/rocket/current', async (req, res) => {
     try {
         res.json(rocketGame);
@@ -1586,7 +1866,7 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
-// Крон задача для проверки инвойсов
+// Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
     try {
         const pendingTransactions = transactions.find({
@@ -1605,19 +1885,19 @@ cron.schedule('* * * * *', async () => {
                 if (invoiceData.status === 'paid') {
                     const user = users.get(transaction.user_id);
                     
-                    if (transaction.demo_mode) {
-                        users.update({
-                            ...user,
-                            demo_balance: user.demo_balance + transaction.amount
-                        });
-                        updateCasinoDemoBank(transaction.amount);
-                    } else {
-                        users.update({
-                            ...user,
-                            main_balance: user.main_balance + transaction.amount
-                        });
-                        updateCasinoBank(transaction.amount);
-                    }
+                  if (transaction.demo_mode) {
+    users.update({
+        ...user,
+        demo_balance: user.demo_balance + transaction.amount
+    });
+    updateCasinoDemoBank(transaction.amount); // Демо-банк
+} else {
+    users.update({
+        ...user,
+        main_balance: user.main_balance + transaction.amount
+    });
+    updateCasinoBank(transaction.amount); // Реальный банк
+}
 
                     transactions.update({
                         ...transaction,
@@ -1632,20 +1912,20 @@ cron.schedule('* * * * *', async () => {
     }
 });
 
+// Запуск сервера
+async function startServer() {
+    await initDatabase();
+    resetDailyRTP(); // Инициализируем RTP систему
+    startRocketGame(); // Запускаем игру ракетка
+    console.log(`TON Casino Server started on port ${PORT}`);
+    console.log(`RTP система инициализирована. Целевой RTP: 60%`);
+}
+
 // Крон задача для сброса RTP каждый день в 00:00
 cron.schedule('0 0 * * *', () => {
     console.log('Сброс дневного RTP...');
     resetDailyRTP();
     console.log('RTP сброшен на новый день');
 });
-
-// Запуск сервера
-async function startServer() {
-    await initDatabase();
-    resetDailyRTP();
-    startRocketGame();
-    console.log(`TON Casino Server started on port ${PORT}`);
-    console.log(`RTP система инициализирована. Целевой RTP: 70%`);
-}
 
 startServer();
