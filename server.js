@@ -274,6 +274,16 @@ function resetDailyRTP() {
             targetRTP: 30,
             lastResetDate: today
         };
+        
+        // Сбрасываем также счетчики паттернов при дневном сбросе
+        lastResults = [];
+        antiPatternSystem = {
+            lastHighWins: 0,
+            lastLowWins: 0,
+            randomSeed: Math.random() * 1000
+        };
+        
+        console.log('Сброшены дневные статистики RTP и счетчики паттернов');
     }
     
     if (rtpSystem.demoBank.lastResetDate !== today) {
@@ -306,43 +316,156 @@ function updateRTPStats(bankType, deposit, payout) {
     console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
 }
 
-// Новый улучшенный алгоритм генерации точки краша с RTP 30%
-function generateCrashPoint(players = []) {
-    resetDailyRTP();
-    
-    // Разделяем игроков на реальных и демо
-    const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
-    const demoPlayers = players.filter(p => !p.isBot && p.demoMode);
-    
-    const totalRealBet = realPlayers.reduce((sum, p) => sum + p.betAmount, 0);
-    const totalDemoBet = demoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
-    
-    // Получаем состояние банков
-    const realBank = getCasinoBank();
-    const demoBank = getCasinoDemoBank();
-    
-    // Определяем основную логику для реального банка
-    let crashPoint = 1.00;
-    
-    if (totalRealBet > 0) {
-        crashPoint = generateRealBankCrashPoint(totalRealBet, realBank.total_balance, rtpSystem.realBank);
-    } else if (totalDemoBet > 0) {
-        crashPoint = generateDemoBankCrashPoint(totalDemoBet, rtpSystem.demoBank);
-    } else {
-        // Только боты - случайный краш для красоты
-        crashPoint = Math.random() * 10 + 2; // 2x - 12x
-    }
-    
-    return Math.max(1.00, crashPoint);
+// НОВЫЙ НЕПРЕДСКАЗУЕМЫЙ АЛГОРИТМ с RTP 30% и защитой от паттернов
+let lastResults = []; // Память последних результатов
+let antiPatternSystem = {
+    lastHighWins: 0,    // Счетчик последовательных высоких выигрышей  
+    lastLowWins: 0,     // Счетчик последовательных низких выигрышей
+    randomSeed: Math.random() * 1000 // Случайное семя для непредсказуемости
+};
+
+// Генерируем случайное число с учетом семени
+function getSeededRandom() {
+    return (antiPatternSystem.randomSeed / 233280 + Math.random()) / 2;
 }
 
-// Алгоритм для реального банка с учетом RTP 30%
-function generateRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
-    // Если банк пустой или маленький - сначала пополняем его (игроки проигрывают)
+// Проверяем, нужно ли избегать паттерна
+function shouldAvoidPattern(type) {
+    if (type === 'high' && antiPatternSystem.lastHighWins >= 2) {
+        return true; // Избегаем третий подряд высокий выигрыш
+    }
+    if (type === 'low' && antiPatternSystem.lastLowWins >= 3) {
+        return true; // Избегаем четвертый подряд низкий результат
+    }
+    return false;
+}
+
+// Обновляем систему защиты от паттернов
+function updateAntiPatternSystem(crashPoint) {
+    // Добавляем результат в историю
+    lastResults.unshift(crashPoint);
+    if (lastResults.length > 10) {
+        lastResults.pop(); // Храним только последние 10 результатов
+    }
+    
+    // Обновляем счетчики паттернов
+    if (crashPoint >= 4.0) {
+        antiPatternSystem.lastHighWins++;
+        antiPatternSystem.lastLowWins = 0;
+    } else if (crashPoint <= 1.5) {
+        antiPatternSystem.lastLowWins++;
+        antiPatternSystem.lastHighWins = 0;
+    } else {
+        antiPatternSystem.lastHighWins = 0;
+        antiPatternSystem.lastLowWins = 0;
+    }
+    
+    // Обновляем случайное семя для дополнительной непредсказуемости
+    antiPatternSystem.randomSeed = (antiPatternSystem.randomSeed * 9301 + 49297) % 233280;
+}
+
+// Генерация среднего выигрыша для избежания паттернов
+function generateMiddleWinCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    if (totalBet >= 0.7) {
+        return Math.random() * 1.0 + 1.5; // 1.5x - 2.5x средние выигрыши
+    } else {
+        return Math.random() * 1.2 + 1.4; // 1.4x - 2.6x для малых ставок
+    }
+}
+
+// Генерация для ботов с красивыми результатами
+function generateRandomBotCrashPoint() {
+    const random = getSeededRandom() * 100;
+    
+    if (random < 30) return Math.random() * 3 + 2; // 2x - 5x
+    if (random < 60) return Math.random() * 4 + 5; // 5x - 9x
+    if (random < 85) return Math.random() * 6 + 9; // 9x - 15x
+    return Math.random() * 15 + 15; // 15x - 30x
+}
+
+// Генерация краш-поинта с защитой от паттернов (выигрышный)
+function generateAntiPatternWinningCrashPoint(totalBet) {
+    // Если было много высоких выигрышей - даем средний
+    if (shouldAvoidPattern('high')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
+    const bonusChance = antiPatternSystem.lastLowWins * 15; // Бонус за предыдущие проигрыши
+    
+    // Учитываем размер ставки с дополнительной случайностью
+    if (totalBet >= 0.7) { // Большие ставки
+        if (random < 25 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый выигрыш 1.0-1.4x
+        if (random < 55 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний 1.8-2.3x  
+        if (random < 80 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой 4.0-5.2x
+        return Math.random() * 9.8 + 5.2; // Крупный 5.2-15x
+    } else { // Малые ставки (0.1-0.6)
+        if (random < 15 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый
+        if (random < 40 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний
+        if (random < 70 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой  
+        return Math.random() * 9.8 + 5.2; // Крупный
+    }
+}
+
+// Генерация сбалансированного краш-поинта с защитой от паттернов
+function generateAntiPatternBalancedCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    // Если был паттерн проигрышей - увеличиваем шанс выигрыша
+    const winBonus = antiPatternSystem.lastLowWins * 10;
+    // Если был паттерн выигрышей - уменьшаем шанс высокого выигрыша
+    const highWinPenalty = antiPatternSystem.lastHighWins * 15;
+    
+    if (totalBet >= 0.7) {
+        if (random < 45 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 65 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 80 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний
+        if (random < 93 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
+    } else {
+        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 55 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 75 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний  
+        if (random < 92 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
+    }
+}
+
+// Генерация проигрышного краш-поинта с защитой от паттернов
+function generateAntiPatternLosingCrashPoint(totalBet) {
+    // Если было много проигрышей подряд - даем средний выигрыш
+    if (shouldAvoidPattern('low')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
+    
+    if (totalBet >= 0.7) {
+        if (random < 75) return Math.random() * 0.15 + 1.00; // 75% проигрыш
+        if (random < 88) return Math.random() * 0.4 + 1.0;   // 13% малый
+        if (random < 96) return Math.random() * 0.5 + 1.8;   // 8% средний
+        return Math.random() * 1.2 + 4.0; // 4% большой
+    } else {
+        if (random < 65) return Math.random() * 0.15 + 1.00; // 65% проигрыш
+        if (random < 80) return Math.random() * 0.4 + 1.0;   // 15% малый
+        if (random < 92) return Math.random() * 0.5 + 1.8;   // 12% средний
+        return Math.random() * 1.2 + 4.0; // 8% большой
+    }
+}
+
+// Непредсказуемый алгоритм для реального банка
+function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
+    // Если банк пустой или маленький - сначала пополняем его
     if (bankBalance < 100) {
         console.log(`Реальный банк мал (${bankBalance}), пополняем банк`);
-        // 85% шанс слива при малом банке
-        if (Math.random() < 0.85) {
+        // Но избегаем слишком очевидного паттерна
+        if (shouldAvoidPattern('low')) {
+            return generateMiddleWinCrashPoint(totalBet);
+        }
+        // 75% шанс слива при малом банке (уменьшено с 85%)
+        if (getSeededRandom() < 0.75) {
             return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
         }
     }
@@ -350,138 +473,279 @@ function generateRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
     const currentRTP = rtpStats.currentRTP;
     const targetRTP = rtpStats.targetRTP;
     
+    // Добавляем дополнительную случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 10; // ±5% случайное отклонение
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
     // Если RTP значительно ниже цели - увеличиваем шансы на выигрыш
-    if (currentRTP < targetRTP - 5) {
-        return generateWinningCrashPoint(totalBet);
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
     }
-    // Если RTP приближается к цели - балансируем
-    else if (currentRTP < targetRTP + 2) {
-        return generateBalancedCrashPoint(totalBet);
+    // Если RTP приближается к цели - балансируем с учетом паттернов
+    else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
     }
-    // Если RTP превышает цель - больше проигрышей
+    // Если RTP превышает цель - больше проигрышей, но избегаем паттернов
     else {
-        return generateLosingCrashPoint(totalBet);
+        return generateAntiPatternLosingCrashPoint(totalBet);
     }
 }
 
-// Алгоритм для демо банка
-function generateDemoBankCrashPoint(totalBet, rtpStats) {
+// Непредсказуемый алгоритм для демо банка
+function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats) {
     const currentRTP = rtpStats.currentRTP;
     const targetRTP = rtpStats.targetRTP;
     
-    // Аналогичная логика, но без проверки пустого банка
-    if (currentRTP < targetRTP - 5) {
-        return generateWinningCrashPoint(totalBet);
-    } else if (currentRTP < targetRTP + 2) {
-        return generateBalancedCrashPoint(totalBet);
+    // Добавляем случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 8;
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    } else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
     } else {
-        return generateLosingCrashPoint(totalBet);
+        return generateAntiPatternLosingCrashPoint(totalBet);
     }
 }
 
-// Генерация краш-поинта с высокими шансами на выигрыш
-function generateWinningCrashPoint(totalBet) {
-    const random = Math.random() * 100;
+function generateCrashPoint(players = []) {
+    resetDailyRTP();
     
-    // Учитываем размер ставки
+    // Администраторы (могут играть на демо балансе)
+    const adminIds = [
+        parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
+        1135073023
+    ];
+    
+    // Фильтруем игроков: исключаем ставки админов если есть реальные игроки
+    const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
+    const realNonAdminPlayers = realPlayers.filter(p => !adminIds.includes(parseInt(p.userId)));
+    const demoPlayers = players.filter(p => !p.isBot && p.demoMode);
+    
+    // Если есть хотя бы один реальный игрок (не админ), исключаем ставки админов
+    let effectivePlayers = [...players];
+    if (realNonAdminPlayers.length > 0) {
+        effectivePlayers = players.filter(p => p.isBot || !adminIds.includes(parseInt(p.userId)));
+        console.log(`Исключены ставки админов: есть ${realNonAdminPlayers.length} реальных игроков`);
+    }
+    
+    const effectiveRealPlayers = effectivePlayers.filter(p => !p.isBot && !p.demoMode);
+    const effectiveDemoPlayers = effectivePlayers.filter(p => !p.isBot && p.demoMode);
+    
+    const totalRealBet = effectiveRealPlayers.reduce((sum, p) => sum + p.betAmount, 0);
+    const totalDemoBet = effectiveDemoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
+    
+    // Получаем состояние банков
+    const realBank = getCasinoBank();
+    const demoBank = getCasinoDemoBank();
+    
+    // Основная логика с защитой от паттернов
+    let crashPoint = 1.00;
+    
+    if (totalRealBet > 0) {
+        crashPoint = generateUnpredictableRealBankCrashPoint(totalRealBet, realBank.total_balance, rtpSystem.realBank);
+    } else if (totalDemoBet > 0) {
+        crashPoint = generateUnpredictableDemoBankCrashPoint(totalDemoBet, rtpSystem.demoBank);
+    } else {
+        // Только боты - случайный краш для красоты
+        crashPoint = generateRandomBotCrashPoint();
+    }
+    
+    // Записываем результат в историю для анализа паттернов
+    updateAntiPatternSystem(crashPoint);
+    
+    return Math.max(1.00, crashPoint);
+}
+
+// Обновляем систему защиты от паттернов
+function updateAntiPatternSystem(crashPoint) {
+    // Добавляем результат в историю
+    lastResults.unshift(crashPoint);
+    if (lastResults.length > 10) {
+        lastResults.pop(); // Храним только последние 10 результатов
+    }
+    
+    // Обновляем счетчики паттернов
+    if (crashPoint >= 4.0) {
+        antiPatternSystem.lastHighWins++;
+        antiPatternSystem.lastLowWins = 0;
+    } else if (crashPoint <= 1.5) {
+        antiPatternSystem.lastLowWins++;
+        antiPatternSystem.lastHighWins = 0;
+    } else {
+        antiPatternSystem.lastHighWins = 0;
+        antiPatternSystem.lastLowWins = 0;
+    }
+    
+    // Обновляем случайное семя для дополнительной непредсказуемости
+    antiPatternSystem.randomSeed = (antiPatternSystem.randomSeed * 9301 + 49297) % 233280;
+}
+
+// Генерируем случайное число с учетом семени
+function getSeededRandom() {
+    return (antiPatternSystem.randomSeed / 233280 + Math.random()) / 2;
+}
+
+// Проверяем, нужно ли избегать паттерна
+function shouldAvoidPattern(type) {
+    if (type === 'high' && antiPatternSystem.lastHighWins >= 2) {
+        return true; // Избегаем третий подряд высокий выигрыш
+    }
+    if (type === 'low' && antiPatternSystem.lastLowWins >= 3) {
+        return true; // Избегаем четвертый подряд низкий результат
+    }
+    return false;
+}
+
+// Непредсказуемый алгоритм для реального банка
+function generateUnpredictableRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
+    // Если банк пустой или маленький - сначала пополняем его
+    if (bankBalance < 100) {
+        console.log(`Реальный банк мал (${bankBalance}), пополняем банк`);
+        // Но избегаем слишком очевидного паттерна
+        if (shouldAvoidPattern('low')) {
+            return generateMiddleWinCrashPoint(totalBet);
+        }
+        // 75% шанс слива при малом банке (уменьшено с 85%)
+        if (getSeededRandom() < 0.75) {
+            return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
+        }
+    }
+    
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Добавляем дополнительную случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 10; // ±5% случайное отклонение
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    // Если RTP значительно ниже цели - увеличиваем шансы на выигрыш
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    }
+    // Если RTP приближается к цели - балансируем с учетом паттернов
+    else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
+    }
+    // Если RTP превышает цель - больше проигрышей, но избегаем паттернов
+    else {
+        return generateAntiPatternLosingCrashPoint(totalBet);
+    }
+}
+
+// Непредсказуемый алгоритм для демо банка
+function generateUnpredictableDemoBankCrashPoint(totalBet, rtpStats) {
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Добавляем случайность к границам RTP
+    const rtpVariance = (getSeededRandom() - 0.5) * 8;
+    const adjustedTargetRTP = targetRTP + rtpVariance;
+    
+    if (currentRTP < adjustedTargetRTP - 8) {
+        return generateAntiPatternWinningCrashPoint(totalBet);
+    } else if (currentRTP < adjustedTargetRTP + 3) {
+        return generateAntiPatternBalancedCrashPoint(totalBet);
+    } else {
+        return generateAntiPatternLosingCrashPoint(totalBet);
+    }
+}
+
+// Генерация для ботов с красивыми результатами
+function generateRandomBotCrashPoint() {
+    const random = getSeededRandom() * 100;
+    
+    if (random < 30) return Math.random() * 3 + 2; // 2x - 5x
+    if (random < 60) return Math.random() * 4 + 5; // 5x - 9x
+    if (random < 85) return Math.random() * 6 + 9; // 9x - 15x
+    return Math.random() * 15 + 15; // 15x - 30x
+}
+
+// НОВЫЕ ФУНКЦИИ С ЗАЩИТОЙ ОТ ПАТТЕРНОВ
+
+// Генерация среднего выигрыша для избежания паттернов
+function generateMiddleWinCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    if (totalBet >= 0.7) {
+        return Math.random() * 1.0 + 1.5; // 1.5x - 2.5x средние выигрыши
+    } else {
+        return Math.random() * 1.2 + 1.4; // 1.4x - 2.6x для малых ставок
+    }
+}
+
+// Генерация краш-поинта с защитой от паттернов (выигрышный)
+function generateAntiPatternWinningCrashPoint(totalBet) {
+    // Если было много высоких выигрышей - даем средний
+    if (shouldAvoidPattern('high')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
+    const bonusChance = antiPatternSystem.lastLowWins * 15; // Бонус за предыдущие проигрыши
+    
+    // Учитываем размер ставки с дополнительной случайностью
     if (totalBet >= 0.7) { // Большие ставки
-        if (random < 30) return Math.random() * 0.4 + 1.0; // 30% - малый выигрыш 1.0-1.4x
-        if (random < 60) return Math.random() * 0.5 + 1.8; // 30% - средний 1.8-2.3x  
-        if (random < 85) return Math.random() * 1.2 + 4.0; // 25% - большой 4.0-5.2x
-        return Math.random() * 9.8 + 5.2; // 15% - крупный 5.2-15x
+        if (random < 25 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый выигрыш 1.0-1.4x
+        if (random < 55 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний 1.8-2.3x  
+        if (random < 80 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой 4.0-5.2x
+        return Math.random() * 9.8 + 5.2; // Крупный 5.2-15x
     } else { // Малые ставки (0.1-0.6)
-        if (random < 20) return Math.random() * 0.4 + 1.0; // 20% - малый
-        if (random < 45) return Math.random() * 0.5 + 1.8; // 25% - средний
-        if (random < 75) return Math.random() * 1.2 + 4.0; // 30% - большой  
-        return Math.random() * 9.8 + 5.2; // 25% - крупный
+        if (random < 15 + bonusChance) return Math.random() * 0.4 + 1.0; // Малый
+        if (random < 40 + bonusChance) return Math.random() * 0.5 + 1.8; // Средний
+        if (random < 70 + bonusChance) return Math.random() * 1.2 + 4.0; // Большой  
+        return Math.random() * 9.8 + 5.2; // Крупный
     }
 }
 
-// Генерация сбалансированного краш-поинта
-function generateBalancedCrashPoint(totalBet) {
-    const random = Math.random() * 100;
+// Генерация сбалансированного краш-поинта с защитой от паттернов
+function generateAntiPatternBalancedCrashPoint(totalBet) {
+    const random = getSeededRandom() * 100;
+    
+    // Если был паттерн проигрышей - увеличиваем шанс выигрыша
+    const winBonus = antiPatternSystem.lastLowWins * 10;
+    // Если был паттерн выигрышей - уменьшаем шанс высокого выигрыша
+    const highWinPenalty = antiPatternSystem.lastHighWins * 15;
     
     if (totalBet >= 0.7) {
-        if (random < 50) return Math.random() * 0.15 + 1.00; // 50% проигрыш
-        if (random < 70) return Math.random() * 0.4 + 1.0;   // 20% малый
-        if (random < 85) return Math.random() * 0.5 + 1.8;   // 15% средний
-        if (random < 95) return Math.random() * 1.2 + 4.0;   // 10% большой
-        return Math.random() * 9.8 + 5.2; // 5% крупный
+        if (random < 45 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 65 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 80 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний
+        if (random < 93 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
     } else {
-        if (random < 40) return Math.random() * 0.15 + 1.00; // 40% проигрыш
-        if (random < 60) return Math.random() * 0.4 + 1.0;   // 20% малый
-        if (random < 80) return Math.random() * 0.5 + 1.8;   // 20% средний  
-        if (random < 95) return Math.random() * 1.2 + 4.0;   // 15% большой
-        return Math.random() * 9.8 + 5.2; // 5% крупный
+        if (random < 35 - winBonus) return Math.random() * 0.15 + 1.00; // Проигрыш
+        if (random < 55 - winBonus) return Math.random() * 0.4 + 1.0;   // Малый
+        if (random < 75 - winBonus) return Math.random() * 0.5 + 1.8;   // Средний  
+        if (random < 92 - highWinPenalty) return Math.random() * 1.2 + 4.0; // Большой
+        return Math.random() * 9.8 + 5.2; // Крупный
     }
 }
 
-// Генерация краш-поинта с высокими шансами на проигрыш
-function generateLosingCrashPoint(totalBet) {
-    const random = Math.random() * 100;
+// Генерация проигрышного краш-поинта с защитой от паттернов
+function generateAntiPatternLosingCrashPoint(totalBet) {
+    // Если было много проигрышей подряд - даем средний выигрыш
+    if (shouldAvoidPattern('low')) {
+        return generateMiddleWinCrashPoint(totalBet);
+    }
+    
+    const random = getSeededRandom() * 100;
     
     if (totalBet >= 0.7) {
-        if (random < 80) return Math.random() * 0.15 + 1.00; // 80% проигрыш
-        if (random < 90) return Math.random() * 0.4 + 1.0;   // 10% малый
-        if (random < 97) return Math.random() * 0.5 + 1.8;   // 7% средний
-        return Math.random() * 1.2 + 4.0; // 3% большой
+        if (random < 75) return Math.random() * 0.15 + 1.00; // 75% проигрыш (уменьшено с 80%)
+        if (random < 88) return Math.random() * 0.4 + 1.0;   // 13% малый
+        if (random < 96) return Math.random() * 0.5 + 1.8;   // 8% средний
+        return Math.random() * 1.2 + 4.0; // 4% большой
     } else {
-        if (random < 70) return Math.random() * 0.15 + 1.00; // 70% проигрыш  
-        if (random < 85) return Math.random() * 0.4 + 1.0;   // 15% малый
-        if (random < 95) return Math.random() * 0.5 + 1.8;   // 10% средний
-        return Math.random() * 1.2 + 4.0; // 5% большой
+        if (random < 65) return Math.random() * 0.15 + 1.00; // 65% проигрыш (уменьшено с 70%)
+        if (random < 80) return Math.random() * 0.4 + 1.0;   // 15% малый
+        if (random < 92) return Math.random() * 0.5 + 1.8;   // 12% средний
+        return Math.random() * 1.2 + 4.0; // 8% большой
     }
 }
 
-// Rocket Game Functions
-function generateCrashPoint_OLD(totalBankAmount = 0) {
-    // Если нет реальных игроков (только боты)
-    if (totalBankAmount === 0) {
-        const random = Math.random() * 100;
-        
-        // 50% - больше 4x, но меньше 6x
-        if (random < 50) {
-            return Math.random() * 2 + 4; // 4x - 6x
-        }
-        // 40% - от 6 до 12x  
-        else if (random < 90) {
-            return Math.random() * 6 + 6; // 6x - 12x
-        }
-        // 10% - больше 12x
-        else {
-            return Math.random() * 20 + 12; // 12x+
-        }
-    }
-    
-    // Если реальная ставка 30 тонн или больше - сливается сразу
-    if (totalBankAmount >= 30) {
-        return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x
-    }
-    
-    // От 3 до 8 тонн
-    if (totalBankAmount >= 3 && totalBankAmount <= 8) {
-        return Math.random() * 0.65 + 1.30; // 1.30x - 1.95x
-    }
-    
-    // Логика для маленьких ставок с возможным продлением
-    // Если большинство пользователей проиграли и остались несколько с маленькой ставкой
-    if (totalBankAmount <= 1) {
-        const random = Math.random();
-        
-        // 70% шанс обычного краша для максимизации прибыли
-        if (random < 0.7) {
-            return Math.random() * 2.0 + 1.40; // 1.40x - 3.40x
-        }
-        // 30% шанс продления для привлечения игроков
-        else {
-            return Math.random() * 8 + 5; // 5x - 13x
-        }
-    }
-    
-    // Если что-то между диапазонами (от 1 до 3 тонн или от 8 до 30 тонн)
-    // от 1.40 до 3.4
-    return Math.random() * 2.0 + 1.40;
-}
+// Rocket Game Main Functions
 
 function startRocketGame() {
     if (rocketGame.status !== 'waiting') return;
