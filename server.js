@@ -1355,7 +1355,8 @@ app.post('/api/check-invoice', async (req, res) => {
                             ...user,
                             main_balance: user.main_balance + transaction.amount
                         });
-                        updateCasinoBank(transaction.amount);
+                        // ИСПРАВЛЕНО: Депозиты не должны влиять на банк казино
+                        // updateCasinoBank(transaction.amount); - убрано
                     }
 
                     // Обновляем статус транзакции
@@ -1578,6 +1579,7 @@ app.post('/api/mines/start', async (req, res) => {
         ...user,
         demo_balance: user.demo_balance - betAmount
     });
+    updateCasinoDemoBank(betAmount); // ИСПРАВЛЕНО: добавлено обновление демо банка
 } else {
     users.update({
         ...user,
@@ -1762,7 +1764,7 @@ app.post('/api/rocket/bet', async (req, res) => {
                 ...user,
                 demo_balance: user.demo_balance - betAmount
             });
-            updateCasinoDemoBank(-betAmount); // ИСПРАВЛЕНО: было betAmount, теперь -betAmount
+            updateCasinoDemoBank(betAmount); // ИСПРАВЛЕНО: ставки должны добавляться в банк (+)
             // Обновляем RTP статистику для демо банка
             updateRTPStats('demoBank', betAmount, 0);
         } else {
