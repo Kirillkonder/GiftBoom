@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  ton-casino:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - CRYPTO_PAY_TOKEN=457597:AA6vplOWcYiyCSHol1JMhKFmaqG1T93bPmY
+      - BOT_USERNAME=@CasinoGiftContractBot
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

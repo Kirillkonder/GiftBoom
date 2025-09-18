@@ -1,0 +1,655 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
+    min-height: 100vh;
+    color: #e6e6e6;
+}
+
+.container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    padding-bottom: 80px; /* Добавлено место для нижнего меню */
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header h1 {
+    font-size: 24px;
+    color: #f0f0f0;
+    margin-bottom: 5px;
+}
+
+.header p {
+    color: #a0a0a0;
+    font-size: 14px;
+}
+
+.mode-switcher {
+    display: none; /* Скрываем по умолчанию, покажется через JS если есть доступ */
+    margin: 15px 0;
+    padding: 10px;
+    background: #1e0b0b;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.mode-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.mode-badge.mainnet {
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
+}
+
+.mode-badge.testnet {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: white;
+}
+
+.mode-info {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 10px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin: 5px;
+    width: calc(100% - 10px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(253, 121, 168, 0.5);
+}
+
+.btn-mode {
+    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    color: white;
+}
+
+.btn-admin {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: white;
+    margin-bottom: 15px;
+}
+
+.profile-card {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: #1a1a1a;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.balance-section {
+    margin: 20px 0;
+}
+
+.balance-label {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.balance-amount {
+    font-size: 48px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 5px;
+}
+
+.balance-currency {
+    font-size: 14px;
+    color: #a0a0a0;
+}
+
+.games-section,
+.deposit-section,
+.transaction-history {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.game-info {
+    text-align: center;
+    color: #a0a0a0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.transaction-history {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-info {
+    flex: 1;
+}
+
+.transaction-type {
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+.transaction-date {
+    font-size: 12px;
+    color: #a0a0a0;
+}
+
+.transaction-amount {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.transaction-positive {
+    color: #00b894;
+}
+
+.transaction-negative {
+    color: #ff6b6b;
+}
+
+.no-transactions {
+    text-align: center;
+    color: #a0a0a0;
+    padding: 20px;
+}
+
+/* Нижнее игровое меню */
+.games-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(25, 30, 42, 0.98);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 1000;
+}
+
+.game-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    min-width: 60px;
+}
+
+.game-menu-item:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
+}
+
+.game-menu-item:active {
+    transform: scale(0.95);
+}
+
+.game-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.game-name {
+    font-size: 10px;
+    color: #a0a0a0;
+    text-align: center;
+    font-weight: 500;
+}
+
+.footer {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    margin-top: 30px;
+    padding: 10px;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: #191e2a;
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 350px;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #a0a0a0;
+}
+
+.modal h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #f0f0f0;
+}
+
+input[type="number"],
+input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s ease;
+    color: #f0f0f0;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.deposit-info,
+.withdraw-info {
+    text-align: center;
+    font-size: 12px;
+    color: #a0a0a0;
+    margin-top: 15px;
+    line-height: 1.4;
+}
+
+/* Стили для контента игр */
+.game-content {
+    text-align: center;
+    padding: 20px 0;
+    color: #a0a0a0;
+    line-height: 1.6;
+}
+
+/* Admin Panel Styles */
+.admin-stats {
+    margin: 20px 0;
+}
+
+.admin-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-stat-item:last-child {
+    border-bottom: none;
+}
+
+.admin-stat-label {
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+.admin-stat-value {
+    font-weight: bold;
+    color: #00b894;
+}
+
+.admin-warning {
+    text-align: center;
+    font-size: 12px;
+    color: #ff6b6b;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .balance-amount {
+        font-size: 36px;
+    }
+    
+    .modal-content {
+        margin: 20% auto;
+        width: 95%;
+    }
+    
+    .games-menu {
+        padding: 8px 0;
+    }
+    
+    .game-menu-item {
+        padding: 6px 8px;
+        min-width: 50px;
+    }
+    
+    .game-icon {
+        font-size: 20px;
+    }
+    
+    .game-name {
+        font-size: 9px;
+    }
+}
+
+/* Animation for buttons */
+.btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
+}
+
+
+/* Существующие стили остаются без изменений */
+
+/* Новые стили для Mines */
+.mines-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.bet-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.bet-input {
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.mines-select {
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.start-btn {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.start-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.mines-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mine-cell {
+    aspect-ratio: 1;
+    background: #007bff;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+}
+
+.mine-cell.revealed {
+    background: #28a745;
+}
+
+.mine-cell.mine {
+    background: #dc3545;
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.cashout-btn {
+    padding: 15px 30px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.cashout-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.result-message {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.win {
+    background: #d4edda;
+    color: #155724;
+}
+
+.lose {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-test {
+    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    color: white;
+}
+
+
+
+
+.rocket-game {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+
+
+
+
+
+
+
+
+/* Rocket specific styles */
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+
+/* Rocket specific styles */
+
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Анимации для ракетки */
+
