@@ -42,6 +42,24 @@ let rocketGame = {
   history: []
 };
 
+// RTP система - отслеживание доходности за день
+let rtpSystem = {
+  realBank: {
+    dailyDeposits: 0,      // Общие депозиты за день
+    dailyPayouts: 0,       // Общие выплаты за день
+    currentRTP: 0,         // Текущий RTP в процентах
+    targetRTP: 30,         // Целевой RTP 30%
+    lastResetDate: new Date().toDateString()
+  },
+  demoBank: {
+    dailyDeposits: 0,
+    dailyPayouts: 0,
+    currentRTP: 0,
+    targetRTP: 30,
+    lastResetDate: new Date().toDateString()
+  }
+};
+
 // Боты для ракетки
 const rocketBots = [
   { name: "Bot_1", minBet: 1, maxBet: 10, risk: "medium" },
@@ -244,8 +262,179 @@ function calculateMultiplier(openedCells, displayedMines) {
   return mineMultipliers ? mineMultipliers[mineMultipliers.length - 1] * 2 : 1.00;
 }
 
+// Функция для сброса дневного RTP (вызывается каждый день)
+function resetDailyRTP() {
+    const today = new Date().toDateString();
+    
+    if (rtpSystem.realBank.lastResetDate !== today) {
+        rtpSystem.realBank = {
+            dailyDeposits: 0,
+            dailyPayouts: 0,
+            currentRTP: 0,
+            targetRTP: 30,
+            lastResetDate: today
+        };
+    }
+    
+    if (rtpSystem.demoBank.lastResetDate !== today) {
+        rtpSystem.demoBank = {
+            dailyDeposits: 0,
+            dailyPayouts: 0,
+            currentRTP: 0,
+            targetRTP: 30,
+            lastResetDate: today
+        };
+    }
+}
+
+// Функция расчета текущего RTP
+function calculateCurrentRTP(bankType) {
+    const bank = rtpSystem[bankType];
+    if (bank.dailyDeposits === 0) return 0;
+    return (bank.dailyPayouts / bank.dailyDeposits) * 100;
+}
+
+// Функция обновления RTP статистики
+function updateRTPStats(bankType, deposit, payout) {
+    resetDailyRTP(); // Проверяем, нужно ли сбросить дневную статистику
+    
+    const bank = rtpSystem[bankType];
+    bank.dailyDeposits += deposit;
+    bank.dailyPayouts += payout;
+    bank.currentRTP = calculateCurrentRTP(bankType);
+    
+    console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
+}
+
+// Новый улучшенный алгоритм генерации точки краша с RTP 30%
+function generateCrashPoint(players = []) {
+    resetDailyRTP();
+    
+    // Разделяем игроков на реальных и демо
+    const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
+    const demoPlayers = players.filter(p => !p.isBot && p.demoMode);
+    
+    const totalRealBet = realPlayers.reduce((sum, p) => sum + p.betAmount, 0);
+    const totalDemoBet = demoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
+    
+    // Получаем состояние банков
+    const realBank = getCasinoBank();
+    const demoBank = getCasinoDemoBank();
+    
+    // Определяем основную логику для реального банка
+    let crashPoint = 1.00;
+    
+    if (totalRealBet > 0) {
+        crashPoint = generateRealBankCrashPoint(totalRealBet, realBank.total_balance, rtpSystem.realBank);
+    } else if (totalDemoBet > 0) {
+        crashPoint = generateDemoBankCrashPoint(totalDemoBet, rtpSystem.demoBank);
+    } else {
+        // Только боты - случайный краш для красоты
+        crashPoint = Math.random() * 10 + 2; // 2x - 12x
+    }
+    
+    return Math.max(1.00, crashPoint);
+}
+
+// Алгоритм для реального банка с учетом RTP 30%
+function generateRealBankCrashPoint(totalBet, bankBalance, rtpStats) {
+    // Если банк пустой или маленький - сначала пополняем его (игроки проигрывают)
+    if (bankBalance < 100) {
+        console.log(`Реальный банк мал (${bankBalance}), пополняем банк`);
+        // 85% шанс слива при малом банке
+        if (Math.random() < 0.85) {
+            return Math.random() * 0.15 + 1.00; // 1.00x - 1.15x (проигрыш)
+        }
+    }
+    
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Если RTP значительно ниже цели - увеличиваем шансы на выигрыш
+    if (currentRTP < targetRTP - 5) {
+        return generateWinningCrashPoint(totalBet);
+    }
+    // Если RTP приближается к цели - балансируем
+    else if (currentRTP < targetRTP + 2) {
+        return generateBalancedCrashPoint(totalBet);
+    }
+    // Если RTP превышает цель - больше проигрышей
+    else {
+        return generateLosingCrashPoint(totalBet);
+    }
+}
+
+// Алгоритм для демо банка
+function generateDemoBankCrashPoint(totalBet, rtpStats) {
+    const currentRTP = rtpStats.currentRTP;
+    const targetRTP = rtpStats.targetRTP;
+    
+    // Аналогичная логика, но без проверки пустого банка
+    if (currentRTP < targetRTP - 5) {
+        return generateWinningCrashPoint(totalBet);
+    } else if (currentRTP < targetRTP + 2) {
+        return generateBalancedCrashPoint(totalBet);
+    } else {
+        return generateLosingCrashPoint(totalBet);
+    }
+}
+
+// Генерация краш-поинта с высокими шансами на выигрыш
+function generateWinningCrashPoint(totalBet) {
+    const random = Math.random() * 100;
+    
+    // Учитываем размер ставки
+    if (totalBet >= 0.7) { // Большие ставки
+        if (random < 30) return Math.random() * 0.4 + 1.0; // 30% - малый выигрыш 1.0-1.4x
+        if (random < 60) return Math.random() * 0.5 + 1.8; // 30% - средний 1.8-2.3x  
+        if (random < 85) return Math.random() * 1.2 + 4.0; // 25% - большой 4.0-5.2x
+        return Math.random() * 9.8 + 5.2; // 15% - крупный 5.2-15x
+    } else { // Малые ставки (0.1-0.6)
+        if (random < 20) return Math.random() * 0.4 + 1.0; // 20% - малый
+        if (random < 45) return Math.random() * 0.5 + 1.8; // 25% - средний
+        if (random < 75) return Math.random() * 1.2 + 4.0; // 30% - большой  
+        return Math.random() * 9.8 + 5.2; // 25% - крупный
+    }
+}
+
+// Генерация сбалансированного краш-поинта
+function generateBalancedCrashPoint(totalBet) {
+    const random = Math.random() * 100;
+    
+    if (totalBet >= 0.7) {
+        if (random < 50) return Math.random() * 0.15 + 1.00; // 50% проигрыш
+        if (random < 70) return Math.random() * 0.4 + 1.0;   // 20% малый
+        if (random < 85) return Math.random() * 0.5 + 1.8;   // 15% средний
+        if (random < 95) return Math.random() * 1.2 + 4.0;   // 10% большой
+        return Math.random() * 9.8 + 5.2; // 5% крупный
+    } else {
+        if (random < 40) return Math.random() * 0.15 + 1.00; // 40% проигрыш
+        if (random < 60) return Math.random() * 0.4 + 1.0;   // 20% малый
+        if (random < 80) return Math.random() * 0.5 + 1.8;   // 20% средний  
+        if (random < 95) return Math.random() * 1.2 + 4.0;   // 15% большой
+        return Math.random() * 9.8 + 5.2; // 5% крупный
+    }
+}
+
+// Генерация краш-поинта с высокими шансами на проигрыш
+function generateLosingCrashPoint(totalBet) {
+    const random = Math.random() * 100;
+    
+    if (totalBet >= 0.7) {
+        if (random < 80) return Math.random() * 0.15 + 1.00; // 80% проигрыш
+        if (random < 90) return Math.random() * 0.4 + 1.0;   // 10% малый
+        if (random < 97) return Math.random() * 0.5 + 1.8;   // 7% средний
+        return Math.random() * 1.2 + 4.0; // 3% большой
+    } else {
+        if (random < 70) return Math.random() * 0.15 + 1.00; // 70% проигрыш  
+        if (random < 85) return Math.random() * 0.4 + 1.0;   // 15% малый
+        if (random < 95) return Math.random() * 0.5 + 1.8;   // 10% средний
+        return Math.random() * 1.2 + 4.0; // 5% большой
+    }
+}
+
 // Rocket Game Functions
-function generateCrashPoint(totalBankAmount = 0) {
+function generateCrashPoint_OLD(totalBankAmount = 0) {
     // Если нет реальных игроков (только боты)
     if (totalBankAmount === 0) {
         const random = Math.random() * 100;
@@ -305,9 +494,13 @@ function startRocketGame() {
     
     // Генерируем crashPoint после завершения времени на ставки
     setTimeout(() => {
-        const totalBank = rocketGame.players.filter(p => !p.isBot).reduce((sum, p) => sum + p.betAmount, 0);
-        rocketGame.crashPoint = generateCrashPoint(totalBank);
-        console.log(`Общий банк: ${totalBank} TON, Краш-поинт: ${rocketGame.crashPoint.toFixed(2)}x`);
+        // Передаем всех игроков для анализа
+        rocketGame.crashPoint = generateCrashPoint(rocketGame.players);
+        console.log(`Краш-поинт: ${rocketGame.crashPoint.toFixed(2)}x`);
+        
+        // Выводим RTP статистику
+        console.log(`Реальный банк RTP: ${rtpSystem.realBank.currentRTP.toFixed(2)}%`);
+        console.log(`Демо банк RTP: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
     }, 5000);
 
     // Добавляем ставки ботов
@@ -496,7 +689,7 @@ wss.on('connection', function connection(ws) {
     console.log('Rocket game client disconnected');
   });
 });
-//dadd
+
 // API: Аутентификация админа
 app.post('/api/admin/login', async (req, res) => {
     const { telegramId, password } = req.body;
@@ -945,10 +1138,9 @@ app.post('/api/create-withdrawal', async (req, res) => {
 });
 
 // API: Получить баланс пользователя
-// API: Получить баланс пользователя
-// API: Получить баланс пользователя
 app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
+    // Только эти два пользователя могут использовать демо режим
     const isAdminUser = telegramId === 842428912 || telegramId === 1135073023;
 
     try {
@@ -985,12 +1177,7 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
     }
 });
 
-// API: Переключить демо режим
-// API: Переключить демо режим
-// API: Переключить демо режим
-// API: Переключить демо режим
-// API: Переключить демо режим
-// API: Переключить демо режим
+// API: Переключить демо режим (только для админов)
 app.post('/api/user/toggle-demo-mode', async (req, res) => {
     const { telegramId } = req.body;
 
@@ -1001,7 +1188,7 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Проверяем, что это админ (ID 842428912 или 1135073023)
+        // Проверяем, что это админ (только эти два ID могут использовать демо режим)
         if (parseInt(telegramId) !== 842428912 && parseInt(telegramId) !== 1135073023) {
             return res.status(403).json({ error: 'Demo mode not available' });
         }
@@ -1010,6 +1197,8 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
             ...user,
             demo_mode: !user.demo_mode
         });
+
+        console.log(`Пользователь ${telegramId} переключил демо режим: ${!user.demo_mode}`);
 
         res.json({
             success: true,
@@ -1213,7 +1402,7 @@ app.post('/api/rocket/bet', async (req, res) => {
 
         // ПРОВЕРКА: Уже есть ставка от этого пользователя
         const existingBet = rocketGame.players.find(p => 
-            p.userId == telegramId && !p.isBot
+           p.userId == telegramId && !p.isBot
         );
         
         if (existingBet) {
@@ -1235,20 +1424,24 @@ app.post('/api/rocket/bet', async (req, res) => {
             return res.status(400).json({ error: 'Ставки не принимаются' });
         }
 
-        // Списываем ставку
+        // Списываем ставку и обновляем RTP статистику
         if (demoMode) {
-    users.update({
-        ...user,
-        demo_balance: user.demo_balance - betAmount
-    });
-    updateCasinoDemoBank(betAmount); // Демо-банк
-} else {
-    users.update({
-        ...user,
-        main_balance: user.main_balance - betAmount
-    });
-    updateCasinoBank(betAmount); // Реальный банк
-}
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance - betAmount
+            });
+            updateCasinoDemoBank(betAmount);
+            // Обновляем RTP статистику для демо банка
+            updateRTPStats('demoBank', betAmount, 0);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance - betAmount
+            });
+            updateCasinoBank(betAmount);
+            // Обновляем RTP статистику для реального банка
+            updateRTPStats('realBank', betAmount, 0);
+        }
 
         // Добавляем игрока в текущую игру
         const player = {
@@ -1277,7 +1470,6 @@ app.post('/api/rocket/bet', async (req, res) => {
 });
 
 // API: Забрать выигрыш в Rocket
-// server.js - исправленный endpoint /api/rocket/cashout
 app.post('/api/rocket/cashout', async (req, res) => {
     const { telegramId } = req.body;
 
@@ -1299,29 +1491,33 @@ app.post('/api/rocket/cashout', async (req, res) => {
             return res.status(400).json({ error: 'Игрок не найден или уже забрал выигрыш' });
         }
 
-        // 🔥 НЕМЕДЛЕННО начисляем выигрыш
+        // Начисляем выигрыш и обновляем RTP статистику
         const winAmount = player.betAmount * rocketGame.multiplier;
         
         if (player.demoMode) {
-    users.update({
-        ...user,
-        demo_balance: user.demo_balance + winAmount
-    });
-    updateCasinoDemoBank(-winAmount); // Демо-банк
-} else {
-    users.update({
-        ...user,
-        main_balance: user.main_balance + winAmount
-    });
-    updateCasinoBank(-winAmount); // Реальный банк
-}
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance + winAmount
+            });
+            updateCasinoDemoBank(-winAmount);
+            // Обновляем RTP статистику для демо банка (только выплата)
+            updateRTPStats('demoBank', 0, winAmount);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance + winAmount
+            });
+            updateCasinoBank(-winAmount);
+            // Обновляем RTP статистику для реального банка (только выплата)
+            updateRTPStats('realBank', 0, winAmount);
+        }
 
         // Обновляем данные игрока
         player.cashedOut = true;
         player.cashoutMultiplier = rocketGame.multiplier;
         player.winAmount = winAmount;
 
-        // 🔥 Сохраняем транзакцию сразу
+        // Сохраняем транзакцию сразу
         transactions.insert({
             user_id: user.$loki,
             amount: winAmount,
@@ -1414,8 +1610,17 @@ cron.schedule('* * * * *', async () => {
 // Запуск сервера
 async function startServer() {
     await initDatabase();
+    resetDailyRTP(); // Инициализируем RTP систему
     startRocketGame(); // Запускаем игру ракетка
     console.log(`TON Casino Server started on port ${PORT}`);
+    console.log(`RTP система инициализирована. Целевой RTP: 30%`);
 }
+
+// Крон задача для сброса RTP каждый день в 00:00
+cron.schedule('0 0 * * *', () => {
+    console.log('Сброс дневного RTP...');
+    resetDailyRTP();
+    console.log('RTP сброшен на новый день');
+});
 
 startServer();
