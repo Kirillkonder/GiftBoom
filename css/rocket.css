@@ -39,21 +39,15 @@ body {
     animation: grid-pulse 4s ease-in-out infinite;
 }
 
-/* Анимация пульсации линий сетки */
+/* Анимация пульсации сетки */
 @keyframes grid-pulse {
     0%, 100% {
-        background: 
-            linear-gradient(rgba(30, 92, 184, 0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(30, 92, 184, 0.15) 1px, transparent 1px),
-            linear-gradient(rgba(30, 92, 184, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(30, 92, 184, 0.08) 1px, transparent 1px);
+        transform: scale(1);
+        opacity: 0.8;
     }
     50% {
-        background: 
-            linear-gradient(rgba(30, 92, 184, 0.4) 2px, transparent 2px),
-            linear-gradient(90deg, rgba(30, 92, 184, 0.4) 2px, transparent 2px),
-            linear-gradient(rgba(30, 92, 184, 0.2) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(30, 92, 184, 0.2) 1px, transparent 1px);
+        transform: scale(1.05);
+        opacity: 1;
     }
 }
 
