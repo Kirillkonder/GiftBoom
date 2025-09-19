@@ -401,28 +401,41 @@ function shouldWin(betAmount) {
 
 // Генерация полностью случайного краш-поинта для реального банка
 function generateRandomRealBankCrashPoint(totalBet, bankBalance) {
-    // Если банк критически мал - больше сливов
-    if (bankBalance < 50) {
-        if (Math.random() < 0.8) {
-            return Math.random() * 0.2 + 1.0; // 80% слив 1.0-1.2x
+    // Если банк меньше 5 TON - сливы, RTP не работает
+    if (bankBalance < 5) {
+        if (Math.random() < 0.85) {
+            return Math.random() * 0.15 + 1.0; // 85% слив 1.0-1.15x
         }
-        return Math.random() * 1.5 + 1.5; // 20% средний
+        return Math.random() * 0.4 + 1.15; // 15% малый выигрыш 1.15-1.55x
     }
     
+    // RTP активирован при 5+ TON - сложный непредсказуемый алгоритм
     const shouldPlayerWin = shouldWin(totalBet);
     const random = getRandomFloat() * 100;
     
+    // Шанс на большой икс (добавлено по просьбе)
+    const bigWinChance = Math.random() * 100;
+    if (bigWinChance < 3) { // 3% шанс на очень большой выигрыш
+        return Math.random() * 50.0 + 20.0; // 20x-70x большие иксы!
+    }
+    
+    // Более сложная логика с дополнительной рандомизацией
+    const extraRandom = Math.random() * Math.sin(Date.now() / 1000) * 50;
+    const adjustedRandom = random + extraRandom;
+    
     if (shouldPlayerWin) {
-        // Игрок выигрывает - случайные множители
-        if (random < 30) return Math.random() * 0.8 + 1.2; // 1.2-2.0x
-        if (random < 60) return Math.random() * 1.5 + 2.0; // 2.0-3.5x
-        if (random < 85) return Math.random() * 3.0 + 3.5; // 3.5-6.5x
-        return Math.random() * 10.0 + 6.5; // 6.5-16.5x
+        // Игрок выигрывает - непредсказуемые множители
+        if (adjustedRandom < 25) return Math.random() * 0.9 + 1.1; // 1.1-2.0x
+        if (adjustedRandom < 50) return Math.random() * 2.0 + 2.0; // 2.0-4.0x  
+        if (adjustedRandom < 75) return Math.random() * 4.0 + 4.0; // 4.0-8.0x
+        if (adjustedRandom < 92) return Math.random() * 8.0 + 8.0; // 8.0-16.0x
+        return Math.random() * 15.0 + 15.0; // 15.0-30.0x крупные выигрыши
     } else {
-        // Игрок проигрывает - низкие множители
-        if (random < 70) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
-        if (random < 90) return Math.random() * 0.3 + 1.15; // 1.15-1.45x
-        return Math.random() * 0.5 + 1.45; // 1.45-1.95x
+        // Игрок проигрывает - но с защитой от паттернов
+        const lossRandom = Math.random() * Math.cos(Date.now() / 2000) * 30;
+        if (lossRandom + random < 65) return Math.random() * 0.12 + 1.0; // 1.0-1.12x
+        if (lossRandom + random < 85) return Math.random() * 0.25 + 1.12; // 1.12-1.37x
+        return Math.random() * 0.4 + 1.37; // 1.37-1.77x
     }
 }
 
