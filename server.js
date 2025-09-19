@@ -222,6 +222,40 @@ function updateCasinoDemoBank(amount) {
     });
 }
 
+// Функция синхронизации баланса
+async function syncCasinoBalance() {
+    try {
+        console.log('Синхронизируем баланс с Crypto Bot...');
+        
+        const response = await axios.post('https://pay.crypt.bot/api/getBalance', {}, {
+            headers: {
+                'Crypto-Pay-API-Token': process.env.CRYPTO_PAY_MAINNET_TOKEN,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.data.ok) {
+            const tonBalance = response.data.result.find(asset => asset.currency_code === 'TON');
+            if (tonBalance) {
+                const realBalance = parseFloat(tonBalance.available);
+                const currentBank = getCasinoBank();
+                
+                // Синхронизируем только если расхождение
+                if (Math.abs(currentBank.total_balance - realBalance) > 0.01) {
+                    console.log(`Синхронизация: ${currentBank.total_balance} → ${realBalance} TON`);
+                    casinoBank.update({
+                        ...currentBank,
+                        total_balance: realBalance,
+                        updated_at: new Date()
+                    });
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка синхронизации баланса:', error.message);
+    }
+}
+
 // Mines Game Functions
 function generateMinesGame(minesCount) {
   const totalCells = 25;
@@ -1048,6 +1082,28 @@ app.get('/api/admin/users/:telegramId', async (req, res) => {
     }
 });
 
+// API: Синхронизировать баланс вручную
+app.post('/api/admin/sync-balance', async (req, res) => {
+    const { telegramId } = req.body;
+    
+    if (telegramId !== parseInt(process.env.OWNER_TELEGRAM_ID)) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    try {
+        await syncCasinoBalance();
+        const bank = getCasinoBank();
+        
+        res.json({
+            success: true,
+            balance: bank.total_balance,
+            message: 'Баланс синхронизирован с Crypto Bot'
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // API: Создать инвойс для депозита
 app.post('/api/create-invoice', async (req, res) => {
     const { telegramId, amount, demoMode } = req.body;
@@ -1697,7 +1753,7 @@ cron.schedule('* * * * *', async () => {
         main_balance: user.main_balance + transaction.amount
     });
     // Депозит не влияет на банк казино - это пополнение баланса пользователя
-    // updateCasinoBank(transaction.amount); ← ЭТУ СТРОКУ НУЖНО УБРАТЬ!
+    // updateCasinoB    ank(transaction.amount); ← ЭТУ СТРОКУ НУЖНО УБРАТЬ!
 }
 
                     transactions.update({
@@ -1718,8 +1774,15 @@ async function startServer() {
     await initDatabase();
     resetDailyRTP(); // Инициализируем RTP систему
     startRocketGame(); // Запускаем игру ракетка
+    
+    // Запускаем синхронизацию баланса
+    setTimeout(syncCasinoBalance, 5000);
+    // И каждые 5 минут
+    setInterval(syncCasinoBalance, 5 * 60 * 1000);
+    
     console.log(`TON Casino Server started on port ${PORT}`);
     console.log(`RTP система инициализирована. Целевой RTP: 60%`);
+    console.log(`Синхронизация баланса активирована (каждые 5 минут)`);
 }
 
 // Крон задача для сброса RTP каждый день в 00:00
