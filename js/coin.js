@@ -210,89 +210,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Flip buttons
     flipButtons.forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const side = this.getAttribute('data-side');
-            const betAmount = parseInt(betInput.value) || 1;
-            
-            // Check balance
-            const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
-            if (betAmount > currentBalance) {
-                showNotification('Недостаточно средств!', false);
-                return;
-            }
-            
-            if (betAmount < 1) {
-                showNotification('Минимальная ставка: 1 TON', false);
-                return;
-            }
-            
-            // Disable buttons during flip
-            flipButtons.forEach(button => {
-                button.disabled = true;
-                button.style.opacity = '0.5';
+    btn.addEventListener('click', async function() {
+        const side = this.getAttribute('data-side');
+        const betAmount = parseInt(betInput.value) || 1;
+        
+        // Check balance
+        const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
+        if (betAmount > currentBalance) {
+            showNotification('Недостаточно средств!', false);
+            return;
+        }
+        
+        if (betAmount < 1) {
+            showNotification('Минимальная ставка: 1 TON', false);
+            return;
+        }
+        
+        // Disable buttons during flip
+        flipButtons.forEach(button => {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+        });
+        
+        // Add flip animation
+        coinImg.classList.add('flipping');
+        
+        try {
+            // Start coinflip game
+            const response = await fetch('/api/coinflip/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    telegramId: userData.telegramId,
+                    betAmount: betAmount,
+                    chosenSide: side,
+                    demoMode: userData.demoMode
+                })
             });
             
-            // Add flip animation
-            coinImg.classList.add('flipping');
+            const result = await response.json();
             
-            try {
-                // Start coinflip game
-                const response = await fetch('/api/coinflip/start', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        telegramId: userData.telegramId,
-                        betAmount: betAmount,
-                        chosenSide: side,
-                        demoMode: userData.demoMode
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Update balance
-                    if (userData.demoMode) {
-                        userData.demoBalance = result.new_balance;
-                    } else {
-                        userData.mainBalance = result.new_balance;
-                    }
-                    updateBalanceDisplay();
-                    
-                    // Show result after animation
-                    setTimeout(() => {
-                        coinImg.classList.remove('flipping');
-                        
-                        if (result.win) {
-                            showNotification(`Вы выиграли ${result.win_amount} TON!`, true);
-                        } else {
-                            showNotification('Вы проиграли! Попробуйте еще раз.', false);
-                        }
-                        
-                        // Re-enable buttons
-                        flipButtons.forEach(button => {
-                            button.disabled = false;
-                            button.style.opacity = '1';
-                        });
-                    }, 2000);
-                    
+            if (result.success) {
+                // Update balance
+                if (userData.demoMode) {
+                    userData.demoBalance = result.new_balance;
                 } else {
-                    showNotification('Ошибка: ' + result.error, false);
+                    userData.mainBalance = result.new_balance;
+                }
+                updateBalanceDisplay();
+                
+                // Show result after animation
+                setTimeout(() => {
                     coinImg.classList.remove('flipping');
+                    
+                    if (result.win) {
+                        showNotification(`Вы выиграли ${result.win_amount} TON!`, true);
+                    } else {
+                        showNotification('Вы проиграли! Попробуйте еще раз.', false);
+                    }
                     
                     // Re-enable buttons
                     flipButtons.forEach(button => {
                         button.disabled = false;
                         button.style.opacity = '1';
                     });
-                }
+                }, 2000);
                 
-            } catch (error) {
-                console.error('Flip error:', error);
+            } else {
+                showNotification('Ошибка: ' + result.error, false);
                 coinImg.classList.remove('flipping');
-                showNotification('Ошибка соединения', false);
                 
                 // Re-enable buttons
                 flipButtons.forEach(button => {
@@ -300,8 +288,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     button.style.opacity = '1';
                 });
             }
-        });
+            
+        } catch (error) {
+            console.error('Flip error:', error);
+            coinImg.classList.remove('flipping');
+            showNotification('Ошибка соединения', false);
+            
+            // Re-enable buttons
+            flipButtons.forEach(button => {
+                button.disabled = false;
+                button.style.opacity = '1';
+            });
+        }
     });
+});
 
     // Close/Back button
     closeBtn.addEventListener('click', function() {

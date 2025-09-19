@@ -1843,7 +1843,7 @@ app.get('/api/rocket/current', async (req, res) => {
 
 
 // API: Начать игру Coinflip
-app.post('/api/coinflip/start', async (req, res) => {
+aapp.post('/api/coinflip/start', async (req, res) => {
     const { telegramId, betAmount, chosenSide, demoMode } = req.body;
 
     try {
@@ -1876,8 +1876,6 @@ app.post('/api/coinflip/start', async (req, res) => {
             } else {
                 updateCasinoDemoBank(betAmount);
             }
-            
-            updateRTPStats('demoBank', win ? 0 : betAmount, win ? winAmount : 0);
         } else {
             users.update({
                 ...user,
@@ -1889,8 +1887,6 @@ app.post('/api/coinflip/start', async (req, res) => {
             } else {
                 updateCasinoBank(betAmount);
             }
-            
-            updateRTPStats('realBank', win ? 0 : betAmount, win ? winAmount : 0);
         }
 
         // Сохраняем транзакцию

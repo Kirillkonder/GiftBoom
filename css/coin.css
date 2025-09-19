@@ -294,12 +294,26 @@
             gap: 8px;
         }
 
-        @keyframes coinFlip {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(180deg) scale(1.1); }
-            100% { transform: rotateY(360deg); }
-        }
+       .coin.flipping {
+    animation: coinFlip 2s ease-in-out;
+}
+
+@keyframes coinFlip {
+    0% { transform: rotateY(0deg); }
+    25% { transform: rotateY(180deg); }
+    50% { transform: rotateY(360deg); }
+    75% { transform: rotateY(540deg); }
+    100% { transform: rotateY(720deg); }
+}
+
+.flip-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
         .coin.flipping {
             animation: coinFlip 2s ease-in-out;
         }
+
+
+        
