@@ -473,6 +473,16 @@ body {
     transform: translate(-50%, -50%) rotate(-45deg);
     z-index: 2;
     transition: none;
+    /* Волновая анимация фона */
+    background: 
+        radial-gradient(circle at 30% 30%, rgba(30, 92, 184, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 70% 70%, rgba(100, 150, 255, 0.3) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(30, 92, 184, 0.1) 0%, rgba(100, 150, 255, 0.2) 100%);
+    animation: waveBackground 3s ease-in-out infinite;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 20px rgba(30, 92, 184, 0.3),
+        inset 0 0 20px rgba(100, 150, 255, 0.2);
 }
 
 .rocket.pulsating {
@@ -487,6 +497,55 @@ body {
     50% { 
         transform: translate(-50%, -50%) rotate(-45deg) scale(1.05); 
         filter: brightness(1.2) drop-shadow(0 0 12px rgba(30, 92, 184, 0.8)); 
+    }
+}
+
+/* Волновая анимация для фона ракетки */
+@keyframes waveBackground {
+    0% {
+        background: 
+            radial-gradient(circle at 30% 30%, rgba(30, 92, 184, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(100, 150, 255, 0.3) 0%, transparent 50%),
+            linear-gradient(45deg, rgba(30, 92, 184, 0.1) 0%, rgba(100, 150, 255, 0.2) 100%);
+        box-shadow: 
+            0 0 20px rgba(30, 92, 184, 0.3),
+            inset 0 0 20px rgba(100, 150, 255, 0.2);
+    }
+    25% {
+        background: 
+            radial-gradient(circle at 40% 60%, rgba(50, 120, 200, 0.5) 0%, transparent 60%),
+            radial-gradient(circle at 80% 40%, rgba(120, 170, 255, 0.4) 0%, transparent 60%),
+            linear-gradient(45deg, rgba(50, 120, 200, 0.2) 0%, rgba(120, 170, 255, 0.3) 100%);
+        box-shadow: 
+            0 0 25px rgba(50, 120, 200, 0.4),
+            inset 0 0 25px rgba(120, 170, 255, 0.3);
+    }
+    50% {
+        background: 
+            radial-gradient(circle at 60% 20%, rgba(70, 140, 220, 0.6) 0%, transparent 70%),
+            radial-gradient(circle at 20% 80%, rgba(140, 190, 255, 0.5) 0%, transparent 70%),
+            linear-gradient(45deg, rgba(70, 140, 220, 0.3) 0%, rgba(140, 190, 255, 0.4) 100%);
+        box-shadow: 
+            0 0 30px rgba(70, 140, 220, 0.5),
+            inset 0 0 30px rgba(140, 190, 255, 0.4);
+    }
+    75% {
+        background: 
+            radial-gradient(circle at 80% 50%, rgba(40, 110, 190, 0.5) 0%, transparent 60%),
+            radial-gradient(circle at 40% 20%, rgba(110, 160, 245, 0.4) 0%, transparent 60%),
+            linear-gradient(45deg, rgba(40, 110, 190, 0.2) 0%, rgba(110, 160, 245, 0.3) 100%);
+        box-shadow: 
+            0 0 25px rgba(40, 110, 190, 0.4),
+            inset 0 0 25px rgba(110, 160, 245, 0.3);
+    }
+    100% {
+        background: 
+            radial-gradient(circle at 30% 30%, rgba(30, 92, 184, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(100, 150, 255, 0.3) 0%, transparent 50%),
+            linear-gradient(45deg, rgba(30, 92, 184, 0.1) 0%, rgba(100, 150, 255, 0.2) 100%);
+        box-shadow: 
+            0 0 20px rgba(30, 92, 184, 0.3),
+            inset 0 0 20px rgba(100, 150, 255, 0.2);
     }
 }
 
