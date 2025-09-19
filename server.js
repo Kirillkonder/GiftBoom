@@ -69,18 +69,21 @@ const rocketBots = [
 
 
 function getUserDisplayName(userData) {
-    if (!userData) return `User_unknown`;
+    // Получаем данные пользователя из Telegram WebApp
+    const tg = global.Telegram?.WebApp;
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const tgUser = tg.initDataUnsafe.user;
+        if (tgUser.username) return tgUser.username;
+        if (tgUser.first_name && tgUser.last_name) return `${tgUser.first_name} ${tgUser.last_name}`;
+        if (tgUser.first_name) return tgUser.first_name;
+        return `User_${tgUser.id}`;
+    }
     
-    if (userData.username) {
-        return userData.username;
-    }
-    if (userData.first_name && userData.last_name) {
-        return `${userData.first_name} ${userData.last_name}`;
-    }
-    if (userData.first_name) {
-        return userData.first_name;
-    }
-    return `User_${userData.id || userData.telegram_id || 'unknown'}`;
+    // Если нет данных из Telegram, используем то что есть
+    if (userData.username) return userData.username;
+    if (userData.first_name && userData.last_name) return `${userData.first_name} ${userData.last_name}`;
+    if (userData.first_name) return userData.first_name;
+    return `User_${userData.telegram_id || userData.id || 'unknown'}`;
 }
 
 function initDatabase() {
@@ -1660,7 +1663,7 @@ app.post('/api/rocket/bet', async (req, res) => {
         // Добавляем игрока в текущую игру
        const player = {
             userId: telegramId,
-            name: getUserDisplayName(user), // Теперь передается корректный объект user
+            name: username || getUserDisplayName(user), // Теперь передается корректный объект user
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,
