@@ -10,7 +10,7 @@ const WebSocket = require('ws');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+let casinoDemoBank;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -1864,17 +1864,18 @@ app.post('/api/coinflip/start', async (req, res) => {
         const win = randomSide === chosenSide;
         const winAmount = win ? Math.floor(betAmount * 1.96) : 0;
 
-        // Обновляем баланс
+        // Обновляем баланс пользователя
         if (demoMode) {
             users.update({
                 ...user,
                 demo_balance: win ? user.demo_balance + winAmount : user.demo_balance - betAmount
             });
             
+            // Обновляем банк казино - ИСПРАВЛЕНО
             if (win) {
-                updateCasinoDemoBank(-winAmount);
+                updateCasinoDemoBank(-winAmount); // Казино выплачивает выигрыш
             } else {
-                updateCasinoDemoBank(betAmount);
+                updateCasinoDemoBank(betAmount); // Игрок проиграл - ставка в банк
             }
         } else {
             users.update({
@@ -1882,10 +1883,11 @@ app.post('/api/coinflip/start', async (req, res) => {
                 main_balance: win ? user.main_balance + winAmount : user.main_balance - betAmount
             });
             
+            // Обновляем банк казино - ИСПРАВЛЕНО
             if (win) {
-                updateCasinoBank(-winAmount);
+                updateCasinoBank(-winAmount); // Казино выплачивает выигрыш
             } else {
-                updateCasinoBank(betAmount);
+                updateCasinoBank(betAmount); // Игрок проиграл - ставка в банк
             }
         }
 

@@ -214,7 +214,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Flip buttons
-   flipButtons.forEach(btn => {
+   // В функции flipButtons исправьте обработку ошибок
+flipButtons.forEach(btn => {
     btn.addEventListener('click', async function() {
         const side = this.getAttribute('data-side');
         const betAmount = parseInt(betInput.value) || 1;
@@ -295,7 +296,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     });
 });
-
     // Close/Back button
     closeBtn.addEventListener('click', function() {
         // Go back to previous page or close
