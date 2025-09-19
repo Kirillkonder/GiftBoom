@@ -311,6 +311,11 @@
     cursor: not-allowed;
 }
 
+.flip-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(247, 147, 30, 0.4);
+}
+
         .coin.flipping {
             animation: coinFlip 2s ease-in-out;
         }

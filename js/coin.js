@@ -1,4 +1,6 @@
 // Initialize app
+console.log('Coinflip game initialized');
+console.log('Telegram WebApp available:', !!window.Telegram?.WebApp);
 document.addEventListener('DOMContentLoaded', function() {
     const coinImg = document.getElementById('coinImage');
     const betInput = document.getElementById('betAmount');
@@ -55,24 +57,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Get user balance from server
     async function getUserBalance() {
-        try {
-            const response = await fetch(`/api/user/balance/${userData.telegramId}`);
-            const data = await response.json();
-            
-            if (data.error) {
-                console.error('Balance fetch error:', data.error);
-                return;
-            }
-            
-            userData.mainBalance = data.main_balance;
-            userData.demoBalance = data.demo_balance;
-            userData.demoMode = data.demo_mode;
-            userData.isAdmin = data.is_admin;
-            
-        } catch (error) {
-            console.error('Failed to fetch balance:', error);
+    try {
+        const response = await fetch(`/api/user/balance/${userData.telegramId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Balance fetch error:', data.error);
+            return;
         }
+        
+        userData.mainBalance = data.main_balance;
+        userData.demoBalance = data.demo_balance;
+        userData.demoMode = data.demo_mode;
+        userData.isAdmin = data.is_admin;
+        
+        // ДОБАВИТЬ ЭТУ СТРОКУ:
+        updateBalanceDisplay();
+        
+    } catch (error) {
+        console.error('Failed to fetch balance:', error);
     }
+}
 
     // Update balance display
     function updateBalanceDisplay() {
@@ -209,12 +214,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Flip buttons
-    flipButtons.forEach(btn => {
+   flipButtons.forEach(btn => {
     btn.addEventListener('click', async function() {
         const side = this.getAttribute('data-side');
         const betAmount = parseInt(betInput.value) || 1;
         
-        // Check balance
+        // Проверка баланса
         const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
         if (betAmount > currentBalance) {
             showNotification('Недостаточно средств!', false);
@@ -226,17 +231,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Disable buttons during flip
+        // Блокируем кнопки
         flipButtons.forEach(button => {
             button.disabled = true;
             button.style.opacity = '0.5';
         });
         
-        // Add flip animation
+        // Анимация
         coinImg.classList.add('flipping');
         
         try {
-            // Start coinflip game
             const response = await fetch('/api/coinflip/start', {
                 method: 'POST',
                 headers: {
@@ -253,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.success) {
-                // Update balance
+                // Обновляем баланс
                 if (userData.demoMode) {
                     userData.demoBalance = result.new_balance;
                 } else {
@@ -261,45 +265,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 updateBalanceDisplay();
                 
-                // Show result after animation
+                // Показываем результат
                 setTimeout(() => {
                     coinImg.classList.remove('flipping');
-                    
                     if (result.win) {
                         showNotification(`Вы выиграли ${result.win_amount} TON!`, true);
                     } else {
-                        showNotification('Вы проиграли! Попробуйте еще раз.', false);
+                        showNotification(`Вы проиграли ${betAmount} TON!`, false);
                     }
-                    
-                    // Re-enable buttons
-                    flipButtons.forEach(button => {
-                        button.disabled = false;
-                        button.style.opacity = '1';
-                    });
-                }, 2000);
+                }, 1000);
                 
             } else {
                 showNotification('Ошибка: ' + result.error, false);
                 coinImg.classList.remove('flipping');
-                
-                // Re-enable buttons
-                flipButtons.forEach(button => {
-                    button.disabled = false;
-                    button.style.opacity = '1';
-                });
             }
             
         } catch (error) {
             console.error('Flip error:', error);
             coinImg.classList.remove('flipping');
             showNotification('Ошибка соединения', false);
-            
-            // Re-enable buttons
+        }
+        
+        // Разблокируем кнопки через 2 секунды
+        setTimeout(() => {
             flipButtons.forEach(button => {
                 button.disabled = false;
                 button.style.opacity = '1';
             });
-        }
+        }, 2000);
     });
 });
 
@@ -317,23 +310,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Input validation - only allow whole numbers
-    betInput.addEventListener('input', function() {
-        // Remove any non-digit characters
-        this.value = this.value.replace(/[^0-9]/g, '');
-        
-        // Ensure minimum bet of 1
-        if (!this.value || parseInt(this.value) < 1) {
-            this.value = '1';
-        }
-        
-        // Limit max bet
-        const maxBet = Math.min(userData.demoMode ? userData.demoBalance : userData.mainBalance, 1000);
-        if (parseInt(this.value) > maxBet) {
-            this.value = maxBet.toString();
-        }
-        
-        updatePotentialWin();
-    });
+   betInput.addEventListener('input', function() {
+    // Сохраняем курсор позицию
+    const cursorPosition = this.selectionStart;
+    
+    // Удаляем все кроме цифр
+    let newValue = this.value.replace(/[^0-9]/g, '');
+    
+    // Если пусто или 0, ставим 1
+    if (!newValue || parseInt(newValue) < 1) {
+        newValue = '1';
+    }
+    
+    // Получаем текущий баланс
+    const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
+    const maxBet = Math.min(currentBalance, 1000);
+    
+    // Ограничиваем максимальную ставку
+    if (parseInt(newValue) > maxBet) {
+        newValue = maxBet.toString();
+    }
+    
+    this.value = newValue;
+    
+    // Восстанавливаем позицию курсора
+    this.setSelectionRange(cursorPosition, cursorPosition);
+    
+    updatePotentialWin();
+});
 
     // Prevent paste with non-numeric values
     betInput.addEventListener('paste', function(e) {
