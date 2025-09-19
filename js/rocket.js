@@ -10,6 +10,8 @@ let allOnlineUsers = 0;
 let currentBetAmount = 5;
 
 
+
+
 function decreaseBet() {
     const betInput = document.getElementById('betAmount');
     let value = parseFloat(betInput.value);
@@ -384,18 +386,6 @@ async function updateUserBalance(winAmount = 0) {
     }
 }
 
-function getUserDisplayName(userData) {
-    if (userData.username) {
-        return userData.username;
-    }
-    if (userData.first_name && userData.last_name) {
-        return `${userData.first_name} ${userData.last_name}`;
-    }
-    if (userData.first_name) {
-        return userData.first_name;
-    }
-    return `User_${userData.id}`;
-}
 
 function updatePlayersList(players) {
     const playersList = document.getElementById('playersList');

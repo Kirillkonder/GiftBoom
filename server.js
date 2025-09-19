@@ -67,6 +67,20 @@ const rocketBots = [
   { name: "Bot_3", minBet: 0.5, maxBet: 5, risk: "low" }
 ];
 
+
+function getUserDisplayName(userData) {
+    if (userData.username) {
+        return userData.username;
+    }
+    if (userData.first_name && userData.last_name) {
+        return `${userData.first_name} ${userData.last_name}`;
+    }
+    if (userData.first_name) {
+        return userData.first_name;
+    }
+    return `User_${userData.id}`;
+}
+
 function initDatabase() {
     return new Promise((resolve) => {
         db = new Loki(dbPath, {
@@ -1642,16 +1656,16 @@ app.post('/api/rocket/bet', async (req, res) => {
         }
 
         // Добавляем игрока в текущую игру
-       const player = {
+      const player = {
             userId: telegramId,
-            name: getUserDisplayName(userData), // Используем реальное имя
+            name: getUserDisplayName(user), // user - это объект пользователя из базы
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,
             cashoutMultiplier: null,
             winAmount: 0,
             isBot: false
-        };
+        }
 
         rocketGame.players.push(player);
 
