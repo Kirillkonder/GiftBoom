@@ -36,26 +36,46 @@ body {
         40px 40px;
     
     /* Анимация волны */
-    animation: grid-wave 8s ease-in-out infinite;
+    animation: grid-wave 12s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Анимация волны для сетки */
 @keyframes grid-wave {
-    0%, 100% {
-        transform: translateY(0px) translateX(0px);
+    0% {
+        transform: translateY(0px) translateX(0px) scale(1);
         background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px;
     }
+    12.5% {
+        transform: translateY(-8px) translateX(3px) scale(1.01);
+        background-position: 15px 8px, 8px 15px, 8px 4px, 4px 8px;
+    }
     25% {
-        transform: translateY(-10px) translateX(5px);
-        background-position: 20px 10px, 10px 20px, 10px 5px, 5px 10px;
+        transform: translateY(-12px) translateX(6px) scale(1.02);
+        background-position: 30px 12px, 12px 30px, 15px 6px, 6px 15px;
+    }
+    37.5% {
+        transform: translateY(-8px) translateX(9px) scale(1.01);
+        background-position: 45px 8px, 8px 45px, 22px 4px, 4px 22px;
     }
     50% {
-        transform: translateY(0px) translateX(10px);
-        background-position: 40px 0px, 0px 40px, 20px 0px, 0px 20px;
+        transform: translateY(0px) translateX(12px) scale(1);
+        background-position: 60px 0px, 0px 60px, 30px 0px, 0px 30px;
+    }
+    62.5% {
+        transform: translateY(8px) translateX(9px) scale(1.01);
+        background-position: 45px -8px, -8px 45px, 22px -4px, -4px 22px;
     }
     75% {
-        transform: translateY(10px) translateX(5px);
-        background-position: 20px -10px, -10px 20px, 10px -5px, -5px 10px;
+        transform: translateY(12px) translateX(6px) scale(1.02);
+        background-position: 30px -12px, -12px 30px, 15px -6px, -6px 15px;
+    }
+    87.5% {
+        transform: translateY(8px) translateX(3px) scale(1.01);
+        background-position: 15px -8px, -8px 15px, 8px -4px, -4px 8px;
+    }
+    100% {
+        transform: translateY(0px) translateX(0px) scale(1);
+        background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px;
     }
 }
 
@@ -1105,4 +1125,3 @@ body {
         font-size: 13px;
     }
 }
-
