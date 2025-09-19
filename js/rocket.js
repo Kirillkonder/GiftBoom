@@ -436,23 +436,15 @@ function updatePlayersList(players) {
             const avatar = document.createElement('div');
             avatar.className = 'player-avatar';
             
+            // Разные эмодзи для ботов и реальных игроков
             if (player.isBot) {
-                // Для ботов - эмодзи как раньше
                 const botEmojis = ['🤖', '👾', '🦾', '🔧', '⚙️', '💻', '🎮', '🧠'];
                 avatar.textContent = botEmojis[Math.floor(Math.random() * botEmojis.length)];
                 avatar.style.backgroundColor = '#ff6b35';
             } else {
-                // Для реальных игроков - Telegram аватарка
-                avatar.innerHTML = `
-                    <img src="https://t.me/i/userpic/320/${player.userId}.jpg" 
-                         alt="${player.name}" 
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                         class="telegram-avatar">
-                    <div class="avatar-fallback" style="display: none;">
-                        ${getInitials(player.name)}
-                    </div>
-                `;
-                avatar.classList.add('telegram-avatar-container');
+                const userEmojis = ['👨', '👩', '🧑', '👨‍🚀', '👩‍🚀', '🦸', '🦹', '🎯'];
+                avatar.textContent = userEmojis[Math.floor(Math.random() * userEmojis.length)];
+                avatar.style.backgroundColor = '#1e5cb8';
             }
             
             const infoContainer = document.createElement('div');
@@ -460,8 +452,14 @@ function updatePlayersList(players) {
             
             const nameSpan = document.createElement('span');
             nameSpan.className = 'player-name';
-            // Используем реальное имя пользователя вместо User_ID
-            nameSpan.textContent = player.name || `User_${player.userId}`;
+            
+            // ИСПРАВЛЕНИЕ: Используем реальное имя из Telegram
+            if (player.isBot) {
+                nameSpan.textContent = player.name;
+            } else {
+                // Для реальных пользователей используем имя из Telegram
+                nameSpan.textContent = player.telegramName || player.name || `User_${player.userId}`;
+            }
             
             const betSpan = document.createElement('span');
             betSpan.className = 'player-bet';
@@ -514,6 +512,12 @@ function updatePlayersList(players) {
             const betSpan = existingPlayer.querySelector('.player-bet');
             const playerItem = existingPlayer;
             
+            // Обновляем имя на случай, если изменилось
+            const nameSpan = existingPlayer.querySelector('.player-name');
+            if (nameSpan && !player.isBot) {
+                nameSpan.textContent = player.telegramName || player.name || `User_${player.userId}`;
+            }
+            
             // Отображаем выигрыш или проигрыш
             if (player.cashedOut) {
                 // Игрок выиграл
@@ -549,17 +553,6 @@ function updatePlayersList(players) {
     });
 }
 
-// Вспомогательная функция для получения инициалов
-function getInitials(name) {
-    if (!name) return '👤';
-    
-    const names = name.split(' ');
-    if (names.length === 1) {
-        return name.charAt(0).toUpperCase();
-    }
-    
-    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
-}
 
 
 function updateHistory(history) {
