@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TON Casino - Монетка</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="header"></div>
+        
+        <div class="game-container">
+            <h2>🪙 Игра "Монетка"</h2>
+            <p>Страница в разработке...</p>
+            <p>Скоро здесь появится игра "Монетка"!</p>
+            
+            <button class="btn btn-primary" onclick="goBack()">
+                ← Назад в казино
+            </button>
+        </div>
+    </div>
+
+    <script src="components/header.js"></script>
+    <script>
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+        
+        // Загружаем header
+        document.addEventListener('DOMContentLoaded', function() {
+            const header = document.getElementById('header');
+            if (window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                header.innerHTML = `
+                    <div class="header">
+                        <div class="user-header">
+                            <div class="avatar">👤</div>
+                            <div class="user-info">
+                                <div class="username">${user.first_name || user.username || 'Пользователь'}</div>
+                                <div class="user-id">ID: ${user.id}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
