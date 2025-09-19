@@ -1621,7 +1621,7 @@ app.post('/api/rocket/bet', async (req, res) => {
         const balance = demoMode ? user.demo_balance : user.main_balance;
         
         if (balance < betAmount) {
-            return res.status(404).json({ error: 'Недостаточно средств' });
+            return res.status(400).json({ error: 'Недостаточно средств' });
         }
 
         // Списываем ставку
@@ -1641,23 +1641,10 @@ app.post('/api/rocket/bet', async (req, res) => {
             updateRTPStats('realBank', betAmount, 0);
         }
 
-        // Получаем имя пользователя из Telegram
-        const tg = window.Telegram.WebApp;
-        let telegramName = `User_${telegramId}`;
-        
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const tgUser = tg.initDataUnsafe.user;
-            telegramName = tgUser.first_name || tgUser.username || telegramName;
-            if (tgUser.last_name) {
-                telegramName += ` ${tgUser.last_name}`;
-            }
-        }
-
         // Добавляем игрока в текущую игру
         const player = {
             userId: telegramId,
-            name: `User_${telegramId}`, // Для обратной совместимости
-            telegramName: telegramName, // Новое поле с реальным именем
+            name: `User_${telegramId}`,
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,

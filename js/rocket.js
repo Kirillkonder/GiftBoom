@@ -452,14 +452,7 @@ function updatePlayersList(players) {
             
             const nameSpan = document.createElement('span');
             nameSpan.className = 'player-name';
-            
-            // ИСПРАВЛЕНИЕ: Используем реальное имя из Telegram
-            if (player.isBot) {
-                nameSpan.textContent = player.name;
-            } else {
-                // Для реальных пользователей используем имя из Telegram
-                nameSpan.textContent = player.telegramName || player.name || `User_${player.userId}`;
-            }
+            nameSpan.textContent = player.name;
             
             const betSpan = document.createElement('span');
             betSpan.className = 'player-bet';
@@ -512,12 +505,6 @@ function updatePlayersList(players) {
             const betSpan = existingPlayer.querySelector('.player-bet');
             const playerItem = existingPlayer;
             
-            // Обновляем имя на случай, если изменилось
-            const nameSpan = existingPlayer.querySelector('.player-name');
-            if (nameSpan && !player.isBot) {
-                nameSpan.textContent = player.telegramName || player.name || `User_${player.userId}`;
-            }
-            
             // Отображаем выигрыш или проигрыш
             if (player.cashedOut) {
                 // Игрок выиграл
@@ -552,7 +539,6 @@ function updatePlayersList(players) {
         }
     });
 }
-
 
 
 function updateHistory(history) {
