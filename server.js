@@ -91,7 +91,7 @@ function initDatabase() {
                     users.insert({
                         telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
                         main_balance: 0,
-                        demo_balance: 1000,
+                        demo_balance: 50, // 50 TON вместо 1000
                         created_at: new Date(),
                         demo_mode: false,
                         is_admin: true
@@ -118,7 +118,7 @@ function initDatabase() {
                 if (!casinoDemoBank) {
                     casinoDemoBank = db.addCollection('casino_demo_bank');
                     casinoDemoBank.insert({
-                        total_balance: 10000, // 10000 TON демо-банк
+                        total_balance: 500, // 500 TON демо-банк вместо 10000
                         owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
                         created_at: new Date(),
                         updated_at: new Date()
@@ -1316,7 +1316,7 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
             const newUser = users.insert({
                 telegram_id: telegramId,
                 main_balance: 0,
-                demo_balance: isAdminUser ? 1000 : 0, // Демо баланс только для админов
+                demo_balance: isAdminUser ? 50 : 0, // 50 TON для админов вместо 1000
                 created_at: new Date(),
                 demo_mode: false,
                 is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
