@@ -69,6 +69,8 @@ const rocketBots = [
 
 
 function getUserDisplayName(userData) {
+    if (!userData) return `User_unknown`;
+    
     if (userData.username) {
         return userData.username;
     }
@@ -78,7 +80,7 @@ function getUserDisplayName(userData) {
     if (userData.first_name) {
         return userData.first_name;
     }
-    return `User_${userData.id}`;
+    return `User_${userData.id || userData.telegram_id || 'unknown'}`;
 }
 
 function initDatabase() {
@@ -1656,16 +1658,16 @@ app.post('/api/rocket/bet', async (req, res) => {
         }
 
         // Добавляем игрока в текущую игру
-      const player = {
+       const player = {
             userId: telegramId,
-            name: getUserDisplayName(user), // user - это объект пользователя из базы
+            name: getUserDisplayName(user), // Теперь передается корректный объект user
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,
             cashoutMultiplier: null,
             winAmount: 0,
             isBot: false
-        }
+        };
 
         rocketGame.players.push(player);
 
