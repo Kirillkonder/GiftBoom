@@ -443,7 +443,7 @@ function updatePlayersList(players) {
             if (player.isBot) {
                 const botEmojis = ['👨', '👩', '🧑', '👨‍🚀', '👩‍🚀', '🦸', '🦹', '🎯'];
                 avatar.textContent = botEmojis[Math.floor(Math.random() * botEmojis.length)];
-                avatar.style.backgroundColor = '#ff6b35';
+                avatar.style.backgroundColor = '#1e5cb8';
             } else {
                 const userEmojis = ['👨', '👩', '🧑', '👨‍🚀', '👩‍🚀', '🦸', '🦹', '🎯'];
                 avatar.textContent = userEmojis[Math.floor(Math.random() * userEmojis.length)];
