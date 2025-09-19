@@ -76,96 +76,6 @@ function hideButtonLoading(buttonId) {
     button.classList.remove('loading');
 }
 
-// Подключаем CSS для аватарок Telegram
-const telegramCSS = document.createElement('link');
-telegramCSS.rel = 'stylesheet';
-telegramCSS.href = '/src/assets/telegram-avatars.css';
-document.head.appendChild(telegramCSS);
-
-// Подключаем утилиты для Telegram-стиля
-const script = document.createElement('script');
-script.src = '/src/utils/telegram-utils.js';
-document.head.appendChild(script);
-
-// Telegram-style utilities (встроенные функции)
-const telegramNicknames = [
-    'Лунный_Странник', 'Звездный_Пилот', 'Космо_Рейдер', 'Нео_Гемблер',
-    'Крипто_Лорд', 'Квант_Трейдер', 'Блок_Воин', 'Цифро_Маг',
-    'Тон_Охотник', 'Сатоши_Фанат', 'Эфир_Мастер', 'Деген_Про',
-    'Ракета_Эксперт', 'Краш_Игрок', 'Луна_Тигр', 'Марс_Волк',
-    'Солар_Орел', 'Галакс_Лев', 'Стеллар_Кот', 'Орбит_Лис'
-];
-
-const botEmojis = ['🤖', '👾', '🦾', '🔧', '⚙️', '💻', '🎮', '🧠', '⚡', '🚀'];
-const avatarColors = [
-    'avatar-color-1', 'avatar-color-2', 'avatar-color-3', 'avatar-color-4',
-    'avatar-color-5', 'avatar-color-6', 'avatar-color-7', 'avatar-color-8'
-];
-
-function getInitials(name) {
-    if (!name) return '??';
-    const words = name.trim().split(/\s+/);
-    if (words.length === 1) {
-        return words[0].substring(0, 2).toUpperCase();
-    }
-    return (words[0][0] + words[1][0]).toUpperCase();
-}
-
-function getAvatarColor(name) {
-    if (!name) return avatarColors[0];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % avatarColors.length;
-    return avatarColors[index];
-}
-
-function generateTelegramNickname(playerId) {
-    const hash = playerId ? playerId.toString() : Math.random().toString();
-    let hashNumber = 0;
-    for (let i = 0; i < hash.length; i++) {
-        hashNumber = hash.charCodeAt(i) + ((hashNumber << 5) - hashNumber);
-    }
-    const index = Math.abs(hashNumber) % telegramNicknames.length;
-    return telegramNicknames[index];
-}
-
-function createTelegramAvatar(player) {
-    const avatar = document.createElement('div');
-    avatar.className = 'player-avatar';
-    
-    if (player.isBot) {
-        avatar.classList.add('bot-avatar');
-        const emoji = botEmojis[Math.floor(Math.random() * botEmojis.length)];
-        avatar.textContent = emoji;
-    } else {
-        avatar.classList.add('user-avatar');
-        let displayName = player.name;
-        if (!displayName || displayName.startsWith('Bot_') || displayName === 'Гость') {
-            displayName = generateTelegramNickname(player.id || player.name);
-        }
-        const initials = getInitials(displayName);
-        const colorClass = getAvatarColor(displayName);
-        avatar.classList.add(colorClass);
-        avatar.textContent = initials;
-        avatar.setAttribute('title', displayName);
-    }
-    
-    return avatar;
-}
-
-function getTelegramDisplayName(player) {
-    if (player.isBot) {
-        return player.name;
-    }
-    let displayName = player.name;
-    if (!displayName || displayName.startsWith('Bot_') || displayName === 'Гость') {
-        displayName = generateTelegramNickname(player.id || player.name);
-    }
-    return displayName;
-}
-
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     initializeGame();
@@ -522,15 +432,27 @@ function updatePlayersList(players) {
             const playerItem = document.createElement('div');
             playerItem.className = 'player-item';
             
-            // Создаем аватарку в стиле Telegram
-            const avatar = createTelegramAvatar(player);
+            // Создаем аватарку
+            const avatar = document.createElement('div');
+            avatar.className = 'player-avatar';
+            
+            // Разные эмодзи для ботов и реальных игроков
+            if (player.isBot) {
+                const botEmojis = ['🤖', '👾', '🦾', '🔧', '⚙️', '💻', '🎮', '🧠'];
+                avatar.textContent = botEmojis[Math.floor(Math.random() * botEmojis.length)];
+                avatar.style.backgroundColor = '#ff6b35';
+            } else {
+                const userEmojis = ['👨', '👩', '🧑', '👨‍🚀', '👩‍🚀', '🦸', '🦹', '🎯'];
+                avatar.textContent = userEmojis[Math.floor(Math.random() * userEmojis.length)];
+                avatar.style.backgroundColor = '#1e5cb8';
+            }
             
             const infoContainer = document.createElement('div');
             infoContainer.className = 'player-info-container';
             
             const nameSpan = document.createElement('span');
-            nameSpan.className = `player-name ${player.isBot ? 'bot-name' : 'user-name'}`;
-            nameSpan.textContent = getTelegramDisplayName(player);
+            nameSpan.className = 'player-name';
+            nameSpan.textContent = player.name;
             
             const betSpan = document.createElement('span');
             betSpan.className = 'player-bet';
