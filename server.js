@@ -1843,7 +1843,7 @@ app.get('/api/rocket/current', async (req, res) => {
 
 
 // API: Начать игру Coinflip
-aapp.post('/api/coinflip/start', async (req, res) => {
+app.post('/api/coinflip/start', async (req, res) => {
     const { telegramId, betAmount, chosenSide, demoMode } = req.body;
 
     try {
