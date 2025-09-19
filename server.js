@@ -71,9 +71,10 @@ const rocketBots = [
   { name: "spaceman", minBet: 4, maxBet: 25, risk: "high" },
   { name: "moonrider", minBet: 0.8, maxBet: 6, risk: "low" },
   { name: "stargazer", minBet: 2.5, maxBet: 18, risk: "medium" },
-  { name: "cosmicbet", minBet: 6, maxBet: 30, risk: "high" }
+  { name: "cosmicbet", minBet: 6, maxBet: 30, risk: "high" },
+  { name: "lucky777", minBet: 1.5, maxBet: 7, risk: "low" },
+  { name: "risk_taker", minBet: 8, maxBet: 35, risk: "high" }
 ];
-
 
 function getUserDisplayName(userData) {
     // Получаем данные пользователя из Telegram WebApp
@@ -696,8 +697,8 @@ function startRocketGame() {
 // server.js - исправленная функция startRocketFlight
 function startRocketFlight() {
   const startTime = Date.now();
-  let baseSpeed = 0.1; // Базовая скорость
-  let acceleration = 0.05; // Ускорение
+  let baseSpeed = 0.1;
+  let acceleration = 0.05;
   
   const flightInterval = setInterval(() => {
     if (rocketGame.status !== 'flying') {
@@ -706,16 +707,55 @@ function startRocketFlight() {
     }
 
     const elapsed = (Date.now() - startTime) / 1000;
-    
-    // Экспоненциальное увеличение множителя с ускорением
-    // Чем больше времени прошло, тем быстрее растет множитель
     rocketGame.multiplier = 1.00 + (elapsed * baseSpeed * Math.exp(elapsed * acceleration));
 
-    // Проверяем автоматический вывод у ботов
+    // ОБНОВЛЕННАЯ ЛОГИКА ДЛЯ БОТОВ - РЕАЛИСТИЧНЫЕ ВЫИГРЫШИ
     rocketGame.players.forEach(player => {
-      if (player.isBot && !player.cashedOut && rocketGame.multiplier >= player.autoCashout) {
-        player.cashedOut = true;
-        player.winAmount = player.betAmount * rocketGame.multiplier;
+      if (player.isBot && !player.cashedOut) {
+        // Шанс выигрыша зависит от risk-профиля бота
+        let winChance;
+        switch(player.risk) {
+          case 'low':
+            winChance = 0.6; // 60% шанс выиграть
+            break;
+          case 'medium':
+            winChance = 0.5; // 50% шанс выиграть
+            break;
+          case 'high':
+            winChance = 0.4; // 40% шанс выиграть
+            break;
+          default:
+            winChance = 0.5;
+        }
+
+        // Реалистичная логика вывода
+        if (rocketGame.multiplier >= player.autoCashout) {
+          // Бот всегда выводит на своем autoCashout
+          player.cashedOut = true;
+          player.winAmount = player.betAmount * player.autoCashout;
+          player.cashoutMultiplier = player.autoCashout;
+          
+          // Визуальное логирование для реалистичности
+          console.log(`🤖 Бот ${player.name} выиграл ${player.winAmount.toFixed(2)} TON (${player.autoCashout.toFixed(2)}x)`);
+          
+        } else if (rocketGame.multiplier > 1.5 && Math.random() < 0.01) {
+          // 1% шанс что бот испугается и выведет раньше
+          const earlyCashout = rocketGame.multiplier * (0.8 + Math.random() * 0.4);
+          player.cashedOut = true;
+          player.winAmount = player.betAmount * earlyCashout;
+          player.cashoutMultiplier = earlyCashout;
+          
+          console.log(`🤖 Бот ${player.name} испугался и вывел ${player.winAmount.toFixed(2)} TON (${earlyCashout.toFixed(2)}x)`);
+        }
+        
+        // Шанс что бот проиграет (не успеет вывести)
+        if (!player.cashedOut && rocketGame.multiplier >= rocketGame.crashPoint * 0.9) {
+          // Если множитель близок к крашу, бот может "не успеть"
+          if (Math.random() < 0.3) {
+            player.cashedOut = false; // Проиграл
+            console.log(`🤖 Бот ${player.name} не успел вывести и проиграл ${player.betAmount.toFixed(2)} TON`);
+          }
+        }
       }
     });
 
@@ -723,25 +763,49 @@ function startRocketFlight() {
     if (rocketGame.multiplier >= rocketGame.crashPoint) {
       rocketGame.status = 'crashed';
       clearInterval(flightInterval);
+      
+      // Обрабатываем проигравших ботов
+      rocketGame.players.forEach(player => {
+        if (player.isBot && !player.cashedOut) {
+          console.log(`🤖 Бот ${player.name} проиграл ${player.betAmount.toFixed(2)} TON при краше ${rocketGame.crashPoint.toFixed(2)}x`);
+        }
+      });
+      
       processRocketGameEnd();
     }
 
     broadcastRocketUpdate();
-  }, 100); // Обновляем каждые 100ms
+  }, 100);
 }
 
 
 
 function processRocketGameEnd() {
+  // Статистика по ботам
+  const botStats = rocketGame.players.filter(p => p.isBot);
+  const winningBots = botStats.filter(p => p.cashedOut);
+  const losingBots = botStats.filter(p => !p.cashedOut);
+  
+  console.log(`📊 Статистика ботов: ${winningBots.length} выиграли, ${losingBots.length} проиграли`);
+  winningBots.forEach(bot => {
+    console.log(`   🎉 ${bot.name}: +${bot.winAmount.toFixed(2)} TON (${bot.cashoutMultiplier.toFixed(2)}x)`);
+  });
+  losingBots.forEach(bot => {
+    console.log(`   💥 ${bot.name}: -${bot.betAmount.toFixed(2)} TON`);
+  });
+
   // Сохраняем игру в историю
   const gameRecord = rocketGames.insert({
     crashPoint: rocketGame.crashPoint,
     maxMultiplier: rocketGame.multiplier,
     startTime: new Date(rocketGame.startTime),
     endTime: new Date(),
-    playerCount: rocketGame.players.length,
+    playerCount: rocketGame.players.filter(p => !p.isBot).length, // Только реальные игроки
+    botCount: rocketGame.players.filter(p => p.isBot).length,
     totalBets: rocketGame.players.reduce((sum, p) => sum + p.betAmount, 0),
-    totalPayouts: rocketGame.players.reduce((sum, p) => sum + (p.cashedOut ? p.winAmount : 0), 0)
+    totalPayouts: rocketGame.players.reduce((sum, p) => sum + (p.cashedOut ? p.winAmount : 0), 0),
+    botWins: winningBots.length,
+    botLosses: losingBots.length
   });
 
   // Обрабатываем выплаты для реальных игроков
@@ -751,7 +815,6 @@ function processRocketGameEnd() {
       if (user) {
         if (player.cashedOut) {
           // Игрок выиграл - выплачиваем выигрыш (уже был начислен при cashout)
-          // Просто сохраняем транзакцию
           transactions.insert({
             user_id: user.$loki,
             amount: player.winAmount,
@@ -801,7 +864,9 @@ function processRocketGameEnd() {
   // Добавляем в историю
   rocketGame.history.unshift({
     crashPoint: rocketGame.crashPoint,
-    multiplier: rocketGame.multiplier
+    multiplier: rocketGame.multiplier,
+    botWins: winningBots.length,
+    botLosses: losingBots.length
   });
 
   if (rocketGame.history.length > 50) {
