@@ -1630,21 +1630,21 @@ app.post('/api/rocket/bet', async (req, res) => {
                 ...user,
                 demo_balance: user.demo_balance - betAmount
             });
-            updateCasinoDemoBank(betAmount); // Ставка идет в демо-банк
+            updateCasinoDemoBank(betAmount);
             updateRTPStats('demoBank', betAmount, 0);
         } else {
             users.update({
                 ...user,
                 main_balance: user.main_balance - betAmount
             });
-            updateCasinoBank(betAmount); // Ставка идет в реальный банк
+            updateCasinoBank(betAmount);
             updateRTPStats('realBank', betAmount, 0);
         }
 
-        // Добавляем игрока в текущую игру
+        // Добавляем игрока в текущую игру с реальным именем
         const player = {
             userId: telegramId,
-            name: `User_${telegramId}`,
+            name: user.first_name || `User_${telegramId}`, // Используем реальное имя
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,
