@@ -1841,6 +1841,113 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
+
+// API: Начать игру Coinflip
+app.post('/api/coinflip/start', async (req, res) => {
+    const { telegramId, betAmount, chosenSide, demoMode } = req.body;
+
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const balance = demoMode ? user.demo_balance : user.main_balance;
+        
+        if (balance < betAmount) {
+            return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+
+        // Генерируем результат (50/50 шанс)
+        const randomSide = Math.random() < 0.5 ? 'heads' : 'tails';
+        const win = randomSide === chosenSide;
+        const winAmount = win ? Math.floor(betAmount * 1.96) : 0;
+
+        // Обновляем баланс
+        if (demoMode) {
+            users.update({
+                ...user,
+                demo_balance: win ? user.demo_balance + winAmount : user.demo_balance - betAmount
+            });
+            
+            if (win) {
+                updateCasinoDemoBank(-winAmount);
+            } else {
+                updateCasinoDemoBank(betAmount);
+            }
+            
+            updateRTPStats('demoBank', win ? 0 : betAmount, win ? winAmount : 0);
+        } else {
+            users.update({
+                ...user,
+                main_balance: win ? user.main_balance + winAmount : user.main_balance - betAmount
+            });
+            
+            if (win) {
+                updateCasinoBank(-winAmount);
+            } else {
+                updateCasinoBank(betAmount);
+            }
+            
+            updateRTPStats('realBank', win ? 0 : betAmount, win ? winAmount : 0);
+        }
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            user_id: user.$loki,
+            amount: win ? winAmount : -betAmount,
+            type: win ? 'coinflip_win' : 'coinflip_loss',
+            status: 'completed',
+            demo_mode: demoMode,
+            game_details: {
+                chosen_side: chosenSide,
+                result_side: randomSide,
+                bet_amount: betAmount,
+                win_amount: winAmount
+            },
+            created_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            win: win,
+            win_amount: winAmount,
+            result_side: randomSide,
+            new_balance: demoMode ? 
+                (win ? user.demo_balance + winAmount : user.demo_balance - betAmount) :
+                (win ? user.main_balance + winAmount : user.main_balance - betAmount)
+        });
+
+    } catch (error) {
+        console.error('Coinflip start error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Получить историю Coinflip
+app.get('/api/coinflip/history/:telegramId', async (req, res) => {
+    const telegramId = parseInt(req.params.telegramId);
+
+    try {
+        const user = users.findOne({ telegram_id: telegramId });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const coinflipHistory = transactions.find({
+            user_id: user.$loki,
+            type: { $in: ['coinflip_win', 'coinflip_loss'] }
+        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
+
+        res.json(coinflipHistory);
+    } catch (error) {
+        console.error('Get coinflip history error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
     try {
