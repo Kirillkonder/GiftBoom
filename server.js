@@ -222,12 +222,12 @@ function updateCasinoDemoBank(amount) {
     });
 }
 
-// Функция синхронизации баланса
+// Функция синхронизации баланса с реальным Crypto Bot
 async function syncCasinoBalance() {
     try {
-        console.log('Синхронизируем баланс с Crypto Bot...');
+        console.log('🔄 Синхронизируем реальный баланс с Crypto Bot...');
         
-        const response = await axios.post('https://pay.crypt.bot/api/getBalance', {}, {
+        const response = await axios.get('https://pay.crypt.bot/api/getBalance', {
             headers: {
                 'Crypto-Pay-API-Token': process.env.CRYPTO_PAY_MAINNET_TOKEN,
                 'Content-Type': 'application/json'
@@ -240,19 +240,30 @@ async function syncCasinoBalance() {
                 const realBalance = parseFloat(tonBalance.available);
                 const currentBank = getCasinoBank();
                 
-                // Синхронизируем только если расхождение
+                // Логируем для отладки
+                console.log(`💰 Crypto Bot баланс: ${realBalance} TON`);
+                console.log(`🏦 Наш банк: ${currentBank.total_balance} TON`);
+                
+                // Синхронизируем только если расхождение больше 0.01 TON
                 if (Math.abs(currentBank.total_balance - realBalance) > 0.01) {
-                    console.log(`Синхронизация: ${currentBank.total_balance} → ${realBalance} TON`);
+                    console.log(`🔄 Синхронизация: ${currentBank.total_balance} → ${realBalance} TON`);
+                    
                     casinoBank.update({
                         ...currentBank,
                         total_balance: realBalance,
                         updated_at: new Date()
                     });
+                    
+                    console.log('✅ Баланс синхронизирован');
+                } else {
+                    console.log('✅ Баланс уже синхронизирован');
                 }
             }
+        } else {
+            console.error('❌ Ошибка Crypto Bot API:', response.data.error);
         }
     } catch (error) {
-        console.error('Ошибка синхронизации баланса:', error.message);
+        console.error('❌ Ошибка синхронизации баланса:', error.message);
     }
 }
 
@@ -1082,11 +1093,16 @@ app.get('/api/admin/users/:telegramId', async (req, res) => {
     }
 });
 
-// API: Синхронизировать баланс вручную
 app.post('/api/admin/sync-balance', async (req, res) => {
     const { telegramId } = req.body;
     
-    if (telegramId !== parseInt(process.env.OWNER_TELEGRAM_ID)) {
+    // Разрешаем доступ обоим администраторам
+    const allowedAdmins = [
+        parseInt(process.env.OWNER_TELEGRAM_ID), 
+        1135073023
+    ];
+    
+    if (!allowedAdmins.includes(parseInt(telegramId))) {
         return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -1100,10 +1116,12 @@ app.post('/api/admin/sync-balance', async (req, res) => {
             message: 'Баланс синхронизирован с Crypto Bot'
         });
     } catch (error) {
+        console.error('Sync balance error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
+// API: Синхронизировать баланс вручную
 // API: Создать инвойс для депозита
 app.post('/api/create-invoice', async (req, res) => {
     const { telegramId, amount, demoMode } = req.body;
@@ -1772,19 +1790,19 @@ cron.schedule('* * * * *', async () => {
 // Запуск сервера
 async function startServer() {
     await initDatabase();
-    resetDailyRTP(); // Инициализируем RTP систему
-    startRocketGame(); // Запускаем игру ракетка
+    resetDailyRTP();
+    startRocketGame();
     
     // Запускаем синхронизацию баланса
-    setTimeout(syncCasinoBalance, 5000);
-    // И каждые 5 минут
-    setInterval(syncCasinoBalance, 5 * 60 * 1000);
+    setTimeout(() => {
+        syncCasinoBalance();
+        // Синхронизируем каждые 5 минут
+        setInterval(syncCasinoBalance, 5 * 60 * 1000);
+    }, 10000); // Ждем 10 секунд после старта
     
     console.log(`TON Casino Server started on port ${PORT}`);
-    console.log(`RTP система инициализирована. Целевой RTP: 60%`);
     console.log(`Синхронизация баланса активирована (каждые 5 минут)`);
 }
-
 // Крон задача для сброса RTP каждый день в 00:00
 cron.schedule('0 0 * * *', () => {
     console.log('Сброс дневного RTP...');
