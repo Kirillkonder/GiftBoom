@@ -580,7 +580,8 @@ async function placeBet() {
             body: JSON.stringify({
                 telegramId: currentUser.id,
                 betAmount: betAmount,
-                demoMode: isDemoMode
+                demoMode: isDemoMode,
+                username: currentUser.username || `User_${currentUser.id}`
             })
         });
         

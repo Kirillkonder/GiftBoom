@@ -1614,7 +1614,7 @@ app.post('/api/mines/cashout', async (req, res) => {
 
 // API: Сделать ставку в Rocket
 app.post('/api/rocket/bet', async (req, res) => {
-    const { telegramId, betAmount, demoMode } = req.body;
+    const { telegramId, betAmount, demoMode, username} = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
