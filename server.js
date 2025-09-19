@@ -62,9 +62,16 @@ let rtpSystem = {
 
 // Боты для ракетки
 const rocketBots = [
-  { name: "Bot_1", minBet: 1, maxBet: 10, risk: "medium" },
-  { name: "Bot_2", minBet: 5, maxBet: 20, risk: "high" },
-  { name: "Bot_3", minBet: 0.5, maxBet: 5, risk: "low" }
+  { name: "niwssomi", minBet: 1, maxBet: 10, risk: "medium" },
+  { name: "openhgj", minBet: 5, maxBet: 20, risk: "high" },
+  { name: "lonis", minBet: 0.5, maxBet: 5, risk: "low" },
+  { name: "kartoshka", minBet: 2, maxBet: 8, risk: "medium" },
+  { name: "tonmaster", minBet: 3, maxBet: 15, risk: "high" },
+  { name: "cryptoking", minBet: 1, maxBet: 12, risk: "medium" },
+  { name: "spaceman", minBet: 4, maxBet: 25, risk: "high" },
+  { name: "moonrider", minBet: 0.8, maxBet: 6, risk: "low" },
+  { name: "stargazer", minBet: 2.5, maxBet: 18, risk: "medium" },
+  { name: "cosmicbet", minBet: 6, maxBet: 30, risk: "high" }
 ];
 
 
@@ -641,22 +648,25 @@ function startRocketGame() {
         console.log(`Демо банк RTP: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
     }, 5000);
 
-    // Добавляем ставки ботов
-    rocketBots.forEach(bot => {
-        const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
-        const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
-                           bot.risk === 'medium' ? 5 + Math.random() * 10 : 
-                           10 + Math.random() * 30;
-        
-        rocketGame.players.push({
-            name: bot.name,
-            betAmount: parseFloat(betAmount.toFixed(2)),
-            autoCashout: parseFloat(autoCashout.toFixed(2)),
-            isBot: true,
-            cashedOut: false,
-            winAmount: 0
+    // Добавляем ставки ботов с небольшой задержкой для реалистичности
+    setTimeout(() => {
+        rocketBots.forEach(bot => {
+            const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
+            const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
+                               bot.risk === 'medium' ? 5 + Math.random() * 10 : 
+                               10 + Math.random() * 30;
+            
+            rocketGame.players.push({
+                name: bot.name,
+                betAmount: parseFloat(betAmount.toFixed(2)),
+                autoCashout: parseFloat(autoCashout.toFixed(2)),
+                isBot: true,
+                cashedOut: false,
+                winAmount: 0
+            });
         });
-    });
+        broadcastRocketUpdate();
+    }, 1000); // Задержка 1 секунда перед добавлением ботов
 
     // ФИКС: Отправляем начальное значение 5 секунд
     rocketGame.timeLeft = 5;

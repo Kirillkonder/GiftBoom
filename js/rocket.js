@@ -441,7 +441,7 @@ function updatePlayersList(players) {
             
             // Разные эмодзи для ботов и реальных игроков
             if (player.isBot) {
-                const botEmojis = ['🤖', '👾', '🦾', '🔧', '⚙️', '💻', '🎮', '🧠'];
+                const botEmojis = ['👨', '👩', '🧑', '👨‍🚀', '👩‍🚀', '🦸', '🦹', '🎯'];
                 avatar.textContent = botEmojis[Math.floor(Math.random() * botEmojis.length)];
                 avatar.style.backgroundColor = '#ff6b35';
             } else {
