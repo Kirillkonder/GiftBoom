@@ -1642,9 +1642,9 @@ app.post('/api/rocket/bet', async (req, res) => {
         }
 
         // Добавляем игрока в текущую игру
-        const player = {
+       const player = {
             userId: telegramId,
-            name: `User_${telegramId}`,
+            name: getUserDisplayName(userData), // Используем реальное имя
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,

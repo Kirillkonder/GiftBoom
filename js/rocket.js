@@ -89,13 +89,11 @@ function goBack() {
 function initializeGame() {
     const tg = window.Telegram.WebApp;
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        const tgUser = tg.initDataUnsafe.user;
         currentUser = {
-            id: tgUser.id,
-            username: tgUser.username,
-            firstName: tgUser.first_name,
-            lastName: tgUser.last_name,
-            photoUrl: tgUser.photo_url
+            id: tg.initDataUnsafe.user.id,
+            username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`,
+            firstName: tg.initDataUnsafe.user.first_name,
+            lastName: tg.initDataUnsafe.user.last_name
         };
         loadUserData();
     }
@@ -386,6 +384,19 @@ async function updateUserBalance(winAmount = 0) {
     }
 }
 
+function getUserDisplayName(userData) {
+    if (userData.username) {
+        return userData.username;
+    }
+    if (userData.first_name && userData.last_name) {
+        return `${userData.first_name} ${userData.last_name}`;
+    }
+    if (userData.first_name) {
+        return userData.first_name;
+    }
+    return `User_${userData.id}`;
+}
+
 function updatePlayersList(players) {
     const playersList = document.getElementById('playersList');
     const playersCount = document.getElementById('playersCount');
@@ -415,10 +426,7 @@ function updatePlayersList(players) {
         const nameSpan = playerElement.querySelector('.player-name');
         if (nameSpan) {
             const playerName = nameSpan.textContent;
-            const playerStillExists = playersWithBets.some(player => {
-                const playerDisplayName = getPlayerDisplayName(player);
-                return playerDisplayName === playerName;
-            });
+            const playerStillExists = playersWithBets.some(player => player.name === playerName);
             if (!playerStillExists) {
                 playerElement.remove();
             }
@@ -427,12 +435,10 @@ function updatePlayersList(players) {
     
     // Добавляем только новых игроков с анимацией
     playersWithBets.forEach((player, index) => {
-        const playerDisplayName = getPlayerDisplayName(player);
-        
         // Проверяем, есть ли уже такой игрок в DOM
         const existingPlayer = Array.from(playersList.children).find(item => {
             const nameSpan = item.querySelector('.player-name');
-            return nameSpan && nameSpan.textContent === playerDisplayName;
+            return nameSpan && nameSpan.textContent === player.name;
         });
         
         if (!existingPlayer) {
@@ -443,24 +449,15 @@ function updatePlayersList(players) {
             const avatar = document.createElement('div');
             avatar.className = 'player-avatar';
             
+            // Разные эмодзи для ботов и реальных игроков
             if (player.isBot) {
-                // Для ботов используем эмодзи
                 const botEmojis = ['🤖', '👾', '🦾', '🔧', '⚙️', '💻', '🎮', '🧠'];
                 avatar.textContent = botEmojis[Math.floor(Math.random() * botEmojis.length)];
                 avatar.style.backgroundColor = '#ff6b35';
             } else {
-                // Для реальных пользователей используем первую букву имени
-                const firstName = player.firstName || '';
-                avatar.textContent = firstName.charAt(0).toUpperCase() || 'U';
+                const userEmojis = ['👨', '👩', '🧑', '👨‍🚀', '👩‍🚀', '🦸', '🦹', '🎯'];
+                avatar.textContent = userEmojis[Math.floor(Math.random() * userEmojis.length)];
                 avatar.style.backgroundColor = '#1e5cb8';
-                
-                // Если есть фото профиля, используем его
-                if (player.photoUrl) {
-                    avatar.style.backgroundImage = `url(${player.photoUrl})`;
-                    avatar.style.backgroundSize = 'cover';
-                    avatar.style.backgroundPosition = 'center';
-                    avatar.textContent = '';
-                }
             }
             
             const infoContainer = document.createElement('div');
@@ -468,7 +465,8 @@ function updatePlayersList(players) {
             
             const nameSpan = document.createElement('span');
             nameSpan.className = 'player-name';
-            nameSpan.textContent = playerDisplayName;
+            // Используем реальное имя пользователя вместо User_ID
+            nameSpan.textContent = player.name;
             
             const betSpan = document.createElement('span');
             betSpan.className = 'player-bet';
@@ -556,22 +554,6 @@ function updatePlayersList(players) {
     });
 }
 
-function getPlayerDisplayName(player) {
-    if (player.isBot) {
-        return player.name;
-    }
-    
-    // Для реальных пользователей используем данные из Telegram
-    if (player.firstName && player.lastName) {
-        return `${player.firstName} ${player.lastName}`;
-    } else if (player.firstName) {
-        return player.firstName;
-    } else if (player.username) {
-        return `@${player.username}`;
-    } else {
-        return `User_${player.userId}`;
-    }
-}
 
 function updateHistory(history) {
     // Обновляем историю в коэффициентах
