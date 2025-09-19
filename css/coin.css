@@ -1,0 +1,305 @@
+ @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f1419 100%);
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .coinflip-container {
+            max-width: 390px;
+            height: 100vh;
+            margin: 0 auto;
+            position: relative;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f1419 100%);
+        }
+
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .balance {
+            background: rgba(0, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #00ffff;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .menu-dots {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .menu-dots:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            margin: 20px 0 40px 0;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .coin-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 40px 0;
+            position: relative;
+            z-index: 5;
+        }
+
+        .coin {
+            width: 200px;
+            height: 200px;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.7));
+            animation: float 3s ease-in-out infinite;
+            cursor: pointer;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .bet-controls {
+            padding: 0 20px;
+            margin: 30px 0;
+        }
+
+        .bet-input-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .bet-amount {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+            background: none;
+            border: none;
+            outline: none;
+            text-align: center;
+            flex: 1;
+            width: 100px;
+        }
+
+        .bet-controls-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bet-controls-btn:hover {
+            background: rgba(0, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .multiplier-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .multiplier-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .multiplier-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            transform: translateY(-2px);
+        }
+
+        .flip-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .flip-btn {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 200, 200, 0.3));
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            color: #00ffff;
+            padding: 16px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .flip-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 200, 200, 0.5));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .stats-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stats-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .stats-value {
+            color: #00ffff;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle {
+            width: 50px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle.active {
+            background: rgba(0, 255, 255, 0.3);
+        }
+
+        .toggle-slider {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle.active .toggle-slider {
+            transform: translateX(26px);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        @keyframes coinFlip {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(180deg) scale(1.1); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        .coin.flipping {
+            animation: coinFlip 2s ease-in-out;
+        }
