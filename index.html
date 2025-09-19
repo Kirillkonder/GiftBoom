@@ -109,14 +109,14 @@
                 type="number" 
                 id="deposit-amount" 
                 placeholder="Введите сумму в TON"
-                min="1"
+                min="3"
                 step="1"
             >
             <button class="btn btn-primary" onclick="processDeposit()">
                 ✅ Пополнить
             </button>
             <div class="deposit-info">
-                <p>Минимальный депозит: 1 TON</p>
+                <p><strong>Минимальный депозит: 3 TON</strong></p>
                 <p id="deposit-mode-info">Оплата через Crypto Pay</p>
             </div>
         </div>
@@ -144,6 +144,7 @@
             </button>
             <div class="withdraw-info">
                 <p>Минимальный вывод: 1 TON</p>
+                <p><strong>⚠️ Требуется отыгрыш x3 от общих депозитов</strong></p>
                 <p id="withdraw-mode-info">Вывод через Crypto Pay</p>
             </div>
         </div>

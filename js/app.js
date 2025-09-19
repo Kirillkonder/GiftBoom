@@ -296,11 +296,153 @@ class TonCasinoApp {
         }
     }
 
+    // Функция отображения ошибок
+    showError(message, details = null) {
+        // Скрываем предыдущие ошибки
+        this.hideError();
+        
+        // Создаем элемент ошибки
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'error-message';
+        errorDiv.className = 'error-message';
+        
+        let errorContent = `
+            <div class="error-content">
+                <div class="error-icon">⚠️</div>
+                <div class="error-text">
+                    <h4>Ошибка</h4>
+                    <p>${message}</p>
+                </div>
+                <button class="error-close" onclick="app.hideError()">✕</button>
+            </div>
+        `;
+        
+        // Если есть детали об отыгрыше, добавляем их
+        if (details && details.wagered !== undefined) {
+            errorContent += `
+                <div class="error-details">
+                    <p><strong>Отыграно:</strong> ${details.wagered.toFixed(2)} TON</p>
+                    <p><strong>Требуется:</strong> ${details.required.toFixed(2)} TON</p>
+                    <p><strong>Осталось:</strong> ${details.remaining.toFixed(2)} TON</p>
+                </div>
+            `;
+        }
+        
+        errorDiv.innerHTML = errorContent;
+        
+        // Добавляем стили
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+            animation: slideDown 0.3s ease-out;
+        `;
+        
+        // Добавляем анимацию
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+            
+            .error-content {
+                display: flex;
+                align-items: flex-start;
+                padding: 16px;
+                gap: 12px;
+            }
+            
+            .error-icon {
+                font-size: 24px;
+                margin-top: 2px;
+            }
+            
+            .error-text {
+                flex: 1;
+            }
+            
+            .error-text h4 {
+                margin: 0 0 8px 0;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            
+            .error-text p {
+                margin: 0;
+                font-size: 14px;
+                line-height: 1.4;
+            }
+            
+            .error-close {
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+            }
+            
+            .error-close:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+            
+            .error-details {
+                background: rgba(0, 0, 0, 0.1);
+                padding: 12px 16px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0 0 12px 12px;
+            }
+            
+            .error-details p {
+                margin: 4px 0;
+                font-size: 13px;
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(errorDiv);
+        
+        // Автоматически скрываем через 7 секунд
+        setTimeout(() => {
+            this.hideError();
+        }, 7000);
+    }
+
+    hideError() {
+        const errorDiv = document.getElementById('error-message');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+
     async processDeposit() {
         const amount = parseFloat(document.getElementById('deposit-amount').value);
         
-        if (!amount || amount < 1) {
-            alert('Минимальный депозит: 1 TON');
+        // НОВАЯ ПРОВЕРКА: Минимальный депозит 3 TON
+        if (!amount || amount < 3) {
+            this.showError('Минимальный депозит: 3 TON');
             return;
         }
 
@@ -339,11 +481,11 @@ class TonCasinoApp {
                 
                 closeDepositModal();
             } else {
-                alert('Ошибка при создании депозита: ' + result.error);
+                this.showError('Ошибка при создании депозита: ' + result.error);
             }
         } catch (error) {
             console.error('Deposit error:', error);
-            alert('Ошибка при создании депозита');
+            this.showError('Ошибка при создании депозита');
         }
     }
 
@@ -389,7 +531,7 @@ class TonCasinoApp {
         const address = document.getElementById('withdraw-address').value;
 
         if (!amount || amount < 1 || !address) {
-            alert('Заполните все поля корректно');
+            this.showError('Заполните все поля корректно');
             return;
         }
 
@@ -420,11 +562,20 @@ class TonCasinoApp {
                 
                 closeWithdrawModal();
             } else {
-                alert('Ошибка при выводе: ' + result.error);
+                // НОВАЯ ОБРАБОТКА: Показываем детальную ошибку отыгрыша
+                if (result.error === 'Недостаточно отыгрыша') {
+                    this.showError(result.message || 'Недостаточно отыгрыша для вывода средств', {
+                        wagered: result.wagered,
+                        required: result.required,
+                        remaining: result.remaining
+                    });
+                } else {
+                    this.showError('Ошибка при выводе: ' + result.error);
+                }
             }
         } catch (error) {
             console.error('Withdraw error:', error);
-            alert('Ошибка при выводе средств');
+            this.showError('Ошибка при выводе средств');
         }
     }
 

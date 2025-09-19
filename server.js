@@ -92,6 +92,7 @@ function initDatabase() {
                         telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
                         main_balance: 0,
                         demo_balance: 50, // 50 TON вместо 1000
+                        total_deposits: 0, // Новое поле для отслеживания депозитов
                         created_at: new Date(),
                         demo_mode: false,
                         is_admin: true
@@ -453,50 +454,31 @@ function generateRandomDemoBankCrashPoint(totalBet) {
     } else {
         // Проигрыши такие же как в реальном банке
         if (random < 65) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
-        if (random < 85) return Math.random() * 0.3 + 1.15; // 1.15-1.45x
-        return Math.random() * 0.5 + 1.45; // 1.45-1.95x
+        if (random < 85) return Math.random() * 0.25 + 1.15; // 1.15-1.4x
+        return Math.random() * 0.4 + 1.4; // 1.4-1.8x
     }
 }
 
-// Генерация для ботов
+// Генерация краш-поинта только для ботов
 function generateRandomBotCrashPoint() {
     const random = Math.random() * 100;
     
-    if (random < 20) return Math.random() * 2 + 2; // 2x - 4x
-    if (random < 45) return Math.random() * 4 + 4; // 4x - 8x
-    if (random < 70) return Math.random() * 8 + 8; // 8x - 16x
-    if (random < 90) return Math.random() * 15 + 15; // 15x - 30x
-    return Math.random() * 30 + 30; // 30x - 60x
+    if (random < 30) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
+    if (random < 60) return Math.random() * 1.0 + 1.5; // 1.5-2.5x
+    if (random < 85) return Math.random() * 3.0 + 2.5; // 2.5-5.5x
+    return Math.random() * 10.0 + 5.5; // 5.5-15.5x
 }
 
-// ГЛАВНАЯ ФУНКЦИЯ ГЕНЕРАЦИИ - ПРОСТАЯ И СЛУЧАЙНАЯ
-function generateCrashPoint(players = []) {
-    resetDailyRTP();
-    
-    // Администраторы
-    const adminIds = [
-        parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
-        1135073023
-    ];
-    
-    // Фильтруем игроков
+// Главная функция генерации краш-поинта
+function generateCrashPoint(players) {
+    // Разделяем игроков на типы
     const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
-    const realNonAdminPlayers = realPlayers.filter(p => !adminIds.includes(parseInt(p.userId)));
     const demoPlayers = players.filter(p => !p.isBot && p.demoMode);
     
-    // Если есть реальные игроки, исключаем админов
-    let effectivePlayers = [...players];
-    if (realNonAdminPlayers.length > 0) {
-        effectivePlayers = players.filter(p => p.isBot || !adminIds.includes(parseInt(p.userId)));
-    }
+    const totalRealBet = realPlayers.reduce((sum, p) => sum + p.betAmount, 0);
+    const totalDemoBet = demoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
     
-    const effectiveRealPlayers = effectivePlayers.filter(p => !p.isBot && !p.demoMode);
-    const effectiveDemoPlayers = effectivePlayers.filter(p => !p.isBot && p.demoMode);
-    
-    const totalRealBet = effectiveRealPlayers.reduce((sum, p) => sum + p.betAmount, 0);
-    const totalDemoBet = effectiveDemoPlayers.reduce((sum, p) => sum + p.betAmount, 0);
-    
-    // Обновляем статистику
+    // Обновляем общую статистику
     gameStats.totalBets += totalRealBet + totalDemoBet;
     gameStats.gamesCount++;
     
@@ -941,59 +923,40 @@ app.post('/api/admin/withdraw-profit', async (req, res) => {
 app.post('/api/admin/add-demo-balance', async (req, res) => {
     const { telegramId, targetTelegramId, amount } = req.body;
 
-    if (telegramId !== parseInt(process.env.OWNER_TELEGRAM_ID)) {
+    // Разрешаем доступ обоим администраторам
+    const allowedAdmins = [
+        parseInt(process.env.OWNER_TELEGRAM_ID), 
+        1135073023
+    ];
+    
+    if (!allowedAdmins.includes(parseInt(telegramId))) {
         return res.status(403).json({ error: 'Access denied' });
     }
 
     try {
-        const user = users.findOne({ telegram_id: parseInt(targetTelegramId) });
+        const targetUser = users.findOne({ telegram_id: parseInt(targetTelegramId) });
         
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        if (!targetUser) {
+            return res.status(404).json({ error: 'Target user not found' });
         }
 
         users.update({
-            ...user,
-            demo_balance: user.demo_balance + parseFloat(amount)
+            ...targetUser,
+            demo_balance: targetUser.demo_balance + amount
         });
 
-        logAdminAction('add_demo_balance', telegramId, {
-            target_user: targetTelegramId,
-            amount: amount
+        logAdminAction('add_demo_balance', telegramId, { 
+            target_user: targetTelegramId, 
+            amount: amount 
         });
 
         res.json({
             success: true,
-            message: 'Demo balance added successfully',
-            new_balance: user.demo_balance + parseFloat(amount)
+            message: `Added ${amount} demo TON to user ${targetTelegramId}`,
+            new_balance: targetUser.demo_balance + amount
         });
     } catch (error) {
         console.error('Add demo balance error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// API: Получить историю транзакций
-app.get('/api/admin/transactions/:telegramId', async (req, res) => {
-    const telegramId = parseInt(req.params.telegramId);
-
-    if (telegramId !== parseInt(process.env.OWNER_TELEGRAM_ID)) {
-        return res.status(403).json({ error: 'Access denied' });
-    }
-
-    try {
-        const allTransactions = transactions.chain()
-            .simplesort('created_at', true)
-            .limit(100)
-            .data()
-            .map(transaction => ({
-                ...transaction,
-                user: users.get(transaction.user_id)
-            }));
-
-        res.json(allTransactions);
-    } catch (error) {
-        console.error('Get transactions error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -1130,6 +1093,11 @@ app.post('/api/create-invoice', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // НОВАЯ ПРОВЕРКА: Минимальный депозит 3 TON
+        if (amount < 3) {
+            return res.status(400).json({ error: 'Минимальный депозит: 3 TON' });
+        }
+
         const invoice = await cryptoPayRequest('createInvoice', {
             asset: 'TON',
             amount: amount.toString(),
@@ -1193,12 +1161,14 @@ app.post('/api/check-invoice', async (req, res) => {
                     if (demoMode) {
                         users.update({
                             ...user,
-                            demo_balance: user.demo_balance + transaction.amount
+                            demo_balance: user.demo_balance + transaction.amount,
+                            total_deposits: (user.total_deposits || 0) + transaction.amount
                         });
                     } else {
                         users.update({
                             ...user,
-                            main_balance: user.main_balance + transaction.amount
+                            main_balance: user.main_balance + transaction.amount,
+                            total_deposits: (user.total_deposits || 0) + transaction.amount
                         });
                         // ИСПРАВЛЕНО: Депозиты не должны влиять на банк казино
                         // updateCasinoBank(transaction.amount); - убрано
@@ -1246,6 +1216,32 @@ app.post('/api/create-withdrawal', async (req, res) => {
         
         if (balance < amount) {
             return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+
+        // НОВАЯ ПРОВЕРКА: Отыгрыш x3 от общих депозитов
+        const totalDeposits = user.total_deposits || 0;
+        const requiredWager = totalDeposits * 3;
+        
+        // Считаем общую сумму ставок пользователя
+        const userTransactions = transactions.find({ 
+            user_id: user.$loki, 
+            demo_mode: demoMode,
+            status: 'completed'
+        });
+        
+        const totalWagered = userTransactions
+            .filter(t => t.type.includes('loss') || t.type.includes('bet'))
+            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+        if (totalWagered < requiredWager) {
+            const remaining = requiredWager - totalWagered;
+            return res.status(400).json({ 
+                error: 'Недостаточно отыгрыша',
+                wagered: totalWagered,
+                required: requiredWager,
+                remaining: remaining,
+                message: `Необходимо отыграть еще ${remaining.toFixed(2)} TON (x3 от депозитов)`
+            });
         }
 
         if (demoMode) {
@@ -1315,6 +1311,28 @@ app.post('/api/create-withdrawal', async (req, res) => {
     }
 });
 
+// API: Получить транзакции пользователя
+app.get('/api/transactions/:telegramId', async (req, res) => {
+    const telegramId = parseInt(req.params.telegramId);
+
+    try {
+        const user = users.findOne({ telegram_id: telegramId });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const userTransactions = transactions.find({ user_id: user.$loki })
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 50);
+
+        res.json(userTransactions);
+    } catch (error) {
+        console.error('Get transactions error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // API: Получить баланс пользователя
 app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
@@ -1330,6 +1348,7 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
                 telegram_id: telegramId,
                 main_balance: 0,
                 demo_balance: isAdminUser ? 50 : 0, // 50 TON для админов вместо 1000
+                total_deposits: 0, // Новое поле
                 created_at: new Date(),
                 demo_mode: false,
                 is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
@@ -1339,14 +1358,16 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
                 main_balance: newUser.main_balance,
                 demo_balance: newUser.demo_balance,
                 demo_mode: newUser.demo_mode,
-                is_admin: newUser.is_admin
+                is_admin: newUser.is_admin,
+                total_deposits: newUser.total_deposits
             });
         } else {
             res.json({
                 main_balance: user.main_balance,
                 demo_balance: user.demo_balance,
                 demo_mode: user.demo_mode,
-                is_admin: user.is_admin
+                is_admin: user.is_admin,
+                total_deposits: user.total_deposits || 0
             });
         }
     } catch (error) {
@@ -1476,23 +1497,26 @@ app.post('/api/mines/open', async (req, res) => {
             game.mines = mines;
         }
 
-        // Проверяем, попал ли на мину
+        // Проверяем, есть ли мина
         if (game.mines.includes(cellIndex)) {
+            // Мина! Игра окончена
             minesGames.update({
                 ...game,
                 game_over: true,
-                win: false
+                win: false,
+                revealed_cells: [...game.revealed_cells, cellIndex]
             });
 
             res.json({
                 success: true,
                 game_over: true,
-                win: false,
                 mine_hit: true,
-                multiplier: 0
+                multiplier: 0,
+                revealed_cells: [...game.revealed_cells, cellIndex],
+                mines: game.mines
             });
         } else {
-            // Добавляем открытую ячейку
+            // Безопасная ячейка
             const revealedCells = [...game.revealed_cells, cellIndex];
             const multiplier = calculateMultiplier(revealedCells.length, game.mines_count);
 
@@ -1745,13 +1769,15 @@ cron.schedule('* * * * *', async () => {
   if (transaction.demo_mode) {
     users.update({
         ...user,
-        demo_balance: user.demo_balance + transaction.amount
+        demo_balance: user.demo_balance + transaction.amount,
+        total_deposits: (user.total_deposits || 0) + transaction.amount
     });
     // Депозит не влияет на банк казино - это пополнение баланса пользователя
 } else {
     users.update({
         ...user,
-        main_balance: user.main_balance + transaction.amount
+        main_balance: user.main_balance + transaction.amount,
+        total_deposits: (user.total_deposits || 0) + transaction.amount
     });
     // Депозит не влияет на банк казино - это пополнение баланса пользователя
     // updateCasinoB    ank(transaction.amount); ← ЭТУ СТРОКУ НУЖНО УБРАТЬ!
