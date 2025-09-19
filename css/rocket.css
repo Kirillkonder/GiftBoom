@@ -34,29 +34,6 @@ body {
         80px 80px,
         40px 40px,
         40px 40px;
-    
-    /* Анимация волны */
-    animation: grid-wave 8s ease-in-out infinite;
-}
-
-/* Анимация волны для сетки */
-@keyframes grid-wave {
-    0%, 100% {
-        transform: translateY(0px) translateX(0px);
-        background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px;
-    }
-    25% {
-        transform: translateY(-10px) translateX(5px);
-        background-position: 20px 10px, 10px 20px, 10px 5px, 5px 10px;
-    }
-    50% {
-        transform: translateY(0px) translateX(10px);
-        background-position: 40px 0px, 0px 40px, 20px 0px, 0px 20px;
-    }
-    75% {
-        transform: translateY(10px) translateX(5px);
-        background-position: 20px -10px, -10px 20px, 10px -5px, -5px 10px;
-    }
 }
 
 .game-container {
