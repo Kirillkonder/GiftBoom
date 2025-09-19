@@ -132,6 +132,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Show notification message
+    function showNotification(message, isWin = false) {
+        // Remove existing notification if any
+        const existingNotification = document.querySelector('.coinflip-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `coinflip-notification ${isWin ? 'win' : 'lose'}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${isWin ? '🎉' : '💥'}</span>
+                <span class="notification-text">${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+
     // Bet controls
     decreaseBtn.addEventListener('click', function() {
         let currentValue = parseInt(betInput.value) || 1;
@@ -184,9 +217,20 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check balance
             const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
             if (betAmount > currentBalance) {
-                alert('Недостаточно средств!');
+                showNotification('Недостаточно средств!', false);
                 return;
             }
+            
+            if (betAmount < 1) {
+                showNotification('Минимальная ставка: 1 TON', false);
+                return;
+            }
+            
+            // Disable buttons during flip
+            flipButtons.forEach(button => {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+            });
             
             // Add flip animation
             coinImg.classList.add('flipping');
@@ -217,26 +261,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     updateBalanceDisplay();
                     
-                    // Show result
+                    // Show result after animation
                     setTimeout(() => {
                         coinImg.classList.remove('flipping');
                         
                         if (result.win) {
-                            alert(`🎉 Вы выиграли ${result.win_amount} TON!`);
+                            showNotification(`Вы выиграли ${result.win_amount} TON!`, true);
                         } else {
-                            alert('💥 Вы проиграли!');
+                            showNotification('Вы проиграли! Попробуйте еще раз.', false);
                         }
+                        
+                        // Re-enable buttons
+                        flipButtons.forEach(button => {
+                            button.disabled = false;
+                            button.style.opacity = '1';
+                        });
                     }, 2000);
                     
                 } else {
-                    alert('Ошибка: ' + result.error);
+                    showNotification('Ошибка: ' + result.error, false);
                     coinImg.classList.remove('flipping');
+                    
+                    // Re-enable buttons
+                    flipButtons.forEach(button => {
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    });
                 }
                 
             } catch (error) {
                 console.error('Flip error:', error);
                 coinImg.classList.remove('flipping');
-                alert('Ошибка соединения');
+                showNotification('Ошибка соединения', false);
+                
+                // Re-enable buttons
+                flipButtons.forEach(button => {
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                });
             }
         });
     });
@@ -254,9 +316,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Input validation
+    // Input validation - only allow whole numbers
     betInput.addEventListener('input', function() {
+        // Remove any non-digit characters
         this.value = this.value.replace(/[^0-9]/g, '');
+        
+        // Ensure minimum bet of 1
         if (!this.value || parseInt(this.value) < 1) {
             this.value = '1';
         }
@@ -270,7 +335,72 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePotentialWin();
     });
 
+    // Prevent paste with non-numeric values
+    betInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text');
+        const numericValue = pasteData.replace(/[^0-9]/g, '');
+        document.execCommand('insertText', false, numericValue);
+    });
+
     // Initialize the game
     removeBackground();
     initGame();
 });
+
+// Add CSS for notifications
+const notificationStyles = `
+    .coinflip-notification {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: rgba(0, 0, 0, 0.9);
+        padding: 15px 25px;
+        border-radius: 15px;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+        border: 2px solid;
+        min-width: 250px;
+        text-align: center;
+        transition: all 0.3s ease;
+        opacity: 0;
+    }
+    
+    .coinflip-notification.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    
+    .coinflip-notification.win {
+        border-color: #00ff00;
+        background: rgba(0, 100, 0, 0.9);
+    }
+    
+    .coinflip-notification.lose {
+        border-color: #ff0000;
+        background: rgba(100, 0, 0, 0.9);
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .notification-icon {
+        font-size: 24px;
+    }
+    
+    .notification-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+    }
+`;
+
+// Inject notification styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = notificationStyles;
+document.head.appendChild(styleSheet);
