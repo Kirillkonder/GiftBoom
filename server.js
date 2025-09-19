@@ -365,6 +365,24 @@ function updateRTPStats(bankType, deposit, payout) {
     console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
 }
 
+function processBotBetsInRTP(players, bankType) {
+    const botBets = players.filter(p => p.isBot && !p.demoMode);
+    const totalBotBets = botBets.reduce((sum, p) => sum + p.betAmount, 0);
+    
+    if (totalBotBets > 0) {
+        // Боты вносят депозиты в RTP систему
+        updateRTPStats(bankType, totalBotBets, 0);
+        
+        // Если боты выиграли, учитываем выплаты
+        const botWins = botBets.filter(p => p.cashedOut);
+        const totalBotPayouts = botWins.reduce((sum, p) => sum + p.winAmount, 0);
+        
+        if (totalBotPayouts > 0) {
+            updateRTPStats(bankType, 0, totalBotPayouts);
+        }
+    }
+}
+
 // ПРОСТОЙ РАНДОМНЫЙ АЛГОРИТМ с RTP 50%
 let gameStats = {
     totalBets: 0,
@@ -445,6 +463,18 @@ function generateRandomDemoBankCrashPoint(totalBet) {
     }
 }
 
+function generateBotCrashPoint() {
+    const random = Math.random() * 100;
+    
+    // Боты получают разнообразные множители
+    if (random < 25) return Math.random() * 2 + 2; // 2x - 4x
+    if (random < 50) return Math.random() * 4 + 4; // 4x - 8x
+    if (random < 70) return Math.random() * 8 + 8; // 8x - 16x
+    if (random < 85) return Math.random() * 15 + 15; // 15x - 30x
+    if (random < 95) return Math.random() * 30 + 30; // 30x - 60x
+    return Math.random() * 90 + 60; // 60x - 150x (очень редкие большие множители)
+}
+
 // Генерация для ботов
 function generateRandomBotCrashPoint() {
     const random = Math.random() * 100;
@@ -488,11 +518,21 @@ function generateCrashPoint(players = []) {
     gameStats.gamesCount++;
     
     let crashPoint = 1.00;
+    const realBank = getCasinoBank();
+    const bankBalance = realBank.total_balance;
+    
+    // Критический уровень банка - 5 TON
+    const isBankCritical = bankBalance < 5;
     
     if (totalRealBet > 0) {
-        // Реальные ставки
-        const realBank = getCasinoBank();
-        crashPoint = generateRandomRealBankCrashPoint(totalRealBet, realBank.total_balance);
+        // Реальные ставки - учитываем состояние банка
+        if (isBankCritical) {
+            // Банк критически мал - больше сливов для восстановления
+            crashPoint = generateBankRecoveryCrashPoint(totalRealBet, bankBalance);
+        } else {
+            // Банк в норме - работаем по RTP
+            crashPoint = generateRTPBasedCrashPoint(totalRealBet, bankBalance, 'realBank');
+        }
         
         // Обновляем статистику выплат
         if (crashPoint > 1.0) {
@@ -502,24 +542,102 @@ function generateCrashPoint(players = []) {
         
     } else if (totalDemoBet > 0) {
         // Демо ставки
-        crashPoint = generateRandomDemoBankCrashPoint(totalDemoBet);
+        crashPoint = generateDemoCrashPoint(totalDemoBet);
         
         // Обновляем статистику выплат для демо
         if (crashPoint > 1.0) {
             const payout = totalDemoBet * (crashPoint - 1);
-            gameStats.totalPayouts += payout * 0.5; // Демо считаем с коэффициентом
+            gameStats.totalPayouts += payout * 0.5;
         }
         
     } else {
         // Только боты
-        crashPoint = generateRandomBotCrashPoint();
+        crashPoint = generateBotCrashPoint();
+    }
+    
+    // Добавляем шанс на большой множитель (1% шанс на 50x+)
+    if (Math.random() < 0.01) {
+        const bigMultiplier = 50 + Math.random() * 150; // 50x - 200x
+        crashPoint = Math.max(crashPoint, bigMultiplier);
+        console.log(`🎰 БОНУС! Большой множитель: ${crashPoint.toFixed(2)}x`);
     }
     
     // Логируем статистику
     const currentRTP = gameStats.totalBets > 0 ? (gameStats.totalPayouts / gameStats.totalBets) * 100 : 0;
-    console.log(`🎲 Краш: ${crashPoint.toFixed(2)}x, RTP: ${currentRTP.toFixed(1)}%, Игры: ${gameStats.gamesCount}`);
+    console.log(`🎲 Краш: ${crashPoint.toFixed(2)}x, RTP: ${currentRTP.toFixed(1)}%, Игры: ${gameStats.gamesCount}, Банк: ${bankBalance.toFixed(2)} TON`);
     
     return Math.max(1.00, crashPoint);
+}
+
+function generateBankRecoveryCrashPoint(totalBet, bankBalance) {
+    const recoveryFactor = Math.max(0.1, 1 - (bankBalance / 5)); // 0.1-1.0 в зависимости от недостачи
+    
+    if (Math.random() < 0.8 * recoveryFactor) {
+        // 80% шанс на слив (умноженный на фактор восстановления)
+        return Math.random() * 0.3 + 1.0; // 1.0-1.3x
+    } else if (Math.random() < 0.5) {
+        // Средние множители для разнообразия
+        return Math.random() * 2.0 + 1.5; // 1.5-3.5x
+    } else {
+        // Редкие хорошие множители
+        return Math.random() * 5.0 + 3.5; // 3.5-8.5x
+    }
+}
+
+function generateRTPBasedCrashPoint(totalBet, bankBalance, bankType) {
+    const bank = rtpSystem[bankType];
+    const rtpDeviation = bank.currentRTP - bank.targetRTP;
+    
+    // Корректируем шансы в зависимости от отклонения RTP от целевого
+    let baseWinChance = 0.45; // Базовый шанс выигрыша 45%
+    
+    if (rtpDeviation < -10) {
+        // RTP сильно ниже целевого - увеличиваем шанс выигрыша
+        baseWinChance += 0.15;
+    } else if (rtpDeviation < -5) {
+        baseWinChance += 0.08;
+    } else if (rtpDeviation > 10) {
+        // RTP сильно выше целевого - уменьшаем шанс выигрыша
+        baseWinChance -= 0.15;
+    } else if (rtpDeviation > 5) {
+        baseWinChance -= 0.08;
+    }
+    
+    const shouldWin = Math.random() < baseWinChance;
+    const random = Math.random() * 100;
+    
+    if (shouldWin) {
+        // Игрок выигрывает - случайные множители с учетом RTP
+        if (random < 25) return Math.random() * 0.8 + 1.2; // 1.2-2.0x
+        if (random < 50) return Math.random() * 1.5 + 2.0; // 2.0-3.5x
+        if (random < 75) return Math.random() * 3.0 + 3.5; // 3.5-6.5x
+        if (random < 90) return Math.random() * 10.0 + 6.5; // 6.5-16.5x
+        return Math.random() * 33.5 + 16.5; // 16.5-50x (редкие большие выигрыши)
+    } else {
+        // Игрок проигрывает - низкие множители
+        if (random < 60) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
+        if (random < 85) return Math.random() * 0.3 + 1.15; // 1.15-1.45x
+        return Math.random() * 0.5 + 1.45; // 1.45-1.95x
+    }
+}
+
+function generateDemoCrashPoint(totalBet) {
+    const shouldWin = Math.random() < 0.5; // 50% шанс в демо
+    const random = Math.random() * 100;
+    
+    if (shouldWin) {
+        // Демо банк щедрее
+        if (random < 20) return Math.random() * 0.8 + 1.2; // 1.2-2.0x
+        if (random < 45) return Math.random() * 1.5 + 2.0; // 2.0-3.5x
+        if (random < 70) return Math.random() * 3.0 + 3.5; // 3.5-6.5x
+        if (random < 85) return Math.random() * 12.0 + 6.5; // 6.5-18.5x
+        return Math.random() * 31.5 + 18.5; // 18.5-50x
+    } else {
+        // Проигрыши
+        if (random < 60) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
+        if (random < 85) return Math.random() * 0.3 + 1.15; // 1.15-1.45x
+        return Math.random() * 0.5 + 1.45; // 1.45-1.95x
+    }
 }
 
 // НОВЫЕ ФУНКЦИИ С ЗАЩИТОЙ ОТ ПАТТЕРНОВ
@@ -708,92 +826,93 @@ function startRocketFlight() {
 
 
 
-function processRocketGameEnd() {
-  // Сохраняем игру в историю
-  const gameRecord = rocketGames.insert({
-    crashPoint: rocketGame.crashPoint,
-    maxMultiplier: rocketGame.multiplier,
-    startTime: new Date(rocketGame.startTime),
-    endTime: new Date(),
-    playerCount: rocketGame.players.length,
-    totalBets: rocketGame.players.reduce((sum, p) => sum + p.betAmount, 0),
-    totalPayouts: rocketGame.players.reduce((sum, p) => sum + (p.cashedOut ? p.winAmount : 0), 0)
-  });
+unction processRocketGameEnd() {
+    // Сохраняем игру в историю
+    const gameRecord = rocketGames.insert({
+        crashPoint: rocketGame.crashPoint,
+        maxMultiplier: rocketGame.multiplier,
+        startTime: new Date(rocketGame.startTime),
+        endTime: new Date(),
+        playerCount: rocketGame.players.length,
+        totalBets: rocketGame.players.reduce((sum, p) => sum + p.betAmount, 0),
+        totalPayouts: rocketGame.players.reduce((sum, p) => sum + (p.cashedOut ? p.winAmount : 0), 0)
+    });
 
-  // Обрабатываем выплаты для реальных игроков
-  rocketGame.players.forEach(player => {
-    if (!player.isBot) {
-      const user = users.findOne({ telegram_id: parseInt(player.userId) });
-      if (user) {
-        if (player.cashedOut) {
-          // Игрок выиграл - выплачиваем выигрыш (уже был начислен при cashout)
-          // Просто сохраняем транзакцию
-          transactions.insert({
-            user_id: user.$loki,
-            amount: player.winAmount,
-            type: 'rocket_win',
-            status: 'completed',
-            demo_mode: player.demoMode,
-            game_id: gameRecord.$loki,
-            created_at: new Date()
-          });
+    // Обрабатываем RTP для ботов
+    processBotBetsInRTP(rocketGame.players, 'realBank');
+    
+    // Обрабатываем выплаты для реальных игроков
+    rocketGame.players.forEach(player => {
+        if (!player.isBot) {
+            const user = users.findOne({ telegram_id: parseInt(player.userId) });
+            if (user) {
+                if (player.cashedOut) {
+                    // Игрок выиграл
+                    transactions.insert({
+                        user_id: user.$loki,
+                        amount: player.winAmount,
+                        type: 'rocket_win',
+                        status: 'completed',
+                        demo_mode: player.demoMode,
+                        game_id: gameRecord.$loki,
+                        created_at: new Date()
+                    });
 
-          // Сохраняем ставку
-          rocketBets.insert({
-            game_id: gameRecord.$loki,
-            user_id: user.$loki,
-            bet_amount: player.betAmount,
-            cashout_multiplier: player.cashoutMultiplier,
-            win_amount: player.winAmount,
-            demo_mode: player.demoMode,
-            created_at: new Date()
-          });
-        } else {
-          // Игрок проиграл - ставка остается в банке казино (уже была добавлена при ставке)
-          transactions.insert({
-            user_id: user.$loki,
-            amount: -player.betAmount,
-            type: 'rocket_loss',
-            status: 'completed',
-            demo_mode: player.demoMode,
-            game_id: gameRecord.$loki,
-            created_at: new Date()
-          });
+                    rocketBets.insert({
+                        game_id: gameRecord.$loki,
+                        user_id: user.$loki,
+                        bet_amount: player.betAmount,
+                        cashout_multiplier: player.cashoutMultiplier,
+                        win_amount: player.winAmount,
+                        demo_mode: player.demoMode,
+                        created_at: new Date()
+                    });
+                } else {
+                    // Игрок проиграл
+                    transactions.insert({
+                        user_id: user.$loki,
+                        amount: -player.betAmount,
+                        type: 'rocket_loss',
+                        status: 'completed',
+                        demo_mode: player.demoMode,
+                        game_id: gameRecord.$loki,
+                        created_at: new Date()
+                    });
 
-          rocketBets.insert({
-            game_id: gameRecord.$loki,
-            user_id: user.$loki,
-            bet_amount: player.betAmount,
-            cashout_multiplier: null,
-            win_amount: 0,
-            demo_mode: player.demoMode,
-            created_at: new Date()
-          });
+                    rocketBets.insert({
+                        game_id: gameRecord.$loki,
+                        user_id: user.$loki,
+                        bet_amount: player.betAmount,
+                        cashout_multiplier: null,
+                        win_amount: 0,
+                        demo_mode: player.demoMode,
+                        created_at: new Date()
+                    });
+                }
+            }
         }
-      }
+    });
+
+    // Добавляем в историю
+    rocketGame.history.unshift({
+        crashPoint: rocketGame.crashPoint,
+        multiplier: rocketGame.multiplier
+    });
+
+    if (rocketGame.history.length > 50) {
+        rocketGame.history.pop();
     }
-  });
 
-  // Добавляем в историю
-  rocketGame.history.unshift({
-    crashPoint: rocketGame.crashPoint,
-    multiplier: rocketGame.multiplier
-  });
-
-  if (rocketGame.history.length > 50) {
-    rocketGame.history.pop();
-  }
-
-  broadcastRocketUpdate();
-
-  // Через 5 секунд начинаем новую игру
-  setTimeout(() => {
-    rocketGame.status = 'waiting';
-    rocketGame.multiplier = 1.00;
-    rocketGame.players = [];
     broadcastRocketUpdate();
-    startRocketGame();
-  }, 5000);
+
+    // Через 5 секунд начинаем новую игру
+    setTimeout(() => {
+        rocketGame.status = 'waiting';
+        rocketGame.multiplier = 1.00;
+        rocketGame.players = [];
+        broadcastRocketUpdate();
+        startRocketGame();
+    }, 5000);
 }
 
 
