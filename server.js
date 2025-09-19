@@ -1347,20 +1347,21 @@ app.post('/api/mines/start', async (req, res) => {
             created_at: new Date()
         });
 
-        // Списываем ставку
-       if (demoMode) {
-    users.update({
-        ...user,
-        demo_balance: user.demo_balance - betAmount
-    });
-    updateCasinoDemoBank(betAmount); // ИСПРАВЛЕНО: добавлено обновление демо банка
-} else {
-    users.update({
-        ...user,
-        main_balance: user.main_balance - betAmount
-    });
-    updateCasinoBank(betAmount); // Реальный банк
-}
+        // Списываем ставку и обновляем банк казино
+        if (demoMode) {
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance - betAmount
+            });
+            updateCasinoDemoBank(betAmount); // Ставка идет в банк казино
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance - betAmount
+            });
+            updateCasinoBank(betAmount); // Ставка идет в банк казино
+        }
+
         res.json({
             success: true,
             game_id: game.$loki,
@@ -1472,18 +1473,18 @@ app.post('/api/mines/cashout', async (req, res) => {
 
         // Начисляем выигрыш
         if (game.demo_mode) {
-    users.update({
-        ...user,
-        demo_balance: user.demo_balance + winAmount
-    });
-    updateCasinoDemoBank(-winAmount); // Демо-банк
-} else {
-    users.update({
-        ...user,
-        main_balance: user.main_balance + winAmount
-    });
-    updateCasinoBank(-winAmount); // Реальный банк
-}
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance + winAmount
+            });
+            updateCasinoDemoBank(-winAmount); // Выплата из банка казино
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance + winAmount
+            });
+            updateCasinoBank(-winAmount); // Выплата из банка казино
+        }
 
         res.json({
             success: true,
@@ -1532,22 +1533,20 @@ app.post('/api/rocket/bet', async (req, res) => {
             return res.status(400).json({ error: 'Ставки не принимаются' });
         }
 
-        // Списываем ставку и обновляем RTP статистику
+        // Списываем ставку и обновляем банк казино
         if (demoMode) {
             users.update({
                 ...user,
                 demo_balance: user.demo_balance - betAmount
             });
-            updateCasinoDemoBank(betAmount); // ИСПРАВЛЕНО: ставки должны добавляться в банк (+)
-            // Обновляем RTP статистику для демо банка
+            updateCasinoDemoBank(betAmount); // Ставка идет в демо-банк
             updateRTPStats('demoBank', betAmount, 0);
         } else {
             users.update({
                 ...user,
                 main_balance: user.main_balance - betAmount
             });
-            updateCasinoBank(betAmount);
-            // Обновляем RTP статистику для реального банка
+            updateCasinoBank(betAmount); // Ставка идет в реальный банк
             updateRTPStats('realBank', betAmount, 0);
         }
 
@@ -1599,7 +1598,7 @@ app.post('/api/rocket/cashout', async (req, res) => {
             return res.status(400).json({ error: 'Игрок не найден или уже забрал выигрыш' });
         }
 
-        // Начисляем выигрыш и обновляем RTP статистику
+        // Начисляем выигрыш и обновляем банк казино
         const winAmount = player.betAmount * rocketGame.multiplier;
         
         if (player.demoMode) {
@@ -1607,16 +1606,14 @@ app.post('/api/rocket/cashout', async (req, res) => {
                 ...user,
                 demo_balance: user.demo_balance + winAmount
             });
-            updateCasinoDemoBank(-winAmount);
-            // Обновляем RTP статистику для демо банка (только выплата)
+            updateCasinoDemoBank(-winAmount); // Выплата из демо-банка
             updateRTPStats('demoBank', 0, winAmount);
         } else {
             users.update({
                 ...user,
                 main_balance: user.main_balance + winAmount
             });
-            updateCasinoBank(-winAmount);
-            // Обновляем RTP статистику для реального банка (только выплата)
+            updateCasinoBank(-winAmount); // Выплата из реального банка
             updateRTPStats('realBank', 0, winAmount);
         }
 
@@ -1625,7 +1622,7 @@ app.post('/api/rocket/cashout', async (req, res) => {
         player.cashoutMultiplier = rocketGame.multiplier;
         player.winAmount = winAmount;
 
-        // Сохраняем транзакцию сразу
+        // Сохраняем транзакцию
         transactions.insert({
             user_id: user.$loki,
             amount: winAmount,
@@ -1641,7 +1638,7 @@ app.post('/api/rocket/cashout', async (req, res) => {
             success: true,
             multiplier: rocketGame.multiplier,
             winAmount: winAmount,
-            new_balance: player.demoMode ? user.demo_balance : user.main_balance
+            new_balance: player.demoMode ? user.demo_balance + winAmount : user.main_balance + winAmount
         });
     } catch (error) {
         console.error('Rocket cashout error:', error);
@@ -1688,18 +1685,19 @@ cron.schedule('* * * * *', async () => {
                 if (invoiceData.status === 'paid') {
                     const user = users.get(transaction.user_id);
                     
-                  if (transaction.demo_mode) {
+  if (transaction.demo_mode) {
     users.update({
         ...user,
         demo_balance: user.demo_balance + transaction.amount
     });
-    updateCasinoDemoBank(transaction.amount); // Демо-банк
+    // Депозит не влияет на банк казино - это пополнение баланса пользователя
 } else {
     users.update({
         ...user,
         main_balance: user.main_balance + transaction.amount
     });
-    updateCasinoBank(transaction.amount); // Реальный банк
+    // Депозит не влияет на банк казино - это пополнение баланса пользователя
+    // updateCasinoBank(transaction.amount); ← ЭТУ СТРОКУ НУЖНО УБРАТЬ!
 }
 
                     transactions.update({
