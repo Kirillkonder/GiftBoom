@@ -707,7 +707,7 @@ function startRocketFlight() {
 }
 
 
-// server.js - исправленная функция processRocketGameEnd
+
 function processRocketGameEnd() {
   // Сохраняем игру в историю
   const gameRecord = rocketGames.insert({
@@ -726,27 +726,11 @@ function processRocketGameEnd() {
       const user = users.findOne({ telegram_id: parseInt(player.userId) });
       if (user) {
         if (player.cashedOut) {
-          // Игрок выиграл - выплачиваем выигрыш
-          const winAmount = player.betAmount * player.cashoutMultiplier;
-          
-          if (player.demoMode) {
-            users.update({
-              ...user,
-              demo_balance: user.demo_balance + winAmount
-            });
-            updateCasinoDemoBank(-winAmount);
-          } else {
-            users.update({
-              ...user,
-              main_balance: user.main_balance + winAmount
-            });
-            updateCasinoBank(-winAmount);
-          }
-
-          // Записываем транзакцию
+          // Игрок выиграл - выплачиваем выигрыш (уже был начислен при cashout)
+          // Просто сохраняем транзакцию
           transactions.insert({
             user_id: user.$loki,
-            amount: winAmount,
+            amount: player.winAmount,
             type: 'rocket_win',
             status: 'completed',
             demo_mode: player.demoMode,
@@ -760,13 +744,12 @@ function processRocketGameEnd() {
             user_id: user.$loki,
             bet_amount: player.betAmount,
             cashout_multiplier: player.cashoutMultiplier,
-            win_amount: winAmount,
+            win_amount: player.winAmount,
             demo_mode: player.demoMode,
             created_at: new Date()
           });
         } else {
           // Игрок проиграл - ставка остается в банке казино (уже была добавлена при ставке)
-          // Записываем проигрышную транзакцию
           transactions.insert({
             user_id: user.$loki,
             amount: -player.betAmount,
@@ -777,7 +760,6 @@ function processRocketGameEnd() {
             created_at: new Date()
           });
 
-          // Сохраняем проигрышную ставку
           rocketBets.insert({
             game_id: gameRecord.$loki,
             user_id: user.$loki,
@@ -813,6 +795,8 @@ function processRocketGameEnd() {
     startRocketGame();
   }, 5000);
 }
+
+
 
 function broadcastRocketUpdate() {
     const data = JSON.stringify({
@@ -1603,11 +1587,7 @@ app.post('/api/rocket/bet', async (req, res) => {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
 
-        if (rocketGame.status !== 'counting') {
-            return res.status(400).json({ error: 'Ставки не принимаются' });
-        }
-
-        // Списываем ставку и обновляем банк казино
+        // Списываем ставку
         if (demoMode) {
             users.update({
                 ...user,
@@ -1672,7 +1652,7 @@ app.post('/api/rocket/cashout', async (req, res) => {
             return res.status(400).json({ error: 'Игрок не найден или уже забрал выигрыш' });
         }
 
-        // Начисляем выигрыш и обновляем банк казино
+        // Начисляем выигрыш
         const winAmount = player.betAmount * rocketGame.multiplier;
         
         if (player.demoMode) {
@@ -1695,16 +1675,6 @@ app.post('/api/rocket/cashout', async (req, res) => {
         player.cashedOut = true;
         player.cashoutMultiplier = rocketGame.multiplier;
         player.winAmount = winAmount;
-
-        // Сохраняем транзакцию
-        transactions.insert({
-            user_id: user.$loki,
-            amount: winAmount,
-            type: 'rocket_win',
-            status: 'completed',
-            demo_mode: player.demoMode,
-            created_at: new Date()
-        });
 
         broadcastRocketUpdate();
 
