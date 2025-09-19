@@ -22,30 +22,7 @@
         </div>
     </div>
 
-    <script src="components/header.js"></script>
-    <script>
-        function goBack() {
-            window.location.href = 'index.html';
-        }
-        
-        // Загружаем header
-        document.addEventListener('DOMContentLoaded', function() {
-            const header = document.getElementById('header');
-            if (window.Telegram.WebApp.initDataUnsafe.user) {
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                header.innerHTML = `
-                    <div class="header">
-                        <div class="user-header">
-                            <div class="avatar">👤</div>
-                            <div class="user-info">
-                                <div class="username">${user.first_name || user.username || 'Пользователь'}</div>
-                                <div class="user-id">ID: ${user.id}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-    </script>
+    
+    
 </body>
 </html>
