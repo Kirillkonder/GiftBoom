@@ -826,7 +826,7 @@ function startRocketFlight() {
 
 
 
-unction processRocketGameEnd() {
+function processRocketGameEnd() {
     // Сохраняем игру в историю
     const gameRecord = rocketGames.insert({
         crashPoint: rocketGame.crashPoint,
