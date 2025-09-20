@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const halfBtn = document.getElementById('halfBtn');
     const doubleBtn = document.getElementById('doubleBtn');
     const flipButtons = document.querySelectorAll('.flip-btn');
-    const balanceElement = document.querySelector('.balance span:last-child');
+    const balanceElement = document.querySelector('.balance span:last-child'); // Элемент где "194"
     const closeBtn = document.querySelector('.close-btn');
+    const potentialWin = document.getElementById('potentialWin');
     
     let userBalance = 0;
     let demoMode = false;
@@ -22,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 telegramId = tg.initDataUnsafe.user.id;
                 
+                console.log('Loading balance for user:', telegramId);
+                
                 // Get user balance from server
                 const response = await fetch(`/api/user/balance/${telegramId}`);
                 const data = await response.json();
@@ -31,10 +34,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                userBalance = demoMode ? data.demo_balance : data.main_balance;
+                userBalance = data.demo_mode ? data.demo_balance : data.main_balance;
                 demoMode = data.demo_mode;
                 
-                // Update balance display
+                console.log('Balance loaded:', userBalance, 'Demo mode:', demoMode);
+                
+                // Update balance display - ВМЕСТО "194"
                 balanceElement.textContent = Math.floor(userBalance);
                 
                 // Set max bet to current balance
@@ -43,9 +48,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     betInput.value = maxBet;
                     updatePotentialWin();
                 }
+            } else {
+                console.log('Telegram WebApp not found, using test mode');
+                // For testing without Telegram
+                userBalance = 100;
+                balanceElement.textContent = userBalance; // ВМЕСТО "194"
             }
         } catch (error) {
             console.error('Initialization error:', error);
+            // Fallback for error
+            userBalance = 100;
+            balanceElement.textContent = userBalance; // ВМЕСТО "194"
         }
     }
 
@@ -141,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePotentialWin() {
         const betAmount = parseInt(betInput.value) || 0;
         const winAmount = Math.floor(betAmount * 1.96);
-        document.getElementById('potentialWin').textContent = winAmount + ' TON';
+        potentialWin.textContent = winAmount + ' TON';
     }
 
     // Flip buttons
@@ -181,9 +194,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Update balance
+                    // Update balance - ОБНОВЛЯЕМ БАЛАНС НА ЭКРАНЕ
                     userBalance = demoMode ? result.new_demo_balance : result.new_main_balance;
-                    balanceElement.textContent = Math.floor(userBalance);
+                    balanceElement.textContent = Math.floor(userBalance); // ВМЕСТО "194"
                     
                     // Show result
                     if (result.win) {
