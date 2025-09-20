@@ -10,7 +10,7 @@ const WebSocket = require('ws');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-let casinoDemoBank;
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -1837,120 +1837,6 @@ app.get('/api/rocket/current', async (req, res) => {
         res.json(rocketGame);
     } catch (error) {
         console.error('Get current rocket game error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-
-// API: Начать игру Coinflip
-app.post('/api/coinflip/start', async (req, res) => {
-    const { telegramId, betAmount, chosenSide, demoMode } = req.body;
-
-    try {
-        const user = users.findOne({ telegram_id: parseInt(telegramId) });
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Валидация ставки
-        if (betAmount < 0.1) {
-            return res.status(400).json({ error: 'Минимальная ставка: 0.1 TON' });
-        }
-        
-        if (betAmount > 20) {
-            return res.status(400).json({ error: 'Максимальная ставка: 20 TON' });
-        }
-
-        const balance = demoMode ? user.demo_balance : user.main_balance;
-        
-        if (balance < betAmount) {
-            return res.status(400).json({ error: 'Недостаточно средств' });
-        }
-
-        // Генерируем результат (50/50 шанс)
-        const randomSide = Math.random() < 0.5 ? 'heads' : 'tails';
-        const win = randomSide === chosenSide;
-        const winAmount = win ? betAmount * 2.0 : 0;
-
-        // Обновляем баланс пользователя
-        if (demoMode) {
-            users.update({
-                ...user,
-                demo_balance: win ? user.demo_balance + winAmount : user.demo_balance - betAmount
-            });
-            
-            // Обновляем банк казино - ИСПРАВЛЕНО
-            if (win) {
-                updateCasinoDemoBank(-winAmount); // Казино выплачивает выигрыш
-            } else {
-                updateCasinoDemoBank(betAmount); // Игрок проиграл - ставка в банк
-            }
-        } else {
-            users.update({
-                ...user,
-                main_balance: win ? user.main_balance + winAmount : user.main_balance - betAmount
-            });
-            
-            // Обновляем банк казино - ИСПРАВЛЕНО
-            if (win) {
-                updateCasinoBank(-winAmount); // Казино выплачивает выигрыш
-            } else {
-                updateCasinoBank(betAmount); // Игрок проиграл - ставка в банк
-            }
-        }
-
-        // Сохраняем транзакцию
-        transactions.insert({
-            user_id: user.$loki,
-            amount: win ? winAmount : -betAmount,
-            type: win ? 'coinflip_win' : 'coinflip_loss',
-            status: 'completed',
-            demo_mode: demoMode,
-            game_details: {
-                chosen_side: chosenSide,
-                result_side: randomSide,
-                bet_amount: betAmount,
-                win_amount: winAmount
-            },
-            created_at: new Date()
-        });
-
-        res.json({
-            success: true,
-            win: win,
-            win_amount: winAmount,
-            result_side: randomSide,
-            new_balance: demoMode ? 
-                (win ? user.demo_balance + winAmount : user.demo_balance - betAmount) :
-                (win ? user.main_balance + winAmount : user.main_balance - betAmount)
-        });
-
-    } catch (error) {
-        console.error('Coinflip start error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// API: Получить историю Coinflip
-app.get('/api/coinflip/history/:telegramId', async (req, res) => {
-    const telegramId = parseInt(req.params.telegramId);
-
-    try {
-        const user = users.findOne({ telegram_id: telegramId });
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const coinflipHistory = transactions.find({
-            user_id: user.$loki,
-            type: { $in: ['coinflip_win', 'coinflip_loss'] }
-        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
-
-        res.json(coinflipHistory);
-    } catch (error) {
-        console.error('Get coinflip history error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
