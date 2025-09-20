@@ -76,36 +76,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Bet controls
             decreaseBtn.addEventListener('click', function() {
-                let currentValue = parseInt(betInput.value) || 0;
-                if (currentValue > 1) {
-                    betInput.value = currentValue - 1;
-                    updatePotentialWin();
-                }
+                let currentValue = parseFloat(betInput.value) || 0.1;
+                let newValue = Math.max(0.1, currentValue - 0.1);
+                betInput.value = newValue.toFixed(1);
+                updatePotentialWin();
             });
 
             increaseBtn.addEventListener('click', function() {
-                let currentValue = parseInt(betInput.value) || 0;
-                betInput.value = currentValue + 1;
+                let currentValue = parseFloat(betInput.value) || 0;
+                let newValue = Math.min(10, currentValue + 0.1);
+                betInput.value = newValue.toFixed(1);
                 updatePotentialWin();
             });
 
             halfBtn.addEventListener('click', function() {
-                let currentValue = parseInt(betInput.value) || 0;
-                betInput.value = Math.max(1, Math.floor(currentValue / 2));
+                let currentValue = parseFloat(betInput.value) || 0.1;
+                let newValue = Math.max(0.1, currentValue / 2);
+                betInput.value = newValue.toFixed(1);
                 updatePotentialWin();
             });
 
             doubleBtn.addEventListener('click', function() {
-                let currentValue = parseInt(betInput.value) || 0;
-                betInput.value = currentValue * 2;
+                let currentValue = parseFloat(betInput.value) || 0.1;
+                let newValue = Math.min(10, currentValue * 2);
+                betInput.value = newValue.toFixed(1);
                 updatePotentialWin();
             });
 
             // Update potential win
             function updatePotentialWin() {
-                const betAmount = parseInt(betInput.value) || 0;
-                const winAmount = Math.floor(betAmount * 1.96);
-                potentialWin.textContent = winAmount + ' TON';
+                const betAmount = parseFloat(betInput.value) || 0;
+                const winAmount = (betAmount * 1.96).toFixed(2);
+                if (potentialWin) {
+                    potentialWin.textContent = winAmount + ' TON';
+                }
             }
 
             // Series toggle
@@ -117,7 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
             flipButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const side = this.getAttribute('data-side');
-                    const betAmount = parseFloat(betInput.value) || 100;
+                    const betAmount = parseFloat(betInput.value) || 0.1;
+                    
+                    // Validate bet amount
+                    if (betAmount < 0.1 || betAmount > 10) {
+                        alert('Ставка должна быть от 0.1 до 10 TON');
+                        return;
+                    }
                     
                     // Check if user has enough balance
                     const currentBalance = userBalance.demo_mode ? userBalance.demo_balance : userBalance.main_balance;
@@ -164,10 +174,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Input validation
             betInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-                if (parseInt(this.value) < 1) {
-                    this.value = '1';
+                // Allow numbers and one decimal point
+                this.value = this.value.replace(/[^0-9.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = this.value.split('.');
+                if (parts.length > 2) {
+                    this.value = parts[0] + '.' + parts.slice(1).join('');
                 }
+                
+                // Validate range
+                const value = parseFloat(this.value);
+                if (this.value && !isNaN(value)) {
+                    if (value < 0.1) {
+                        this.value = '0.1';
+                    } else if (value > 10) {
+                        this.value = '10.0';
+                    }
+                }
+                
                 updatePotentialWin();
             });
 
