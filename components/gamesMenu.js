@@ -9,6 +9,10 @@ function openGame(gameType) {
     } else if (gameType === 'coin') {
         // Перенаправляем на страницу coin.html (новая игра)
         window.location.href = 'coin.html';
+    
+    } else if (gameType === 'plinko'){
+        window.location.href = 'plinko.html';
+
     } else {
         // Для других игр показываем модальные окна
         document.getElementById(`game-${gameType}-modal`).style.display = 'block';

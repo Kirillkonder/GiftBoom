@@ -35,7 +35,7 @@ window.onclick = function(event) {
     // Игровые модальные окна
     const minesModal = document.getElementById('game-mines-modal');
     const coinModal = document.getElementById('game-coin-modal'); // Изменено с contracts на coin
-    const casesModal = document.getElementById('game-cases-modal');
+    const casesModal = document.getElementById('game-plinko-modal');
     const rocketModal = document.getElementById('game-rocket-modal');
     
     if (event.target === depositModal) {
@@ -54,7 +54,7 @@ window.onclick = function(event) {
         closeGameModal('coin'); // Изменено с contracts на coin
     }
     if (event.target === casesModal) {
-        closeGameModal('cases');
+        closeGameModal('plinko');
     }
     if (event.target === rocketModal) {
         closeGameModal('rocket');
