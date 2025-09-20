@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -586,8 +585,8 @@
                 body: JSON.stringify({
                     telegramId: currentUser.id,
                     betAmount: betAmount,
-                    choice: choice,
-                    demoMode: isDemoMode
+                    choice: choice
+                    // НЕ ПЕРЕДАЕМ demoMode - сервер сам определит режим пользователя
                 })
             });
             
@@ -679,24 +678,24 @@
         document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
     }
 
-    // Загрузка данных пользователя - ПОЛНОСТЬЮ ПЕРЕПИСАНА как в ракетке
+    // Загрузка данных пользователя - ПРАВИЛЬНАЯ ЛОГИКА КАК В ROCKET.JS
     async function loadUserData() {
         try {
             const response = await fetch(`/api/coinflip/balance/${currentUser.id}`);
             if (response.ok) {
                 const userData = await response.json();
                 
-                // ТОЧНО ТАКАЯ ЖЕ ЛОГИКА КАК В ROCKET.JS
+                // ИНДИВИДУАЛЬНАЯ ЛОГИКА ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ
                 isAdmin = userData.is_admin;
-                isDemoMode = userData.demo_mode && isAdmin; // Демо-режим только для админов
+                isDemoMode = userData.demo_mode; // Демо-режим индивидуален для каждого пользователя
                 
-                // Используем правильный баланс в зависимости от режима
+                // Каждый пользователь имеет СВОЙ СОБСТВЕННЫЙ баланс
                 currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
                 
                 document.getElementById('balance').textContent = currentBalance.toFixed(2);
                 document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
                 
-                console.log('Данные пользователя загружены:', {
+                console.log('Индивидуальные данные пользователя загружены:', {
                     id: currentUser.id,
                     isAdmin: isAdmin,
                     isDemoMode: isDemoMode,
