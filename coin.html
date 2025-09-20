@@ -585,8 +585,8 @@
                 body: JSON.stringify({
                     telegramId: currentUser.id,
                     betAmount: betAmount,
-                    choice: choice,
-                    demoMode: isDemoMode // ПЕРЕДАЕМ РЕЖИМ ПОЛЬЗОВАТЕЛЯ
+                    choice: choice
+                    // НЕ ПЕРЕДАЕМ demoMode - сервер сам определит режим пользователя
                 })
             });
             
@@ -594,7 +594,7 @@
             
             setTimeout(() => {
                 if (result.success) {
-                    // Обновляем баланс из ответа сервера
+                    // ОБНОВЛЕНО: Получаем новый баланс из ответа сервера
                     if (result.newBalance !== undefined) {
                         currentBalance = result.newBalance;
                         document.getElementById('balance').textContent = currentBalance.toFixed(2);
@@ -690,7 +690,7 @@
                 isDemoMode = userData.demo_mode; // Используем режим пользователя из базы
                 
                 // Каждый пользователь имеет СВОЙ СОБСТВЕННЫЙ баланс
-                currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
+                currentBalance = userData.current_balance;
                 
                 document.getElementById('balance').textContent = currentBalance.toFixed(2);
                 document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
