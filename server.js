@@ -124,10 +124,10 @@ function initDatabase() {
                         users.insert({
                             telegram_id: telegramId,
                             main_balance: 0,
-                            demo_balance: 50, // 50 TON вместо 1000
+                            demo_balance: 50, // 50 TON демо-баланс
                             total_deposits: 0,
                             created_at: new Date(),
-                            demo_mode: false,
+                            demo_mode: true, // ВКЛЮЧАЕМ ДЕМО РЕЖИМ ПО УМОЛЧАНИЮ
                             is_admin: true
                         });
                     });
@@ -153,7 +153,7 @@ function initDatabase() {
                 if (!casinoDemoBank) {
                     casinoDemoBank = db.addCollection('casino_demo_bank');
                     casinoDemoBank.insert({
-                        total_balance: 500, // 500 TON демо-банк вместо 10000
+                        total_balance: 500, // 500 TON демо-банк
                         owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
                         created_at: new Date(),
                         updated_at: new Date()
@@ -1876,22 +1876,22 @@ app.post('/api/coinflip/play', async (req, res) => {
                     ...user,
                     demo_balance: newBalance
                 });
-                // Выплата из демо-банка казино
+                // Выплата из демо-банка казино (списываем ВЕСЬ выигрыш)
                 const demoBank = getCasinoDemoBank();
                 casinoDemoBank.update({
                     ...demoBank,
-                    total_balance: demoBank.total_balance - betAmount // Выплачиваем только чистый выигрыш (ставка уже в банке)
+                    total_balance: demoBank.total_balance - winAmount
                 });
             } else {
                 users.update({
                     ...user,
                     main_balance: newBalance
                 });
-                // Выплата из реального банка казино
+                // Выплата из реального банка казино (списываем ВЕСЬ выигрыш)
                 const bank = getCasinoBank();
                 casinoBank.update({
                     ...bank,
-                    total_balance: bank.total_balance - betAmount // Выплачиваем только чистый выигрыш
+                    total_balance: bank.total_balance - winAmount
                 });
             }
         } else {
