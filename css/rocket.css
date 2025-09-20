@@ -17,81 +17,39 @@ body {
 
 /* Фон с сеткой на всю страницу */
 .grid-background {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.15) 1px, transparent 1px);
-    background-size: 30px 30px;
-    opacity: 0.4;
-    animation: waveMove 12s ease-in-out infinite;
-    transform-style: preserve-3d;
-    perspective: 1000px;
+    z-index: -1;
+    background: 
+        linear-gradient(rgba(30, 92, 184, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.2) 1px, transparent 1px),
+        linear-gradient(rgba(30, 92, 184, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.1) 1px, transparent 1px);
+    
+    background-size: 
+        80px 80px,
+        80px 80px,
+        40px 40px,
+        40px 40px;
+    
+    /* Анимация пульсации сетки */
+    animation: grid-pulse 4s ease-in-out infinite;
 }
 
-@keyframes waveMove {
+/* Анимация пульсации сетки */
+@keyframes grid-pulse {
     0%, 100% {
-        background-position: 0 0;
-        opacity: 0.4;
-        transform: translateZ(0) rotateX(0deg) rotateY(0deg);
-    }
-    25% {
-        background-position: 7px 5px;
-        opacity: 0.5;
-        transform: translateZ(10px) rotateX(2deg) rotateY(1deg);
+        transform: scale(1);
+        opacity: 0.8;
     }
     50% {
-        background-position: 15px 10px;
-        opacity: 0.6;
-        transform: translateZ(20px) rotateX(4deg) rotateY(2deg);
-    }
-    75% {
-        background-position: 7px 5px;
-        opacity: 0.5;
-        transform: translateZ(10px) rotateX(2deg) rotateY(-1deg);
+        transform: scale(1.05);
+        opacity: 1;
     }
 }
-
-/* Добавляем дополнительный слой для глубины */
-.grid-background::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        linear-gradient(rgba(0, 200, 200, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 200, 200, 0.08) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: deepWave 18s ease-in-out infinite;
-    transform: translateZ(-20px);
-    opacity: 0.3;
-}
-
-@keyframes deepWave {
-    0%, 100% {
-        background-position: 0 0;
-        opacity: 0.3;
-    }
-    25% {
-        background-position: 10px 8px;
-        opacity: 0.4;
-    }
-    50% {
-        background_position: 20px 15px;
-        opacity: 0.5;
-    }
-    75% {
-        background-position: 10px 8px;
-        opacity: 0.4;
-    }
-}
-
-
 
 .game-container {
     max-width: 390px;
