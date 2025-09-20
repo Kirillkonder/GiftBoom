@@ -1,11 +1,625 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Plinko Game - 1win Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.5)); }
+            to { filter: drop-shadow(0 0 20px rgba(78, 205, 196, 0.8)); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .control-input {
+            padding: 10px 15px;
+            border: 2px solid #4ecdc4;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #45b7d1, #96c93d);
+            color: white;
+            box-shadow: 0 5px 15px rgba(69, 183, 209, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(69, 183, 209, 0.5);
+        }
+
+        .game-board {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(78, 205, 196, 0.2);
+        }
+
+        .peg {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #4ecdc4, #45b7d1);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+            animation: pegGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes pegGlow {
+            from { box-shadow: 0 0 10px rgba(78, 205, 196, 0.8); }
+            to { box-shadow: 0 0 20px rgba(78, 205, 196, 1); }
+        }
+
+        .ball {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #e74c3c);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
+            z-index: 10;
+        }
+
+        .multiplier-slots {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+        }
+
+        .multiplier-slot {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .multiplier-slot::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .multiplier-high {
+            background: linear-gradient(45deg, #ff6b6b, #e74c3c);
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .multiplier-medium {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .multiplier-low {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .game-board {
+                width: 95vw;
+                height: 70vh;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            width: 6px;
+            height: 6px;
+            background: #4ecdc4;
+            border-radius: 50%;
+            animation: particleFloat 3s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(0);
+                opacity: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-    plinko
+    <button class="btn btn-secondary home-btn" onclick="window.history.back()">← Главное меню</button>
+    
+    <div class="game-container">
+        <div class="header">
+            <h1>🎯 PLINKO GAME 🎯</h1>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="ballCount">Количество шариков:</label>
+                <input type="number" id="ballCount" class="control-input" min="1" max="10" value="1">
+            </div>
+            <div class="control-group">
+                <label for="betAmount">Ставка:</label>
+                <input type="number" id="betAmount" class="control-input" min="1" max="1000" value="10">
+            </div>
+            <button class="btn btn-primary" onclick="dropBalls()">🚀 ЗАПУСТИТЬ</button>
+            <button class="btn btn-secondary" onclick="resetGame()">🔄 СБРОС</button>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <div class="multiplier-slots" id="multiplierSlots"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalGames">0</div>
+                <div class="stat-label">Всего игр</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalWin">0</div>
+                <div class="stat-label">Общий выигрыш</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="lastWin">0</div>
+                <div class="stat-label">Последний выигрыш</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="maxWin">0</div>
+                <div class="stat-label">Максимальный выигрыш</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PlinkoGame {
+            constructor() {
+                this.gameBoard = document.getElementById('gameBoard');
+                this.pegs = [];
+                this.balls = [];
+                this.multipliers = [1000, 130, 26, 9, 4, 2, 2, 4, 9, 26, 130, 1000];
+                this.slotWidth = 800 / this.multipliers.length;
+                this.stats = {
+                    totalGames: 0,
+                    totalWin: 0,
+                    lastWin: 0,
+                    maxWin: 0
+                };
+                this.init();
+            }
+
+            init() {
+                this.createPegs();
+                this.createMultiplierSlots();
+                this.loadStats();
+                this.updateStatsDisplay();
+            }
+
+            createPegs() {
+                const rows = 12;
+                const startY = 100;
+                const rowSpacing = 40;
+                
+                for (let row = 0; row < rows; row++) {
+                    const pegsInRow = row + 3;
+                    const pegSpacing = 700 / (pegsInRow + 1);
+                    const startX = (800 - (pegsInRow - 1) * pegSpacing) / 2;
+                    
+                    for (let col = 0; col < pegsInRow; col++) {
+                        const peg = document.createElement('div');
+                        peg.className = 'peg';
+                        peg.style.left = `${startX + col * pegSpacing}px`;
+                        peg.style.top = `${startY + row * rowSpacing}px`;
+                        
+                        // Добавляем случайную задержку анимации
+                        peg.style.animationDelay = `${Math.random() * 2}s`;
+                        
+                        this.gameBoard.appendChild(peg);
+                        this.pegs.push({
+                            x: startX + col * pegSpacing,
+                            y: startY + row * rowSpacing,
+                            element: peg
+                        });
+                    }
+                }
+            }
+
+            createMultiplierSlots() {
+                const slotsContainer = document.getElementById('multiplierSlots');
+                slotsContainer.innerHTML = '';
+                
+                this.multipliers.forEach((multiplier, index) => {
+                    const slot = document.createElement('div');
+                    slot.className = 'multiplier-slot';
+                    
+                    if (multiplier >= 100) {
+                        slot.classList.add('multiplier-high');
+                    } else if (multiplier >= 10) {
+                        slot.classList.add('multiplier-medium');
+                    } else {
+                        slot.classList.add('multiplier-low');
+                    }
+                    
+                    slot.textContent = `${multiplier}x`;
+                    slot.style.animationDelay = `${index * 0.1}s`;
+                    slotsContainer.appendChild(slot);
+                });
+            }
+
+            createBall(startX = 400) {
+                const ball = document.createElement('div');
+                ball.className = 'ball';
+                ball.style.left = `${startX}px`;
+                ball.style.top = '20px';
+                this.gameBoard.appendChild(ball);
+                
+                return {
+                    element: ball,
+                    x: startX,
+                    y: 20,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: 0,
+                    gravity: 0.5,
+                    bounce: 0.8,
+                    friction: 0.99
+                };
+            }
+
+            animateBall(ball) {
+                return new Promise((resolve) => {
+                    const animate = () => {
+                        // Применяем гравитацию
+                        ball.vy += ball.gravity;
+                        
+                        // Обновляем позицию
+                        ball.x += ball.vx;
+                        ball.y += ball.vy;
+                        
+                        // Проверяем столкновения с колышками
+                        this.pegs.forEach(peg => {
+                            const dx = ball.x - peg.x;
+                            const dy = ball.y - peg.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < 20) {
+                                // Столкновение с колышком
+                                ball.vx = (dx / distance) * 3 + (Math.random() - 0.5) * 2;
+                                ball.vy = Math.abs(ball.vy) * ball.bounce;
+                                
+                                // Эффект свечения колышка
+                                peg.element.style.boxShadow = '0 0 25px rgba(255, 107, 107, 1)';
+                                setTimeout(() => {
+                                    peg.element.style.boxShadow = '0 0 10px rgba(78, 205, 196, 0.8)';
+                                }, 200);
+                                
+                                this.createParticles(ball.x, ball.y);
+                            }
+                        });
+                        
+                        // Границы игрового поля
+                        if (ball.x < 8) {
+                            ball.x = 8;
+                            ball.vx = Math.abs(ball.vx);
+                        }
+                        if (ball.x > 792) {
+                            ball.x = 792;
+                            ball.vx = -Math.abs(ball.vx);
+                        }
+                        
+                        // Применяем трение
+                        ball.vx *= ball.friction;
+                        
+                        // Обновляем позицию элемента
+                        ball.element.style.left = `${ball.x}px`;
+                        ball.element.style.top = `${ball.y}px`;
+                        
+                        // Проверяем, достиг ли шарик дна
+                        if (ball.y >= 540) {
+                            const slotIndex = Math.floor(ball.x / this.slotWidth);
+                            const finalSlot = Math.max(0, Math.min(this.multipliers.length - 1, slotIndex));
+                            this.handleBallLanding(ball, finalSlot);
+                            resolve(finalSlot);
+                        } else {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+                    
+                    animate();
+                });
+            }
+
+            createParticles(x, y) {
+                for (let i = 0; i < 5; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = `${x + this.gameBoard.offsetLeft}px`;
+                    particle.style.top = `${y + this.gameBoard.offsetTop}px`;
+                    particle.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                    
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 3000);
+                }
+            }
+
+            handleBallLanding(ball, slotIndex) {
+                const multiplier = this.multipliers[slotIndex];
+                const betAmount = parseInt(document.getElementById('betAmount').value) || 10;
+                const winAmount = betAmount * multiplier;
+                
+                // Анимация слота
+                const slots = document.querySelectorAll('.multiplier-slot');
+                if (slots[slotIndex]) {
+                    slots[slotIndex].style.transform = 'scale(1.2)';
+                    slots[slotIndex].style.boxShadow = '0 0 30px rgba(255, 107, 107, 0.8)';
+                    
+                    setTimeout(() => {
+                        slots[slotIndex].style.transform = 'scale(1)';
+                        slots[slotIndex].style.boxShadow = 'none';
+                    }, 500);
+                }
+                
+                // Обновляем статистику
+                this.stats.totalGames++;
+                this.stats.totalWin += winAmount;
+                this.stats.lastWin = winAmount;
+                if (winAmount > this.stats.maxWin) {
+                    this.stats.maxWin = winAmount;
+                }
+                
+                this.saveStats();
+                this.updateStatsDisplay();
+                
+                // Удаляем шарик с задержкой
+                setTimeout(() => {
+                    if (ball.element.parentNode) {
+                        ball.element.parentNode.removeChild(ball.element);
+                    }
+                }, 1000);
+                
+                // Создаем эффект взрыва
+                this.createParticles(ball.x, ball.y);
+            }
+
+            async dropBalls() {
+                const ballCount = parseInt(document.getElementById('ballCount').value) || 1;
+                const promises = [];
+                
+                for (let i = 0; i < ballCount; i++) {
+                    setTimeout(() => {
+                        const startX = 400 + (Math.random() - 0.5) * 100;
+                        const ball = this.createBall(startX);
+                        promises.push(this.animateBall(ball));
+                    }, i * 200);
+                }
+            }
+
+            resetGame() {
+                // Удаляем все шарики
+                const balls = document.querySelectorAll('.ball');
+                balls.forEach(ball => ball.remove());
+                
+                // Сбрасываем статистику
+                this.stats = {
+                    totalGames: 0,
+                    totalWin: 0,
+                    lastWin: 0,
+                    maxWin: 0
+                };
+                
+                this.saveStats();
+                this.updateStatsDisplay();
+            }
+
+            loadStats() {
+                const saved = localStorage.getItem('plinkoStats');
+                if (saved) {
+                    this.stats = JSON.parse(saved);
+                }
+            }
+
+            saveStats() {
+                localStorage.setItem('plinkoStats', JSON.stringify(this.stats));
+            }
+
+            updateStatsDisplay() {
+                document.getElementById('totalGames').textContent = this.stats.totalGames;
+                document.getElementById('totalWin').textContent = this.stats.totalWin;
+                document.getElementById('lastWin').textContent = this.stats.lastWin;
+                document.getElementById('maxWin').textContent = this.stats.maxWin;
+            }
+        }
+
+        // Глобальные функции
+        let game;
+
+        function dropBalls() {
+            game.dropBalls();
+        }
+
+        function resetGame() {
+            game.resetGame();
+        }
+
+        // Инициализация игры
+        window.addEventListener('load', () => {
+            game = new PlinkoGame();
+        });
+
+        // Добавляем эффекты при наведении на кнопки
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-2px) scale(1.05)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
 </body>
 </html>
