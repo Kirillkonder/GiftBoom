@@ -12,24 +12,24 @@
         <div class="grid-background"></div>
         
         <div class="header">
-            <button class="close-btn">✕</button>
-            <div class="balance">
+            <button class="close-btn" id="closeBtn">✕</button>
+            <div class="balance" id="balanceDisplay">
                 <span>💎</span>
-                <span>194</span>
+                <span id="balanceAmount">0</span>
             </div>
-            <button class="menu-dots">⋯</button>
+            <button class="menu-dots" id="menuBtn">⋯</button>
         </div>
 
         <h1 class="title">COINFLIP</h1>
 
         <div class="coin-container">
-            <img src="coin.png" alt="GiftBoom Coin" class="coin" id="coinImage">
+            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5MCIgZmlsbD0iI0ZGREI1MCIgc3Ryb2tlPSIjQzk5RjAwIiBzdHJva2Utd2lkdGg9IjUiLz4KICA8dGV4dCB4PSIxMDAiIHk9IjEwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+T1JFTDwvdGV4dD4KPC9zdmc+" alt="Coin" class="coin" id="coinImage">
         </div>
 
         <div class="bet-controls">
             <div class="bet-input-container">
                 <button class="bet-controls-btn">🔸</button>
-                <input type="text" value="100" class="bet-amount" id="betAmount">
+                <input type="text" value="0.1" class="bet-amount" id="betAmount">
                 <div class="control-buttons">
                     <button class="bet-controls-btn" id="decreaseBtn">-</button>
                     <button class="bet-controls-btn" id="increaseBtn">+</button>
@@ -47,27 +47,379 @@
             </div>
         </div>
 
-       <!--  <div class="stats-container">
+        <div class="stats-container">
             <div class="stats-row">
                 <span class="stats-label">Возможный выигрыш</span>
-                <span class="stats-value" id="potentialWin">190 TON</span>
+                <span class="stats-value" id="potentialWin">0.2 TON</span>
             </div>
             <div class="stats-row">
                 <span class="stats-label">Множитель</span>
-                <span class="stats-value">x1.96</span>
+                <span class="stats-value">x2.0</span>
             </div>
             <div class="stats-row">
-                <span class="stats-label">Серия</span>
+                <span class="stats-label">Демо режим</span>
                 <div class="toggle-container">
-                    <div class="toggle active" id="seriesToggle">
+                    <div class="toggle" id="demoToggle">
                         <div class="toggle-slider"></div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>-->
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/coin.js"></script>
+    <script>
+        // Глобальные переменные
+        let userBalance = 0;
+        let demoBalance = 0;
+        let isDemoMode = false;
+        let isFlipping = false;
+        let telegramUserId = null;
+        
+        // Получаем параметры из URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                tgWebAppStartParam: params.get('tgWebAppStartParam'),
+                tgWebAppVersion: params.get('tgWebAppVersion'),
+                tgWebAppPlatform: params.get('tgWebAppPlatform'),
+                tgWebAppThemeParams: params.get('tgWebAppThemeParams')
+            };
+        }
+        
+        // Инициализация приложения
+        async function initApp() {
+            try {
+                // Получаем параметры из URL
+                const params = getUrlParams();
+                
+                // Если запущено внутри Telegram, получаем данные пользователя
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const tg = window.Telegram.WebApp;
+                    tg.expand();
+                    tg.enableClosingConfirmation();
+                    
+                    const user = tg.initDataUnsafe.user;
+                    if (user) {
+                        telegramUserId = user.id;
+                        console.log("User ID:", telegramUserId);
+                    }
+                } else if (params.tgWebAppStartParam) {
+                    // Если есть параметр запуска, используем его как ID пользователя
+                    telegramUserId = params.tgWebAppStartParam;
+                    console.log("User ID from param:", telegramUserId);
+                } else {
+                    // Для тестирования используем случайный ID
+                    telegramUserId = Math.floor(Math.random() * 1000000);
+                    console.log("Random User ID for testing:", telegramUserId);
+                }
+                
+                // Загружаем баланс пользователя
+                await loadUserBalance();
+                
+                // Настраиваем обработчики событий
+                setupEventListeners();
+                
+            } catch (error) {
+                console.error("Error initializing app:", error);
+            }
+        }
+        
+        // Загрузка баланса пользователя
+        async function loadUserBalance() {
+            try {
+                const response = await fetch(`/api/user/balance/${telegramUserId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    userBalance = data.main_balance;
+                    demoBalance = data.demo_balance;
+                    isDemoMode = data.demo_mode;
+                    
+                    updateBalanceDisplay();
+                    updateDemoToggle();
+                } else {
+                    console.error("Failed to load user balance");
+                }
+            } catch (error) {
+                console.error("Error loading balance:", error);
+            }
+        }
+        
+        // Переключение демо режима
+        async function toggleDemoMode() {
+            try {
+                const response = await fetch('/api/user/toggle-demo-mode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ telegramId: telegramUserId })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    isDemoMode = data.demo_mode;
+                    updateDemoToggle();
+                    updateBalanceDisplay();
+                }
+            } catch (error) {
+                console.error("Error toggling demo mode:", error);
+            }
+        }
+        
+        // Обновление отображения баланса
+        function updateBalanceDisplay() {
+            const balanceAmount = document.getElementById('balanceAmount');
+            const balance = isDemoMode ? demoBalance : userBalance;
+            balanceAmount.textContent = balance.toFixed(2);
+            
+            // Обновляем возможный выигрыш
+            updatePotentialWin();
+        }
+        
+        // Обновление переключателя демо режима
+        function updateDemoToggle() {
+            const demoToggle = document.getElementById('demoToggle');
+            if (isDemoMode) {
+                demoToggle.classList.add('active');
+            } else {
+                demoToggle.classList.remove('active');
+            }
+        }
+        
+        // Обновление отображения возможного выигрыша
+        function updatePotentialWin() {
+            const betAmount = parseFloat(document.getElementById('betAmount').value);
+            const potentialWinElement = document.getElementById('potentialWin');
+            potentialWinElement.textContent = (betAmount * 2).toFixed(2) + " TON";
+        }
+        
+        // Установка обработчиков событий
+        function setupEventListeners() {
+            // Кнопки изменения ставки
+            document.getElementById('increaseBtn').addEventListener('click', increaseBet);
+            document.getElementById('decreaseBtn').addEventListener('click', decreaseBet);
+            
+            // Кнопки множителей
+            document.getElementById('doubleBtn').addEventListener('click', () => multiplyBet(2));
+            document.getElementById('halfBtn').addEventListener('click', () => multiplyBet(0.5));
+            
+            // Кнопки выбора стороны
+            document.querySelectorAll('.flip-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!isFlipping) {
+                        const selectedSide = this.getAttribute('data-side');
+                        flipCoin(selectedSide);
+                    }
+                });
+            });
+            
+            // Переключатель демо режима
+            document.getElementById('demoToggle').addEventListener('click', toggleDemoMode);
+            
+            // Кнопка закрытия
+            document.getElementById('closeBtn').addEventListener('click', function() {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.close();
+                } else {
+                    alert("Приложение будет закрыто");
+                }
+            });
+            
+            // Поле ввода ставки
+            document.getElementById('betAmount').addEventListener('input', function() {
+                validateBetAmount();
+                updatePotentialWin();
+            });
+        }
+        
+        // Увеличение ставки
+        function increaseBet() {
+            const betInput = document.getElementById('betAmount');
+            let betAmount = parseFloat(betInput.value);
+            
+            if (isNaN(betAmount)) betAmount = 0.1;
+            
+            if (betAmount < 10) {
+                betAmount += 0.1;
+                if (betAmount > 10) betAmount = 10;
+                betInput.value = betAmount.toFixed(1);
+                updatePotentialWin();
+            }
+        }
+        
+        // Уменьшение ставки
+        function decreaseBet() {
+            const betInput = document.getElementById('betAmount');
+            let betAmount = parseFloat(betInput.value);
+            
+            if (isNaN(betAmount)) betAmount = 0.1;
+            
+            if (betAmount > 0.1) {
+                betAmount -= 0.1;
+                if (betAmount < 0.1) betAmount = 0.1;
+                betInput.value = betAmount.toFixed(1);
+                updatePotentialWin();
+            }
+        }
+        
+        // Умножение ставки
+        function multiplyBet(multiplier) {
+            const betInput = document.getElementById('betAmount');
+            let betAmount = parseFloat(betInput.value);
+            
+            if (isNaN(betAmount)) betAmount = 0.1;
+            
+            betAmount *= multiplier;
+            
+            // Ограничиваем ставку в пределах 0.1-10 TON
+            if (betAmount < 0.1) betAmount = 0.1;
+            if (betAmount > 10) betAmount = 10;
+            
+            betInput.value = betAmount.toFixed(1);
+            updatePotentialWin();
+        }
+        
+        // Валидация суммы ставки
+        function validateBetAmount() {
+            const betInput = document.getElementById('betAmount');
+            let betAmount = parseFloat(betInput.value);
+            
+            if (isNaN(betAmount) || betAmount < 0.1) {
+                betAmount = 0.1;
+            } else if (betAmount > 10) {
+                betAmount = 10;
+            }
+            
+            betInput.value = betAmount.toFixed(1);
+        }
+        
+        // Бросок монеты
+        async function flipCoin(selectedSide) {
+            if (isFlipping) return;
+            
+            const betInput = document.getElementById('betAmount');
+            const betAmount = parseFloat(betInput.value);
+            const currentBalance = isDemoMode ? demoBalance : userBalance;
+            
+            // Проверяем, достаточно ли средств
+            if (betAmount > currentBalance) {
+                alert("Недостаточно средств для ставки");
+                return;
+            }
+            
+            isFlipping = true;
+            
+            try {
+                // Отправляем запрос на сервер для броска монеты
+                const response = await fetch('/api/coinflip/bet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        telegramId: telegramUserId,
+                        betAmount: betAmount,
+                        selectedSide: selectedSide,
+                        demoMode: isDemoMode
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Запускаем анимацию монеты
+                    animateCoinFlip(result.winSide, result.isWin);
+                    
+                    // Обновляем баланс
+                    if (isDemoMode) {
+                        demoBalance = result.new_balance;
+                    } else {
+                        userBalance = result.new_balance;
+                    }
+                    
+                    updateBalanceDisplay();
+                    
+                    // Показываем результат
+                    setTimeout(() => {
+                        if (result.isWin) {
+                            showNotification(`Вы выиграли ${(betAmount * 2).toFixed(2)} TON!`, 'success');
+                        } else {
+                            showNotification(`Вы проиграли ${betAmount.toFixed(2)} TON`, 'error');
+                        }
+                    }, 2000);
+                    
+                } else {
+                    const error = await response.json();
+                    showNotification(error.error || "Ошибка при броске монеты", 'error');
+                }
+                
+            } catch (error) {
+                console.error("Error flipping coin:", error);
+                showNotification("Ошибка соединения", 'error');
+            } finally {
+                isFlipping = false;
+            }
+        }
+        
+        // Анимация броска монеты
+        function animateCoinFlip(resultSide, isWin) {
+            const coinImage = document.getElementById('coinImage');
+            coinImage.classList.add('flipping');
+            
+            // Меняем сторону монеты в зависимости от результата
+            setTimeout(() => {
+                if (resultSide === 'heads') {
+                    coinImage.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5MCIgZmlsbD0iI0ZGREI1MCIgc3Ryb2tlPSIjQzk5RjAwIiBzdHJva2Utd2lkdGg9IjUiLz4KICA8dGV4dCB4PSIxMDAiIHk9IjEwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+T1JFTDwvdGV4dD4KPC9zdmc+";
+                } else {
+                    coinImage.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSI5MCIgZmlsbD0iI0ZGREI1MCIgc3Ryb2tlPSIjQzk5RjAwIiBzdHJva2Utd2lkdGg9IjUiLz4KICA8dGV4dCB4PSIxMDAiIHk9IjEwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+UkVaS0E8L3RleHQ+Cjwvc3ZnPg==";
+                }
+            }, 1000);
+            
+            // Убираем класс анимации после завершения
+            setTimeout(() => {
+                coinImage.classList.remove('flipping');
+            }, 2000);
+        }
+        
+        // Показать уведомление
+        function showNotification(message, type) {
+            // Создаем элемент уведомления
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.padding = '12px 24px';
+            notification.style.borderRadius = '8px';
+            notification.style.zIndex = '1000';
+            notification.style.fontWeight = '600';
+            notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            
+            if (type === 'success') {
+                notification.style.background = 'linear-gradient(135deg, #00b09b, #96c93d)';
+                notification.style.color = 'white';
+            } else {
+                notification.style.background = 'linear-gradient(135deg, #ff416c, #ff4b2b)';
+                notification.style.color = 'white';
+            }
+            
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Удаляем уведомление через 3 секунды
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 500);
+            }, 3000);
+        }
+        
+        // Запускаем приложение после загрузки страницы
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
 </body>
 </html>

@@ -48,16 +48,15 @@
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: rgba(255, 255, 255, 0.7);
-            padding: 8px 12px;
+            width: 32px;
+            height: 32px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 16px;
             cursor: pointer;
             transition: background 0.3s ease;
-            white-space: nowrap;
         }
 
         .close-btn:hover {
@@ -220,19 +219,10 @@
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
 
-        .flip-btn:hover:not(:disabled) {
+        .flip-btn:hover {
             background: linear-gradient(135deg, rgba(0, 255, 255, 0.5), rgba(0, 200, 200, 0.5));
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(0, 255, 255, 0.3);
-        }
-
-        .flip-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: rgba(0, 255, 255, 0.1);
-            border-color: rgba(0, 255, 255, 0.2);
-            transform: none;
-            box-shadow: none;
         }
 
         .stats-container {
