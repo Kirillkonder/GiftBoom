@@ -102,7 +102,7 @@ function initDatabase() {
                 users = db.getCollection('users');
                 transactions = db.getCollection('transactions');
                 casinoBank = db.getCollection('casino_bank');
-                casinoDemoBank = db.getCollection('casino_demo_bank');
+                casinoDemoBank = db.getCollection('casino_demo_bank'); // Новая коллекция
                 adminLogs = db.getCollection('admin_logs');
                 minesGames = db.getCollection('mines_games');
                 rocketGames = db.getCollection('rocket_games');
@@ -114,22 +114,15 @@ function initDatabase() {
                         indices: ['telegram_id']
                     });
                     
-                    // Создаем администраторов по умолчанию
-                    const adminIds = [
-                        parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
-                        1135073023 // второй администратор
-                    ];
-                    
-                    adminIds.forEach(telegramId => {
-                        users.insert({
-                            telegram_id: telegramId,
-                            main_balance: 0,
-                            demo_balance: 50, // 50 TON демо-баланс
-                            total_deposits: 0,
-                            created_at: new Date(),
-                            demo_mode: true, // ВКЛЮЧАЕМ ДЕМО РЕЖИМ ПО УМОЛЧАНИЮ
-                            is_admin: true
-                        });
+                    // Создаем администратора по умолчанию
+                    users.insert({
+                        telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
+                        main_balance: 0,
+                        demo_balance: 50, // 50 TON вместо 1000
+                        total_deposits: 0, // Новое поле для отслеживания депозитов
+                        created_at: new Date(),
+                        demo_mode: false,
+                        is_admin: true
                     });
                 }
                 
@@ -153,7 +146,7 @@ function initDatabase() {
                 if (!casinoDemoBank) {
                     casinoDemoBank = db.addCollection('casino_demo_bank');
                     casinoDemoBank.insert({
-                        total_balance: 500, // 500 TON демо-банк
+                        total_balance: 500, // 500 TON демо-банк вместо 10000
                         owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
                         created_at: new Date(),
                         updated_at: new Date()
@@ -185,7 +178,6 @@ function initDatabase() {
                 }
                 
                 console.log('LokiJS database initialized');
-                console.log('Администраторы созданы:', users.find({is_admin: true}).map(u => u.telegram_id));
                 resolve(true);
             },
             autosave: true,
@@ -1438,33 +1430,40 @@ app.get('/api/transactions/:telegramId', async (req, res) => {
 // API: Получить баланс пользователя
 app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
-    
+    // Только эти два пользователя могут использовать демо режим
+    const isAdminUser = telegramId === 842428912 || telegramId === 1135073023;
+
     try {
-        let user = users.findOne({ telegram_id: telegramId });
+        const user = users.findOne({ telegram_id: telegramId });
         
         if (!user) {
             // Создаем нового пользователя если не найден
-            user = users.insert({
+            const newUser = users.insert({
                 telegram_id: telegramId,
                 main_balance: 0,
-                demo_balance: 0,
-                total_deposits: 0,
+                demo_balance: isAdminUser ? 50 : 0, // 50 TON для админов вместо 1000
+                total_deposits: 0, // Новое поле
                 created_at: new Date(),
                 demo_mode: false,
                 is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
             });
+            
+            res.json({
+                main_balance: newUser.main_balance,
+                demo_balance: newUser.demo_balance,
+                demo_mode: newUser.demo_mode,
+                is_admin: newUser.is_admin,
+                total_deposits: newUser.total_deposits
+            });
+        } else {
+            res.json({
+                main_balance: user.main_balance,
+                demo_balance: user.demo_balance,
+                demo_mode: user.demo_mode,
+                is_admin: user.is_admin,
+                total_deposits: user.total_deposits || 0
+            });
         }
-        
-        // ОБНОВЛЕНО: Всегда возвращаем актуальный баланс из базы
-        user = users.findOne({ telegram_id: telegramId }); // Перечитываем на случай изменений
-        
-        res.json({
-            main_balance: user.main_balance,
-            demo_balance: user.demo_balance,
-            demo_mode: user.demo_mode,
-            is_admin: user.is_admin,
-            total_deposits: user.total_deposits || 0
-        });
     } catch (error) {
         console.error('Get balance error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -1842,163 +1841,7 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
-// API: Игра в монетку
 
-app.post('/api/coinflip/play', async (req, res) => {
-    const { telegramId, betAmount, choice, demoMode } = req.body; // Добавьте demoMode в деструктуризацию
-
-    try {
-        let user = users.findOne({ telegram_id: parseInt(telegramId) });
-        
-        if (!user) {
-            // Создаем нового пользователя если не найден
-            const isAdmin = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023;
-            user = users.insert({
-                telegram_id: parseInt(telegramId),
-                main_balance: 0,
-                demo_balance: isAdmin ? 50 : 0,
-                total_deposits: 0,
-                created_at: new Date(),
-                demo_mode: isAdmin,
-                is_admin: isAdmin
-            });
-        }
-
-        // ИСПОЛЬЗУЕМ РЕЖИМ ИЗ ЗАПРОСА (как в других играх)
-        const useDemoMode = demoMode !== undefined ? demoMode : user.demo_mode;
-        const balance = useDemoMode ? user.demo_balance : user.main_balance;
-        
-        if (balance < betAmount) {
-            return res.status(400).json({ error: 'Недостаточно средств' });
-        }
-
-        // Генерируем случайный результат (50/50)
-        const result = Math.random() > 0.5 ? 'open' : 'решка';
-        const won = result === choice.toLowerCase();
-        
-        let newBalance;
-        let winAmount = 0;
-
-        if (won) {
-            // Игрок выиграл - выплачиваем выигрыш x2
-            winAmount = betAmount * 2;
-            
-            if (useDemoMode) {
-                newBalance = user.demo_balance + winAmount;
-                users.update({
-                    ...user,
-                    demo_balance: newBalance
-                });
-                // Выплата из демо-банка казино
-                const demoBank = getCasinoDemoBank();
-                casinoDemoBank.update({
-                    ...demoBank,
-                    total_balance: demoBank.total_balance - winAmount
-                });
-            } else {
-                newBalance = user.main_balance + winAmount;
-                users.update({
-                    ...user,
-                    main_balance: newBalance
-                });
-                // Выплата из реального банка казино
-                const bank = getCasinoBank();
-                casinoBank.update({
-                    ...bank,
-                    total_balance: bank.total_balance - winAmount
-                });
-            }
-        } else {
-            // Игрок проиграл - списываем ставку
-            if (useDemoMode) {
-                newBalance = user.demo_balance - betAmount;
-                users.update({
-                    ...user,
-                    demo_balance: newBalance
-                });
-                // Ставка идет в демо-банк казино
-                const demoBank = getCasinoDemoBank();
-                casinoDemoBank.update({
-                    ...demoBank,
-                    total_balance: demoBank.total_balance + betAmount
-                });
-            } else {
-                newBalance = user.main_balance - betAmount;
-                users.update({
-                    ...user,
-                    main_balance: newBalance
-                });
-                // Ставка идет в реальный банк казино
-                const bank = getCasinoBank();
-                casinoBank.update({
-                    ...bank,
-                    total_balance: bank.total_balance + betAmount
-                });
-            }
-        }
-
-        // Сохраняем транзакцию с правильным режимом
-        transactions.insert({
-            user_id: user.$loki,
-            amount: won ? winAmount : -betAmount,
-            type: won ? 'coinflip_win' : 'coinflip_loss',
-            status: 'completed',
-            demo_mode: useDemoMode,
-            created_at: new Date(),
-            details: {
-                betAmount: betAmount,
-                choice: choice,
-                result: result,
-                won: won
-            }
-        });
-
-        res.json({
-            success: true,
-            won: won,
-            result: result,
-            winAmount: winAmount,
-            newBalance: newBalance
-        });
-    } catch (error) {
-        console.error('Coinflip error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// API: Получить баланс пользователя для монетки
-app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
-    const telegramId = parseInt(req.params.telegramId);
-    
-    try {
-        let user = users.findOne({ telegram_id: telegramId });
-        
-        if (!user) {
-            // Создаем нового пользователя если не найден
-            const isAdmin = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023;
-            user = users.insert({
-                telegram_id: telegramId,
-                main_balance: 0,
-                demo_balance: isAdmin ? 50 : 0,
-                total_deposits: 0,
-                created_at: new Date(),
-                demo_mode: isAdmin,
-                is_admin: isAdmin
-            });
-        }
-        
-        res.json({
-            main_balance: user.main_balance,
-            demo_balance: user.demo_balance,
-            demo_mode: user.demo_mode,
-            is_admin: user.is_admin,
-            current_balance: user.demo_mode ? user.demo_balance : user.main_balance
-        });
-    } catch (error) {
-        console.error('Get coinflip balance error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
