@@ -1841,7 +1841,96 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
+app.post('/api/coinflip/play', async (req, res) => {
+    const { telegramId, betAmount, choice, demoMode } = req.body;
 
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const balance = demoMode ? user.demo_balance : user.main_balance;
+        
+        if (balance < betAmount) {
+            return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+
+        // Генерируем случайный результат (50/50)
+        const result = Math.random() > 0.5 ? 'open' : 'решка';
+        const won = result === choice.toLowerCase();
+        
+        let newBalance;
+        let winAmount = 0;
+
+        if (won) {
+            // Игрок выиграл - выплачиваем выигрыш x2
+            winAmount = betAmount * 2;
+            newBalance = balance + winAmount;
+            
+            // Обновляем баланс пользователя
+            if (demoMode) {
+                users.update({
+                    ...user,
+                    demo_balance: newBalance
+                });
+                updateCasinoDemoBank(-betAmount); // Выплата из демо-банка
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: newBalance
+                });
+                updateCasinoBank(-betAmount); // Выплата из реального банка
+            }
+        } else {
+            // Игрок проиграл - списываем ставку
+            newBalance = balance - betAmount;
+            
+            // Обновляем баланс пользователя
+            if (demoMode) {
+                users.update({
+                    ...user,
+                    demo_balance: newBalance
+                });
+                updateCasinoDemoBank(betAmount); // Ставка идет в демо-банк
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: newBalance
+                });
+                updateCasinoBank(betAmount); // Ставка идет в реальный банк
+            }
+        }
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            user_id: user.$loki,
+            amount: won ? winAmount : -betAmount,
+            type: won ? 'coinflip_win' : 'coinflip_loss',
+            status: 'completed',
+            demo_mode: demoMode,
+            created_at: new Date(),
+            details: {
+                betAmount: betAmount,
+                choice: choice,
+                result: result,
+                won: won
+            }
+        });
+
+        res.json({
+            success: true,
+            won: won,
+            result: result,
+            winAmount: winAmount,
+            newBalance: newBalance
+        });
+    } catch (error) {
+        console.error('Coinflip error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
