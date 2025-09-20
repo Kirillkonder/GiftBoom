@@ -477,10 +477,10 @@
     </div>
 
     <script>
-        let currentUser = null;
-        let isDemoMode = false;
-        let currentBalance = 0;
-        let currentBetAmount = 0.1;
+            let currentUser = null;
+            let isDemoMode = false;
+            let currentBalance = 0;
+            let currentBetAmount = 0.1;
 
         // Toast notifications
         function showToast(type, title, message, duration = 3000) {
@@ -676,51 +676,51 @@
         }
 
         // Загрузка данных пользователя
-        async function loadUserData() {
-    try {
-        const response = await fetch(`/api/user/balance/${currentUser.id}`);
-        if (response.ok) {
-            const userData = await response.json();
-            
-            // Обновляем баланс в зависимости от режима
-            currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
-            document.getElementById('balance').textContent = currentBalance.toFixed(2);
-            
-            // Показываем/скрываем демо-бейдж
-            document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
-            
-            // Сохраняем текущий режим
-            isDemoMode = userData.demo_mode;
+         async function loadUserData() {
+        try {
+            const response = await fetch(`/api/user/balance/${currentUser.id}`);
+            if (response.ok) {
+                const userData = await response.json();
+                
+                // ОБНОВЛЕНО: Сначала получаем режим из ответа сервера
+                isDemoMode = userData.demo_mode;
+                
+                // Затем обновляем баланс в зависимости от режима
+                currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
+                document.getElementById('balance').textContent = currentBalance.toFixed(2);
+                
+                // Показываем/скрываем демо-бейдж
+                document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки данных пользователя:', error);
         }
-    } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
     }
-}
 
-// Инициализация
-document.addEventListener('DOMContentLoaded', function() {
-    // Получаем данные пользователя из Telegram WebApp
-    const tg = window.Telegram?.WebApp;
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        currentUser = {
-            id: tg.initDataUnsafe.user.id,
-            username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
-        };
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+        // Получаем данные пользователя из Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            currentUser = {
+                id: tg.initDataUnsafe.user.id,
+                username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
+            };
+            
+            // Загружаем данные пользователя
+            loadUserData();
+        } else {
+            // Для тестирования без Telegram
+            currentUser = { id: 842428912, username: 'test_user' };
+            loadUserData();
+        }
         
-        // Загружаем данные пользователя
-        loadUserData();
-    } else {
-        // Для тестирования без Telegram
-        currentUser = { id: 842428912, username: 'test_user' };
-        loadUserData();
-    }
-    
-    // Обновляем потенциальный выигрыш
-    updatePotentialWin();
-    
-    // Загружаем изображение без фона
-    loadImageWithoutBackground();
-});
+        // Обновляем потенциальный выигрыш
+        updatePotentialWin();
+        
+        // Загружаем изображение без фона
+        loadImageWithoutBackground();
+    });
     </script>
 </body>
 </html>
