@@ -586,7 +586,6 @@
                     telegramId: currentUser.id,
                     betAmount: betAmount,
                     choice: choice
-                    // НЕ ПЕРЕДАЕМ demoMode - сервер сам определит режим пользователя
                 })
             });
             
@@ -594,24 +593,19 @@
             
             setTimeout(() => {
                 if (result.success) {
-                    // ОБНОВЛЕНО: Получаем новый баланс из ответа сервера
-                    if (result.newBalance !== undefined) {
-                        currentBalance = result.newBalance;
-                        document.getElementById('balance').textContent = currentBalance.toFixed(2);
-                        
-                        if (result.won) {
-                            showWinNotification(result.winAmount);
-                            document.getElementById('balance').classList.add('balance-updated');
-                            setTimeout(() => {
-                                document.getElementById('balance').classList.remove('balance-updated');
-                            }, 1000);
-                        } else {
-                            showError(`Увы! Выпало ${result.result}. Вы проиграли ${betAmount} TON.`);
-                        }
-                    }
+                    // Обновляем баланс из ответа сервера
+                    currentBalance = result.newBalance;
+                    document.getElementById('balance').textContent = currentBalance.toFixed(2);
                     
-                    // Всегда перезагружаем данные пользователя после игры
-                    loadUserData();
+                    if (result.won) {
+                        showWinNotification(result.winAmount);
+                        document.getElementById('balance').classList.add('balance-updated');
+                        setTimeout(() => {
+                            document.getElementById('balance').classList.remove('balance-updated');
+                        }, 1000);
+                    } else {
+                        showError(`Увы! Выпало ${result.result}. Вы проиграли ${betAmount} TON.`);
+                    }
                 } else {
                     showError('Ошибка: ' + result.error);
                 }
@@ -678,24 +672,24 @@
         document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
     }
 
-    // Загрузка данных пользователя - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // Загрузка данных пользователя - УНИФИЦИРОВАННАЯ ВЕРСИЯ
     async function loadUserData() {
         try {
-            const response = await fetch(`/api/coinflip/balance/${currentUser.id}`);
+            const response = await fetch(`/api/user/balance/${currentUser.id}`);
             if (response.ok) {
                 const userData = await response.json();
                 
-                // КОРРЕКТНО ОПРЕДЕЛЯЕМ РЕЖИМ И БАЛАНС ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ
+                // КОРРЕКТНО ОПРЕДЕЛЯЕМ РЕЖИМ И БАЛАНС
                 isAdmin = userData.is_admin;
-                isDemoMode = userData.demo_mode; // Используем режим пользователя из базы
+                isDemoMode = userData.demo_mode;
                 
-                // Каждый пользователь имеет СВОЙ СОБСТВЕННЫЙ баланс
-                currentBalance = userData.current_balance;
+                // Используем соответствующий баланс в зависимости от режима
+                currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
                 
                 document.getElementById('balance').textContent = currentBalance.toFixed(2);
                 document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
                 
-                console.log('Индивидуальные данные пользователя загружены:', {
+                console.log('Данные пользователя загружены:', {
                     id: currentUser.id,
                     isAdmin: isAdmin,
                     isDemoMode: isDemoMode,
@@ -711,7 +705,7 @@
         }
     }
 
-    // Инициализация
+    // Инициализация - УНИФИЦИРОВАННАЯ ВЕРСИЯ
     document.addEventListener('DOMContentLoaded', function() {
         // Получаем данные пользователя из Telegram WebApp
         const tg = window.Telegram?.WebApp;
@@ -736,7 +730,7 @@
         loadImageWithoutBackground();
         
         // Периодическое обновление баланса
-        setInterval(loadUserData, 10000); // Обновляем каждые 10 секунд
+        setInterval(loadUserData, 10000);
     });
 </script>
 </body>
