@@ -98,6 +98,11 @@
             border: 1px solid rgba(0, 255, 0, 0.3);
         }
 
+        .demo-balance {
+            background: rgba(255, 165, 0, 0.2);
+            border: 1px solid rgba(255, 165, 0, 0.3);
+        }
+
         .main-content {
             flex: 1;
             display: flex;
@@ -325,10 +330,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="close-btn">✕ Закрыть</button>
+            <button class="close-btn" onclick="goBack()">✕ Закрыть</button>
             <div class="logo">COINFLIP</div>
             <div class="stats">
-                <div class="stat-item balance">194</div>
+                <div class="stat-item balance" id="mainBalance">0</div>
+                <div class="stat-item demo-balance" id="demoBalance" style="display: none;">0</div>
                 <div class="stat-item">0.00 ⭐</div>
             </div>
         </div>
@@ -382,6 +388,10 @@
     </div>
 
     <script type="module">
+        let currentUser = null;
+        let isDemoMode = false;
+        let isAdmin = false;
+
         // Функция для загрузки и обработки изображения
         async function loadImageWithoutBackground() {
             try {
@@ -436,8 +446,57 @@
             toggle.classList.toggle('active');
         };
 
-        // Управление ставками
+        // Функция для возврата назад
+        window.goBack = function() {
+            window.location.href = 'index.html';
+        };
+
+        // Загрузка данных пользователя
+        async function loadUserData() {
+            try {
+                const response = await fetch(`/api/user/balance/${currentUser.id}`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    
+                    // Обновляем балансы
+                    document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
+                    
+                    // Для админов показываем демо баланс
+                    if (userData.is_admin) {
+                        document.getElementById('demoBalance').textContent = userData.demo_balance.toFixed(2);
+                        document.getElementById('demoBalance').style.display = 'block';
+                        isAdmin = true;
+                    } else {
+                        document.getElementById('demoBalance').style.display = 'none';
+                        isAdmin = false;
+                    }
+                    
+                    isDemoMode = userData.demo_mode;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки данных пользователя:', error);
+            }
+        }
+
+        // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
+            // Получаем данные пользователя из Telegram WebApp
+            const tg = window.Telegram?.WebApp;
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                currentUser = {
+                    id: tg.initDataUnsafe.user.id,
+                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
+                };
+                
+                // Загружаем данные пользователя
+                loadUserData();
+            } else {
+                // Для тестирования без Telegram
+                currentUser = { id: 842428912, username: 'test_user' };
+                loadUserData();
+            }
+            
+            // Управление ставками
             const betInput = document.getElementById('betAmount');
             const multiplierBtns = document.querySelectorAll('.multiplier-btn');
             const betBtns = document.querySelectorAll('.bet-btn');
