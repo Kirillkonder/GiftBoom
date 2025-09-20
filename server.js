@@ -1953,6 +1953,38 @@ app.post('/api/coinflip/play', async (req, res) => {
     }
 });
 
+app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
+    const telegramId = parseInt(req.params.telegramId);
+    
+    try {
+        let user = users.findOne({ telegram_id: telegramId });
+        
+        if (!user) {
+            user = users.insert({
+                telegram_id: telegramId,
+                main_balance: 0,
+                demo_balance: 0,
+                total_deposits: 0,
+                created_at: new Date(),
+                demo_mode: false,
+                is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
+            });
+        }
+        
+        user = users.findOne({ telegram_id: telegramId });
+        
+        res.json({
+            main_balance: user.main_balance,
+            demo_balance: user.demo_balance,
+            demo_mode: user.demo_mode,
+            is_admin: user.is_admin
+        });
+    } catch (error) {
+        console.error('Get coinflip balance error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
     try {

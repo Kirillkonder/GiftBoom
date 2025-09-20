@@ -477,225 +477,228 @@
     </div>
 
     <script>
-            let currentUser = null;
-            let isDemoMode = false;
-            let currentBalance = 0;
-            let currentBetAmount = 0.1;
+             let currentUser = null;
+    let isDemoMode = false;
+    let currentBalance = 0;
+    let currentBetAmount = 0.1;
 
-        // Toast notifications
-        function showToast(type, title, message, duration = 3000) {
-            let toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toast-container';
-                toastContainer.className = 'toast-container';
-                document.body.appendChild(toastContainer);
-            }
-            
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            const icons = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️',
-                win: '🏆'
-            };
-            
-            toast.innerHTML = `
-                <span class="toast-icon">${icons[type] || icons.info}</span>
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
-            `;
-            
-            toastContainer.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-            
-            if (duration > 0) {
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    toast.classList.add('hide');
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
-                }, duration);
-            }
-            
-            return toast;
+    // Toast notifications
+    function showToast(type, title, message, duration = 3000) {
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container';
+            document.body.appendChild(toastContainer);
         }
-
-        function showError(message) {
-            showToast('error', 'Ошибка', message);
-        }
-
-        function showSuccess(message) {
-            showToast('success', 'Успешно', message);
-        }
-
-        function showWinNotification(amount) {
-            if (amount >= 10) {
-                showToast('win', 'КРУПНЫЙ ВЫИГРЫШ!', `🎉 Вы выиграли ${amount.toFixed(2)} TON!`, 5000);
-            } else {
-                showToast('success', 'Выигрыш!', `+${amount.toFixed(2)} TON`);
-            }
-        }
-
-        // Функция для загрузки и обработки изображения
-        async function loadImageWithoutBackground() {
-            try {
-                const coinImg = document.getElementById('coinImage');
-                coinImg.style.filter = 'drop-shadow(0 0 20px rgba(0, 255, 255, 0.8))';
-                coinImg.style.background = 'transparent';
-            } catch (error) {
-                console.error('Ошибка при обработке изображения:', error);
-            }
-        }
-
-        // Функция переворота монетки
-       window.flipCoin = async function(choice) {
-    const coin = document.getElementById('coinImage');
-    const betAmount = parseFloat(document.getElementById('betAmount').value);
-    
-    // Проверка баланса
-    if (currentBalance < betAmount) {
-        showError('Недостаточно средств');
-        return;
-    }
-    
-    // Анимация переворота
-    coin.style.transform = 'rotateY(1800deg) scale(1.1)';
-    coin.style.transition = 'transform 2s ease-in-out';
-    
-    try {
-        // Отправляем запрос на сервер для обработки игры
-        const response = await fetch('/api/coinflip/play', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                betAmount: betAmount,
-                choice: choice,
-                demoMode: isDemoMode
-            })
-        });
         
-        const result = await response.json();
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️',
+            win: '🏆'
+        };
+        
+        toast.innerHTML = `
+            <span class="toast-icon">${icons[type] || icons.info}</span>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        toastContainer.appendChild(toast);
         
         setTimeout(() => {
-            if (result.success) {
-                // ОБНОВЛЕНО: Используем newBalance из ответа сервера
-                currentBalance = result.newBalance;
-                document.getElementById('balance').textContent = currentBalance.toFixed(2);
-                
-                if (result.won) {
-                    showWinNotification(result.winAmount);
-                    document.getElementById('balance').classList.add('balance-updated');
-                    setTimeout(() => {
-                        document.getElementById('balance').classList.remove('balance-updated');
-                    }, 1000);
-                } else {
-                    showError(`Увы! Выпало ${result.result}. Вы проиграли ${betAmount} TON.`);
-                }
-            } else {
-                showError('Ошибка: ' + result.error);
-            }
-            
-            coin.style.transform = 'rotateY(0deg) scale(1)';
-        }, 2000);
-    } catch (error) {
-        console.error('Ошибка при игре:', error);
-        showError('Ошибка соединения с сервером');
-        coin.style.transform = 'rotateY(0deg) scale(1)';
+            toast.classList.add('show');
+        }, 10);
+        
+        if (duration > 0) {
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        return toast;
     }
-};
 
-        // Функция переключения серии
-        window.toggleSeries = function() {
-            const toggle = document.querySelector('.toggle');
-            toggle.classList.toggle('active');
-        };
+    function showError(message) {
+        showToast('error', 'Ошибка', message);
+    }
 
-        // Функция для возврата назад
-        window.goBack = function() {
-            window.location.href = 'index.html';
-        };
+    function showSuccess(message) {
+        showToast('success', 'Успешно', message);
+    }
 
-        // Управление ставками
-        window.decreaseBet = function() {
-            const betInput = document.getElementById('betAmount');
-            let value = parseFloat(betInput.value);
-            if (value > 0.1) {
-                value = Math.max(0.1, value - 0.1);
-                betInput.value = value.toFixed(1);
-                currentBetAmount = value;
-                updatePotentialWin();
-            }
-        };
+    function showWinNotification(amount) {
+        if (amount >= 10) {
+            showToast('win', 'КРУПНЫЙ ВЫИГРЫШ!', `🎉 Вы выиграли ${amount.toFixed(2)} TON!`, 5000);
+        } else {
+            showToast('success', 'Выигрыш!', `+${amount.toFixed(2)} TON`);
+        }
+    }
 
-        window.increaseBet = function() {
-            const betInput = document.getElementById('betAmount');
-            let value = parseFloat(betInput.value);
-            if (value < 10) {
-                value = Math.min(10, value + 0.1);
-                betInput.value = value.toFixed(1);
-                currentBetAmount = value;
-                updatePotentialWin();
-            }
-        };
+    // Функция для загрузки и обработки изображения
+    async function loadImageWithoutBackground() {
+        try {
+            const coinImg = document.getElementById('coinImage');
+            coinImg.style.filter = 'drop-shadow(0 0 20px rgba(0, 255, 255, 0.8))';
+            coinImg.style.background = 'transparent';
+        } catch (error) {
+            console.error('Ошибка при обработке изображения:', error);
+        }
+    }
 
-        window.validateBetAmount = function() {
-            const betInput = document.getElementById('betAmount');
-            let value = parseFloat(betInput.value);
+    // Функция переворота монетки
+    window.flipCoin = async function(choice) {
+        const coin = document.getElementById('coinImage');
+        const betAmount = parseFloat(document.getElementById('betAmount').value);
+        
+        // Проверка баланса
+        if (currentBalance < betAmount) {
+            showError('Недостаточно средств');
+            return;
+        }
+        
+        // Анимация переворота
+        coin.style.transform = 'rotateY(1800deg) scale(1.1)';
+        coin.style.transition = 'transform 2s ease-in-out';
+        
+        try {
+            // Отправляем запрос на сервер для обработки игры
+            const response = await fetch('/api/coinflip/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    telegramId: currentUser.id,
+                    betAmount: betAmount,
+                    choice: choice,
+                    demoMode: isDemoMode
+                })
+            });
             
-            if (isNaN(value)) {
-                value = 0.1;
-            }
+            const result = await response.json();
             
-            value = Math.max(0.1, Math.min(10, value));
+            setTimeout(() => {
+                if (result.success) {
+                    // Обновляем баланс из ответа сервера
+                    currentBalance = result.newBalance;
+                    document.getElementById('balance').textContent = currentBalance.toFixed(2);
+                    
+                    if (result.won) {
+                        showWinNotification(result.winAmount);
+                        document.getElementById('balance').classList.add('balance-updated');
+                        setTimeout(() => {
+                            document.getElementById('balance').classList.remove('balance-updated');
+                        }, 1000);
+                    } else {
+                        showError(`Увы! Выпало ${result.result}. Вы проиграли ${betAmount} TON.`);
+                    }
+                    
+                    // Обновляем данные пользователя после игры
+                    loadUserData();
+                } else {
+                    showError('Ошибка: ' + result.error);
+                }
+                
+                coin.style.transform = 'rotateY(0deg) scale(1)';
+            }, 2000);
+        } catch (error) {
+            console.error('Ошибка при игре:', error);
+            showError('Ошибка соединения с сервером');
+            coin.style.transform = 'rotateY(0deg) scale(1)';
+        }
+    };
+
+    // Функция переключения серии
+    window.toggleSeries = function() {
+        const toggle = document.querySelector('.toggle');
+        toggle.classList.toggle('active');
+    };
+
+    // Функция для возврата назад
+    window.goBack = function() {
+        window.location.href = 'index.html';
+    };
+
+    // Управление ставками
+    window.decreaseBet = function() {
+        const betInput = document.getElementById('betAmount');
+        let value = parseFloat(betInput.value);
+        if (value > 0.1) {
+            value = Math.max(0.1, value - 0.1);
             betInput.value = value.toFixed(1);
             currentBetAmount = value;
             updatePotentialWin();
-        };
-
-        function updatePotentialWin() {
-            const potentialWin = currentBetAmount * 2;
-            document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
         }
+    };
 
-        // Загрузка данных пользователя
-         async function loadUserData() {
-    try {
-        const response = await fetch(`/api/user/balance/${currentUser.id}`);
-        if (response.ok) {
-            const userData = await response.json();
-            
-            // ОБНОВЛЕНО: Получаем все данные из ответа сервера
-            isDemoMode = userData.demo_mode;
-            currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
-            
-            document.getElementById('balance').textContent = currentBalance.toFixed(2);
-            document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
-            
-            console.log('Данные пользователя загружены:', userData);
+    window.increaseBet = function() {
+        const betInput = document.getElementById('betAmount');
+        let value = parseFloat(betInput.value);
+        if (value < 10) {
+            value = Math.min(10, value + 0.1);
+            betInput.value = value.toFixed(1);
+            currentBetAmount = value;
+            updatePotentialWin();
         }
-    } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
-        // Для тестирования используем заглушки
-        currentBalance = isDemoMode ? 50 : 0;
-        document.getElementById('balance').textContent = currentBalance.toFixed(2);
+    };
+
+    window.validateBetAmount = function() {
+        const betInput = document.getElementById('betAmount');
+        let value = parseFloat(betInput.value);
+        
+        if (isNaN(value)) {
+            value = 0.1;
+        }
+        
+        value = Math.max(0.1, Math.min(10, value));
+        betInput.value = value.toFixed(1);
+        currentBetAmount = value;
+        updatePotentialWin();
+    };
+
+    function updatePotentialWin() {
+        const potentialWin = currentBetAmount * 2;
+        document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
     }
-}
+
+    // Загрузка данных пользователя
+    async function loadUserData() {
+        try {
+            const response = await fetch(`/api/coinflip/balance/${currentUser.id}`);
+            if (response.ok) {
+                const userData = await response.json();
+                
+                isDemoMode = userData.demo_mode;
+                currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
+                
+                document.getElementById('balance').textContent = currentBalance.toFixed(2);
+                document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                
+                console.log('Данные пользователя загружены:', userData);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки данных пользователя:', error);
+            // Для тестирования используем заглушки
+            currentBalance = isDemoMode ? 50 : 0;
+            document.getElementById('balance').textContent = currentBalance.toFixed(2);
+        }
+    }
+
     // Инициализация
     document.addEventListener('DOMContentLoaded', function() {
         // Получаем данные пользователя из Telegram WebApp
@@ -711,6 +714,7 @@
         } else {
             // Для тестирования без Telegram
             currentUser = { id: 842428912, username: 'test_user' };
+            isDemoMode = true;
             loadUserData();
         }
         
@@ -719,6 +723,9 @@
         
         // Загружаем изображение без фона
         loadImageWithoutBackground();
+        
+        // Периодическое обновление баланса
+        setInterval(loadUserData, 30000); // Обновляем каждые 30 секунд
     });
     </script>
 </body>
