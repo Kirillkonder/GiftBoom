@@ -102,7 +102,7 @@ function initDatabase() {
                 users = db.getCollection('users');
                 transactions = db.getCollection('transactions');
                 casinoBank = db.getCollection('casino_bank');
-                casinoDemoBank = db.getCollection('casino_demo_bank'); // Новая коллекция
+                casinoDemoBank = db.getCollection('casino_demo_bank');
                 adminLogs = db.getCollection('admin_logs');
                 minesGames = db.getCollection('mines_games');
                 rocketGames = db.getCollection('rocket_games');
@@ -114,15 +114,22 @@ function initDatabase() {
                         indices: ['telegram_id']
                     });
                     
-                    // Создаем администратора по умолчанию
-                    users.insert({
-                        telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
-                        main_balance: 0,
-                        demo_balance: 50, // 50 TON вместо 1000
-                        total_deposits: 0, // Новое поле для отслеживания депозитов
-                        created_at: new Date(),
-                        demo_mode: false,
-                        is_admin: true
+                    // Создаем администраторов по умолчанию
+                    const adminIds = [
+                        parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
+                        1135073023 // второй администратор
+                    ];
+                    
+                    adminIds.forEach(telegramId => {
+                        users.insert({
+                            telegram_id: telegramId,
+                            main_balance: 0,
+                            demo_balance: 50, // 50 TON вместо 1000
+                            total_deposits: 0,
+                            created_at: new Date(),
+                            demo_mode: false,
+                            is_admin: true
+                        });
                     });
                 }
                 
@@ -178,6 +185,7 @@ function initDatabase() {
                 }
                 
                 console.log('LokiJS database initialized');
+                console.log('Администраторы созданы:', users.find({is_admin: true}).map(u => u.telegram_id));
                 resolve(true);
             },
             autosave: true,
@@ -1432,11 +1440,11 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
     
     try {
-        const user = users.findOne({ telegram_id: telegramId });
+        let user = users.findOne({ telegram_id: telegramId });
         
         if (!user) {
             // Создаем нового пользователя если не найден
-            const newUser = users.insert({
+            user = users.insert({
                 telegram_id: telegramId,
                 main_balance: 0,
                 demo_balance: 0,
@@ -1445,28 +1453,23 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
                 demo_mode: false,
                 is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
             });
-            
-            res.json({
-                main_balance: newUser.main_balance,
-                demo_balance: newUser.demo_balance,
-                demo_mode: newUser.demo_mode,
-                is_admin: newUser.is_admin,
-                total_deposits: newUser.total_deposits
-            });
-        } else {
-            res.json({
-                main_balance: user.main_balance,
-                demo_balance: user.demo_balance,
-                demo_mode: user.demo_mode,
-                is_admin: user.is_admin,
-                total_deposits: user.total_deposits || 0
-            });
         }
+        
+        // ОБНОВЛЕНО: Всегда возвращаем актуальный баланс из базы
+        user = users.findOne({ telegram_id: telegramId }); // Перечитываем на случай изменений
+        
+        res.json({
+            main_balance: user.main_balance,
+            demo_balance: user.demo_balance,
+            demo_mode: user.demo_mode,
+            is_admin: user.is_admin,
+            total_deposits: user.total_deposits || 0
+        });
     } catch (error) {
         console.error('Get balance error:', error);
         res.status(500).json({ error: 'Server error' });
     }
-});;
+});
 
 // API: Переключить демо режим (только для админов)
 app.post('/api/user/toggle-demo-mode', async (req, res) => {
@@ -1873,13 +1876,23 @@ app.post('/api/coinflip/play', async (req, res) => {
                     ...user,
                     demo_balance: newBalance
                 });
-                updateCasinoDemoBank(-betAmount); // Выплата из демо-банка
+                // Выплата из демо-банка казино
+                const demoBank = getCasinoDemoBank();
+                casinoDemoBank.update({
+                    ...demoBank,
+                    total_balance: demoBank.total_balance - betAmount // Выплачиваем только чистый выигрыш (ставка уже в банке)
+                });
             } else {
                 users.update({
                     ...user,
                     main_balance: newBalance
                 });
-                updateCasinoBank(-betAmount); // Выплата из реального банка
+                // Выплата из реального банка казино
+                const bank = getCasinoBank();
+                casinoBank.update({
+                    ...bank,
+                    total_balance: bank.total_balance - betAmount // Выплачиваем только чистый выигрыш
+                });
             }
         } else {
             // Игрок проиграл - списываем ставку
@@ -1891,13 +1904,23 @@ app.post('/api/coinflip/play', async (req, res) => {
                     ...user,
                     demo_balance: newBalance
                 });
-                updateCasinoDemoBank(betAmount); // Ставка идет в демо-банк
+                // Ставка идет в демо-банк казино
+                const demoBank = getCasinoDemoBank();
+                casinoDemoBank.update({
+                    ...demoBank,
+                    total_balance: demoBank.total_balance + betAmount
+                });
             } else {
                 users.update({
                     ...user,
                     main_balance: newBalance
                 });
-                updateCasinoBank(betAmount); // Ставка идет в реальный банк
+                // Ставка идет в реальный банк казино
+                const bank = getCasinoBank();
+                casinoBank.update({
+                    ...bank,
+                    total_balance: bank.total_balance + betAmount
+                });
             }
         }
 
