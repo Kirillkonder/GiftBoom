@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plinko Game - 1win Style</title>
+    <title>Plinko - 1Win Style</title>
     <style>
         * {
             margin: 0;
@@ -13,13 +13,16 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            background: linear-gradient(135deg, #0f1e3d 0%, #1a365d 50%, #0f1e3d 100%);
+            min-height: 100vh;
             color: white;
             overflow-x: hidden;
-            min-height: 100vh;
         }
 
         .game-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
@@ -27,599 +30,558 @@
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            padding: 20px 0;
         }
 
         .header h1 {
-            font-size: 3rem;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
-            animation: glow 2s ease-in-out infinite alternate;
+            font-size: 2.5rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
         }
 
-        @keyframes glow {
-            from { filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.5)); }
-            to { filter: drop-shadow(0 0 20px rgba(78, 205, 196, 0.8)); }
-        }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .control-group label {
-            font-weight: bold;
-            color: #4ecdc4;
-        }
-
-        .control-input {
-            padding: 10px 15px;
-            border: 2px solid #4ecdc4;
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .control-input:focus {
-            outline: none;
-            border-color: #ff6b6b;
-            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            color: white;
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(45deg, #45b7d1, #96c93d);
-            color: white;
-            box-shadow: 0 5px 15px rgba(69, 183, 209, 0.3);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(69, 183, 209, 0.5);
-        }
-
-        .game-board {
+        .plinko-board {
             position: relative;
-            width: 800px;
-            height: 600px;
-            margin: 0 auto;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border: 2px solid rgba(78, 205, 196, 0.3);
+            width: 600px;
+            height: 500px;
+            margin: 0 auto 30px;
+            background: rgba(15, 30, 61, 0.8);
+            border: 2px solid rgba(0, 212, 255, 0.3);
             border-radius: 20px;
             overflow: hidden;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 50px rgba(78, 205, 196, 0.2);
         }
 
         .peg {
             position: absolute;
-            width: 8px;
-            height: 8px;
-            background: radial-gradient(circle, #4ecdc4, #45b7d1);
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
-            animation: pegGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes pegGlow {
-            from { box-shadow: 0 0 10px rgba(78, 205, 196, 0.8); }
-            to { box-shadow: 0 0 20px rgba(78, 205, 196, 1); }
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
         .ball {
             position: absolute;
             width: 16px;
             height: 16px;
-            background: radial-gradient(circle at 30% 30%, #ff6b6b, #e74c3c);
+            background: linear-gradient(145deg, #ff6b6b, #ff4757);
             border-radius: 50%;
             box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
-            z-index: 10;
+            transition: all 0.1s ease-out;
+            z-index: 100;
         }
 
-        .multiplier-slots {
+        .multiplier-zone {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
             height: 60px;
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
         }
 
-        .multiplier-slot {
-            flex: 1;
+        .multiplier {
+            background: linear-gradient(145deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .control-panel {
+            background: rgba(15, 30, 61, 0.9);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .left-controls, .right-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            color: #a0aec0;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn {
+            background: rgba(45, 55, 72, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.6);
+        }
+
+        .btn.active {
+            background: linear-gradient(145deg, #00d4ff, #0ea5e9);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .play-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #00d4ff, #0ea5e9);
+            border: 4px solid rgba(0, 212, 255, 0.3);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            overflow: hidden;
         }
 
-        .multiplier-slot::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
-            animation: shimmer 2s infinite;
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
         }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .play-button:active {
+            transform: scale(0.95);
         }
 
-        .multiplier-high {
-            background: linear-gradient(45deg, #ff6b6b, #e74c3c);
-            color: white;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-        }
-
-        .multiplier-medium {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            color: white;
-        }
-
-        .multiplier-low {
-            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
-            color: white;
-        }
-
-        .stats {
+        .bet-controls {
             display: flex;
-            justify-content: space-around;
-            margin-top: 30px;
-            flex-wrap: wrap;
-            gap: 20px;
+            align-items: center;
+            gap: 10px;
+            background: rgba(45, 55, 72, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
         }
 
-        .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
+        .bet-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            width: 100px;
             text-align: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(78, 205, 196, 0.3);
-            min-width: 150px;
         }
 
-        .stat-value {
-            font-size: 2rem;
+        .bet-button {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
             font-weight: bold;
-            color: #4ecdc4;
-            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
         }
 
-        .stat-label {
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 5px;
+        .balance {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 20px;
+            color: #ffd700;
         }
 
-        .home-btn {
+        .lines-selector {
+            background: rgba(45, 55, 72, 0.5);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            padding: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .lines-selector::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lines-selector::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .lines-selector::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .ball.bouncing {
+            animation: bounce 0.3s ease-out;
+        }
+
+        .menu-button {
             position: fixed;
             top: 20px;
             left: 20px;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
             z-index: 1000;
         }
 
-        @media (max-width: 768px) {
-            .game-board {
-                width: 95vw;
-                height: 70vh;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-
-        .particle {
-            position: fixed;
-            pointer-events: none;
-            z-index: 1000;
-            width: 6px;
-            height: 6px;
-            background: #4ecdc4;
-            border-radius: 50%;
-            animation: particleFloat 3s ease-out forwards;
-        }
-
-        @keyframes particleFloat {
-            0% {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) scale(0);
-                opacity: 0;
-            }
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
     </style>
 </head>
 <body>
-    <button class="btn btn-secondary home-btn" onclick="window.history.back()">← Главное меню</button>
+    <button class="menu-button" onclick="window.location.href='/'">← Главное меню</button>
     
     <div class="game-container">
         <div class="header">
-            <h1>🎯 PLINKO GAME 🎯</h1>
+            <h1>PLINKO</h1>
         </div>
 
-        <div class="controls">
-            <div class="control-group">
-                <label for="ballCount">Количество шариков:</label>
-                <input type="number" id="ballCount" class="control-input" min="1" max="10" value="1">
+        <div class="plinko-board" id="plinkoBoard">
+            <canvas id="gameCanvas" width="600" height="500"></canvas>
+            <div class="multiplier-zone">
+                <div class="multiplier" data-multiplier="5.6">×5.6</div>
+                <div class="multiplier" data-multiplier="2.2">×2.2</div>
+                <div class="multiplier" data-multiplier="1.1">×1.1</div>
+                <div class="multiplier" data-multiplier="1.4">×1.4</div>
+                <div class="multiplier" data-multiplier="0.8">×0.8</div>
+                <div class="multiplier" data-multiplier="1.4">×1.4</div>
+                <div class="multiplier" data-multiplier="3.1">×3.1</div>
+                <div class="multiplier" data-multiplier="2.2">×2.2</div>
+                <div class="multiplier" data-multiplier="5.6">×5.6</div>
             </div>
-            <div class="control-group">
-                <label for="betAmount">Ставка:</label>
-                <input type="number" id="betAmount" class="control-input" min="1" max="1000" value="10">
-            </div>
-            <button class="btn btn-primary" onclick="dropBalls()">🚀 ЗАПУСТИТЬ</button>
-            <button class="btn btn-secondary" onclick="resetGame()">🔄 СБРОС</button>
         </div>
 
-        <div class="game-board" id="gameBoard">
-            <div class="multiplier-slots" id="multiplierSlots"></div>
+        <div class="control-panel">
+            <div class="left-controls">
+                <div class="control-group">
+                    <div class="control-label">Уровень Риска</div>
+                    <div class="button-group">
+                        <button class="btn" onclick="setRisk('low')">Низкий</button>
+                        <button class="btn active" onclick="setRisk('medium')">Средний</button>
+                        <button class="btn" onclick="setRisk('high')">Высокий</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Линии</div>
+                    <div class="lines-selector">
+                        <div class="button-group" style="flex-direction: column; gap: 2px;">
+                            <button class="btn" onclick="setLines(8)">8</button>
+                            <button class="btn" onclick="setLines(9)">9</button>
+                            <button class="btn" onclick="setLines(10)">10</button>
+                            <button class="btn" onclick="setLines(11)">11</button>
+                            <button class="btn active" onclick="setLines(12)">12</button>
+                            <button class="btn" onclick="setLines(13)">13</button>
+                            <button class="btn" onclick="setLines(14)">14</button>
+                            <button class="btn" onclick="setLines(15)">15</button>
+                            <button class="btn" onclick="setLines(16)">16</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-controls">
+                <button class="play-button" onclick="dropBall()">ИГРАТЬ</button>
+            </div>
+
+            <div class="right-controls">
+                <div class="control-group">
+                    <div class="control-label">Режим Ставки</div>
+                    <div class="button-group">
+                        <button class="btn active" onclick="setBetMode('manual')">🎮 Ручной</button>
+                        <button class="btn" onclick="setBetMode('auto')">⚡ Авто</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Ставка: 1,00 FUN</div>
+                    <div class="bet-controls">
+                        <button class="bet-button" onclick="adjustBet(-0.1)">−</button>
+                        <span>Мин</span>
+                        <input type="text" class="bet-input" value="1,00 FUN" readonly>
+                        <span>Макс</span>
+                        <button class="bet-button" onclick="adjustBet(0.1)">+</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-value" id="totalGames">0</div>
-                <div class="stat-label">Всего игр</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalWin">0</div>
-                <div class="stat-label">Общий выигрыш</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="lastWin">0</div>
-                <div class="stat-label">Последний выигрыш</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="maxWin">0</div>
-                <div class="stat-label">Максимальный выигрыш</div>
-            </div>
+        <div class="balance">
+            Баланс 1 000,00 FUN
         </div>
     </div>
 
     <script>
-        class PlinkoGame {
-            constructor() {
-                this.gameBoard = document.getElementById('gameBoard');
-                this.pegs = [];
-                this.balls = [];
-                this.multipliers = [1000, 130, 26, 9, 4, 2, 2, 4, 9, 26, 130, 1000];
-                this.slotWidth = 800 / this.multipliers.length;
-                this.stats = {
-                    totalGames: 0,
-                    totalWin: 0,
-                    lastWin: 0,
-                    maxWin: 0
-                };
-                this.init();
-            }
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            risk: 'medium',
+            lines: 12,
+            betMode: 'manual',
+            betAmount: 1.00,
+            balance: 1000.00,
+            pegs: [],
+            balls: [],
+            isPlaying: false
+        };
 
-            init() {
-                this.createPegs();
-                this.createMultiplierSlots();
-                this.loadStats();
-                this.updateStatsDisplay();
-            }
-
-            createPegs() {
-                const rows = 12;
-                const startY = 100;
-                const rowSpacing = 40;
+        // Инициализация пегов
+        function initializePegs() {
+            gameState.pegs = [];
+            const rows = gameState.lines;
+            const pegRadius = 6;
+            const boardWidth = 600;
+            const boardHeight = 440; // Оставляем место для множителей
+            const startY = 80;
+            
+            for (let row = 0; row < rows; row++) {
+                const pegsInRow = row + 3;
+                const spacing = (boardWidth - 100) / (pegsInRow + 1);
+                const y = startY + (row * (boardHeight - startY) / rows);
                 
-                for (let row = 0; row < rows; row++) {
-                    const pegsInRow = row + 3;
-                    const pegSpacing = 700 / (pegsInRow + 1);
-                    const startX = (800 - (pegsInRow - 1) * pegSpacing) / 2;
+                for (let col = 0; col < pegsInRow; col++) {
+                    const x = 50 + spacing * (col + 1) + (row % 2) * (spacing / 2);
+                    gameState.pegs.push({ x, y, radius: pegRadius });
+                }
+            }
+        }
+
+        // Отрисовка пегов
+        function drawPegs() {
+            gameState.pegs.forEach(peg => {
+                ctx.beginPath();
+                ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Класс шарика
+        class Ball {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = 0;
+                this.radius = 8;
+                this.gravity = 0.3;
+                this.bounce = 0.7;
+                this.friction = 0.99;
+                this.active = true;
+            }
+
+            update() {
+                if (!this.active) return;
+
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Проверка столкновений с пегами
+                gameState.pegs.forEach(peg => {
+                    const dx = this.x - peg.x;
+                    const dy = this.y - peg.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    for (let col = 0; col < pegsInRow; col++) {
-                        const peg = document.createElement('div');
-                        peg.className = 'peg';
-                        peg.style.left = `${startX + col * pegSpacing}px`;
-                        peg.style.top = `${startY + row * rowSpacing}px`;
+                    if (distance < this.radius + peg.radius) {
+                        // Отталкивание от пега
+                        const angle = Math.atan2(dy, dx);
+                        const force = 3;
+                        this.vx = Math.cos(angle) * force + (Math.random() - 0.5) * 2;
+                        this.vy = Math.sin(angle) * force;
                         
-                        // Добавляем случайную задержку анимации
-                        peg.style.animationDelay = `${Math.random() * 2}s`;
-                        
-                        this.gameBoard.appendChild(peg);
-                        this.pegs.push({
-                            x: startX + col * pegSpacing,
-                            y: startY + row * rowSpacing,
-                            element: peg
-                        });
+                        // Отодвигаем шарик от пега
+                        const overlap = this.radius + peg.radius - distance;
+                        this.x += Math.cos(angle) * overlap;
+                        this.y += Math.sin(angle) * overlap;
                     }
-                }
-            }
-
-            createMultiplierSlots() {
-                const slotsContainer = document.getElementById('multiplierSlots');
-                slotsContainer.innerHTML = '';
-                
-                this.multipliers.forEach((multiplier, index) => {
-                    const slot = document.createElement('div');
-                    slot.className = 'multiplier-slot';
-                    
-                    if (multiplier >= 100) {
-                        slot.classList.add('multiplier-high');
-                    } else if (multiplier >= 10) {
-                        slot.classList.add('multiplier-medium');
-                    } else {
-                        slot.classList.add('multiplier-low');
-                    }
-                    
-                    slot.textContent = `${multiplier}x`;
-                    slot.style.animationDelay = `${index * 0.1}s`;
-                    slotsContainer.appendChild(slot);
                 });
-            }
 
-            createBall(startX = 400) {
-                const ball = document.createElement('div');
-                ball.className = 'ball';
-                ball.style.left = `${startX}px`;
-                ball.style.top = '20px';
-                this.gameBoard.appendChild(ball);
-                
-                return {
-                    element: ball,
-                    x: startX,
-                    y: 20,
-                    vx: (Math.random() - 0.5) * 2,
-                    vy: 0,
-                    gravity: 0.5,
-                    bounce: 0.8,
-                    friction: 0.99
-                };
-            }
-
-            animateBall(ball) {
-                return new Promise((resolve) => {
-                    const animate = () => {
-                        // Применяем гравитацию
-                        ball.vy += ball.gravity;
-                        
-                        // Обновляем позицию
-                        ball.x += ball.vx;
-                        ball.y += ball.vy;
-                        
-                        // Проверяем столкновения с колышками
-                        this.pegs.forEach(peg => {
-                            const dx = ball.x - peg.x;
-                            const dy = ball.y - peg.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            
-                            if (distance < 20) {
-                                // Столкновение с колышком
-                                ball.vx = (dx / distance) * 3 + (Math.random() - 0.5) * 2;
-                                ball.vy = Math.abs(ball.vy) * ball.bounce;
-                                
-                                // Эффект свечения колышка
-                                peg.element.style.boxShadow = '0 0 25px rgba(255, 107, 107, 1)';
-                                setTimeout(() => {
-                                    peg.element.style.boxShadow = '0 0 10px rgba(78, 205, 196, 0.8)';
-                                }, 200);
-                                
-                                this.createParticles(ball.x, ball.y);
-                            }
-                        });
-                        
-                        // Границы игрового поля
-                        if (ball.x < 8) {
-                            ball.x = 8;
-                            ball.vx = Math.abs(ball.vx);
-                        }
-                        if (ball.x > 792) {
-                            ball.x = 792;
-                            ball.vx = -Math.abs(ball.vx);
-                        }
-                        
-                        // Применяем трение
-                        ball.vx *= ball.friction;
-                        
-                        // Обновляем позицию элемента
-                        ball.element.style.left = `${ball.x}px`;
-                        ball.element.style.top = `${ball.y}px`;
-                        
-                        // Проверяем, достиг ли шарик дна
-                        if (ball.y >= 540) {
-                            const slotIndex = Math.floor(ball.x / this.slotWidth);
-                            const finalSlot = Math.max(0, Math.min(this.multipliers.length - 1, slotIndex));
-                            this.handleBallLanding(ball, finalSlot);
-                            resolve(finalSlot);
-                        } else {
-                            requestAnimationFrame(animate);
-                        }
-                    };
-                    
-                    animate();
-                });
-            }
-
-            createParticles(x, y) {
-                for (let i = 0; i < 5; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'particle';
-                    particle.style.left = `${x + this.gameBoard.offsetLeft}px`;
-                    particle.style.top = `${y + this.gameBoard.offsetTop}px`;
-                    particle.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
-                    
-                    document.body.appendChild(particle);
-                    
-                    setTimeout(() => {
-                        if (particle.parentNode) {
-                            particle.parentNode.removeChild(particle);
-                        }
-                    }, 3000);
+                // Отскок от стен
+                if (this.x < this.radius) {
+                    this.x = this.radius;
+                    this.vx = -this.vx * this.bounce;
                 }
+                if (this.x > canvas.width - this.radius) {
+                    this.x = canvas.width - this.radius;
+                    this.vx = -this.vx * this.bounce;
+                }
+
+                // Проверка достижения дна
+                if (this.y > canvas.height - 60 - this.radius) {
+                    this.y = canvas.height - 60 - this.radius;
+                    this.active = false;
+                    this.calculateWin();
+                }
+
+                this.vx *= this.friction;
+                this.vy *= this.friction;
             }
 
-            handleBallLanding(ball, slotIndex) {
-                const multiplier = this.multipliers[slotIndex];
-                const betAmount = parseInt(document.getElementById('betAmount').value) || 10;
-                const winAmount = betAmount * multiplier;
+            calculateWin() {
+                const multipliers = [5.6, 2.2, 1.1, 1.4, 0.8, 1.4, 3.1, 2.2, 5.6];
+                const sectionWidth = canvas.width / multipliers.length;
+                const section = Math.floor(this.x / sectionWidth);
+                const multiplier = multipliers[Math.min(section, multipliers.length - 1)];
                 
-                // Анимация слота
-                const slots = document.querySelectorAll('.multiplier-slot');
-                if (slots[slotIndex]) {
-                    slots[slotIndex].style.transform = 'scale(1.2)';
-                    slots[slotIndex].style.boxShadow = '0 0 30px rgba(255, 107, 107, 0.8)';
-                    
-                    setTimeout(() => {
-                        slots[slotIndex].style.transform = 'scale(1)';
-                        slots[slotIndex].style.boxShadow = 'none';
-                    }, 500);
-                }
+                const winAmount = gameState.betAmount * multiplier;
+                gameState.balance += winAmount - gameState.betAmount;
                 
-                // Обновляем статистику
-                this.stats.totalGames++;
-                this.stats.totalWin += winAmount;
-                this.stats.lastWin = winAmount;
-                if (winAmount > this.stats.maxWin) {
-                    this.stats.maxWin = winAmount;
-                }
-                
-                this.saveStats();
-                this.updateStatsDisplay();
-                
-                // Удаляем шарик с задержкой
+                // Показать выигрыш
                 setTimeout(() => {
-                    if (ball.element.parentNode) {
-                        ball.element.parentNode.removeChild(ball.element);
-                    }
-                }, 1000);
-                
-                // Создаем эффект взрыва
-                this.createParticles(ball.x, ball.y);
+                    alert(`Выигрыш: ${winAmount.toFixed(2)} FUN (×${multiplier})`);
+                    updateBalance();
+                }, 500);
             }
 
-            async dropBalls() {
-                const ballCount = parseInt(document.getElementById('ballCount').value) || 1;
-                const promises = [];
+            draw() {
+                if (!this.active) return;
+
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 
-                for (let i = 0; i < ballCount; i++) {
+                // Градиент для шарика
+                const gradient = ctx.createRadialGradient(
+                    this.x - 3, this.y - 3, 0,
+                    this.x, this.y, this.radius
+                );
+                gradient.addColorStop(0, '#ff6b6b');
+                gradient.addColorStop(1, '#ff4757');
+                
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Свечение
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = 'rgba(255, 107, 107, 0.8)';
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Анимационный цикл
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawPegs();
+            
+            gameState.balls.forEach((ball, index) => {
+                ball.update();
+                ball.draw();
+                
+                if (!ball.active && ball.y >= canvas.height - 60 - ball.radius) {
                     setTimeout(() => {
-                        const startX = 400 + (Math.random() - 0.5) * 100;
-                        const ball = this.createBall(startX);
-                        promises.push(this.animateBall(ball));
-                    }, i * 200);
+                        gameState.balls.splice(index, 1);
+                        if (gameState.balls.length === 0) {
+                            gameState.isPlaying = false;
+                        }
+                    }, 1000);
                 }
-            }
-
-            resetGame() {
-                // Удаляем все шарики
-                const balls = document.querySelectorAll('.ball');
-                balls.forEach(ball => ball.remove());
-                
-                // Сбрасываем статистику
-                this.stats = {
-                    totalGames: 0,
-                    totalWin: 0,
-                    lastWin: 0,
-                    maxWin: 0
-                };
-                
-                this.saveStats();
-                this.updateStatsDisplay();
-            }
-
-            loadStats() {
-                const saved = localStorage.getItem('plinkoStats');
-                if (saved) {
-                    this.stats = JSON.parse(saved);
-                }
-            }
-
-            saveStats() {
-                localStorage.setItem('plinkoStats', JSON.stringify(this.stats));
-            }
-
-            updateStatsDisplay() {
-                document.getElementById('totalGames').textContent = this.stats.totalGames;
-                document.getElementById('totalWin').textContent = this.stats.totalWin;
-                document.getElementById('lastWin').textContent = this.stats.lastWin;
-                document.getElementById('maxWin').textContent = this.stats.maxWin;
-            }
+            });
+            
+            requestAnimationFrame(gameLoop);
         }
 
-        // Глобальные функции
-        let game;
-
-        function dropBalls() {
-            game.dropBalls();
+        // Функции управления
+        function dropBall() {
+            if (gameState.isPlaying) return;
+            if (gameState.balance < gameState.betAmount) {
+                alert('Недостаточно средств!');
+                return;
+            }
+            
+            gameState.isPlaying = true;
+            const ball = new Ball(canvas.width / 2 + (Math.random() - 0.5) * 20, 20);
+            gameState.balls.push(ball);
         }
 
-        function resetGame() {
-            game.resetGame();
+        function setRisk(risk) {
+            gameState.risk = risk;
+            document.querySelectorAll('.left-controls .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function setLines(lines) {
+            gameState.lines = lines;
+            document.querySelectorAll('.lines-selector .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            initializePegs();
+        }
+
+        function setBetMode(mode) {
+            gameState.betMode = mode;
+            document.querySelectorAll('.right-controls .button-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function adjustBet(amount) {
+            gameState.betAmount = Math.max(0.1, gameState.betAmount + amount);
+            document.querySelector('.bet-input').value = gameState.betAmount.toFixed(2) + ' FUN';
+        }
+
+        function updateBalance() {
+            document.querySelector('.balance').textContent = `Баланс ${gameState.balance.toFixed(2)} FUN`;
         }
 
         // Инициализация игры
-        window.addEventListener('load', () => {
-            game = new PlinkoGame();
-        });
-
-        // Добавляем эффекты при наведении на кнопки
-        document.addEventListener('DOMContentLoaded', () => {
-            const buttons = document.querySelectorAll('.btn');
-            buttons.forEach(btn => {
-                btn.addEventListener('mouseenter', () => {
-                    btn.style.transform = 'translateY(-2px) scale(1.05)';
-                });
-                btn.addEventListener('mouseleave', () => {
-                    btn.style.transform = 'translateY(0) scale(1)';
-                });
-            });
-        });
+        initializePegs();
+        gameLoop();
     </script>
 </body>
-</html>
+</html
