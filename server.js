@@ -427,6 +427,28 @@ function shouldWin(betAmount) {
     return random < winChance;
 }
 
+// Функция для определения результата coinflip с учетом RTP
+function determineGameResult(currentRTP, targetRTP, betAmount) {
+    const random = Math.random() * 100;
+    
+    // Базовый шанс выигрыша 50% для coinflip (честной игры)
+    let winChance = 50;
+    
+    // Корректируем шанс на основе текущего RTP
+    if (currentRTP < targetRTP) {
+        // Если RTP ниже целевого - увеличиваем шанс выигрыша
+        winChance += Math.min(5, (targetRTP - currentRTP) * 0.5);
+    } else if (currentRTP > targetRTP) {
+        // Если RTP выше целевого - уменьшаем шанс выигрыша
+        winChance -= Math.min(10, (currentRTP - targetRTP) * 0.5);
+    }
+    
+    // Ограничиваем шанс в разумных пределах (40%-60%)
+    winChance = Math.max(40, Math.min(60, winChance));
+    
+    return random < winChance;
+}
+
 // Генерация полностью случайного краш-поинта для реального банка
 function generateRandomRealBankCrashPoint(totalBet, bankBalance) {
     // Если банк меньше 5 TON - сливы, RTP не работает
@@ -1889,6 +1911,102 @@ cron.schedule('* * * * *', async () => {
         }
     } catch (error) {
         console.error('Cron job error:', error);
+    }
+});
+
+// API: Coinflip game
+app.post('/api/coinflip/bet', async (req, res) => {
+    const { telegramId, betAmount, selectedSide, demoMode } = req.body;
+
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const balance = demoMode ? user.demo_balance : user.main_balance;
+        
+        if (balance < betAmount) {
+            return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+
+        // Генерируем результат с учетом RTP
+        const bankType = demoMode ? 'demoBank' : 'realBank';
+        const currentRTP = calculateCurrentRTP(bankType);
+        const shouldWin = determineGameResult(currentRTP, rtpSystem[bankType].targetRTP, betAmount);
+        
+        // Результат монетки (true = орел, false = решка)
+        const coinResult = shouldWin ? (selectedSide === 'heads') : (selectedSide !== 'heads');
+        const resultSide = coinResult ? 'heads' : 'tails';
+        const isWin = resultSide === selectedSide;
+        
+        // Списываем ставку
+        if (demoMode) {
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance - betAmount
+            });
+            updateCasinoDemoBank(betAmount);
+            updateRTPStats('demoBank', betAmount, 0);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance - betAmount
+            });
+            updateCasinoBank(betAmount);
+            updateRTPStats('realBank', betAmount, 0);
+        }
+
+        let winAmount = 0;
+        let newBalance = demoMode ? user.demo_balance - betAmount : user.main_balance - betAmount;
+
+        if (isWin) {
+            winAmount = betAmount * 1.96; // Коэффициент 1.96x
+            
+            // Начисляем выигрыш
+            if (demoMode) {
+                users.update({
+                    ...user,
+                    demo_balance: user.demo_balance + winAmount
+                });
+                updateCasinoDemoBank(-winAmount);
+                updateRTPStats('demoBank', 0, winAmount);
+                newBalance = user.demo_balance + winAmount;
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: user.main_balance + winAmount
+                });
+                updateCasinoBank(-winAmount);
+                updateRTPStats('realBank', 0, winAmount);
+                newBalance = user.main_balance + winAmount;
+            }
+        }
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            telegram_id: parseInt(telegramId),
+            type: 'coinflip_bet',
+            amount: betAmount,
+            win_amount: winAmount,
+            game_result: resultSide,
+            selected_side: selectedSide,
+            demo_mode: demoMode,
+            created_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            result: resultSide,
+            win: isWin,
+            win_amount: winAmount,
+            new_balance: newBalance,
+            multiplier: isWin ? 1.96 : 0
+        });
+    } catch (error) {
+        console.error('Coinflip bet error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

@@ -1,14 +1,30 @@
+let userBalance = {
+    main_balance: 0,
+    demo_balance: 0,
+    demo_mode: false,
+    is_admin: false
+};
+
+// Get Telegram ID from URL params or default for testing
+const urlParams = new URLSearchParams(window.location.search);
+const telegramId = urlParams.get('telegramId') || '842428912'; // Default admin ID for testing
+
 // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            const coinImg = document.getElementById('coinImage');
-            const betInput = document.getElementById('betAmount');
-            const decreaseBtn = document.getElementById('decreaseBtn');
-            const increaseBtn = document.getElementById('increaseBtn');
-            const halfBtn = document.getElementById('halfBtn');
-            const doubleBtn = document.getElementById('doubleBtn');
-            const flipButtons = document.querySelectorAll('.flip-btn');
-            const seriesToggle = document.getElementById('seriesToggle');
-            const potentialWin = document.getElementById('potentialWin');
+document.addEventListener('DOMContentLoaded', function() {
+    const coinImg = document.getElementById('coinImage');
+    const betInput = document.getElementById('betAmount');
+    const decreaseBtn = document.getElementById('decreaseBtn');
+    const increaseBtn = document.getElementById('increaseBtn');
+    const halfBtn = document.getElementById('halfBtn');
+    const doubleBtn = document.getElementById('doubleBtn');
+    const flipButtons = document.querySelectorAll('.flip-btn');
+    const seriesToggle = document.getElementById('seriesToggle');
+    const potentialWin = document.getElementById('potentialWin');
+    const balanceElement = document.getElementById('balanceAmount');
+    const backBtn = document.getElementById('backBtn');
+    
+    // Load user balance on page load
+    loadUserBalance();
 
             // Remove background from coin image
             async function removeBackground() {
@@ -101,25 +117,48 @@
             flipButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const side = this.getAttribute('data-side');
+                    const betAmount = parseFloat(betInput.value) || 100;
+                    
+                    // Check if user has enough balance
+                    const currentBalance = userBalance.demo_mode ? userBalance.demo_balance : userBalance.main_balance;
+                    if (betAmount > currentBalance) {
+                        alert('Недостаточно средств для ставки!');
+                        return;
+                    }
+                    
+                    // Disable buttons during flip
+                    flipButtons.forEach(b => b.disabled = true);
                     
                     // Add flip animation
                     coinImg.classList.add('flipping');
                     
-                    // Remove animation after completion
-                    setTimeout(() => {
-                        coinImg.classList.remove('flipping');
-                        
-                        // Simulate random result
-                        const result = Math.random() < 0.5 ? 'heads' : 'tails';
-                        const won = result === side;
-                        
-                        // Show result (you can add more visual feedback here)
-                        if (won) {
-                            console.log('You won!');
-                        } else {
-                            console.log('You lost!');
-                        }
-                    }, 2000);
+                    // Make bet request to server
+                    makeCoinflipBet(side, betAmount)
+                        .then(result => {
+                            setTimeout(() => {
+                                coinImg.classList.remove('flipping');
+                                
+                                // Show result
+                                showGameResult(result);
+                                
+                                // Update balance
+                                if (userBalance.demo_mode) {
+                                    userBalance.demo_balance = result.new_balance;
+                                } else {
+                                    userBalance.main_balance = result.new_balance;
+                                }
+                                updateBalanceDisplay();
+                                
+                                // Re-enable buttons
+                                flipButtons.forEach(b => b.disabled = false);
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            console.error('Bet error:', error);
+                            coinImg.classList.remove('flipping');
+                            flipButtons.forEach(b => b.disabled = false);
+                            alert('Ошибка при совершении ставки');
+                        });
                 });
             });
 
@@ -132,6 +171,115 @@
                 updatePotentialWin();
             });
 
+            // Back button functionality
+            if (backBtn) {
+                backBtn.addEventListener('click', function() {
+                    // Go back to main page or previous page
+                    window.history.back();
+                });
+            }
+
             // Initialize potential win
             updatePotentialWin();
         });
+
+// Balance management functions
+async function loadUserBalance() {
+    try {
+        const response = await fetch(`/api/user/balance/${telegramId}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            userBalance = data;
+            updateBalanceDisplay();
+        } else {
+            console.error('Error loading balance:', data.error);
+        }
+    } catch (error) {
+        console.error('Error loading balance:', error);
+    }
+}
+
+function updateBalanceDisplay() {
+    const balanceElement = document.getElementById('balanceAmount');
+    
+    if (userBalance.is_admin) {
+        // For admins, show both real and demo balance
+        const currentBalance = userBalance.demo_mode ? userBalance.demo_balance : userBalance.main_balance;
+        const modeText = userBalance.demo_mode ? ' (ДЕМО)' : ' (РЕАЛ)';
+        balanceElement.textContent = currentBalance.toFixed(2) + modeText;
+        
+        // Add click handler to toggle between demo and real mode
+        balanceElement.style.cursor = 'pointer';
+        balanceElement.onclick = toggleDemoMode;
+    } else {
+        // For regular users, show only real balance
+        balanceElement.textContent = userBalance.main_balance.toFixed(2);
+    }
+}
+
+async function toggleDemoMode() {
+    if (!userBalance.is_admin) return;
+    
+    try {
+        const response = await fetch('/api/user/toggle-demo-mode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ telegramId: telegramId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            userBalance.demo_mode = data.demo_mode;
+            updateBalanceDisplay();
+        }
+    } catch (error) {
+        console.error('Error toggling demo mode:', error);
+    }
+}
+
+// Game functions
+async function makeCoinflipBet(selectedSide, betAmount) {
+    try {
+        const response = await fetch('/api/coinflip/bet', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                telegramId: telegramId,
+                betAmount: betAmount,
+                selectedSide: selectedSide,
+                demoMode: userBalance.demo_mode
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Server error');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Coinflip bet error:', error);
+        throw error;
+    }
+}
+
+function showGameResult(result) {
+    const resultText = result.result === 'heads' ? 'Орел' : 'Решка';
+    const winText = result.win ? 'Выигрыш!' : 'Проигрыш';
+    const message = `${resultText} - ${winText}`;
+    
+    if (result.win) {
+        console.log(`${message} Выиграно: ${result.win_amount.toFixed(2)} TON`);
+    } else {
+        console.log(message);
+    }
+    
+    // You can add visual feedback here (modal, animation, etc.)
+}
