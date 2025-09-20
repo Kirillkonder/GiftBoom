@@ -1853,6 +1853,15 @@ app.post('/api/coinflip/start', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // Валидация ставки
+        if (betAmount < 0.1) {
+            return res.status(400).json({ error: 'Минимальная ставка: 0.1 TON' });
+        }
+        
+        if (betAmount > 20) {
+            return res.status(400).json({ error: 'Максимальная ставка: 20 TON' });
+        }
+
         const balance = demoMode ? user.demo_balance : user.main_balance;
         
         if (balance < betAmount) {
@@ -1862,7 +1871,7 @@ app.post('/api/coinflip/start', async (req, res) => {
         // Генерируем результат (50/50 шанс)
         const randomSide = Math.random() < 0.5 ? 'heads' : 'tails';
         const win = randomSide === chosenSide;
-        const winAmount = win ? Math.floor(betAmount * 1.96) : 0;
+        const winAmount = win ? betAmount * 2.0 : 0;
 
         // Обновляем баланс пользователя
         if (demoMode) {

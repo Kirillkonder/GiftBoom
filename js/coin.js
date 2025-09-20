@@ -85,9 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
         balanceElement.textContent = Math.floor(balance);
         
         // Update bet input max value
-        const maxBet = Math.min(balance, 1000);
-        if (parseInt(betInput.value) > maxBet) {
-            betInput.value = maxBet;
+        const maxBet = Math.min(balance, 20);
+        if (parseFloat(betInput.value) > maxBet) {
+            betInput.value = maxBet.toFixed(1);
             updatePotentialWin();
         }
     }
@@ -172,39 +172,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Bet controls
     decreaseBtn.addEventListener('click', function() {
-        let currentValue = parseInt(betInput.value) || 1;
-        if (currentValue > 1) {
-            betInput.value = currentValue - 1;
+        let currentValue = parseFloat(betInput.value) || 0.1;
+        if (currentValue > 0.1) {
+            const newValue = Math.max(0.1, currentValue - 0.1);
+            betInput.value = newValue.toFixed(1);
             updatePotentialWin();
         }
     });
 
     increaseBtn.addEventListener('click', function() {
-        let currentValue = parseInt(betInput.value) || 1;
-        const maxBet = Math.min(userData.demoMode ? userData.demoBalance : userData.mainBalance, 1000);
+        let currentValue = parseFloat(betInput.value) || 0.1;
+        const maxBet = Math.min(userData.demoMode ? userData.demoBalance : userData.mainBalance, 20);
         if (currentValue < maxBet) {
-            betInput.value = currentValue + 1;
+            const newValue = Math.min(maxBet, currentValue + 0.1);
+            betInput.value = newValue.toFixed(1);
             updatePotentialWin();
         }
     });
 
     halfBtn.addEventListener('click', function() {
-        let currentValue = parseInt(betInput.value) || 1;
-        betInput.value = Math.max(1, Math.floor(currentValue / 2));
+        let currentValue = parseFloat(betInput.value) || 0.1;
+        const newValue = Math.max(0.1, currentValue / 2);
+        betInput.value = newValue.toFixed(1);
         updatePotentialWin();
     });
 
     doubleBtn.addEventListener('click', function() {
-        let currentValue = parseInt(betInput.value) || 1;
-        const maxBet = Math.min(userData.demoMode ? userData.demoBalance : userData.mainBalance, 1000);
-        betInput.value = Math.min(currentValue * 2, maxBet);
+        let currentValue = parseFloat(betInput.value) || 0.1;
+        const maxBet = Math.min(userData.demoMode ? userData.demoBalance : userData.mainBalance, 20);
+        const newValue = Math.min(maxBet, currentValue * 2);
+        betInput.value = newValue.toFixed(1);
         updatePotentialWin();
     });
 
     // Update potential win
     function updatePotentialWin() {
-        const betAmount = parseInt(betInput.value) || 1;
-        const winAmount = Math.floor(betAmount * 1.96);
+        const betAmount = parseFloat(betInput.value) || 0.1;
+        const winAmount = (betAmount * 2.0).toFixed(1);
         potentialWin.textContent = winAmount + ' TON';
     }
 
@@ -218,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
 flipButtons.forEach(btn => {
     btn.addEventListener('click', async function() {
         const side = this.getAttribute('data-side');
-        const betAmount = parseInt(betInput.value) || 1;
+        const betAmount = parseFloat(betInput.value) || 0.1;
         
         // Проверка баланса
         const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
@@ -227,8 +231,13 @@ flipButtons.forEach(btn => {
             return;
         }
         
-        if (betAmount < 1) {
-            showNotification('Минимальная ставка: 1 TON', false);
+        if (betAmount < 0.1) {
+            showNotification('Минимальная ставка: 0.1 TON', false);
+            return;
+        }
+        
+        if (betAmount > 20) {
+            showNotification('Максимальная ставка: 20 TON', false);
             return;
         }
         
@@ -314,21 +323,33 @@ flipButtons.forEach(btn => {
     // Сохраняем курсор позицию
     const cursorPosition = this.selectionStart;
     
-    // Удаляем все кроме цифр
-    let newValue = this.value.replace(/[^0-9]/g, '');
+    // Удаляем все кроме цифр и точки
+    let newValue = this.value.replace(/[^0-9.]/g, '');
     
-    // Если пусто или 0, ставим 1
-    if (!newValue || parseInt(newValue) < 1) {
-        newValue = '1';
+    // Убираем множественные точки
+    const parts = newValue.split('.');
+    if (parts.length > 2) {
+        newValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Ограничиваем до 1 знака после запятой
+    if (parts[1] && parts[1].length > 1) {
+        newValue = parts[0] + '.' + parts[1].substring(0, 1);
+    }
+    
+    // Если пусто или меньше минимума, ставим 0.1
+    const numValue = parseFloat(newValue);
+    if (!newValue || isNaN(numValue) || numValue < 0.1) {
+        newValue = '0.1';
     }
     
     // Получаем текущий баланс
     const currentBalance = userData.demoMode ? userData.demoBalance : userData.mainBalance;
-    const maxBet = Math.min(currentBalance, 1000);
+    const maxBet = Math.min(currentBalance, 20);
     
     // Ограничиваем максимальную ставку
-    if (parseInt(newValue) > maxBet) {
-        newValue = maxBet.toString();
+    if (parseFloat(newValue) > maxBet) {
+        newValue = maxBet.toFixed(1);
     }
     
     this.value = newValue;
@@ -343,10 +364,13 @@ flipButtons.forEach(btn => {
     betInput.addEventListener('paste', function(e) {
         e.preventDefault();
         const pasteData = e.clipboardData.getData('text');
-        const numericValue = pasteData.replace(/[^0-9]/g, '');
+        const numericValue = pasteData.replace(/[^0-9.]/g, '');
         document.execCommand('insertText', false, numericValue);
     });
 
+    // Set default bet amount and initialize
+    betInput.value = '0.1';
+    
     // Initialize the game
     removeBackground();
     initGame();
