@@ -1953,6 +1953,7 @@ app.post('/api/coinflip/play', async (req, res) => {
     }
 });
 
+// API: Получить баланс пользователя для монетки
 app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
     
@@ -1960,6 +1961,7 @@ app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
         let user = users.findOne({ telegram_id: telegramId });
         
         if (!user) {
+            // Создаем нового пользователя если не найден
             user = users.insert({
                 telegram_id: telegramId,
                 main_balance: 0,
@@ -1971,19 +1973,26 @@ app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
             });
         }
         
+        // Перечитываем пользователя на случай изменений
         user = users.findOne({ telegram_id: telegramId });
+        
+        // Для админов используем demo_balance в демо-режиме, для обычных пользователей - main_balance
+        const isAdmin = user.is_admin;
+        const useDemoBalance = isAdmin && user.demo_mode;
         
         res.json({
             main_balance: user.main_balance,
             demo_balance: user.demo_balance,
             demo_mode: user.demo_mode,
-            is_admin: user.is_admin
+            is_admin: user.is_admin,
+            current_balance: useDemoBalance ? user.demo_balance : user.main_balance,
+            use_demo_balance: useDemoBalance
         });
     } catch (error) {
         console.error('Get coinflip balance error:', error);
         res.status(500).json({ error: 'Server error' });
     }
-});
+});;
 
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {

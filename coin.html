@@ -476,11 +476,12 @@
         </div>
     </div>
 
-    <script>
-             let currentUser = null;
+   <script>
+    let currentUser = null;
     let isDemoMode = false;
     let currentBalance = 0;
     let currentBetAmount = 0.1;
+    let isAdmin = false;
 
     // Toast notifications
     function showToast(type, title, message, duration = 3000) {
@@ -586,7 +587,7 @@
                     telegramId: currentUser.id,
                     betAmount: betAmount,
                     choice: choice,
-                    demoMode: isDemoMode
+                    demoMode: isDemoMode && isAdmin // Только для админов в демо-режиме
                 })
             });
             
@@ -683,18 +684,20 @@
             if (response.ok) {
                 const userData = await response.json();
                 
-                isDemoMode = userData.demo_mode;
-                currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
+                isAdmin = userData.is_admin;
+                isDemoMode = userData.demo_mode && isAdmin; // Демо-режим только для админов
+                currentBalance = userData.current_balance;
                 
                 document.getElementById('balance').textContent = currentBalance.toFixed(2);
                 document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
                 
                 console.log('Данные пользователя загружены:', userData);
+                console.log('isAdmin:', isAdmin, 'isDemoMode:', isDemoMode, 'balance:', currentBalance);
             }
         } catch (error) {
             console.error('Ошибка загрузки данных пользователя:', error);
             // Для тестирования используем заглушки
-            currentBalance = isDemoMode ? 50 : 0;
+            currentBalance = 0;
             document.getElementById('balance').textContent = currentBalance.toFixed(2);
         }
     }
@@ -714,7 +717,6 @@
         } else {
             // Для тестирования без Telegram
             currentUser = { id: 842428912, username: 'test_user' };
-            isDemoMode = true;
             loadUserData();
         }
         
@@ -725,8 +727,8 @@
         loadImageWithoutBackground();
         
         // Периодическое обновление баланса
-        setInterval(loadUserData, 30000); // Обновляем каждые 30 секунд
+        setInterval(loadUserData, 10000); // Обновляем каждые 10 секунд
     });
-    </script>
+</script>
 </body>
 </html>
