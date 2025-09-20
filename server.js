@@ -1842,6 +1842,7 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
+// API: Игра в монетку
 app.post('/api/coinflip/play', async (req, res) => {
     const { telegramId, betAmount, choice, demoMode } = req.body;
 
@@ -1852,8 +1853,10 @@ app.post('/api/coinflip/play', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // ИСПОЛЬЗУЕМ ИНДИВИДУАЛЬНЫЙ БАЛАНС КАЖДОГО ПОЛЬЗОВАТЕЛЯ
-        const balance = user.demo_mode ? user.demo_balance : user.main_balance;
+        // ИСПОЛЬЗУЕМ ПЕРЕДАННЫЙ РЕЖИМ (demoMode), А НЕ РЕЖИМ ИЗ БАЗЫ
+        // Это позволяет каждому пользователю иметь свой собственный режим
+        const useDemoMode = demoMode !== undefined ? demoMode : user.demo_mode;
+        const balance = useDemoMode ? user.demo_balance : user.main_balance;
         
         if (balance < betAmount) {
             return res.status(400).json({ error: 'Недостаточно средств' });
@@ -1871,13 +1874,13 @@ app.post('/api/coinflip/play', async (req, res) => {
             winAmount = betAmount * 2;
             newBalance = balance + winAmount;
             
-            // ОБНОВЛЯЕМ ИНДИВИДУАЛЬНЫЙ БАЛАНС ПОЛЬЗОВАТЕЛЯ
-            if (user.demo_mode) {
+            // ОБНОВЛЯЕМ ИНДИВИДУАЛЬНЫЙ БАЛАНС ПОЛЬЗОВАТЕЛЯ В ПРАВИЛЬНОМ РЕЖИМЕ
+            if (useDemoMode) {
                 users.update({
                     ...user,
                     demo_balance: newBalance
                 });
-                // Выплата из демо-банка казино (списываем ВЕСЬ выигрыш)
+                // Выплата из демо-банка казино
                 const demoBank = getCasinoDemoBank();
                 casinoDemoBank.update({
                     ...demoBank,
@@ -1888,7 +1891,7 @@ app.post('/api/coinflip/play', async (req, res) => {
                     ...user,
                     main_balance: newBalance
                 });
-                // Выплата из реального банка казино (списываем ВЕСЬ выигрыш)
+                // Выплата из реального банка казино
                 const bank = getCasinoBank();
                 casinoBank.update({
                     ...bank,
@@ -1899,8 +1902,8 @@ app.post('/api/coinflip/play', async (req, res) => {
             // Игрок проиграл - списываем ставку
             newBalance = balance - betAmount;
             
-            // ОБНОВЛЯЕМ ИНДИВИДУАЛЬНЫЙ БАЛАНС ПОЛЬЗОВАТЕЛЯ
-            if (user.demo_mode) {
+            // ОБНОВЛЯЕМ ИНДИВИДУАЛЬНЫЙ БАЛАНС ПОЛЬЗОВАТЕЛЯ В ПРАВИЛЬНОМ РЕЖИМЕ
+            if (useDemoMode) {
                 users.update({
                     ...user,
                     demo_balance: newBalance
@@ -1925,13 +1928,13 @@ app.post('/api/coinflip/play', async (req, res) => {
             }
         }
 
-        // Сохраняем транзакцию с правильным режимом пользователя
+        // Сохраняем транзакцию с правильным режимом
         transactions.insert({
             user_id: user.$loki,
             amount: won ? winAmount : -betAmount,
             type: won ? 'coinflip_win' : 'coinflip_loss',
             status: 'completed',
-            demo_mode: user.demo_mode, // ИСПОЛЬЗУЕМ РЕЖИМ ПОЛЬЗОВАТЕЛЯ, А НЕ ПЕРЕДАННЫЙ ПАРАМЕТР
+            demo_mode: useDemoMode, // Используем переданный режим
             created_at: new Date(),
             details: {
                 betAmount: betAmount,
@@ -1950,6 +1953,43 @@ app.post('/api/coinflip/play', async (req, res) => {
         });
     } catch (error) {
         console.error('Coinflip error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Получить баланс пользователя для монетки
+app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
+    const telegramId = parseInt(req.params.telegramId);
+    
+    try {
+        let user = users.findOne({ telegram_id: telegramId });
+        
+        if (!user) {
+            // Создаем нового пользователя если не найден
+            const isAdmin = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023;
+            user = users.insert({
+                telegram_id: telegramId,
+                main_balance: 0,
+                demo_balance: isAdmin ? 50 : 0, // КАЖДЫЙ АДМИН ПОЛУЧАЕТ СВОЙ ИНДИВИДУАЛЬНЫЙ ДЕМО-БАЛАНС 50 TON
+                total_deposits: 0,
+                created_at: new Date(),
+                demo_mode: isAdmin, // Админы по умолчанию в демо-режиме
+                is_admin: isAdmin
+            });
+        }
+        
+        // Перечитываем пользователя на случай изменений
+        user = users.findOne({ telegram_id: telegramId });
+        
+        res.json({
+            main_balance: user.main_balance,
+            demo_balance: user.demo_balance,
+            demo_mode: user.demo_mode, // Возвращаем режим пользователя из базы
+            is_admin: user.is_admin,
+            current_balance: user.demo_mode ? user.demo_balance : user.main_balance
+        });
+    } catch (error) {
+        console.error('Get coinflip balance error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

@@ -585,8 +585,8 @@
                 body: JSON.stringify({
                     telegramId: currentUser.id,
                     betAmount: betAmount,
-                    choice: choice
-                    // НЕ ПЕРЕДАЕМ demoMode - сервер сам определит режим пользователя
+                    choice: choice,
+                    demoMode: isDemoMode // ПЕРЕДАЕМ РЕЖИМ ПОЛЬЗОВАТЕЛЯ
                 })
             });
             
@@ -594,7 +594,7 @@
             
             setTimeout(() => {
                 if (result.success) {
-                    // ОБНОВЛЕНО: Получаем новый баланс из ответа сервера
+                    // Обновляем баланс из ответа сервера
                     if (result.newBalance !== undefined) {
                         currentBalance = result.newBalance;
                         document.getElementById('balance').textContent = currentBalance.toFixed(2);
@@ -678,16 +678,16 @@
         document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
     }
 
-    // Загрузка данных пользователя - ПРАВИЛЬНАЯ ЛОГИКА КАК В ROCKET.JS
+    // Загрузка данных пользователя - ИСПРАВЛЕННАЯ ВЕРСИЯ
     async function loadUserData() {
         try {
             const response = await fetch(`/api/coinflip/balance/${currentUser.id}`);
             if (response.ok) {
                 const userData = await response.json();
                 
-                // ИНДИВИДУАЛЬНАЯ ЛОГИКА ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ
+                // КОРРЕКТНО ОПРЕДЕЛЯЕМ РЕЖИМ И БАЛАНС ДЛЯ КАЖДОГО ПОЛЬЗОВАТЕЛЯ
                 isAdmin = userData.is_admin;
-                isDemoMode = userData.demo_mode; // Демо-режим индивидуален для каждого пользователя
+                isDemoMode = userData.demo_mode; // Используем режим пользователя из базы
                 
                 // Каждый пользователь имеет СВОЙ СОБСТВЕННЫЙ баланс
                 currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
