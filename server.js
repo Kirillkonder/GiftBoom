@@ -1843,7 +1843,7 @@ app.get('/api/rocket/current', async (req, res) => {
 });
 
 // API: Игра в монетку
-// API: Игра в монетку
+
 app.post('/api/coinflip/play', async (req, res) => {
     const { telegramId, betAmount, choice } = req.body;
 
@@ -1989,84 +1989,6 @@ app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-// API: Получить баланс пользователя для монетки
-app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
-    const telegramId = parseInt(req.params.telegramId);
-    
-    try {
-        let user = users.findOne({ telegram_id: telegramId });
-        
-        if (!user) {
-            // Создаем нового пользователя если не найден
-            const isAdmin = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023;
-            user = users.insert({
-                telegram_id: telegramId,
-                main_balance: 0,
-                demo_balance: isAdmin ? 50 : 0, // КАЖДЫЙ АДМИН ПОЛУЧАЕТ СВОЙ ИНДИВИДУАЛЬНЫЙ ДЕМО-БАЛАНС 50 TON
-                total_deposits: 0,
-                created_at: new Date(),
-                demo_mode: isAdmin, // Админы по умолчанию в демо-режиме
-                is_admin: isAdmin
-            });
-        }
-        
-        // Перечитываем пользователя на случай изменений
-        user = users.findOne({ telegram_id: telegramId });
-        
-        res.json({
-            main_balance: user.main_balance,
-            demo_balance: user.demo_balance,
-            demo_mode: user.demo_mode, // Возвращаем режим пользователя из базы
-            is_admin: user.is_admin,
-            current_balance: user.demo_mode ? user.demo_balance : user.main_balance
-        });
-    } catch (error) {
-        console.error('Get coinflip balance error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// API: Получить баланс пользователя для монетки
-app.get('/api/coinflip/balance/:telegramId', async (req, res) => {
-    const telegramId = parseInt(req.params.telegramId);
-    
-    try {
-        let user = users.findOne({ telegram_id: telegramId });
-        
-        if (!user) {
-            // Создаем нового пользователя если не найден
-            const isAdmin = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023;
-            user = users.insert({
-                telegram_id: telegramId,
-                main_balance: 0,
-                demo_balance: isAdmin ? 50 : 0, // КАЖДЫЙ АДМИН ПОЛУЧАЕТ СВОЙ ИНДИВИДУАЛЬНЫЙ ДЕМО-БАЛАНС 50 TON
-                total_deposits: 0,
-                created_at: new Date(),
-                demo_mode: isAdmin, // Админы по умолчанию в демо-режиме
-                is_admin: isAdmin
-            });
-        }
-        
-        // Перечитываем пользователя на случай изменений
-        user = users.findOne({ telegram_id: telegramId });
-        
-        // КАЖДЫЙ ПОЛЬЗОВАТЕЛЬ ИМЕЕТ СВОЙ ИНДИВИДУАЛЬНЫЙ БАЛАНС
-        const isAdmin = user.is_admin;
-        
-        res.json({
-            main_balance: user.main_balance,
-            demo_balance: user.demo_balance, // У каждого админа свой demo_balance
-            demo_mode: user.demo_mode, // У каждого пользователя свой режим
-            is_admin: user.is_admin,
-            current_balance: user.demo_mode ? user.demo_balance : user.main_balance,
-            use_demo_balance: user.demo_mode
-        });
-    } catch (error) {
-        console.error('Get coinflip balance error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});;
 
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
