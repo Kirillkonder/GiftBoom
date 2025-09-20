@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plinko - 1Win Style</title>
+    <title>Plinko Game</title>
+    <meta name="description" content="Играйте в Plinko - захватывающую игру с шариками и множителями!" />
     <style>
         * {
             margin: 0;
@@ -17,15 +18,19 @@
             min-height: 100vh;
             color: white;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            max-width: 1200px;
+            width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
+            gap: 15px;
         }
 
         .header {
@@ -34,30 +39,31 @@
         }
 
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             color: #00d4ff;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
         }
 
         .plinko-board {
             position: relative;
-            width: 600px;
-            height: 500px;
-            margin: 0 auto 30px;
+            width: calc(100vw - 20px);
+            max-width: 380px;
+            height: 300px;
+            margin: 0 auto 15px;
             background: rgba(15, 30, 61, 0.8);
             border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 20px;
+            border-radius: 15px;
             overflow: hidden;
         }
 
         .peg {
             position: absolute;
-            width: 12px;
-            height: 12px;
+            width: 8px;
+            height: 8px;
             background: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
         }
 
         .ball {
@@ -76,11 +82,11 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 60px;
+            height: 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
+            padding: 0 15px;
             background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
         }
 
@@ -99,18 +105,25 @@
         .control-panel {
             background: rgba(15, 30, 61, 0.9);
             border: 2px solid rgba(0, 212, 255, 0.2);
-            border-radius: 20px;
-            padding: 30px;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 30px;
-            align-items: center;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .left-controls, .right-controls {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .center-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
         }
 
         .control-group {
@@ -134,11 +147,16 @@
             background: rgba(45, 55, 72, 0.8);
             border: 1px solid rgba(0, 212, 255, 0.3);
             color: white;
-            padding: 8px 16px;
+            padding: 12px 16px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 14px;
+            min-height: 44px;
+            min-width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn:hover {
@@ -153,13 +171,13 @@
         }
 
         .play-button {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: linear-gradient(145deg, #00d4ff, #0ea5e9);
             border: 4px solid rgba(0, 212, 255, 0.3);
             color: white;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -252,76 +270,41 @@
         .balance {
             text-align: center;
             margin-top: 20px;
-            font-size: 20px;
+            font-size: 18px;
             color: #ffd700;
+            font-weight: bold;
         }
 
-        .lines-selector {
-            background: rgba(45, 55, 72, 0.5);
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            border-radius: 10px;
-            padding: 5px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .lines-selector::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .lines-selector::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-        }
-
-        .lines-selector::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.5);
-            border-radius: 3px;
+        select.btn {
+            background: rgba(45, 55, 72, 0.8);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-height: 44px;
+            width: 80px;
         }
 
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
+            40% { transform: translateY(-8px); }
+            60% { transform: translateY(-4px); }
         }
 
         .ball.bouncing {
             animation: bounce 0.3s ease-out;
         }
-
-        .menu-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: linear-gradient(145deg, #667eea, #764ba2);
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .menu-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
     </style>
 </head>
 <body>
-    <button class="menu-button" onclick="window.location.href='/'">← Главное меню</button>
-    
     <div class="game-container">
         <div class="header">
             <h1>PLINKO</h1>
         </div>
 
         <div class="plinko-board" id="plinkoBoard">
-            <canvas id="gameCanvas" width="600" height="500"></canvas>
+            <canvas id="gameCanvas" width="380" height="300"></canvas>
             <div class="multiplier-zone">
                 <div class="multiplier" data-multiplier="5.6">×5.6</div>
                 <div class="multiplier" data-multiplier="2.2">×2.2</div>
@@ -338,7 +321,7 @@
         <div class="control-panel">
             <div class="left-controls">
                 <div class="control-group">
-                    <div class="control-label">Уровень Риска</div>
+                    <div class="control-label">Уровень</div>
                     <div class="button-group">
                         <button class="btn" onclick="setRisk('low')">Низкий</button>
                         <button class="btn active" onclick="setRisk('medium')">Средний</button>
@@ -348,30 +331,27 @@
                 
                 <div class="control-group">
                     <div class="control-label">Линии</div>
-                    <div class="lines-selector">
-                        <div class="button-group" style="flex-direction: column; gap: 2px;">
-                            <button class="btn" onclick="setLines(8)">8</button>
-                            <button class="btn" onclick="setLines(9)">9</button>
-                            <button class="btn" onclick="setLines(10)">10</button>
-                            <button class="btn" onclick="setLines(11)">11</button>
-                            <button class="btn active" onclick="setLines(12)">12</button>
-                            <button class="btn" onclick="setLines(13)">13</button>
-                            <button class="btn" onclick="setLines(14)">14</button>
-                            <button class="btn" onclick="setLines(15)">15</button>
-                            <button class="btn" onclick="setLines(16)">16</button>
-                        </div>
-                    </div>
+                    <select class="btn" onchange="setLines(parseInt(this.value))">
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12" selected>12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                    </select>
                 </div>
             </div>
 
             <div class="center-controls">
                 <div class="balls-control">
-                    <div class="control-label">Количество шариков</div>
+                    <div class="control-label">Количество</div>
                     <div class="balls-selector">
                         <button class="btn active" onclick="setBallCount(1)">1</button>
                         <button class="btn" onclick="setBallCount(10)">10</button>
                         <button class="btn" onclick="setBallCount(100)">100</button>
-                        <button class="btn" onclick="setBallCount(1000)">1000</button>
                     </div>
                     <button class="play-button" onclick="dropBalls()">ИГРАТЬ</button>
                 </div>
@@ -379,20 +359,18 @@
 
             <div class="right-controls">
                 <div class="control-group">
-                    <div class="control-label">Режим Ставки</div>
+                    <div class="control-label">Режим</div>
                     <div class="button-group">
-                        <button class="btn active" onclick="setBetMode('manual')">🎮 Ручной</button>
-                        <button class="btn" onclick="setBetMode('auto')">⚡ Авто</button>
+                        <button class="btn active" onclick="setBetMode('manual')">🎮</button>
+                        <button class="btn" onclick="setBetMode('auto')">⚡</button>
                     </div>
                 </div>
                 
                 <div class="control-group">
-                    <div class="control-label">Ставка: 1,00 FUN</div>
+                    <div class="control-label">Ставка</div>
                     <div class="bet-controls">
                         <button class="bet-button" onclick="adjustBet(-0.1)">−</button>
-                        <span>Мин</span>
                         <input type="text" class="bet-input" value="1,00 FUN" readonly>
-                        <span>Макс</span>
                         <button class="bet-button" onclick="adjustBet(0.1)">+</button>
                     </div>
                 </div>
@@ -425,10 +403,10 @@
         function initializePegs() {
             gameState.pegs = [];
             const rows = gameState.lines;
-            const pegRadius = 6;
-            const boardWidth = 560;
-            const boardHeight = 400;
-            const startY = 60;
+            const pegRadius = 4;
+            const boardWidth = 340;
+            const boardHeight = 240;
+            const startY = 40;
             const startX = 20;
             
             for (let row = 0; row < rows; row++) {
@@ -473,8 +451,8 @@
                 this.y = y;
                 this.vx = (Math.random() - 0.5) * 1;
                 this.vy = 0;
-                this.radius = 7;
-                this.gravity = 0.35;
+                this.radius = 5;
+                this.gravity = 0.25;
                 this.bounciness = 0.75;
                 this.friction = 0.98;
                 this.active = true;
@@ -566,8 +544,8 @@
                 this.vy *= 0.999;
 
                 // Проверка достижения дна
-                if (this.y >= canvas.height - 70 - this.radius) {
-                    this.y = canvas.height - 70 - this.radius;
+                if (this.y >= canvas.height - 50 - this.radius) {
+                    this.y = canvas.height - 50 - this.radius;
                     this.vy = 0;
                     this.vx *= 0.8;
                     
@@ -644,7 +622,7 @@
                 
                 if (ball.active || ball.delay > 0) {
                     activeBalls++;
-                } else if (ball.y >= canvas.height - 70 - ball.radius && Math.abs(ball.vx) < 0.5) {
+                } else if (ball.y >= canvas.height - 50 - ball.radius && Math.abs(ball.vx) < 0.5) {
                     setTimeout(() => {
                         gameState.balls.splice(index, 1);
                     }, 100);
