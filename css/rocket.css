@@ -17,26 +17,40 @@ body {
 
 /* Фон с сеткой на всю страницу */
 .grid-background {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: -1;
-    background: 
-        linear-gradient(rgba(30, 92, 184, 0.2) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.2) 1px, transparent 1px),
-        linear-gradient(rgba(30, 92, 184, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.1) 1px, transparent 1px);
-    
-    background-size: 
-        80px 80px,
-        80px 80px,
-        40px 40px,
-        40px 40px;
-    
-    /* Анимация пульсации сетки */
-    animation: grid-pulse 4s ease-in-out infinite;
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.3;
+    animation: waveMove 15s linear infinite;
+}
+
+@keyframes waveMove {
+    0% {
+        background-position: 0 0, 0 0;
+        opacity: 0.3;
+    }
+    25% {
+        background-position: 15px 10px, 10px 15px;
+        opacity: 0.4;
+    }
+    50% {
+        background-position: 30px 20px, 20px 30px;
+        opacity: 0.5;
+    }
+    75% {
+        background-position: 15px 10px, 10px 15px;
+        opacity: 0.4;
+    }
+    100% {
+        background-position: 0 0, 0 0;
+        opacity: 0.3;
+    }
 }
 
 /* Анимация пульсации сетки */
