@@ -1,4 +1,3 @@
-// Initialize app
 console.log('Coinflip game initialized');
 console.log('Telegram WebApp available:', !!window.Telegram?.WebApp);
 document.addEventListener('DOMContentLoaded', function() {
@@ -218,8 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Flip buttons
-   // В функции flipButtons исправьте обработку ошибок
-flipButtons.forEach(btn => {
+    flipButtons.forEach(btn => {
     btn.addEventListener('click', async function() {
         const side = this.getAttribute('data-side');
         const betAmount = parseFloat(betInput.value) || 0.1;
