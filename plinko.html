@@ -153,13 +153,13 @@
         }
 
         .play-button {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             background: linear-gradient(145deg, #00d4ff, #0ea5e9);
             border: 4px solid rgba(0, 212, 255, 0.3);
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -167,6 +167,43 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .balls-control {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .balls-selector {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .win-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #00d4ff, #0ea5e9);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .win-display.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
         }
 
         .play-button:hover {
@@ -328,7 +365,16 @@
             </div>
 
             <div class="center-controls">
-                <button class="play-button" onclick="dropBall()">ИГРАТЬ</button>
+                <div class="balls-control">
+                    <div class="control-label">Количество шариков</div>
+                    <div class="balls-selector">
+                        <button class="btn active" onclick="setBallCount(1)">1</button>
+                        <button class="btn" onclick="setBallCount(10)">10</button>
+                        <button class="btn" onclick="setBallCount(100)">100</button>
+                        <button class="btn" onclick="setBallCount(1000)">1000</button>
+                    </div>
+                    <button class="play-button" onclick="dropBalls()">ИГРАТЬ</button>
+                </div>
             </div>
 
             <div class="right-controls">
@@ -368,210 +414,324 @@
             betMode: 'manual',
             betAmount: 1.00,
             balance: 1000.00,
+            ballCount: 1,
             pegs: [],
             balls: [],
-            isPlaying: false
+            isPlaying: false,
+            totalWin: 0
         };
 
-        // Инициализация пегов
+        // Инициализация пегов с улучшенным позиционированием
         function initializePegs() {
             gameState.pegs = [];
             const rows = gameState.lines;
             const pegRadius = 6;
-            const boardWidth = 600;
-            const boardHeight = 440; // Оставляем место для множителей
-            const startY = 80;
+            const boardWidth = 560;
+            const boardHeight = 400;
+            const startY = 60;
+            const startX = 20;
             
             for (let row = 0; row < rows; row++) {
                 const pegsInRow = row + 3;
-                const spacing = (boardWidth - 100) / (pegsInRow + 1);
-                const y = startY + (row * (boardHeight - startY) / rows);
+                const spacing = boardWidth / (pegsInRow + 1);
+                const y = startY + (row * (boardHeight - startY) / (rows - 1));
+                const offsetX = (row % 2) * (spacing / 2);
                 
                 for (let col = 0; col < pegsInRow; col++) {
-                    const x = 50 + spacing * (col + 1) + (row % 2) * (spacing / 2);
-                    gameState.pegs.push({ x, y, radius: pegRadius });
+                    const x = startX + offsetX + spacing * (col + 1);
+                    gameState.pegs.push({ 
+                        x, 
+                        y, 
+                        radius: pegRadius,
+                        glow: 0 
+                    });
                 }
             }
         }
 
-        // Отрисовка пегов
+        // Улучшенная отрисовка пегов
         function drawPegs() {
             gameState.pegs.forEach(peg => {
+                // Основной пег
                 ctx.beginPath();
                 ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 8 + peg.glow;
+                ctx.shadowColor = `rgba(255, 255, 255, ${0.6 + peg.glow * 0.4})`;
                 ctx.fill();
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
                 ctx.shadowBlur = 0;
+                
+                // Уменьшаем свечение
+                peg.glow = Math.max(0, peg.glow - 0.1);
             });
         }
 
-        // Класс шарика
+        // Улучшенный класс шарика с реалистичной физикой
         class Ball {
-            constructor(x, y) {
+            constructor(x, y, delay = 0) {
                 this.x = x;
                 this.y = y;
-                this.vx = (Math.random() - 0.5) * 2;
+                this.vx = (Math.random() - 0.5) * 1;
                 this.vy = 0;
-                this.radius = 8;
-                this.gravity = 0.3;
-                this.bounce = 0.7;
-                this.friction = 0.99;
+                this.radius = 7;
+                this.gravity = 0.35;
+                this.bounciness = 0.75;
+                this.friction = 0.98;
                 this.active = true;
+                this.delay = delay;
+                this.age = 0;
+                this.trail = [];
+                this.color = {
+                    r: 255 + Math.random() * 50,
+                    g: 100 + Math.random() * 100,
+                    b: 100 + Math.random() * 100
+                };
             }
 
             update() {
+                if (this.delay > 0) {
+                    this.delay--;
+                    return;
+                }
+                
                 if (!this.active) return;
 
-                this.vy += this.gravity;
-                this.x += this.vx;
-                this.y += this.vy;
+                this.age++;
+                
+                // Добавляем в след
+                this.trail.push({x: this.x, y: this.y});
+                if (this.trail.length > 8) this.trail.shift();
 
+                // Физика
+                this.vy += this.gravity;
+                
                 // Проверка столкновений с пегами
+                let hasCollision = false;
                 gameState.pegs.forEach(peg => {
                     const dx = this.x - peg.x;
                     const dy = this.y - peg.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = this.radius + peg.radius;
                     
-                    if (distance < this.radius + peg.radius) {
-                        // Отталкивание от пега
-                        const angle = Math.atan2(dy, dx);
-                        const force = 3;
-                        this.vx = Math.cos(angle) * force + (Math.random() - 0.5) * 2;
-                        this.vy = Math.sin(angle) * force;
+                    if (distance < minDistance && distance > 0) {
+                        hasCollision = true;
                         
-                        // Отодвигаем шарик от пега
-                        const overlap = this.radius + peg.radius - distance;
-                        this.x += Math.cos(angle) * overlap;
-                        this.y += Math.sin(angle) * overlap;
+                        // Нормализованный вектор столкновения
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+                        
+                        // Отделяем шарик от пега
+                        const overlap = minDistance - distance;
+                        this.x += nx * overlap * 0.5;
+                        this.y += ny * overlap * 0.5;
+                        
+                        // Скорость столкновения
+                        const dotProduct = this.vx * nx + this.vy * ny;
+                        
+                        // Отражение с потерей энергии
+                        this.vx -= 2 * dotProduct * nx;
+                        this.vy -= 2 * dotProduct * ny;
+                        
+                        // Добавляем случайность и энергию
+                        this.vx *= this.bounciness + (Math.random() - 0.5) * 0.3;
+                        this.vy *= this.bounciness + (Math.random() - 0.5) * 0.2;
+                        
+                        // Минимальная скорость отскока
+                        const minBounce = 2;
+                        if (Math.abs(this.vx) < minBounce) {
+                            this.vx = (Math.random() - 0.5) * minBounce * 2;
+                        }
+                        
+                        // Эффект свечения пега
+                        peg.glow = Math.min(1, peg.glow + 0.5);
                     }
                 });
 
+                // Движение
+                this.x += this.vx;
+                this.y += this.vy;
+
                 // Отскок от стен
-                if (this.x < this.radius) {
+                if (this.x <= this.radius) {
                     this.x = this.radius;
-                    this.vx = -this.vx * this.bounce;
+                    this.vx = Math.abs(this.vx) * this.bounciness;
                 }
-                if (this.x > canvas.width - this.radius) {
+                if (this.x >= canvas.width - this.radius) {
                     this.x = canvas.width - this.radius;
-                    this.vx = -this.vx * this.bounce;
+                    this.vx = -Math.abs(this.vx) * this.bounciness;
                 }
+
+                // Трение воздуха
+                this.vx *= this.friction;
+                this.vy *= 0.999;
 
                 // Проверка достижения дна
-                if (this.y > canvas.height - 60 - this.radius) {
-                    this.y = canvas.height - 60 - this.radius;
-                    this.active = false;
-                    this.calculateWin();
+                if (this.y >= canvas.height - 70 - this.radius) {
+                    this.y = canvas.height - 70 - this.radius;
+                    this.vy = 0;
+                    this.vx *= 0.8;
+                    
+                    if (Math.abs(this.vx) < 0.5) {
+                        this.active = false;
+                        this.calculateWin();
+                    }
                 }
-
-                this.vx *= this.friction;
-                this.vy *= this.friction;
             }
 
             calculateWin() {
                 const multipliers = [5.6, 2.2, 1.1, 1.4, 0.8, 1.4, 3.1, 2.2, 5.6];
                 const sectionWidth = canvas.width / multipliers.length;
-                const section = Math.floor(this.x / sectionWidth);
-                const multiplier = multipliers[Math.min(section, multipliers.length - 1)];
+                const section = Math.max(0, Math.min(multipliers.length - 1, Math.floor(this.x / sectionWidth)));
+                const multiplier = multipliers[section];
                 
                 const winAmount = gameState.betAmount * multiplier;
-                gameState.balance += winAmount - gameState.betAmount;
+                gameState.totalWin += winAmount;
                 
-                // Показать выигрыш
-                setTimeout(() => {
-                    alert(`Выигрыш: ${winAmount.toFixed(2)} FUN (×${multiplier})`);
-                    updateBalance();
-                }, 500);
+                // Подсвечиваем множитель
+                const multiplierElements = document.querySelectorAll('.multiplier');
+                if (multiplierElements[section]) {
+                    multiplierElements[section].style.background = 'linear-gradient(145deg, #00ff00, #32cd32)';
+                    multiplierElements[section].style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        multiplierElements[section].style.background = 'linear-gradient(145deg, #ffd700, #ffed4e)';
+                        multiplierElements[section].style.transform = 'scale(1)';
+                    }, 300);
+                }
             }
 
             draw() {
-                if (!this.active) return;
+                if (this.delay > 0 || !this.active) return;
 
+                // Рисуем след
+                this.trail.forEach((point, i) => {
+                    const alpha = i / this.trail.length * 0.3;
+                    const radius = this.radius * (i / this.trail.length) * 0.5;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha})`;
+                    ctx.fill();
+                });
+
+                // Основной шарик
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 
-                // Градиент для шарика
                 const gradient = ctx.createRadialGradient(
-                    this.x - 3, this.y - 3, 0,
+                    this.x - 2, this.y - 2, 0,
                     this.x, this.y, this.radius
                 );
-                gradient.addColorStop(0, '#ff6b6b');
-                gradient.addColorStop(1, '#ff4757');
+                gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 1)`);
+                gradient.addColorStop(1, `rgba(${this.color.r - 50}, ${this.color.g - 50}, ${this.color.b - 50}, 1)`);
                 
                 ctx.fillStyle = gradient;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.8)`;
                 ctx.fill();
-                
-                // Свечение
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = 'rgba(255, 107, 107, 0.8)';
                 ctx.shadowBlur = 0;
             }
         }
 
-        // Анимационный цикл
+        // Анимационный цикл с улучшенной производительностью
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             drawPegs();
             
+            let activeBalls = 0;
             gameState.balls.forEach((ball, index) => {
                 ball.update();
                 ball.draw();
                 
-                if (!ball.active && ball.y >= canvas.height - 60 - ball.radius) {
+                if (ball.active || ball.delay > 0) {
+                    activeBalls++;
+                } else if (ball.y >= canvas.height - 70 - ball.radius && Math.abs(ball.vx) < 0.5) {
                     setTimeout(() => {
                         gameState.balls.splice(index, 1);
-                        if (gameState.balls.length === 0) {
-                            gameState.isPlaying = false;
-                        }
-                    }, 1000);
+                    }, 100);
                 }
             });
+            
+            if (gameState.isPlaying && activeBalls === 0 && gameState.balls.length === 0) {
+                gameState.isPlaying = false;
+                showWinMessage();
+            }
             
             requestAnimationFrame(gameLoop);
         }
 
-        // Функции управления
-        function dropBall() {
+        // Показ сообщения о выигрыше
+        function showWinMessage() {
+            const netWin = gameState.totalWin - (gameState.betAmount * gameState.ballCount);
+            gameState.balance += netWin;
+            
+            const winDisplay = document.createElement('div');
+            winDisplay.className = 'win-display show';
+            winDisplay.innerHTML = `
+                <div>Общий выигрыш: ${gameState.totalWin.toFixed(2)} FUN</div>
+                <div>Чистая прибыль: ${netWin >= 0 ? '+' : ''}${netWin.toFixed(2)} FUN</div>
+            `;
+            document.body.appendChild(winDisplay);
+            
+            setTimeout(() => {
+                winDisplay.classList.remove('show');
+                setTimeout(() => document.body.removeChild(winDisplay), 500);
+            }, 2500);
+            
+            gameState.totalWin = 0;
+            updateBalance();
+        }
+
+        // Запуск шариков
+        function dropBalls() {
             if (gameState.isPlaying) return;
-            if (gameState.balance < gameState.betAmount) {
+            
+            const totalCost = gameState.betAmount * gameState.ballCount;
+            if (gameState.balance < totalCost) {
                 alert('Недостаточно средств!');
                 return;
             }
             
             gameState.isPlaying = true;
-            const ball = new Ball(canvas.width / 2 + (Math.random() - 0.5) * 20, 20);
-            gameState.balls.push(ball);
+            gameState.balls = [];
+            gameState.totalWin = 0;
+            
+            for (let i = 0; i < gameState.ballCount; i++) {
+                const delay = Math.floor(i / 10) * 5; // Задержка для группового запуска
+                const startX = canvas.width / 2 + (Math.random() - 0.5) * 40;
+                const ball = new Ball(startX, 20, delay);
+                gameState.balls.push(ball);
+            }
         }
 
+        // Функции управления
         function setRisk(risk) {
             gameState.risk = risk;
-            document.querySelectorAll('.left-controls .btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            updateActiveButton('.left-controls .btn', event.target);
         }
 
         function setLines(lines) {
             gameState.lines = lines;
-            document.querySelectorAll('.lines-selector .btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            updateActiveButton('.lines-selector .btn', event.target);
             initializePegs();
         }
 
         function setBetMode(mode) {
             gameState.betMode = mode;
-            document.querySelectorAll('.right-controls .button-group .btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            updateActiveButton('.right-controls .button-group .btn', event.target);
+        }
+
+        function setBallCount(count) {
+            gameState.ballCount = count;
+            updateActiveButton('.balls-selector .btn', event.target);
+        }
+
+        function updateActiveButton(selector, activeButton) {
+            document.querySelectorAll(selector).forEach(btn => btn.classList.remove('active'));
+            activeButton.classList.add('active');
         }
 
         function adjustBet(amount) {
-            gameState.betAmount = Math.max(0.1, gameState.betAmount + amount);
+            gameState.betAmount = Math.max(0.1, Math.round((gameState.betAmount + amount) * 100) / 100);
             document.querySelector('.bet-input').value = gameState.betAmount.toFixed(2) + ' FUN';
         }
 
@@ -584,4 +744,4 @@
         gameLoop();
     </script>
 </body>
-</html
+</html>
