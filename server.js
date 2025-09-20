@@ -1845,17 +1845,27 @@ app.get('/api/rocket/current', async (req, res) => {
 // API: Игра в монетку
 
 app.post('/api/coinflip/play', async (req, res) => {
-    const { telegramId, betAmount, choice } = req.body;
+    const { telegramId, betAmount, choice, demoMode } = req.body; // Добавьте demoMode в деструктуризацию
 
     try {
-        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        let user = users.findOne({ telegram_id: parseInt(telegramId) });
         
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            // Создаем нового пользователя если не найден
+            const isAdmin = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023;
+            user = users.insert({
+                telegram_id: parseInt(telegramId),
+                main_balance: 0,
+                demo_balance: isAdmin ? 50 : 0,
+                total_deposits: 0,
+                created_at: new Date(),
+                demo_mode: isAdmin,
+                is_admin: isAdmin
+            });
         }
 
-        // ИСПОЛЬЗУЕМ РЕЖИМ ПОЛЬЗОВАТЕЛЯ ИЗ БАЗЫ ДАННЫХ
-        const useDemoMode = user.demo_mode;
+        // ИСПОЛЬЗУЕМ РЕЖИМ ИЗ ЗАПРОСА (как в других играх)
+        const useDemoMode = demoMode !== undefined ? demoMode : user.demo_mode;
         const balance = useDemoMode ? user.demo_balance : user.main_balance;
         
         if (balance < betAmount) {
