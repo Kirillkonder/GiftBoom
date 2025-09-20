@@ -1841,69 +1841,7 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
-// Добавьте в server.js после других API endpoints
 
-// API: Бросок монеты
-app.post('/api/coinflip/bet', async (req, res) => {
-    const { telegramId, betAmount, selectedSide, demoMode } = req.body;
-
-    try {
-        const user = users.findOne({ telegram_id: parseInt(telegramId) });
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const balance = demoMode ? user.demo_balance : user.main_balance;
-        
-        if (balance < betAmount) {
-            return res.status(400).json({ error: 'Недостаточно средств' });
-        }
-
-        // Генерируем случайный результат (50/50)
-        const randomSide = Math.random() < 0.5 ? 'heads' : 'tails';
-        const isWin = selectedSide === randomSide;
-        const winAmount = isWin ? betAmount * 1.96 : 0; // Множитель 1.96x
-
-        // Обновляем баланс
-        if (demoMode) {
-            users.update({
-                ...user,
-                demo_balance: isWin ? user.demo_balance + winAmount : user.demo_balance - betAmount
-            });
-            
-            if (isWin) {
-                updateCasinoDemoBank(-winAmount);
-            } else {
-                updateCasinoDemoBank(betAmount);
-            }
-        } else {
-            users.update({
-                ...user,
-                main_balance: isWin ? user.main_balance + winAmount : user.main_balance - betAmount
-            });
-            
-            if (isWin) {
-                updateCasinoBank(-winAmount);
-            } else {
-                updateCasinoBank(betAmount);
-            }
-        }
-
-        res.json({
-            success: true,
-            win: isWin,
-            winAmount: winAmount,
-            actualSide: randomSide,
-            new_main_balance: user.main_balance,
-            new_demo_balance: user.demo_balance
-        });
-
-    } catch (error) {
-        console.error('Coinflip bet error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
