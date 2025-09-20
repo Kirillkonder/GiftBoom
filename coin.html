@@ -476,7 +476,7 @@
         </div>
     </div>
 
-   <script>
+<script>
     let currentUser = null;
     let isDemoMode = false;
     let currentBalance = 0;
@@ -562,67 +562,69 @@
     }
 
     // Функция переворота монетки
-   window.flipCoin = async function(choice) {
-    const coin = document.getElementById('coinImage');
-    const betAmount = parseFloat(document.getElementById('betAmount').value);
-    
-    // Проверка баланса
-    if (currentBalance < betAmount) {
-        showError('Недостаточно средств');
-        return;
-    }
-    
-    // Анимация переворота
-    coin.style.transform = 'rotateY(1800deg) scale(1.1)';
-    coin.style.transition = 'transform 2s ease-in-out';
-    
-    try {
-        // Отправляем запрос на сервер для обработки игры
-        const response = await fetch('/api/coinflip/play', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                betAmount: betAmount,
-                choice: choice,
-                demoMode: isDemoMode // ИСПРАВЛЕНО: правильная переменная
-            })
-        });
+    window.flipCoin = async function(choice) {
+        const coin = document.getElementById('coinImage');
+        const betAmount = parseFloat(document.getElementById('betAmount').value);
         
-        const result = await response.json();
+        // Проверка баланса
+        if (currentBalance < betAmount) {
+            showError('Недостаточно средств');
+            return;
+        }
         
-        setTimeout(() => {
-            if (result.success) {
-                // Обновляем баланс из ответа сервера
-                currentBalance = result.newBalance;
-                document.getElementById('balance').textContent = currentBalance.toFixed(2);
-                
-                if (result.won) {
-                    showWinNotification(result.winAmount);
-                    document.getElementById('balance').classList.add('balance-updated');
-                    setTimeout(() => {
-                        document.getElementById('balance').classList.remove('balance-updated');
-                    }, 1000);
+        // Анимация переворота
+        coin.style.transform = 'rotateY(1800deg) scale(1.1)';
+        coin.style.transition = 'transform 2s ease-in-out';
+        
+        try {
+            // Отправляем запрос на сервер для обработки игры
+            const response = await fetch('/api/coinflip/play', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    telegramId: currentUser.id,
+                    betAmount: betAmount,
+                    choice: choice,
+                    demoMode: isDemoMode
+                })
+            });
+            
+            const result = await response.json();
+            
+            setTimeout(() => {
+                if (result.success) {
+                    // ОБНОВЛЕНО: Получаем новый баланс из ответа сервера
+                    if (result.newBalance !== undefined) {
+                        currentBalance = result.newBalance;
+                        document.getElementById('balance').textContent = currentBalance.toFixed(2);
+                        
+                        if (result.won) {
+                            showWinNotification(result.winAmount);
+                            document.getElementById('balance').classList.add('balance-updated');
+                            setTimeout(() => {
+                                document.getElementById('balance').classList.remove('balance-updated');
+                            }, 1000);
+                        } else {
+                            showError(`Увы! Выпало ${result.result}. Вы проиграли ${betAmount} TON.`);
+                        }
+                    }
+                    
+                    // Всегда перезагружаем данные пользователя после игры
+                    loadUserData();
                 } else {
-                    showError(`Увы! Выпало ${result.result}. Вы проиграли ${betAmount} TON.`);
+                    showError('Ошибка: ' + result.error);
                 }
                 
-                // Обновляем данные пользователя после игры
-                loadUserData();
-            } else {
-                showError('Ошибка: ' + result.error);
-            }
-            
+                coin.style.transform = 'rotateY(0deg) scale(1)';
+            }, 2000);
+        } catch (error) {
+            console.error('Ошибка при игре:', error);
+            showError('Ошибка соединения с сервером');
             coin.style.transform = 'rotateY(0deg) scale(1)';
-        }, 2000);
-    } catch (error) {
-        console.error('Ошибка при игре:', error);
-        showError('Ошибка соединения с сервером');
-        coin.style.transform = 'rotateY(0deg) scale(1)';
-    }
-};
+        }
+    };
 
     // Функция переключения серии
     window.toggleSeries = function() {
@@ -677,30 +679,38 @@
         document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
     }
 
-    // Загрузка данных пользователя
+    // Загрузка данных пользователя - ПОЛНОСТЬЮ ПЕРЕПИСАНА как в ракетке
     async function loadUserData() {
-    try {
-        const response = await fetch(`/api/coinflip/balance/${currentUser.id}`);
-        if (response.ok) {
-            const userData = await response.json();
-            
-            // ИСПРАВЛЕНО: Используем правильную логику как в ракетке
-            isAdmin = userData.is_admin;
-            isDemoMode = userData.demo_mode && isAdmin; // Демо-режим только для админов
-            currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
-            
+        try {
+            const response = await fetch(`/api/coinflip/balance/${currentUser.id}`);
+            if (response.ok) {
+                const userData = await response.json();
+                
+                // ТОЧНО ТАКАЯ ЖЕ ЛОГИКА КАК В ROCKET.JS
+                isAdmin = userData.is_admin;
+                isDemoMode = userData.demo_mode && isAdmin; // Демо-режим только для админов
+                
+                // Используем правильный баланс в зависимости от режима
+                currentBalance = isDemoMode ? userData.demo_balance : userData.main_balance;
+                
+                document.getElementById('balance').textContent = currentBalance.toFixed(2);
+                document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                
+                console.log('Данные пользователя загружены:', {
+                    id: currentUser.id,
+                    isAdmin: isAdmin,
+                    isDemoMode: isDemoMode,
+                    mainBalance: userData.main_balance,
+                    demoBalance: userData.demo_balance,
+                    currentBalance: currentBalance
+                });
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки данных пользователя:', error);
+            currentBalance = 0;
             document.getElementById('balance').textContent = currentBalance.toFixed(2);
-            document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
-            
-            console.log('Данные пользователя загружены:', userData);
-            console.log('isAdmin:', isAdmin, 'isDemoMode:', isDemoMode, 'balance:', currentBalance);
         }
-    } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
-        currentBalance = 0;
-        document.getElementById('balance').textContent = currentBalance.toFixed(2);
     }
-}
 
     // Инициализация
     document.addEventListener('DOMContentLoaded', function() {
