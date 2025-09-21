@@ -1430,22 +1430,21 @@ app.get('/api/transactions/:telegramId', async (req, res) => {
 // API: Получить баланс пользователя
 app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
-    // Только эти два пользователя могут использовать демо режим
-    const isAdminUser = telegramId === 842428912 || telegramId === 1508176983;
 
     try {
         const user = users.findOne({ telegram_id: telegramId });
         
         if (!user) {
             // Создаем нового пользователя если не найден
+            const isOwner = telegramId === parseInt(process.env.OWNER_TELEGRAM_ID);
             const newUser = users.insert({
                 telegram_id: telegramId,
                 main_balance: 0,
-                demo_balance: isAdminUser ? 50 : 0, // 50 TON для админов вместо 1000
+                demo_balance: isOwner ? 50 : 0, // 50 TON только для владельца
                 total_deposits: 0, // Новое поле
                 created_at: new Date(),
                 demo_mode: false,
-                is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1508176983
+                is_admin: isOwner
             });
             
             res.json({

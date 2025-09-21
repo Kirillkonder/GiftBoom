@@ -328,7 +328,7 @@
     </style>
 </head>
 <body>
-      <div class="container">
+    <div class="container">
         <div class="header">
             <button class="close-btn" onclick="goBack()">✕ Закрыть</button>
             <div class="logo">COINFLIP</div>
@@ -387,7 +387,7 @@
         </div>
     </div>
 
-   <script type="module">
+    <script type="module">
         let currentUser = null;
         let isDemoMode = false;
         let isAdmin = false;
@@ -398,9 +398,12 @@
                 const response = await fetch('coin.png');
                 const blob = await response.blob();
                 
+                // Создаем временный элемент изображения для обработки
                 const img = new Image();
                 img.onload = async function() {
                     try {
+                        // Здесь бы мы использовали функцию удаления фона, но для простоты
+                        // просто применим CSS фильтры для улучшения внешнего вида
                         const coinImg = document.getElementById('coinImage');
                         coinImg.style.filter = 'drop-shadow(0 0 20px rgba(0, 255, 255, 0.8))';
                         coinImg.style.background = 'transparent';
@@ -419,6 +422,7 @@
             const coin = document.getElementById('coinImage');
             const betAmount = document.getElementById('betAmount').value;
             
+            // Анимация переворота
             coin.style.transform = 'rotateY(1800deg) scale(1.1)';
             coin.style.transition = 'transform 2s ease-in-out';
             
@@ -450,41 +454,34 @@
         // Загрузка данных пользователя
         async function loadUserData() {
             try {
-                if (!currentUser || !currentUser.id) {
-                    console.error('User ID not found');
-                    return;
-                }
-
                 const response = await fetch(`/api/user/balance/${currentUser.id}`);
                 if (response.ok) {
                     const userData = await response.json();
-                    console.log('User data loaded:', userData);
-                    
-                    // Обновляем балансы в зависимости от режима
-                    if (userData.demo_mode) {
-                        // Демо режим - показываем демо баланс
-                        document.getElementById('demoBalance').textContent = userData.demo_balance.toFixed(2);
-                        document.getElementById('demoBalance').style.display = 'block';
-                        document.getElementById('mainBalance').style.display = 'none';
-                    } else {
-                        // Режим реальных денег - показываем основной баланс
-                        document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
-                        document.getElementById('mainBalance').style.display = 'block';
-                        document.getElementById('demoBalance').style.display = 'none';
-                    }
-                    
-                    // Для админов всегда показываем оба баланса
-                    if (userData.is_admin) {
-                        document.getElementById('demoBalance').textContent = userData.demo_balance.toFixed(2);
-                        document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
-                        document.getElementById('demoBalance').style.display = 'block';
-                        document.getElementById('mainBalance').style.display = 'block';
-                    }
                     
                     isDemoMode = userData.demo_mode;
                     isAdmin = userData.is_admin;
-                } else {
-                    console.error('Failed to load user data');
+                    
+                    // Правильно отображаем баланс в зависимости от режима
+                    if (isDemoMode) {
+                        // В демо-режиме показываем демо баланс
+                        document.getElementById('mainBalance').textContent = userData.demo_balance.toFixed(2);
+                        document.getElementById('mainBalance').className = 'stat-item demo-balance';
+                    } else {
+                        // В реальном режиме показываем основной баланс
+                        document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
+                        document.getElementById('mainBalance').className = 'stat-item balance';
+                    }
+                    
+                    // Для админов показываем дополнительную информацию о втором балансе
+                    if (isAdmin) {
+                        const secondBalance = isDemoMode ? userData.main_balance : userData.demo_balance;
+                        const modeText = isDemoMode ? 'РЕАЛ' : 'ДЕМО';
+                        document.getElementById('demoBalance').textContent = `${secondBalance.toFixed(2)} (${modeText})`;
+                        document.getElementById('demoBalance').style.display = 'block';
+                        document.getElementById('demoBalance').className = isDemoMode ? 'stat-item balance' : 'stat-item demo-balance';
+                    } else {
+                        document.getElementById('demoBalance').style.display = 'none';
+                    }
                 }
             } catch (error) {
                 console.error('Ошибка загрузки данных пользователя:', error);
@@ -501,15 +498,12 @@
                     username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
                 };
                 
-                console.log('Current user:', currentUser);
-                
                 // Загружаем данные пользователя
                 loadUserData();
             } else {
-                // Для тестирования без Telegram - используем реальный ID текущего пользователя
-                // Убираем жестко заданный ID главного админа
-                console.error('Telegram WebApp not available');
-                alert('Для работы приложения требуется Telegram');
+                // Для тестирования без Telegram
+                currentUser = { id: 842428912, username: 'test_user' };
+                loadUserData();
             }
             
             // Управление ставками
