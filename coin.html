@@ -491,8 +491,10 @@
                 // Загружаем данные пользователя
                 loadUserData();
             } else {
-                // Для тестирования без Telegram
-                currentUser = { id: 842428912, username: 'test_user' };
+                // Для тестирования без Telegram - используем реальный ID из URL или случайный
+                const urlParams = new URLSearchParams(window.location.search);
+                const testUserId = urlParams.get('test_user_id') || Math.floor(Math.random() * 1000000);
+                currentUser = { id: testUserId, username: 'test_user' };
                 loadUserData();
             }
             
