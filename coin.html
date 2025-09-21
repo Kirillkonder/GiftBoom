@@ -31,6 +31,22 @@
         <!-- Игровое поле -->
         <div class="coin-game-area">
             
+            <!-- Панель серии -->
+            <div class="series-panel" id="seriesPanel">
+                <div class="series-info">
+                    <span class="series-label">СЕРИЯ: </span>
+                    <span class="series-count" id="seriesCount">0</span>
+                    <span class="series-multiplier" id="seriesMultiplier">x1.00</span>
+                </div>
+                <div class="series-controls">
+                    <button class="series-btn" id="seriesToggle" onclick="toggleSeries()">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                    <button class="series-btn cashout-btn" id="seriesCashout" onclick="cashoutSeries()" disabled>
+                        <i class="bi bi-cash-coin"></i>
+                    </button>
+                </div>
+            </div>
             
             <div class="coin-container">
                 <div class="coin" id="coin">
@@ -88,6 +104,14 @@
         let currentBetAmount = 0.1;
         let selectedChoice = null;
         let isFlipping = false;
+        
+        // Переменные для серийной игры
+        let isSeriesActive = false;
+        let seriesCount = 0;
+        let seriesMultiplier = 1.00;
+        let seriesWinAmount = 0;
+        let baseBetAmount = 0.1;
+        let seriesResults = [];
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -156,6 +180,7 @@
                 value = Math.max(0.1, value - 0.1);
                 betInput.value = value.toFixed(1);
                 currentBetAmount = value;
+                baseBetAmount = value; // Обновляем базовую ставку для серии
             }
         }
 
@@ -166,6 +191,7 @@
                 value = Math.min(10, value + 0.1);
                 betInput.value = value.toFixed(1);
                 currentBetAmount = value;
+                baseBetAmount = value; // Обновляем базовую ставку для серии
             }
         }
 
@@ -180,6 +206,150 @@
             value = Math.max(0.1, Math.min(10, value));
             betInput.value = value.toFixed(1);
             currentBetAmount = value;
+            baseBetAmount = value; // Обновляем базовую ставку для серии
+        }
+
+        // Функции для серийной игры
+        function toggleSeries() {
+            isSeriesActive = !isSeriesActive;
+            
+            const toggleBtn = document.getElementById('seriesToggle');
+            const seriesPanel = document.getElementById('seriesPanel');
+            
+            if (isSeriesActive) {
+                // Начинаем новую серию
+                seriesCount = 0;
+                seriesMultiplier = 1.00;
+                seriesWinAmount = 0;
+                seriesResults = [];
+                baseBetAmount = currentBetAmount;
+                
+                toggleBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                toggleBtn.classList.add('active');
+                seriesPanel.classList.add('active');
+                document.getElementById('seriesCashout').disabled = false;
+                
+                updateSeriesDisplay();
+                showToast('info', 'Серия начата', 'Серийная игра активирована. Удачи!');
+            } else {
+                // Останавливаем серию
+                toggleBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                toggleBtn.classList.remove('active');
+                seriesPanel.classList.remove('active');
+                document.getElementById('seriesCashout').disabled = true;
+                
+                showToast('info', 'Серия остановлена', 'Серийная игра деактивирована');
+            }
+        }
+
+        function cashoutSeries() {
+            if (seriesCount === 0) {
+                showToast('error', 'Ошибка', 'Нет активной серии для завершения');
+                return;
+            }
+            
+            // Выплачиваем выигрыш за серию
+            if (seriesWinAmount > 0) {
+                processSeriesWin();
+            }
+            
+            // Сбрасываем серию
+            resetSeries();
+            showToast('success', 'Серия завершена', `Вы забрали выигрыш ${seriesWinAmount.toFixed(2)} TON`);
+        }
+
+        function updateSeriesDisplay() {
+            document.getElementById('seriesCount').textContent = seriesCount;
+            document.getElementById('seriesMultiplier').textContent = `x${seriesMultiplier.toFixed(2)}`;
+        }
+
+        function resetSeries() {
+            isSeriesActive = false;
+            seriesCount = 0;
+            seriesMultiplier = 1.00;
+            seriesWinAmount = 0;
+            seriesResults = [];
+            
+            const toggleBtn = document.getElementById('seriesToggle');
+            const seriesPanel = document.getElementById('seriesPanel');
+            
+            toggleBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+            toggleBtn.classList.remove('active');
+            seriesPanel.classList.remove('active');
+            document.getElementById('seriesCashout').disabled = true;
+            
+            updateSeriesDisplay();
+        }
+
+        function processSeriesResult(isWin) {
+            if (!isSeriesActive) return;
+            
+            seriesResults.push(isWin);
+            
+            if (isWin) {
+                // Увеличиваем счетчик серии и множитель
+                seriesCount++;
+                
+                // Увеличиваем множитель на рандомное значение от 0.1 до 0.3
+                const multiplierIncrease = 0.1 + (Math.random() * 0.2);
+                seriesMultiplier += multiplierIncrease;
+                
+                // Пересчитываем выигрыш
+                seriesWinAmount = baseBetAmount * seriesMultiplier;
+                
+                updateSeriesDisplay();
+                
+                // Проверяем максимальную длину серии (20)
+                if (seriesCount >= 20) {
+                    processSeriesWin();
+                    showToast('win', 'Максимальная серия!', `Достигнута максимальная серия из 20 побед!`);
+                    resetSeries();
+                    return;
+                }
+                
+                // Шанс 15% что серия прервется после победы
+                if (Math.random() < 0.15 && seriesCount > 3) {
+                    processSeriesWin();
+                    showToast('info', 'Серия завершена', `Серия прервана после ${seriesCount} побед`);
+                    resetSeries();
+                }
+            } else {
+                // Проигрыш - серия прерывается
+                if (seriesCount > 0) {
+                    showToast('error', 'Серия прервана', `Проигрыш после ${seriesCount} побед`);
+                }
+                resetSeries();
+            }
+        }
+
+        async function processSeriesWin() {
+            if (seriesWinAmount <= 0) return;
+            
+            try {
+                // Отправляем запрос на сервер для обработки выигрыша серии
+                const response = await fetch('/api/coin/series-win', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        winAmount: seriesWinAmount,
+                        seriesLength: seriesCount,
+                        demoMode: isDemoMode
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        // Обновляем баланс
+                        document.getElementById('balance').textContent = result.new_balance.toFixed(2);
+                    }
+                }
+            } catch (error) {
+                console.error('Series win processing error:', error);
+            }
         }
 
         async function flipCoin() {
@@ -221,6 +391,11 @@
                     setTimeout(() => {
                         coin.classList.remove('flipping');
                         
+                        // Обрабатываем результат для серии
+                        if (isSeriesActive) {
+                            processSeriesResult(result.win);
+                        }
+                        
                         // Показываем результат
                         if (result.win) {
                             showWinNotification(result.win_amount, result.result);
@@ -231,11 +406,13 @@
                         // Обновляем баланс
                         document.getElementById('balance').textContent = result.new_balance.toFixed(2);
                         
-                        // Сбрасываем выбор
-                        selectedChoice = null;
-                        document.querySelectorAll('.choice-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
+                        // Сбрасываем выбор (только если не в серии)
+                        if (!isSeriesActive) {
+                            selectedChoice = null;
+                            document.querySelectorAll('.choice-btn').forEach(btn => {
+                                btn.classList.remove('active');
+                            });
+                        }
                         
                         isFlipping = false;
                         document.getElementById('flipButton').classList.remove('loading');
@@ -265,7 +442,8 @@
             const icons = {
                 success: 'bi bi-check-circle-fill',
                 error: 'bi bi-x-circle-fill',
-                win: 'bi bi-trophy-fill'
+                win: 'bi bi-trophy-fill',
+                info: 'bi bi-info-circle-fill'
             };
             
             toast.innerHTML = `

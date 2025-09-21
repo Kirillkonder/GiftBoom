@@ -1349,7 +1349,57 @@ app.post('/api/coin/flip', async (req, res) => {
     }
 });
 
+app.post('/api/coin/series-win', async (req, res) => {
+    const { telegramId, winAmount, seriesLength, demoMode } = req.body;
 
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Начисляем выигрыш
+        if (demoMode) {
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance + winAmount
+            });
+            updateCasinoDemoBank(-winAmount);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance + winAmount
+            });
+            updateCasinoBank(-winAmount);
+            updateRTPStats('realBank', 0, winAmount);
+        }
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            user_id: user.$loki,
+            amount: winAmount,
+            type: 'coin_series_win',
+            status: 'completed',
+            demo_mode: demoMode,
+            details: {
+                series_length: seriesLength,
+                win_amount: winAmount,
+                multiplier: (winAmount / (currentBetAmount || 0.1)).toFixed(2)
+            },
+            created_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            new_balance: demoMode ? user.demo_balance + winAmount : user.main_balance + winAmount
+        });
+
+    } catch (error) {
+        console.error('Coin series win error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 // Запуск сервера
 async function startServer() {

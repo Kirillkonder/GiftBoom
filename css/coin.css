@@ -575,3 +575,89 @@
         .toast-close:hover {
             color: #fff;
         }
+
+        .series-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 12px;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.series-panel.active {
+    opacity: 1;
+    background: rgba(255, 215, 0, 0.2);
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.series-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.series-label {
+    font-size: 12px;
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.series-count {
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.series-multiplier {
+    font-size: 14px;
+    color: #00c851;
+    font-weight: bold;
+}
+
+.series-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.series-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.series-btn.active {
+    background: #ffd700;
+    color: #000;
+    transform: scale(1.1);
+}
+
+.series-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.series-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cashout-btn {
+    background: rgba(0, 200, 81, 0.2);
+}
+
+.cashout-btn:not(:disabled):hover {
+    background: rgba(0, 200, 81, 0.3);
+}
