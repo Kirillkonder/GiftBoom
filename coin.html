@@ -110,6 +110,12 @@
             font-weight: bold;
         }
 
+        .user-demo-balance {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
         /* Title */
         .title {
             text-align: center;
@@ -660,10 +666,19 @@
                     const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
                     
                     document.getElementById('balance').textContent = balance.toFixed(2);
-                    document.getElementById('user-balance').textContent = balance.toFixed(2);
                     
                     isDemoMode = userData.demo_mode;
                     document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                    
+                    // ПОКАЗЫВАЕМ ОБА БАЛАНСА ДЛЯ АДМИНОВ
+                    if (currentUser && (currentUser.is_admin || currentUser.id === 123456789)) {
+                        document.getElementById('user-balance').innerHTML = `
+                            ${userData.main_balance.toFixed(2)} TON
+                            ${isDemoMode ? `<br><small style="font-size: 10px; opacity: 0.7;">Демо: ${userData.demo_balance.toFixed(2)} TON</small>` : ''}
+                        `;
+                    } else {
+                        document.getElementById('user-balance').textContent = balance.toFixed(2);
+                    }
                     
                     updateDemoToggleText();
                 }
@@ -779,7 +794,20 @@
                     
                     // Update balance
                     document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-                    document.getElementById('user-balance').textContent = result.new_balance.toFixed(2);
+                    
+                    // Обновляем отображение баланса для администраторов
+                    if (currentUser && (currentUser.is_admin || currentUser.id === 123456789)) {
+                        const userResponse = await fetch(`/api/user/balance/${currentUser.id}`);
+                        if (userResponse.ok) {
+                            const userData = await userResponse.json();
+                            document.getElementById('user-balance').innerHTML = `
+                                ${userData.main_balance.toFixed(2)} TON
+                                ${isDemoMode ? `<br><small style="font-size: 10px; opacity: 0.7;">Демо: ${userData.demo_balance.toFixed(2)} TON</small>` : ''}
+                            `;
+                        }
+                    } else {
+                        document.getElementById('user-balance').textContent = result.new_balance.toFixed(2);
+                    }
                     
                     // Show result
                     if (result.won) {
