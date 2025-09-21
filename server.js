@@ -1349,60 +1349,16 @@ app.post('/api/coin/flip', async (req, res) => {
     }
 });
 
-// Крон задача для проверки инвойсов каждую минуту
-cron.schedule('* * * * *', async () => {
-    try {
-        const pendingTransactions = transactions.find({
-            status: 'pending',
-            type: 'deposit'
-        });
 
-        for (const transaction of pendingTransactions) {
-            const invoice = await cryptoPayRequest('getInvoices', { 
-                invoice_ids: transaction.invoice_id
-            }, transaction.demo_mode);
-
-            if (invoice.ok && invoice.result.items.length > 0) {
-                const invoiceData = invoice.result.items[0];
-                
-                if (invoiceData.status === 'paid') {
-                    const user = users.get(transaction.user_id);
-                    
-  if (transaction.demo_mode) {
-    users.update({
-        ...user,
-        demo_balance: user.demo_balance + transaction.amount,
-        total_deposits: (user.total_deposits || 0) + transaction.amount
-    });
-    // Депозит не влияет на банк казино - это пополнение баланса пользователя
-} else {
-    users.update({
-        ...user,
-        main_balance: user.main_balance + transaction.amount,
-        total_deposits: (user.total_deposits || 0) + transaction.amount
-    });
-    // Депозит не влияет на банк казино - это пополнение баланса пользователя
-    // updateCasinoB    ank(transaction.amount); ← ЭТУ СТРОКУ НУЖНО УБРАТЬ!
-}
-
-                    transactions.update({
-                        ...transaction,
-                        status: 'completed',
-                        updated_at: new Date()
-                    });
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Cron job error:', error);
-    }
-});
 
 // Запуск сервера
 async function startServer() {
     await initDatabase();
     const balanceRoutes = require('./balanceRoutes')(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats);
     app.use('/api', balanceRoutes);
+
+    const cryptoBotRoutes = require('./cryptoBotRoutes')(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats);
+    app.use('/api/crypto', cryptoBotRoutes);
 
     const adminRoutes = require('./adminRoutes')(db, users, transactions, casinoBank, casinoDemoBank, adminLogs, minesGames, rocketGames, rocketBets, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, syncCasinoBalance);
     app.use('/api', adminRoutes);
