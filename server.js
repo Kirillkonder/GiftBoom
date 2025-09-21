@@ -1482,7 +1482,7 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
         }
 
         // Проверяем, что это админ (только эти два ID могут использовать демо режим)
-        if (parseInt(telegramId) !== 842428912 && parseInt(telegramId) !== 1508176983) {
+        if (parseInt(telegramId) !== 842428912 && parseInt(telegramId) !== 1135073023) {
             return res.status(403).json({ error: 'Demo mode not available' });
         }
 
