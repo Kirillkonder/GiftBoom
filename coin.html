@@ -23,7 +23,9 @@
                         <i class="bi bi-plus"></i>
                     </button>
                 </div>
-                <div id="demo-badge">DEMO</div>
+                <div id="demo-badge" style="display: none; background: #ff9500; color: black; padding: 2px 6px; border-radius: 8px; font-size: 10px;">
+                    DEMO
+                </div>
             </div>
         </div>
 
@@ -67,6 +69,9 @@
                 <span class="close" onclick="closeDepositModal()">&times;</span>
             </div>
             <div class="modal-body">
+                <div class="deposit-info">
+                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
+                </div>
                 <div class="input-group">
                     <label for="deposit-amount">Сумма (TON):</label>
                     <input type="number" id="deposit-amount" placeholder="Введите сумму" min="3" step="0.01">
@@ -99,7 +104,9 @@
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 currentUser = {
                     id: tg.initDataUnsafe.user.id,
-                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
+                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`,
+                    firstName: tg.initDataUnsafe.user.first_name,
+                    lastName: tg.initDataUnsafe.user.last_name
                 };
                 loadUserData();
             }
@@ -114,6 +121,12 @@
                     document.getElementById('balance').textContent = balance.toFixed(2);
                     isDemoMode = userData.demo_mode;
                     document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                    
+                    // Обновляем информацию о режиме пополнения
+                    const depositModeInfo = document.getElementById('deposit-mode-info');
+                    depositModeInfo.textContent = isDemoMode ? 
+                        'Демо-пополнение (баланс обновится автоматически)' : 
+                        'Пополнение через Crypto Pay';
                 }
             } catch (error) {
                 console.error('Error loading user data:', error);
@@ -253,11 +266,13 @@
             const icons = {
                 success: 'bi bi-check-circle-fill',
                 error: 'bi bi-x-circle-fill',
+                warning: 'bi bi-exclamation-triangle-fill',
+                info: 'bi bi-info-circle-fill',
                 win: 'bi bi-trophy-fill'
             };
             
             toast.innerHTML = `
-                <i class="toast-icon ${icons[type] || 'bi bi-info-circle-fill'}"></i>
+                <i class="toast-icon ${icons[type] || icons.info}"></i>
                 <div class="toast-content">
                     <div class="toast-title">${title}</div>
                     <div class="toast-message">${message}</div>
@@ -279,7 +294,12 @@
         function hideToast(toast) {
             toast.classList.remove('show');
             toast.classList.add('hide');
-            setTimeout(() => toast.remove(), 300);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
         }
 
         function showWinNotification(amount, result) {
@@ -296,7 +316,7 @@
             showToast('error', 'Ошибка', message);
         }
 
-        // Функции пополнения баланса
+        // Функции пополнения баланса (как в ракетке)
         function openDepositModal() {
             document.getElementById('deposit-modal').style.display = 'block';
         }
@@ -329,16 +349,38 @@
                 
                 if (result.success) {
                     if (isDemoMode) {
+                        // Для демо-режима сразу обновляем баланс
                         await loadUserData();
-                        alert(`Демо-депозит ${amount} TON зачислен!`);
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "✅ Демо-пополнение",
+                                message: `Демо-депозит ${amount} TON успешно зачислен!`,
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert(`Демо-депозит ${amount} TON успешно зачислен!`);
+                        }
                     } else {
+                        // Для реального режима открываем инвойс
                         window.open(result.invoice_url, '_blank');
-                        alert('Откройте Crypto Bot для оплаты');
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "Оплата TON",
+                                message: `Откройте Crypto Bot для оплаты ${amount} TON`,
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert(`Откройте Crypto Bot для оплаты ${amount} TON`);
+                        }
                         checkDepositStatus(result.invoice_id);
                     }
+                    
                     closeDepositModal();
+                } else {
+                    alert('Ошибка при создании депозита: ' + result.error);
                 }
             } catch (error) {
+                console.error('Deposit error:', error);
                 alert('Ошибка при создании депозита');
             }
         }
@@ -359,8 +401,27 @@
                     
                     if (result.status === 'paid') {
                         clearInterval(checkInterval);
-                        alert('Депозит зачислен!');
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "✅ Успешно",
+                                message: 'Депозит успешно зачислен!',
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert('Депозит успешно зачислен!');
+                        }
                         await loadUserData();
+                    } else if (result.status === 'expired' || result.status === 'cancelled') {
+                        clearInterval(checkInterval);
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "❌ Ошибка",
+                                message: 'Платеж отменен или просрочен',
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert('Платеж отменен или просрочен');
+                        }
                     }
                 } catch (error) {
                     console.error('Status check error:', error);
