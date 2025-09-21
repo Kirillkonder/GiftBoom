@@ -1,11 +1,693 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Coin Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .game-container {
+            max-width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: transparent;
+            position: relative;
+        }
+
+        /* Верхняя панель */
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            position: relative;
+            z-index: 10;
+        }
+
+        .close-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #fff;
+            font-weight: 500;
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .close-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .balance {
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .balance-plus-btn {
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: #000;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+        }
+
+        .balance-plus-btn:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .balance-plus-btn:active {
+            transform: scale(0.95);
+        }
+
+        .balance i {
+            font-size: 12px;
+        }
+
+        #demo-badge {
+            display: none;
+            background: #ff9500;
+            color: black;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            margin: 15% auto;
+            padding: 0;
+            border: 1px solid #333;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            border-radius: 15px 15px 0 0;
+            color: #000;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .close {
+            color: #000;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .deposit-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00c851;
+            box-shadow: 0 0 0 2px rgba(0, 200, 81, 0.2);
+        }
+
+        .input-group input::placeholder {
+            color: #666;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+        }
+
+        .deposit-btn {
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            color: #000;
+        }
+
+        .deposit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
+        }
+
+        .deposit-btn:active {
+            transform: translateY(0);
+        }
+
+        .balance-updated {
+            animation: balancePulse 0.5s ease-in-out;
+        }
+
+        @keyframes balancePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background: linear-gradient(135deg, #00ff00, #32cd32); }
+            100% { transform: scale(1); }
+        }
+
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+
+        .toast {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-success .toast-icon {
+            color: #00c851;
+        }
+
+        .toast-error .toast-icon {
+            color: #ff4757;
+        }
+
+        .toast-warning .toast-icon {
+            color: #ff9500;
+        }
+
+        .toast-info .toast-icon {
+            color: #00bfff;
+        }
+
+        .toast-win .toast-icon {
+            color: #ffd700;
+        }
+
+        .toast-content {
+            flex-grow: 1;
+        }
+
+        .toast-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.3;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .toast-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    не работает нахуй
+    <div class="game-container">
+        <!-- Верхняя панель -->
+        <div class="top-panel">
+            <div class="close-btn" onclick="goBack()">
+                <span>Назад</span>
+            </div>
+            <div class="top-right">
+                <div class="balance">
+                    <i class="bi bi-currency-exchange"></i>
+                    <span id="balance">0.00</span>
+                    <button class="balance-plus-btn" onclick="openDepositModal()">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                <div id="demo-badge">DEMO</div>
+            </div>
+        </div>
+
+        <!-- Контент игры Coin -->
+        <div style="padding: 20px; text-align: center;">
+            <h2>Coin Game</h2>
+            <p style="color: #ccc; margin-top: 10px;">Игра в разработке</p>
+        </div>
+    </div>
+
+    <!-- Модальное окно пополнения баланса -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Пополнить баланс</h3>
+                <span class="close" onclick="closeDepositModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="deposit-info">
+                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
+                </div>
+                <div class="input-group">
+                    <label for="deposit-amount">Сумма (TON):</label>
+                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
+                </div>
+                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        let currentUser = null;
+        let isDemoMode = false;
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGame();
+        });
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        function initializeGame() {
+            const tg = window.Telegram.WebApp;
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                currentUser = {
+                    id: tg.initDataUnsafe.user.id,
+                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`,
+                    firstName: tg.initDataUnsafe.user.first_name,
+                    lastName: tg.initDataUnsafe.user.last_name
+                };
+                loadUserData();
+            }
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await fetch(`/api/user/balance/${currentUser.id}`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    isDemoMode = userData.demo_mode;
+                    document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        async function updateUserBalance(winAmount = 0) {
+            try {
+                const response = await fetch(`/api/user/balance/${currentUser.id}`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    
+                    // Если есть выигрыш, показываем обновление
+                    if (winAmount > 0) {
+                        const balanceElement = document.getElementById('balance');
+                        balanceElement.classList.add('balance-updated');
+                        setTimeout(() => {
+                            balanceElement.classList.remove('balance-updated');
+                        }, 1000);
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating balance:', error);
+            }
+        }
+
+        // Функции для пополнения баланса
+        function openDepositModal() {
+            document.getElementById('deposit-modal').style.display = 'block';
+        }
+
+        function closeDepositModal() {
+            document.getElementById('deposit-modal').style.display = 'none';
+            document.getElementById('deposit-amount').value = '';
+        }
+
+        async function processDeposit() {
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            
+            if (!amount || amount < 1) {
+                alert('Минимальный депозит: 1 TON');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/create-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        amount: amount,
+                        demoMode: isDemoMode
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (isDemoMode) {
+                        // Для демо-режима сразу обновляем баланс
+                        await loadUserData();
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "✅ Демо-пополнение",
+                                message: `Демо-депозит ${amount} TON успешно зачислен!`,
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert(`Демо-депозит ${amount} TON успешно зачислен!`);
+                        }
+                    } else {
+                        // Для реального режима открываем инвойс
+                        window.open(result.invoice_url, '_blank');
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "Оплата TON",
+                                message: `Откройте Crypto Bot для оплаты ${amount} TON`,
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert(`Откройте Crypto Bot для оплаты ${amount} TON`);
+                        }
+                        checkDepositStatus(result.invoice_id);
+                    }
+                    
+                    closeDepositModal();
+                } else {
+                    alert('Ошибка при создании депозита: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Deposit error:', error);
+                alert('Ошибка при создании депозита');
+            }
+        }
+
+        async function checkDepositStatus(invoiceId) {
+            const checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/check-invoice', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            invoiceId: invoiceId,
+                            demoMode: isDemoMode
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'paid') {
+                        clearInterval(checkInterval);
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "✅ Успешно",
+                                message: 'Депозит успешно зачислен!',
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert('Депозит успешно зачислен!');
+                        }
+                        await loadUserData();
+                    } else if (result.status === 'expired' || result.status === 'cancelled') {
+                        clearInterval(checkInterval);
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "❌ Ошибка",
+                                message: 'Платеж отменен или просрочен',
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert('Платеж отменен или просрочен');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Status check error:', error);
+                }
+            }, 5000);
+        }
+
+        // Обработчик клика вне модального окна
+        window.onclick = function(event) {
+            const depositModal = document.getElementById('deposit-modal');
+            if (event.target === depositModal) {
+                closeDepositModal();
+            }
+        }
+
+        // Toast уведомления
+        function showToast(type, title, message, duration = 3000) {
+            const toastContainer = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icons = {
+                success: 'bi bi-check-circle-fill',
+                error: 'bi bi-x-circle-fill',
+                warning: 'bi bi-exclamation-triangle-fill',
+                info: 'bi bi-info-circle-fill',
+                win: 'bi bi-trophy-fill'
+            };
+            
+            toast.innerHTML = `
+                <i class="toast-icon ${icons[type] || icons.info}"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Анимация появления
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Автоматическое закрытие
+            if (duration > 0) {
+                setTimeout(() => {
+                    hideToast(toast);
+                }, duration);
+            }
+            
+            return toast;
+        }
+
+        function hideToast(toast) {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+
+        function showError(message) {
+            showToast('error', 'Ошибка', message);
+        }
+
+        function showSuccess(message) {
+            showToast('success', 'Успешно', message);
+        }
+    </script>
 </body>
 </html>
