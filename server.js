@@ -921,7 +921,7 @@ app.post('/api/admin/login', async (req, res) => {
     // Список разрешенных администраторов
     const allowedAdmins = [
         parseInt(process.env.OWNER_TELEGRAM_ID), 
-        1135073023 // второй администратор
+        1508176983// второй администратор
     ];
     
     const isAdmin = allowedAdmins.includes(parseInt(telegramId)) && 
@@ -942,7 +942,7 @@ app.get('/api/admin/dashboard/:telegramId', async (req, res) => {
     // Разрешаем доступ обоим администраторам
     const allowedAdmins = [
         parseInt(process.env.OWNER_TELEGRAM_ID), 
-        1135073023 // второй администратор
+        1508176983 // второй администратор
     ];
     
     if (!allowedAdmins.includes(telegramId)) {
@@ -1020,7 +1020,7 @@ app.post('/api/admin/add-demo-balance', async (req, res) => {
     // Разрешаем доступ обоим администраторам
     const allowedAdmins = [
         parseInt(process.env.OWNER_TELEGRAM_ID), 
-        1135073023
+        1508176983
     ];
     
     if (!allowedAdmins.includes(parseInt(telegramId))) {
@@ -1153,7 +1153,7 @@ app.post('/api/admin/sync-balance', async (req, res) => {
     // Разрешаем доступ обоим администраторам
     const allowedAdmins = [
         parseInt(process.env.OWNER_TELEGRAM_ID), 
-        1135073023
+        1508176983
     ];
     
     if (!allowedAdmins.includes(parseInt(telegramId))) {
@@ -1431,7 +1431,7 @@ app.get('/api/transactions/:telegramId', async (req, res) => {
 app.get('/api/user/balance/:telegramId', async (req, res) => {
     const telegramId = parseInt(req.params.telegramId);
     // Только эти два пользователя могут использовать демо режим
-    const isAdminUser = telegramId === 842428912 || telegramId === 1135073023;
+    const isAdminUser = telegramId === 842428912 || telegramId === 1508176983;
 
     try {
         const user = users.findOne({ telegram_id: telegramId });
@@ -1445,7 +1445,7 @@ app.get('/api/user/balance/:telegramId', async (req, res) => {
                 total_deposits: 0, // Новое поле
                 created_at: new Date(),
                 demo_mode: false,
-                is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
+                is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1508176983
             });
             
             res.json({
@@ -1482,7 +1482,7 @@ app.post('/api/user/toggle-demo-mode', async (req, res) => {
         }
 
         // Проверяем, что это админ (только эти два ID могут использовать демо режим)
-        if (parseInt(telegramId) !== 842428912 && parseInt(telegramId) !== 1135073023) {
+        if (parseInt(telegramId) !== 842428912 && parseInt(telegramId) !== 1508176983) {
             return res.status(403).json({ error: 'Demo mode not available' });
         }
 
@@ -1852,7 +1852,7 @@ cron.schedule('* * * * *', async () => {
         });
 
         for (const transaction of pendingTransactions) {
-            const invoice = await cryptoPayRequest('getInvoices', {
+            const invoice = await cryptoPayRequest('getInvoices', { 
                 invoice_ids: transaction.invoice_id
             }, transaction.demo_mode);
 
