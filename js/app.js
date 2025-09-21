@@ -52,7 +52,7 @@ class TonCasinoApp {
         const response = await fetch(`/api/user/balance/${this.tg.initDataUnsafe.user.id}`);
         this.userData = await response.json();
         this.demoMode = this.userData.demo_mode;
-        this.isAdminUser = this.tg.initDataUnsafe.user.id === 842428912 || this.tg.initDataUnsafe.user.id === 1508176983;
+        this.isAdminUser = this.tg.initDataUnsafe.user.id === 842428912 || this.tg.initDataUnsafe.user.id === 1135073023;
         this.updateUI();
     } catch (error) {
         console.error('Error loading user data:', error);
