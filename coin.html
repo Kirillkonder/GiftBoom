@@ -303,6 +303,7 @@
 
         function closeDepositModal() {
             document.getElementById('deposit-modal').style.display = 'none';
+            document.getElementById('deposit-amount').value = '';
         }
 
         async function processDeposit() {
@@ -365,6 +366,14 @@
                     console.error('Status check error:', error);
                 }
             }, 5000);
+        }
+
+        // Обработчик клика вне модального окна
+        window.onclick = function(event) {
+            const depositModal = document.getElementById('deposit-modal');
+            if (event.target === depositModal) {
+                closeDepositModal();
+            }
         }
     </script>
 </body>
