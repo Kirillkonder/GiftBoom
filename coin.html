@@ -328,7 +328,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+      <div class="container">
         <div class="header">
             <button class="close-btn" onclick="goBack()">✕ Закрыть</button>
             <div class="logo">COINFLIP</div>
@@ -458,20 +458,29 @@
                 if (response.ok) {
                     const userData = await response.json();
                     
-                    // Обновляем балансы
-                    document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
-                    
-                    // Для админов показываем демо баланс
-                    if (userData.is_admin) {
+                    // Обновляем балансы в зависимости от режима
+                    if (userData.demo_mode) {
+                        // Демо режим - показываем демо баланс
                         document.getElementById('demoBalance').textContent = userData.demo_balance.toFixed(2);
                         document.getElementById('demoBalance').style.display = 'block';
-                        isAdmin = true;
+                        document.getElementById('mainBalance').style.display = 'none';
                     } else {
+                        // Режим реальных денег - показываем основной баланс
+                        document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
+                        document.getElementById('mainBalance').style.display = 'block';
                         document.getElementById('demoBalance').style.display = 'none';
-                        isAdmin = false;
+                    }
+                    
+                    // Для админов всегда показываем оба баланса
+                    if (userData.is_admin) {
+                        document.getElementById('demoBalance').textContent = userData.demo_balance.toFixed(2);
+                        document.getElementById('mainBalance').textContent = userData.main_balance.toFixed(2);
+                        document.getElementById('demoBalance').style.display = 'block';
+                        document.getElementById('mainBalance').style.display = 'block';
                     }
                     
                     isDemoMode = userData.demo_mode;
+                    isAdmin = userData.is_admin;
                 }
             } catch (error) {
                 console.error('Ошибка загрузки данных пользователя:', error);
