@@ -1841,7 +1841,98 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
+// Coin Game Functions
+app.post('/api/coin/flip', async (req, res) => {
+    const { telegramId, betAmount, choice, demoMode } = req.body;
 
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const balance = demoMode ? user.demo_balance : user.main_balance;
+        
+        if (balance < betAmount) {
+            return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+
+        // Проверяем валидность выбора
+        if (!['heads', 'tails'].includes(choice)) {
+            return res.status(400).json({ error: 'Invalid choice' });
+        }
+
+        // Списываем ставку
+        if (demoMode) {
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance - betAmount
+            });
+            updateCasinoDemoBank(betAmount);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance - betAmount
+            });
+            updateCasinoBank(betAmount);
+            updateRTPStats('realBank', betAmount, 0);
+        }
+
+        // Генерируем результат (50/50)
+        const result = Math.random() < 0.5 ? 'heads' : 'tails';
+        const win = result === choice;
+        const winAmount = win ? betAmount * 1.95 : 0; // 1.95x для RTP ~97.5%
+
+        // Начисляем выигрыш если победил
+        if (win) {
+            if (demoMode) {
+                users.update({
+                    ...user,
+                    demo_balance: user.demo_balance + winAmount
+                });
+                updateCasinoDemoBank(-winAmount);
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: user.main_balance + winAmount
+                });
+                updateCasinoBank(-winAmount);
+                updateRTPStats('realBank', 0, winAmount);
+            }
+        }
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            user_id: user.$loki,
+            amount: win ? winAmount : -betAmount,
+            type: win ? 'coin_win' : 'coin_loss',
+            status: 'completed',
+            demo_mode: demoMode,
+            details: {
+                choice: choice,
+                result: result,
+                bet_amount: betAmount,
+                win_amount: winAmount
+            },
+            created_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            result: result,
+            win: win,
+            win_amount: winAmount,
+            new_balance: demoMode ? 
+                (win ? user.demo_balance + winAmount : user.demo_balance - betAmount) :
+                (win ? user.main_balance + winAmount : user.main_balance - betAmount)
+        });
+
+    } catch (error) {
+        console.error('Coin flip error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 // Крон задача для проверки инвойсов каждую минуту
 cron.schedule('* * * * *', async () => {
