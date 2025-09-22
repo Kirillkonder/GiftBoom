@@ -188,8 +188,6 @@ body {
     margin-right: calc(-50vw + 50%);
     margin-bottom: 10px;
     background: transparent;
-    /* Обрезаем только нижнюю часть, оставляя верхнюю открытой для ракеты */
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
 /* Коэффициенты */
@@ -794,13 +792,15 @@ body {
         transform: translate(-50%, -500%) rotate(-45deg) scale(0.8);
         opacity: 0.4;
     }
-    100% { 
-        transform: translate(-50%, -1200%) rotate(-45deg) scale(0.1);
+      100% { 
+        transform: translate(-50%, -2000%) rotate(-45deg) scale(0.1);
         opacity: 0;
     }
 }
 
 .rocket.fly-away {
+    z-index: 9999 !important;
+    position: fixed !important;
     animation: rocketFlyAway 4s ease-out forwards;
 }
 
