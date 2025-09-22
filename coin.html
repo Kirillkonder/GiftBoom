@@ -219,43 +219,85 @@
         }
 
         // Функции для серийной игры
-        function toggleSeries() {
-            if (seriesBetLocked) return;
-            
-            isSeriesActive = !isSeriesActive;
-            
-            const toggleBtn = document.getElementById('seriesToggle');
-            const seriesPanel = document.getElementById('seriesPanel');
-            
-            if (isSeriesActive) {
-                // Начинаем новую серию
-                seriesCount = 0;
-                seriesMultiplier = 1.00;
-                seriesWinAmount = 0;
-                seriesResults = [];
-                baseBetAmount = currentBetAmount;
-                seriesBetLocked = true;
-                seriesBetDeducted = false;
-                
-                // Блокируем кнопки изменения ставки
-                document.querySelectorAll('.bet-amount-btn').forEach(btn => {
-                    btn.disabled = true;
-                });
-                document.getElementById('betAmount').disabled = true;
-                
-                toggleBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-                toggleBtn.classList.add('active');
-                seriesPanel.classList.add('active');
-                document.getElementById('seriesCashout').disabled = false;
-                
-                updateSeriesDisplay();
-                showToast('info', 'Серия начата', 'Ставка заблокирована. Удачи!');
-            } else {
-                // Останавливаем серию
-                resetSeries();
-                showToast('info', 'Серия остановлена', 'Серийная игра деактивирована');
-            }
+        // Функции для серийной игры
+function toggleSeries() {
+    if (seriesBetLocked) return;
+    
+    isSeriesActive = !isSeriesActive;
+    
+    const toggleBtn = document.getElementById('seriesToggle');
+    const seriesPanel = document.getElementById('seriesPanel');
+    
+    if (isSeriesActive) {
+        // Начинаем новую серию
+        seriesCount = 0;
+        seriesMultiplier = 1.92; // Начинаем с 1.92 вместо 1.00
+        seriesWinAmount = 0;
+        seriesResults = [];
+        baseBetAmount = currentBetAmount;
+        seriesBetLocked = true;
+        seriesBetDeducted = false;
+        
+        // Блокируем кнопки изменения ставки
+        document.querySelectorAll('.bet-amount-btn').forEach(btn => {
+            btn.disabled = true;
+        });
+        document.getElementById('betAmount').disabled = true;
+        
+        toggleBtn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+        toggleBtn.classList.add('active');
+        seriesPanel.classList.add('active');
+        document.getElementById('seriesCashout').disabled = false;
+        
+        updateSeriesDisplay();
+        showToast('info', 'Серия начата', 'Ставка заблокирована. Удачи!');
+    } else {
+        // Останавливаем серию
+        resetSeries();
+        showToast('info', 'Серия остановлена', 'Серийная игра деактивирована');
+    }
+}
+
+function processSeriesResult(isWin) {
+    if (!isSeriesActive) return;
+    
+    seriesResults.push(isWin);
+    
+    if (isWin) {
+        // Увеличиваем счетчик серии
+        seriesCount++;
+        
+        // Умножаем множитель на 2 каждый раз (вместо случайного увеличения)
+        seriesMultiplier *= 2;
+        
+        // Пересчитываем выигрыш (базовая ставка * множитель)
+        seriesWinAmount = baseBetAmount * seriesMultiplier;
+        
+        updateSeriesDisplay();
+        
+        // Проверяем максимальную длину серии (20)
+        if (seriesCount >= 20) {
+            processSeriesWin();
+            showToast('win', 'Максимальная серия!', `Достигнута максимальная серия из 20 побед!`);
+            return;
         }
+        
+        // Шанс 15% что серия прервется после победы
+        if (Math.random() < 0.15 && seriesCount > 3) {
+            processSeriesWin();
+            showToast('info', 'Серия завершена', `Серия прервана после ${seriesCount} побед`);
+        }
+    } else {
+        // Проигрыш - серия прерывается, ставка теряется
+        if (seriesCount > 0) {
+            showToast('error', 'Серия прервана', `Проигрыш после ${seriesCount} побед. Ставка ${baseBetAmount} TON потеряна`);
+        } else {
+            showToast('error', 'Проигрыш', `Ставка ${baseBetAmount} TON потеряна`);
+        }
+        
+        resetSeries();
+    }
+}
 
         function cashoutSeries() {
             if (seriesCount === 0) {
