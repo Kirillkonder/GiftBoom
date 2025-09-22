@@ -656,11 +656,11 @@ body::after {
 }
 
 .cashout-btn {
-    background: linear-gradient(135deg, #00c851, #32cd32) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
 }
 
 .cashout-btn:disabled {
-    background: linear-gradient(135deg, #666, #888) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
     opacity: 0.6;
 }
 
@@ -690,12 +690,12 @@ body::after {
 }
 
 .history-win {
-    background: linear-gradient(135deg, #00c851, #32cd32) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
     border-color: #00b894 !important;
 }
 
 .history-loss {
-    background: linear-gradient(135deg, #ff4757, #ff6b81) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
     border-color: #ff4757 !important;
 }   
 
@@ -721,7 +721,7 @@ body::after {
 
 @keyframes balancePulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.1); background: linear-gradient(135deg, #00ff00, #32cd32); }
+    50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
 
