@@ -37,6 +37,27 @@ body {
     /* без анимации, чтобы не казалось, что линии “дублируются” */
 }
 
+.grid-background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(30, 92, 184, 0.1) 100%);
+    animation: glow-pulse 6s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
 
 /* Анимация пульсации сетки */
 @keyframes grid-pulse {
