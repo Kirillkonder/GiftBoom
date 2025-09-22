@@ -222,6 +222,12 @@ function validateBetAmount() {
 function toggleSeries() {
     if (seriesBetLocked && !isSeriesActive) return;
     
+    // ПРОВЕРКА БАЛАНСА ПЕРЕД НАЧАЛОМ СЕРИИ (ДОБАВЛЕНО)
+    if (!checkBalanceForBet(currentBetAmount)) {
+        showToast('error', 'Недостаточно средств', `Для начала серии нужно ${currentBetAmount} TON`);
+        return;
+    }
+    
     isSeriesActive = !isSeriesActive;
     
     const toggleBtn = document.getElementById('seriesToggle');
@@ -393,6 +399,21 @@ async function flipCoin() {
     const betAmount = isSeriesActive ? baseBetAmount : currentBetAmount;
     isFlipping = true;
     
+    // ПРОВЕРКА БАЛАНСА ПЕРЕД КАЖДЫМ БРОСКОМ (ДОБАВЛЕНО)
+    const currentBalance = parseFloat(document.getElementById('balance').textContent);
+    if (currentBalance < betAmount) {
+        showToast('error', 'Недостаточно средств', `Нужно: ${betAmount} TON, доступно: ${currentBalance.toFixed(2)} TON`);
+        
+        // Если это серия - останавливаем ее
+        if (isSeriesActive) {
+            resetSeries();
+            showToast('info', 'Серия остановлена', 'Недостаточно средств для продолжения');
+        }
+        
+        isFlipping = false;
+        return;
+    }
+    
     // Блокируем кнопки
     document.getElementById('flipButton').disabled = true;
     document.getElementById('flipButton').classList.add('loading');
@@ -426,6 +447,19 @@ async function flipCoin() {
 
         const result = await response.json();
         
+        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА ОТВЕТА СЕРВЕРА (ДОБАВЛЕНО)
+        if (result.error === 'Недостаточно средств') {
+            showToast('error', 'Недостаточно средств', 'На счету недостаточно TON для ставки');
+            
+            if (isSeriesActive) {
+                resetSeries();
+            }
+            
+            isFlipping = false;
+            document.getElementById('flipButton').classList.remove('loading');
+            return;
+        }
+        
         if (result.success) {
             // Анимация монетки
             const coin = document.getElementById('coin');
@@ -446,14 +480,21 @@ async function flipCoin() {
                     
                     // После обработки результата, если серия активна, разрешаем следующий бросок
                     if (isSeriesActive) {
-                        // Сбрасываем выбор для следующего броска в серии
-                        selectedChoice = null;
-                        document.querySelectorAll('.choice-btn').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
-                        
-                        // Активируем кнопку для следующего броска
-                        document.getElementById('flipButton').disabled = false;
+                        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА БАЛАНСА ДЛЯ СЛЕДУЮЩЕЙ СТАВКИ (ДОБАВЛЕНО)
+                        const updatedBalance = parseFloat(document.getElementById('balance').textContent);
+                        if (updatedBalance < baseBetAmount) {
+                            showToast('error', 'Недостаточно средств', 'Нельзя продолжить серию - недостаточно средств');
+                            resetSeries();
+                        } else {
+                            // Сбрасываем выбор для следующего броска в серии
+                            selectedChoice = null;
+                            document.querySelectorAll('.choice-btn').forEach(btn => {
+                                btn.classList.remove('active');
+                            });
+                            
+                            // Активируем кнопку для следующего броска
+                            document.getElementById('flipButton').disabled = false;
+                        }
                     }
                 } else {
                     // Показываем результат для одиночной игры
@@ -490,11 +531,21 @@ async function flipCoin() {
         isFlipping = false;
         document.getElementById('flipButton').classList.remove('loading');
         
-        // В случае ошибки разрешаем повторную попытку
+        // В случае ошибки разрешаем повторную попытку только если есть средства
         if (isSeriesActive) {
-            document.getElementById('flipButton').disabled = false;
+            const currentBalance = parseFloat(document.getElementById('balance').textContent);
+            if (currentBalance >= baseBetAmount) {
+                document.getElementById('flipButton').disabled = false;
+            } else {
+                resetSeries();
+            }
         }
     }
+}
+
+function checkBalanceForBet(betAmount) {
+    const currentBalance = parseFloat(document.getElementById('balance').textContent);
+    return currentBalance >= betAmount;
 }
 
 // Toast уведомления
