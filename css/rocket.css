@@ -20,31 +20,27 @@ body::before {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 0; /* выше фона body, ниже контента */
+    z-index: 0;
     pointer-events: none;
-    background-color: transparent; /* чёрный уже в body */
+    background-color: transparent;
     background-image:
-        linear-gradient(rgba(30, 92, 184, 0.22) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.22) 1px, transparent 1px);
+        linear-gradient(rgba(30, 92, 184, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.15) 1px, transparent 1px);
     background-size:
         80px 80px,
         80px 80px;
     background-position: 0 0, 0 0;
-    opacity: 0.55;
-    animation: grid-pulse 4s ease-in-out infinite;
-    will-change: transform, opacity;
+    opacity: 0.3;
 }
 
 body::after {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 0; /* синхронно с ::before */
+    z-index: 0;
     pointer-events: none;
-    background: radial-gradient(circle at center, transparent 0%, rgba(30, 92, 184, 0.18) 100%);
-    opacity: 0.5;
-    animation: glow-pulse 5s ease-in-out infinite;
-    will-change: transform, opacity;
+    background: transparent;
+    opacity: 1;
 }
 
 /* Фон с сеткой на всю страницу (безграничный) */
@@ -332,7 +328,7 @@ body::after {
 /* Список игроков */
 .players-list {
     padding: 0 16px 16px;
-    max-height: 260px;
+    max-height: calc(100vh - 200px);
     overflow-y: auto;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
@@ -499,6 +495,7 @@ body::after {
     
     .players-list {
         padding: 0 12px 12px;
+        max-height: calc(100vh - 180px);
         margin: 0 12px;
     }
 }
@@ -1223,7 +1220,23 @@ body::after {
     font-size: 14px;
 }
 
-/* Адаптация для мобильных */
+/* Адаптация для больших экранов */
+@media (min-width: 768px) {
+    .players-list {
+        max-height: calc(100vh - 250px);
+        padding: 0 24px 24px;
+        margin: 0 24px;
+    }
+}
+
+/* Адаптация для очень больших экранов */
+@media (min-width: 1200px) {
+    .players-list {
+        max-height: calc(100vh - 300px);
+        padding: 0 32px 32px;
+        margin: 0 32px;
+    }
+}
 @media (max-width: 390px) {
     .bet-controls {
         padding: 10px 12px;
