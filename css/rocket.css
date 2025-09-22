@@ -25,21 +25,18 @@ body {
     z-index: 0; /* не уходим в -1, чтобы не пропадал на некоторых устройствах */
     pointer-events: none; /* фон не мешает кликам */
 
-    /* Один базовый фон + 4 слоя сетки */
+    /* ОДНА сетка: без дублирования */
     background-color: transparent; /* чёрный уже в body */
     background-image:
-        linear-gradient(rgba(30, 92, 184, 0.2) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.2) 1px, transparent 1px),
-        linear-gradient(rgba(30, 92, 184, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.1) 1px, transparent 1px);
+        linear-gradient(rgba(30, 92, 184, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.18) 1px, transparent 1px);
     background-size:
         80px 80px,
-        80px 80px,
-        40px 40px,
-        40px 40px;
-
-    animation: grid-pulse 4s ease-in-out infinite;
+        80px 80px;
+    background-position: 0 0, 0 0;
+    /* без анимации, чтобы не казалось, что линии “дублируются” */
 }
+
 
 /* Анимация пульсации сетки */
 @keyframes grid-pulse {
