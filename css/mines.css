@@ -1,54 +1,44 @@
-body {
+* {
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #0f1419, #1a2332);
-    color: #ffffff;
+    box-sizing: border-box;
+}
+
+body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, #0a1525 0%, #1a2332 100%);
+    color: white;
+    min-height: 100vh;
     overflow-x: hidden;
 }
 
-.grid-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background: 
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 20px 20px;
-}
-
-.game-container {
-    max-width: 400px;
+.mines-app {
+    max-width: 375px;
     margin: 0 auto;
-    padding: 0;
     min-height: 100vh;
+    position: relative;
 }
 
-/* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+/* Верхняя панель */
 .top-panel {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    background: transparent;
-    position: relative;
-    z-index: 10;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
 }
 
 .close-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
+    gap: 4px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    color: #fff;
-    font-size: 18px;
+    padding: 6px 10px;
+    color: white;
+    font-size: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -57,116 +47,128 @@ body {
     background: rgba(255, 255, 255, 0.15);
 }
 
-.top-right {
+.top-center {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
-.balance {
-    background: linear-gradient(135deg, #1e3a5f, #2d5a87);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    padding: 8px 12px;
+.players-counter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #00c851;
+    color: white;
+    padding: 4px 8px;
     border-radius: 12px;
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    position: relative;
-}
-
-.balance i {
-    color: #4fc3f7;
-    font-size: 16px;
-}
-
-.balance-plus-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: #fff;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     font-size: 12px;
+    font-weight: 600;
+}
+
+.menu-dots {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 4px;
 }
 
-.balance-plus-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+.timer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
 }
 
-/* ===== КОНТЕНТ ИГРЫ ===== */
-.mines-content {
-    padding: 20px;
-    padding-top: 0;
+.sound-btn {
+    cursor: pointer;
 }
 
-.mines-content h1 {
+/* Заголовок */
+.game-header {
     text-align: center;
-    font-size: 28px;
+    padding: 20px 0;
+}
+
+.game-title {
+    font-size: 32px;
     font-weight: 800;
-    margin: 20px 0 30px 0;
     background: linear-gradient(135deg, #ff9500, #ffb347);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow: 0 0 20px rgba(255, 149, 0, 0.3);
+    letter-spacing: 2px;
 }
 
-/* ===== БАЛАНС И СЧЕТЧИК МИН ===== */
+/* Баланс */
+.balance-container {
+    display: flex;
+    justify-content: center;
+    padding: 0 20px 20px;
+}
+
 .balance-display {
-    background: linear-gradient(135deg, #1e3a5f, #2d5a87);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 15px 20px;
-    margin: 20px 0;
-    text-align: center;
-    position: relative;
-}
-
-.balance-amount {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
     display: flex;
     align-items: center;
-    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 8px 16px;
     gap: 8px;
 }
 
 .balance-icon {
-    color: #4fc3f7;
-    font-size: 20px;
+    font-size: 18px;
 }
 
-/* ===== СЕТКА МИН ===== */
+.balance-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+}
+
+.balance-plus {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.balance-plus:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Игровое поле */
+.game-field {
+    padding: 0 20px;
+    margin-bottom: 30px;
+}
+
 .mines-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 8px;
-    padding: 20px 0;
-    max-width: 350px;
+    max-width: 300px;
     margin: 0 auto;
 }
 
 .mine-cell {
     aspect-ratio: 1;
     background: linear-gradient(135deg, #26a69a, #4db6ac);
-    border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 20px;
-    color: #fff;
     position: relative;
+    overflow: hidden;
     box-shadow: 
         0 4px 8px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -184,27 +186,27 @@ body {
 }
 
 .mine-cell.revealed {
-    background: linear-gradient(135deg, #1e3a5f, #2d5a87);
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
     transform: scale(1);
     cursor: default;
 }
 
-.mine-cell.revealed:hover {
-    transform: scale(1);
-}
-
 .mine-cell.mine {
-    background: linear-gradient(135deg, #d32f2f, #f44336);
+    background: linear-gradient(135deg, #f44336, #ef5350);
     animation: explode 0.3s ease-out;
 }
 
-.mine-cell.gem {
-    background: linear-gradient(135deg, #26a69a, #4db6ac);
-    position: relative;
+.mine-cell.revealed::after {
+    content: '💎';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
 }
 
-.mine-cell.gem::after {
-    content: '💎';
+.mine-cell.mine::after {
+    content: '💣';
     position: absolute;
     top: 50%;
     left: 50%;
@@ -218,22 +220,69 @@ body {
     100% { transform: scale(1); }
 }
 
-/* ===== СЧЕТЧИК МИН ===== */
-.mines-counter {
+/* Контроль мин */
+.mines-control {
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     gap: 20px;
-    margin: 20px 0;
+    margin-bottom: 20px;
 }
 
-.mines-counter-btn {
+.control-btn {
     width: 40px;
     height: 40px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
-    color: #fff;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+.mines-display {
+    text-align: center;
+    min-width: 80px;
+}
+
+.mines-display span:first-child {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: #4fc3f7;
+}
+
+.mines-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Контроль ставок */
+.bet-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.bet-btn {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
     font-size: 20px;
     font-weight: 600;
     cursor: pointer;
@@ -243,152 +292,33 @@ body {
     justify-content: center;
 }
 
-.mines-counter-btn:hover {
+.bet-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     transform: scale(1.05);
 }
 
-.mines-counter-display {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
+.bet-display {
     text-align: center;
     min-width: 100px;
-}
-
-.mines-counter-display span {
-    font-size: 18px;
-    color: #4fc3f7;
-}
-
-/* ===== КОНТРОЛЫ СТАВКИ ===== */
-.bet-controls {
-    margin: 30px 0;
-}
-
-.bet-input {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 15px 20px;
-    color: #fff;
-    font-size: 16px;
-    text-align: center;
-    margin-bottom: 20px;
-    box-sizing: border-box;
-}
-
-.bet-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.bet-input:focus {
-    outline: none;
-    border-color: #4fc3f7;
-    box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
-}
-
-.start-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #ff9500, #ffb347);
-    border: none;
-    border-radius: 12px;
-    padding: 16px;
-    color: #000;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: 10px;
-}
-
-.start-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 149, 0, 0.4);
-}
-
-.start-btn:disabled {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* ===== ИНФОРМАЦИЯ ОБ ИГРЕ ===== */
-.game-info {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 15px;
-    margin: 20px 0;
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
+    padding: 12px 20px;
 }
 
-.game-info div {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.game-info span {
-    color: #4fc3f7;
-    font-weight: 600;
-}
-
-/* ===== КНОПКА ВЫВОДА ===== */
-.game-controls {
-    margin: 20px 0;
-}
-
-.cashout-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    border: none;
-    border-radius: 12px;
-    padding: 16px;
-    color: #000;
-    font-size: 16px;
+.bet-amount {
+    display: block;
+    font-size: 24px;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    color: white;
 }
 
-.cashout-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+.bet-currency {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
 }
 
-.cashout-btn:disabled {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* ===== СООБЩЕНИЯ ===== */
-.result-message {
-    text-align: center;
-    padding: 15px;
-    border-radius: 12px;
-    margin: 20px 0;
-    font-weight: 600;
-}
-
-.result-message.win {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: #000;
-}
-
-.result-message.lose {
-    background: linear-gradient(135deg, #f44336, #ef5350);
-    color: #fff;
-}
-
-/* ===== МОДАЛЬНЫЕ ОКНА ===== */
+/* Модальные окна */
 .modal {
     display: none;
     position: fixed;
@@ -509,7 +439,7 @@ body {
     box-shadow: 0 6px 20px rgba(79, 195, 247, 0.4);
 }
 
-/* ===== АНИМАЦИИ ===== */
+/* Анимации */
 @keyframes modalSlideIn {
     from {
         opacity: 0;
@@ -521,7 +451,7 @@ body {
     }
 }
 
-/* ===== ТОСТЫ ===== */
+/* Тосты */
 .toast-container {
     position: fixed;
     top: 20px;
@@ -558,45 +488,22 @@ body {
     }
 }
 
-/* ===== АДАПТИВНОСТЬ ===== */
+/* Адаптивность */
 @media (max-width: 480px) {
-    .game-container {
+    .mines-app {
         padding: 0 10px;
-    }
-    
-    .mines-content {
-        padding: 15px;
     }
     
     .mines-grid {
         gap: 6px;
-        max-width: 300px;
+        max-width: 280px;
     }
     
     .mine-cell {
         border-radius: 10px;
     }
     
-    .mines-content h1 {
-        font-size: 24px;
+    .game-title {
+        font-size: 28px;
     }
-}
-
-/* ===== ДОПОЛНИТЕЛЬНЫЕ КЛАССЫ ДЛЯ СОВМЕСТИМОСТИ ===== */
-.mines-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.players-counter {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
 }
