@@ -58,6 +58,7 @@ body {
     background: transparent; /* Полностью прозрачный фон */
     position: relative;
     z-index: 1;
+    padding-top: 60px; /* Отступ для фиксированной панели */
 }
 
 /* Верхняя панель */
@@ -70,11 +71,12 @@ body {
     padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
     background: rgba(0, 0, 0, 0.7); /* Полупрозрачный черный */
     backdrop-filter: blur(5px);
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     z-index: 10;
     width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
 }
 
 .close-btn {
