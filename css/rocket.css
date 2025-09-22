@@ -716,7 +716,7 @@ body::after {
 }
 
 .balance-updated {
-    animation: balancePulse 0.5s ease-in-out;
+    animation: balancePulse 1s ease-in-out;
 }
 
 @keyframes balancePulse {

@@ -189,8 +189,6 @@ window.onclick = function(event) {
     }
 }
 
-
-
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
@@ -205,14 +203,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const minesDecrease = document.getElementById('minesDecrease');
     const minesIncrease = document.getElementById('minesIncrease');
     const minesValue = document.getElementById('minesValue');
-    const minesSelect = document.getElementById('minesCount');
     
     const minesOptions = [3, 5, 7];
     let currentMinesIndex = 0;
     
     function updateMinesDisplay() {
         minesValue.textContent = minesOptions[currentMinesIndex];
-        minesSelect.value = minesOptions[currentMinesIndex];
     }
     
     minesDecrease.addEventListener('click', function() {
@@ -231,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateMinesDisplay();
 });
-
 
 function goBack() {
     window.location.href = 'index.html';
@@ -263,7 +258,7 @@ async function loadUserData() {
 
 async function startGame() {
     const betAmount = parseFloat(document.getElementById('betAmount').value);
-    const minesCount = parseInt(document.getElementById('minesCount').value);
+    const minesCount = parseInt(document.getElementById('minesValue').textContent);
     
     if (betAmount < 0.1 || betAmount > 10) {
         showToast('error', 'Ошибка', 'Ставка должна быть от 0.1 до 10 TON');
@@ -321,7 +316,6 @@ async function startGame() {
     }
 }
 
-
 function setupGameUI() {
     document.getElementById('gameInfo').style.display = 'flex';
     document.getElementById('cashoutBtn').disabled = false;
@@ -333,7 +327,7 @@ function setupGameUI() {
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
-        cell.style.backgroundImage = "url('../images/poin.png')";
+        cell.style.backgroundImage = "url('images/poin.png')";
     });
 }
 
@@ -345,6 +339,12 @@ function createGrid() {
         const cell = document.createElement('div');
         cell.className = 'mine-cell';
         cell.dataset.index = i;
+        
+        // Устанавливаем изображение poin.png как фон
+        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.style.backgroundSize = 'cover';
+        cell.style.backgroundPosition = 'center';
+        cell.style.backgroundRepeat = 'no-repeat';
         
         cell.addEventListener('click', () => {
             if (currentGame && !currentGame.gameOver) {
@@ -414,10 +414,12 @@ function updateCellUI(cellIndex, isMine) {
         cell.className = 'mine-cell mine';
         cell.style.borderColor = '#dc3545';
         cell.style.backgroundColor = 'rgba(220, 53, 69, 0.3)';
+        cell.innerHTML = '💣'; // Добавляем эмодзи мины
     } else {
         cell.className = 'mine-cell revealed';
         cell.style.borderColor = '#28a745';
         cell.style.backgroundColor = 'rgba(40, 167, 69, 0.3)';
+        cell.innerHTML = '💰'; // Добавляем эмодзи монеты
     }
     
     cell.style.pointerEvents = 'none';

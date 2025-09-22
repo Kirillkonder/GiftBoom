@@ -231,12 +231,7 @@
     font-size: 16px;
 }
 
-.mines-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-}
+
 
 .mine-cell {
     aspect-ratio: 1;
@@ -383,7 +378,7 @@
 
 .mine-cell {
     aspect-ratio: 1;
-    background: url('../images/poin.png') center/cover no-repeat;
+    background: url('poin.png') center/cover no-repeat;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -397,7 +392,6 @@
     position: relative;
     overflow: hidden;
 }
-
 .mine-cell:hover {
     transform: scale(1.05);
     border-color: #0056b3;
@@ -414,6 +408,8 @@
     border-color: #dc3545;
     background-color: rgba(220, 53, 69, 0.3);
 }
+
+
 
 .mine-cell.revealed::after {
     content: '💰';
@@ -432,4 +428,14 @@
     font-size: 20px;
     color: #fff;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.balance-updated {
+    animation: balancePulse 1s ease-in-out;
+}
+
+@keyframes balancePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
