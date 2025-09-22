@@ -39,43 +39,37 @@
         </div>
 
         <div class="mines-content">
-            <h1>💣 MINES</h1>
-            
-            <div class="bet-controls">
-                <div class="bet-input-container">
-                    <label>Ставка:</label>
-                    <input type="number" class="bet-input" id="betAmount" min="0.1" max="10" step="0.1" value="0.1" placeholder="0.1">
-                </div>
-                
-                <div class="mines-counter-container">
-                    <label>Количество мин:</label>
-                    <div class="mines-counter">
-                        <button class="mines-counter-btn" id="minesDecrease">-</button>
-                        <div class="mines-counter-display">
-                            <span id="minesValue">3</span>
-                        </div>
-                        <button class="mines-counter-btn" id="minesIncrease">+</button>
-                    </div>
-                </div>
-                
-                <button class="start-btn" id="startGame">Начать игру</button>
+    <h1>💣 Mines Game</h1>
+    
+    <div class="bet-controls">
+        <input type="number" class="bet-input" id="betAmount" min="0.1" max="10" step="0.1" value="0.1" placeholder="Ставка">
+        
+        <!-- Счетчик мин -->
+        <div class="mines-counter">
+            <button class="mines-counter-btn" id="minesDecrease">-</button>
+            <div class="mines-counter-display">
+                <span id="minesValue">3</span> мин
             </div>
-
-            <div class="game-info" id="gameInfo" style="display: none;">
-                <div>Множитель: <span id="multiplier">1x</span></div>
-                <div>Выигрыш: <span id="potentialWin">0</span> TON</div>
-            </div>
-
-            <!-- Игровое поле -->
-            <div class="mines-grid" id="minesGrid"></div>
-
-            <div class="game-controls">
-                <button class="cashout-btn" id="cashoutBtn" disabled>Забрать</button>
-            </div>
-
-            <div id="resultMessage" class="result-message" style="display: none;"></div>
+            <button class="mines-counter-btn" id="minesIncrease">+</button>
         </div>
+        
+        <button class="start-btn" id="startGame">Начать игру</button>
     </div>
+
+    <div class="game-info" id="gameInfo" style="display: none;">
+        <div>Множитель: <span id="multiplier">1x</span></div>
+        <div>Выигрыш: <span id="potentialWin">0</span> TON</div>
+    </div>
+
+    <!-- Поле с увеличенными ячейками -->
+    <div class="mines-grid" id="minesGrid"></div>
+
+    <div class="game-controls">
+        <button class="cashout-btn" id="cashoutBtn" disabled>Забрать</button>
+    </div>
+
+    <div id="resultMessage" class="result-message" style="display: none;"></div>
+</div>
 
     <!-- Модальное окно пополнения баланса как в Rocket -->
     <div id="deposit-modal" class="modal">

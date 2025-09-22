@@ -199,6 +199,12 @@ function resetGrid() {
         cell.className = 'mine-cell';
         cell.dataset.index = i;
         
+        // Ваше изображение будет фоном всей ячейки
+        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.style.backgroundSize = 'cover';
+        cell.style.backgroundPosition = 'center';
+        cell.style.border = 'none';
+        
         cell.addEventListener('click', () => {
             if (currentGame && !currentGame.gameOver) {
                 revealCell(i);
@@ -346,7 +352,10 @@ function setupGameUI() {
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
+        cell.style.backgroundImage = "url('images/poin.png')";
         cell.innerHTML = ''; // Очищаем эмодзи
+        cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
+        cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
     });
 }
 
@@ -406,9 +415,13 @@ function updateCellUI(cellIndex, isMine) {
     
     if (isMine) {
         cell.className = 'mine-cell mine';
+        cell.style.borderColor = '#dc3545';
+        cell.style.backgroundColor = 'rgba(220, 53, 69, 0.3)';
         cell.innerHTML = '💣'; // Добавляем эмодзи мины
     } else {
         cell.className = 'mine-cell revealed';
+        cell.style.borderColor = '#28a745';
+        cell.style.backgroundColor = 'rgba(40, 167, 69, 0.3)';
         cell.innerHTML = '💰'; // Добавляем эмодзи монеты
     }
     
