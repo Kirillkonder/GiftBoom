@@ -189,6 +189,31 @@ window.onclick = function(event) {
     }
 }
 
+// Функция сброса поля для новой игры
+function resetGrid() {
+    const grid = document.getElementById('minesGrid');
+    grid.innerHTML = '';
+    
+    for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'mine-cell';
+        cell.dataset.index = i;
+        
+        // Устанавливаем изображение poin.png как фон
+        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.style.backgroundSize = 'cover';
+        cell.style.backgroundPosition = 'center';
+        cell.style.backgroundRepeat = 'no-repeat';
+        
+        cell.addEventListener('click', () => {
+            if (currentGame && !currentGame.gameOver) {
+                revealCell(i);
+            }
+        });
+        grid.appendChild(cell);
+    }
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
@@ -197,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cashoutBtn').addEventListener('click', cashout);
     
     // Создаем поле сразу при загрузке страницы
-    createGrid();
+    resetGrid();
     
     // Управление количеством мин
     const minesDecrease = document.getElementById('minesDecrease');
@@ -328,31 +353,10 @@ function setupGameUI() {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
         cell.style.backgroundImage = "url('images/poin.png')";
+        cell.innerHTML = ''; // Очищаем эмодзи
+        cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
+        cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
     });
-}
-
-function createGrid() {
-    const grid = document.getElementById('minesGrid');
-    grid.innerHTML = '';
-    
-    for (let i = 0; i < 25; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'mine-cell';
-        cell.dataset.index = i;
-        
-        // Устанавливаем изображение poin.png как фон
-        cell.style.backgroundImage = "url('images/poin.png')";
-        cell.style.backgroundSize = 'cover';
-        cell.style.backgroundPosition = 'center';
-        cell.style.backgroundRepeat = 'no-repeat';
-        
-        cell.addEventListener('click', () => {
-            if (currentGame && !currentGame.gameOver) {
-                revealCell(i);
-            }
-        });
-        grid.appendChild(cell);
-    }
 }
 
 async function revealCell(cellIndex) {
@@ -399,7 +403,6 @@ async function revealCell(cellIndex) {
             currentGame.currentMultiplier = result.multiplier;
             updateCellUI(cellIndex, false);
             updateMultiplier();
-            // Убрал уведомление об успехе при открытии ячейки
         }
     } catch (error) {
         console.error('Error revealing cell:', error);
@@ -468,13 +471,38 @@ async function cashout() {
 }
 
 function endGame(isWin, winAmount = 0) {
+    currentGame.gameOver = true;
     document.getElementById('cashoutBtn').disabled = true;
     document.getElementById('startGame').disabled = false;
+    document.getElementById('gameInfo').style.display = 'none';
 
     // Блокируем все ячейки
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.style.pointerEvents = 'none';
     });
+
+    // Через 3 секунды сбрасываем поле для новой игры
+    setTimeout(() => {
+        resetGameUI();
+    }, 3000);
+}
+
+// Функция сброса UI для новой игры
+function resetGameUI() {
+    // Сбрасываем текущую игру
+    currentGame = null;
+    
+    // Сбрасываем поле
+    resetGrid();
+    
+    // Сбрасываем информацию о игре
+    document.getElementById('multiplier').textContent = '1x';
+    document.getElementById('potentialWin').textContent = '0';
+    
+    // Показываем сообщение о результате (если нужно)
+    const resultMessage = document.getElementById('resultMessage');
+    resultMessage.style.display = 'none';
+    resultMessage.className = 'result-message';
 }
 
 async function updateBalance() {
