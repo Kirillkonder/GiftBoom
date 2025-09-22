@@ -378,6 +378,15 @@ async function revealCell(cellIndex) {
             updateCellUI(cellIndex, true);
             endGame(false);
             showToast('error', 'Мина!', 'Вы попали на мину! Игра окончена.');
+            
+            // Показываем все мины после проигрыша
+            if (result.mines) {
+                result.mines.forEach(mineIndex => {
+                    if (mineIndex !== cellIndex) { // Не перезаписываем уже открытую мину
+                        updateCellUI(mineIndex, true);
+                    }
+                });
+            }
         } else {
             // Ячейка безопасна
             currentGame.revealedCells.push(cellIndex);
@@ -398,9 +407,11 @@ function updateCellUI(cellIndex, isMine) {
     if (isMine) {
         cell.className = 'mine-cell mine';
         cell.textContent = '💣';
+        cell.style.background = '#dc3545';
     } else {
         cell.className = 'mine-cell revealed';
         cell.textContent = '💰';
+        cell.style.background = '#28a745';
     }
     
     cell.style.pointerEvents = 'none';
