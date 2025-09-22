@@ -1372,6 +1372,7 @@ app.post('/api/coin/flip', async (req, res) => {
 });
 
 // API: Обработка выигрыша серии в Coin
+// API: Обработка выигрыша серии в Coin
 app.post('/api/coin/series-win', async (req, res) => {
     const { telegramId, winAmount, seriesLength, baseBet, demoMode } = req.body;
 
