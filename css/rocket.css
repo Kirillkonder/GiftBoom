@@ -335,17 +335,16 @@ body::after {
     padding: 16px;
     max-height: 260px;
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.85); /* Увеличиваем непрозрачность фона */
-    backdrop-filter: blur(8px); /* Увеличиваем размытие */
+    background: transparent; /* Полностью прозрачный фон */
+    backdrop-filter: none; /* Убираем размытие */
     border-radius: 0;
     margin: 0;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
     box-sizing: border-box;
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Добавляем верхнюю границу */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Добавляем нижнюю границу */
 }
+
 
 .player-item:nth-child(1) { animation-delay: 0.1s; }
 .player-item:nth-child(2) { animation-delay: 0.2s; }
@@ -612,10 +611,8 @@ body::after {
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
     box-sizing: border-box;
-    background: rgba(0, 0, 0, 0.85); /* Увеличиваем непрозрачность фона */
-    backdrop-filter: blur(8px); /* Увеличиваем размытие */
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Добавляем верхнюю границу */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Добавляем нижнюю границу */
+    background: transparent; /* Полностью прозрачный фон */
+    backdrop-filter: none; /* Убираем размытие */
 }
 
 .players-header {
