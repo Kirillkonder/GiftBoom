@@ -104,8 +104,9 @@ body::after {
 }
 
 .game-container {
-    max-width: 390px;
-    margin: 0 auto;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
     min-height: 100vh;
     background: transparent; /* Полностью прозрачный фон */
     position: relative;
@@ -1274,4 +1275,26 @@ body::after {
     .players-section .player-item {
         padding: 8px 10px;
     }
+}
+
+/* Дополнительные стили для полной ширины игроков */
+.players-list,
+.players-section {
+    width: 100vw !important;
+    margin-left: calc(-50vw + 50%) !important;
+    margin-right: calc(-50vw + 50%) !important;
+    box-sizing: border-box !important;
+}
+
+.players-list .player-item,
+.players-section .player-item {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}
+
+.players-header {
+    padding: 10px 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
