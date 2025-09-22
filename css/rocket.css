@@ -69,8 +69,8 @@ body {
     flex-wrap: nowrap;
     box-sizing: border-box;
     padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
-    background: rgba(0, 0, 0, 0.7); /* Полупрозрачный черный */
-    backdrop-filter: blur(5px);
+    background: transparent; /* Убираем фон чтобы была видна сетка */
+    /* backdrop-filter: blur(5px); убрано для прозрачности */
     position: fixed;
     top: 0;
     left: 0;
