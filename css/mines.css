@@ -443,3 +443,201 @@
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+
+/* Новые стили для улучшенного интерфейса ставок */
+.bet-controls-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.bet-section, .mines-section {
+    margin-bottom: 20px;
+}
+
+.section-title {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.bet-amount-selector {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.bet-option {
+    padding: 12px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.bet-option:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.bet-option.active {
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    border-color: #00c851;
+    color: #000;
+    transform: scale(1.05);
+}
+
+.custom-bet input {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    text-align: center;
+}
+
+.custom-bet input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.mines-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px;
+}
+
+.mines-counter-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mines-counter-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.mines-counter-display {
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    min-width: 40px;
+    text-align: center;
+    padding: 8px 12px;
+    background: rgba(0, 123, 255, 0.3);
+    border-radius: 8px;
+}
+
+.start-game-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.start-game-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 200, 81, 0.3);
+}
+
+.start-game-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.info-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+}
+
+.info-value {
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.cashout-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #ff9500, #ff6b00);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cashout-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(255, 149, 0, 0.3);
+}
+
+.cashout-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
