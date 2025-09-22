@@ -15,6 +15,33 @@ body {
     position: relative;
 }
 
+/* Глобальный фон-сетка и пульсация через псевдоэлементы, чтобы не требовать .grid-background в DOM */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0; /* выше фона body, ниже контента */
+    pointer-events: none;
+    background-color: transparent; /* чёрный уже в body */
+    background-image:
+        linear-gradient(rgba(30, 92, 184, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.18) 1px, transparent 1px);
+    background-size:
+        80px 80px,
+        80px 80px;
+    background-position: 0 0, 0 0;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0; /* синхронно с ::before */
+    pointer-events: none;
+    background: radial-gradient(circle at center, transparent 0%, rgba(30, 92, 184, 0.1) 100%);
+    animation: glow-pulse 6s ease-in-out infinite;
+}
+
 /* Фон с сеткой на всю страницу (безграничный) */
 .grid-background {
     position: fixed;
@@ -1211,5 +1238,4 @@ body {
     .ton-label {
         font-size: 13px;
     }
-
 }
