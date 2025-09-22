@@ -200,7 +200,7 @@ function resetGrid() {
         cell.dataset.index = i;
         
         // Устанавливаем изображение poin.png как фон
-        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.style.backgroundImage = "url('poin.png')";
         cell.style.backgroundSize = 'cover';
         cell.style.backgroundPosition = 'center';
         cell.style.backgroundRepeat = 'no-repeat';
@@ -352,7 +352,7 @@ function setupGameUI() {
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
-        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.style.backgroundImage = "url('poin.png')";
         cell.innerHTML = ''; // Очищаем эмодзи
         cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
         cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
