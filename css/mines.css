@@ -148,6 +148,29 @@ body::after {
     background: rgba(0, 0, 0, 0.6);
 }
 
+/* Адаптация кнопки назад для мобильных устройств */
+@media (max-width: 480px) {
+    .close-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+    
+    .close-btn i {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 390px) {
+    .close-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+    
+    .close-btn i {
+        font-size: 13px;
+    }
+}
+
 .top-right {
     display: flex;
     align-items: center;
