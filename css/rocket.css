@@ -63,13 +63,16 @@ body {
 /* Верхняя панель */
 .top-panel {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    padding: 12px 8px 12px 8px;
+    padding: 12px 0;
     background: rgba(0, 0, 0, 0.7); /* Полупрозрачный черный */
     backdrop-filter: blur(5px);
     position: relative;
     z-index: 10;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
 }
 
 .close-btn {
@@ -355,7 +358,7 @@ body {
 /* Адаптация для мобильных устройств */
 @media (max-width: 480px) {
     .top-panel {
-        padding: 10px 6px;
+        padding: 10px 0;
     }
     
     .close-btn {
@@ -387,7 +390,7 @@ body {
     }
     
     .top-panel {
-        padding: 10px 4px;
+        padding: 10px 0;
     }
     
     .close-btn {
@@ -445,7 +448,7 @@ body {
 
 @media (max-width: 320px) {
     .top-panel {
-        padding: 8px 2px;
+        padding: 8px 0;
     }
     
     .close-btn {
