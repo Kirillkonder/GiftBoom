@@ -783,19 +783,23 @@ body {
         transform: translate(-50%, -50%) rotate(-45deg) scale(1);
         opacity: 1;
     }
-    50% { 
+    30% { 
         transform: translate(-50%, -200%) rotate(-45deg) scale(1.2);
         opacity: 0.8;
         filter: brightness(3) blur(5px);
     }
+    60% { 
+        transform: translate(-50%, -500%) rotate(-45deg) scale(0.8);
+        opacity: 0.4;
+    }
     100% { 
-        transform: translate(-50%, -500%) rotate(-45deg) scale(0.5);
+        transform: translate(-50%, -1200%) rotate(-45deg) scale(0.1);
         opacity: 0;
     }
 }
 
 .rocket.fly-away {
-    animation: rocketFlyAway 2s ease-out forwards;
+    animation: rocketFlyAway 4s ease-out forwards;
 }
 
 /* Убираем отступы у секции игроков */
