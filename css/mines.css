@@ -494,19 +494,17 @@ body {
     100% { transform: scale(1); }
 }
 
-/* Новые стили для улучшенного интерфейса ставок */
-.bet-controls-container {
-    background: rgba(0, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
+/* Компактные стили для ставок */
+.bet-section {
     margin-bottom: 20px;
-    border: 2px solid rgba(0, 255, 255, 0.2);
-    backdrop-filter: blur(15px);
-    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);
+    max-width: 300px;
+    margin: 0 auto 20px auto;
 }
 
-.bet-section, .mines-section {
-    margin-bottom: 20px;
+.mines-section-bottom {
+    margin: 20px auto;
+    max-width: 250px;
+    text-align: center;
 }
 
 .section-title {
@@ -521,14 +519,15 @@ body {
 
 .custom-bet input {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(0, 255, 255, 0.3);
-    border-radius: 10px;
+    border-radius: 8px;
     color: #fff;
-    font-size: 16px;
+    font-size: 14px;
     text-align: center;
     transition: all 0.3s ease;
+    margin-bottom: 10px;
 }
 
 .custom-bet input:focus {
@@ -541,20 +540,20 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 10px;
+    gap: 10px;
+    background: transparent;
+    border-radius: 8px;
+    padding: 5px;
 }
 
 .mines-counter-btn {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     display: flex;
@@ -571,31 +570,31 @@ body {
 .mines-counter-display {
     color: white;
     font-weight: bold;
-    font-size: 18px;
-    min-width: 40px;
+    font-size: 16px;
+    min-width: 35px;
     text-align: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: rgba(0, 123, 255, 0.3);
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 .start-game-btn {
     width: 100%;
-    padding: 18px;
+    padding: 12px;
     background: linear-gradient(135deg, #00c851, #32cd32);
     border: none;
-    border-radius: 12px;
+    border-radius: 8px;
     color: #000;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-    box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
+    gap: 8px;
+    margin-top: 0;
+    box-shadow: 0 3px 10px rgba(0, 200, 81, 0.3);
 }
 
 .start-game-btn:hover:not(:disabled) {
