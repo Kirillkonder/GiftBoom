@@ -188,6 +188,8 @@ body {
     margin-right: calc(-50vw + 50%);
     margin-bottom: 10px;
     background: transparent;
+    /* Обрезаем только нижнюю часть, оставляя верхнюю открытой для ракеты */
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
 /* Коэффициенты */
@@ -564,8 +566,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    /* Добавляем отступ сверху равный высоте шапки */
-    margin-top: 60px; /* Высота top-panel + padding */
 }
 
 .rocket {
@@ -575,7 +575,7 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(-45deg);
-    z-index: 100;
+    z-index: 2;
     transition: none;
 }
 
@@ -795,8 +795,7 @@ body {
         opacity: 0.4;
     }
     100% { 
-        /* Увеличиваем конечную позицию чтобы ракета улетела выше шапки */
-        transform: translate(-50%, -1500%) rotate(-45deg) scale(0.1);
+        transform: translate(-50%, -1200%) rotate(-45deg) scale(0.1);
         opacity: 0;
     }
 }
