@@ -65,7 +65,9 @@ body {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: 12px 0;
+    flex-wrap: nowrap;
+    box-sizing: border-box;
+    padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
     background: rgba(0, 0, 0, 0.7); /* Полупрозрачный черный */
     backdrop-filter: blur(5px);
     position: relative;
@@ -358,7 +360,7 @@ body {
 /* Адаптация для мобильных устройств */
 @media (max-width: 480px) {
     .top-panel {
-        padding: 10px 0;
+        padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
     }
     
     .close-btn {
@@ -390,7 +392,7 @@ body {
     }
     
     .top-panel {
-        padding: 10px 0;
+        padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
     }
     
     .close-btn {
@@ -448,7 +450,7 @@ body {
 
 @media (max-width: 320px) {
     .top-panel {
-        padding: 8px 0;
+        padding: 8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left));
     }
     
     .close-btn {
