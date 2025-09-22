@@ -100,126 +100,125 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script>
-        let currentUser = null;
-        let isDemoMode = false;
-        let currentBetAmount = 0.1;
-        let selectedChoice = null;
-        let isFlipping = false;
-        
-        // Переменные для серийной игры
-        let isSeriesActive = false;
-        let seriesCount = 0;
-        let seriesMultiplier = 1.00;
-        let seriesWinAmount = 0;
-        let baseBetAmount = 0.1;
-        let seriesResults = [];
-        let seriesBetLocked = false;
-        let seriesBetDeducted = false;
+let currentUser = null;
+let isDemoMode = false;
+let currentBetAmount = 0.1;
+let selectedChoice = null;
+let isFlipping = false;
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeGame();
-        });
+// Переменные для серийной игры
+let isSeriesActive = false;
+let seriesCount = 0;
+let seriesMultiplier = 1.00;
+let seriesWinAmount = 0;
+let baseBetAmount = 0.1;
+let seriesResults = [];
+let seriesBetLocked = false;
+let seriesBetDeducted = false;
 
-        function goBack() {
-            window.location.href = 'index.html';
-        }
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    initializeGame();
+});
 
-        function initializeGame() {
-            const tg = window.Telegram.WebApp;
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                currentUser = {
-                    id: tg.initDataUnsafe.user.id,
-                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
-                };
-                loadUserData();
+function goBack() {
+    window.location.href = 'index.html';
+}
+
+function initializeGame() {
+    const tg = window.Telegram.WebApp;
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        currentUser = {
+            id: tg.initDataUnsafe.user.id,
+            username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
+        };
+        loadUserData();
+    }
+}
+
+async function loadUserData() {
+    try {
+        const response = await fetch(`/api/user/balance/${currentUser.id}`);
+        if (response.ok) {
+            const userData = await response.json();
+            const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            isDemoMode = userData.demo_mode;
+            document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+            
+            // Обновляем информацию о режиме пополнения
+            const depositInfo = document.getElementById('deposit-mode-info');
+            if (isDemoMode) {
+                depositInfo.textContent = 'Демо-пополнение (баланс пополняется мгновенно)';
+            } else {
+                depositInfo.textContent = 'Пополнение через Crypto Pay';
             }
         }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
+}
 
-        async function loadUserData() {
-            try {
-                const response = await fetch(`/api/user/balance/${currentUser.id}`);
-                if (response.ok) {
-                    const userData = await response.json();
-                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    isDemoMode = userData.demo_mode;
-                    document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
-                    
-                    // Обновляем информацию о режиме пополнения
-                    const depositInfo = document.getElementById('deposit-mode-info');
-                    if (isDemoMode) {
-                        depositInfo.textContent = 'Демо-пополнение (баланс пополняется мгновенно)';
-                    } else {
-                        depositInfo.textContent = 'Пополнение через Crypto Pay';
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
-            }
-        }
+function selectChoice(choice) {
+    if (isFlipping) return;
+    
+    selectedChoice = choice;
+    
+    // Убираем активный класс со всех кнопок
+    document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Добавляем активный класс выбранной кнопке
+    document.querySelector(`.choice-btn:nth-child(${choice === 'heads' ? 1 : 2})`).classList.add('active');
+    
+    // Активируем кнопку броска
+    document.getElementById('flipButton').disabled = false;
+}
 
-        function selectChoice(choice) {
-            if (isFlipping) return;
-            
-            selectedChoice = choice;
-            
-            // Убираем активный класс со всех кнопок
-            document.querySelectorAll('.choice-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Добавляем активный класс выбранной кнопке
-            document.querySelector(`.choice-btn:nth-child(${choice === 'heads' ? 1 : 2})`).classList.add('active');
-            
-            // Активируем кнопку броска
-            document.getElementById('flipButton').disabled = false;
-        }
+function decreaseBet() {
+    if (seriesBetLocked) return;
+    
+    const betInput = document.getElementById('betAmount');
+    let value = parseFloat(betInput.value);
+    if (value > 0.1) {
+        value = Math.max(0.1, value - 0.1);
+        betInput.value = value.toFixed(1);
+        currentBetAmount = value;
+        baseBetAmount = value;
+    }
+}
 
-        function decreaseBet() {
-            if (seriesBetLocked) return;
-            
-            const betInput = document.getElementById('betAmount');
-            let value = parseFloat(betInput.value);
-            if (value > 0.1) {
-                value = Math.max(0.1, value - 0.1);
-                betInput.value = value.toFixed(1);
-                currentBetAmount = value;
-                baseBetAmount = value;
-            }
-        }
+function increaseBet() {
+    if (seriesBetLocked) return;
+    
+    const betInput = document.getElementById('betAmount');
+    let value = parseFloat(betInput.value);
+    if (value < 10) {
+        value = Math.min(10, value + 0.1);
+        betInput.value = value.toFixed(1);
+        currentBetAmount = value;
+        baseBetAmount = value;
+    }
+}
 
-        function increaseBet() {
-            if (seriesBetLocked) return;
-            
-            const betInput = document.getElementById('betAmount');
-            let value = parseFloat(betInput.value);
-            if (value < 10) {
-                value = Math.min(10, value + 0.1);
-                betInput.value = value.toFixed(1);
-                currentBetAmount = value;
-                baseBetAmount = value;
-            }
-        }
+function validateBetAmount() {
+    if (seriesBetLocked) return;
+    
+    const betInput = document.getElementById('betAmount');
+    let value = parseFloat(betInput.value);
+    
+    if (isNaN(value)) {
+        value = 0.1;
+    }
+    
+    value = Math.max(0.1, Math.min(10, value));
+    betInput.value = value.toFixed(1);
+    currentBetAmount = value;
+    baseBetAmount = value;
+}
 
-        function validateBetAmount() {
-            if (seriesBetLocked) return;
-            
-            const betInput = document.getElementById('betAmount');
-            let value = parseFloat(betInput.value);
-            
-            if (isNaN(value)) {
-                value = 0.1;
-            }
-            
-            value = Math.max(0.1, Math.min(10, value));
-            betInput.value = value.toFixed(1);
-            currentBetAmount = value;
-            baseBetAmount = value;
-        }
-
-        // Функции для серийной игры
-        // Функции для серийной игры
+// Функции для серийной игры
 function toggleSeries() {
     if (seriesBetLocked) return;
     
@@ -231,7 +230,7 @@ function toggleSeries() {
     if (isSeriesActive) {
         // Начинаем новую серию
         seriesCount = 0;
-        seriesMultiplier = 1.92; // Начинаем с 1.92 вместо 1.00
+        seriesMultiplier = 1.00; // Начинаем с 1.00
         seriesWinAmount = 0;
         seriesResults = [];
         baseBetAmount = currentBetAmount;
@@ -258,6 +257,48 @@ function toggleSeries() {
     }
 }
 
+function cashoutSeries() {
+    if (seriesCount === 0) {
+        showToast('error', 'Ошибка', 'Нет активной серии для завершения');
+        return;
+    }
+    
+    // Выплачиваем выигрыш за серию
+    processSeriesWin();
+}
+
+function updateSeriesDisplay() {
+    document.getElementById('seriesCount').textContent = seriesCount;
+    document.getElementById('seriesMultiplier').textContent = `x${seriesMultiplier.toFixed(2)}`;
+    document.getElementById('seriesWinAmount').textContent = `+${seriesWinAmount.toFixed(2)} TON`;
+}
+
+function resetSeries() {
+    isSeriesActive = false;
+    seriesCount = 0;
+    seriesMultiplier = 1.00;
+    seriesWinAmount = 0;
+    seriesResults = [];
+    seriesBetLocked = false;
+    seriesBetDeducted = false;
+    
+    // Разблокируем кнопки изменения ставки
+    document.querySelectorAll('.bet-amount-btn').forEach(btn => {
+        btn.disabled = false;
+    });
+    document.getElementById('betAmount').disabled = false;
+    
+    const toggleBtn = document.getElementById('seriesToggle');
+    const seriesPanel = document.getElementById('seriesPanel');
+    
+    toggleBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+    toggleBtn.classList.remove('active');
+    seriesPanel.classList.remove('active');
+    document.getElementById('seriesCashout').disabled = true;
+    
+    updateSeriesDisplay();
+}
+
 function processSeriesResult(isWin) {
     if (!isSeriesActive) return;
     
@@ -267,22 +308,28 @@ function processSeriesResult(isWin) {
         // Увеличиваем счетчик серии
         seriesCount++;
         
-        // Умножаем множитель на 2 каждый раз (вместо случайного увеличения)
-        seriesMultiplier *= 2;
+        // УДВОЕНИЕ МНОЖИТЕЛЯ после каждого выигрыша
+        if (seriesCount === 1) {
+            // Первый выигрыш: 1.92x
+            seriesMultiplier = 1.92;
+        } else {
+            // Каждый следующий выигрыш: удваиваем множитель
+            seriesMultiplier *= 2;
+        }
         
         // Пересчитываем выигрыш (базовая ставка * множитель)
         seriesWinAmount = baseBetAmount * seriesMultiplier;
         
         updateSeriesDisplay();
         
-        // Проверяем максимальную длину серии (20)
-        if (seriesCount >= 20) {
+        // Проверяем максимальную длину серии (10 - так как множитель растет очень быстро)
+        if (seriesCount >= 10) {
             processSeriesWin();
-            showToast('win', 'Максимальная серия!', `Достигнута максимальная серия из 20 побед!`);
+            showToast('win', 'Максимальная серия!', `Достигнута максимальная серия из 10 побед!`);
             return;
         }
         
-        // Шанс 15% что серия прервется после победы
+        // Шанс 15% что серия прервется после победы (только после 3+ побед)
         if (Math.random() < 0.15 && seriesCount > 3) {
             processSeriesWin();
             showToast('info', 'Серия завершена', `Серия прервана после ${seriesCount} побед`);
@@ -299,354 +346,270 @@ function processSeriesResult(isWin) {
     }
 }
 
-        function cashoutSeries() {
-            if (seriesCount === 0) {
-                showToast('error', 'Ошибка', 'Нет активной серии для завершения');
-                return;
+async function processSeriesWin() {
+    if (seriesWinAmount <= 0) return;
+    
+    try {
+        // Отправляем запрос на сервер для обработки выигрыша серии
+        const response = await fetch('/api/coin/series-win', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                winAmount: seriesWinAmount,
+                seriesLength: seriesCount,
+                baseBet: baseBetAmount,
+                demoMode: isDemoMode
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                // Обновляем баланс
+                document.getElementById('balance').textContent = result.new_balance.toFixed(2);
+                showToast('success', 'Серия завершена', `Вы забрали выигрыш ${seriesWinAmount.toFixed(2)} TON`);
             }
-            
-            // Выплачиваем выигрыш за серию
-            processSeriesWin();
+        }
+    } catch (error) {
+        console.error('Series win processing error:', error);
+        showToast('error', 'Ошибка', 'Не удалось обработать выигрыш серии');
+    } finally {
+        resetSeries();
+    }
+}
+
+async function flipCoin() {
+    if (isFlipping || !selectedChoice) return;
+    
+    const betAmount = isSeriesActive ? baseBetAmount : currentBetAmount;
+    isFlipping = true;
+    
+    // Блокируем кнопки
+    document.getElementById('flipButton').disabled = true;
+    document.getElementById('flipButton').classList.add('loading');
+    
+    try {
+        // Для серии: если ставка еще не снята, снимаем ее при первом броске
+        let deductBet = false;
+        if (isSeriesActive && !seriesBetDeducted) {
+            deductBet = true;
+            seriesBetDeducted = true;
+        }
+        
+        const response = await fetch('/api/coin/flip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                betAmount: betAmount,
+                choice: selectedChoice,
+                demoMode: isDemoMode,
+                isSeries: isSeriesActive,
+                deductBet: deductBet
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Network error');
         }
 
-        function updateSeriesDisplay() {
-            document.getElementById('seriesCount').textContent = seriesCount;
-            document.getElementById('seriesMultiplier').textContent = `x${seriesMultiplier.toFixed(2)}`;
-            document.getElementById('seriesWinAmount').textContent = `+${seriesWinAmount.toFixed(2)} TON`;
-        }
-
-        function resetSeries() {
-            isSeriesActive = false;
-            seriesCount = 0;
-            seriesMultiplier = 1.00;
-            seriesWinAmount = 0;
-            seriesResults = [];
-            seriesBetLocked = false;
-            seriesBetDeducted = false;
+        const result = await response.json();
+        
+        if (result.success) {
+            // Анимация монетки
+            const coin = document.getElementById('coin');
+            coin.classList.add('flipping');
             
-            // Разблокируем кнопки изменения ставки
-            document.querySelectorAll('.bet-amount-btn').forEach(btn => {
-                btn.disabled = false;
-            });
-            document.getElementById('betAmount').disabled = false;
-            
-            const toggleBtn = document.getElementById('seriesToggle');
-            const seriesPanel = document.getElementById('seriesPanel');
-            
-            toggleBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
-            toggleBtn.classList.remove('active');
-            seriesPanel.classList.remove('active');
-            document.getElementById('seriesCashout').disabled = true;
-            
-            updateSeriesDisplay();
-        }
-
-        function processSeriesResult(isWin) {
-            if (!isSeriesActive) return;
-            
-            seriesResults.push(isWin);
-            
-            if (isWin) {
-                // Увеличиваем счетчик серии и множитель
-                seriesCount++;
+            // Ждем окончания анимации
+            setTimeout(() => {
+                coin.classList.remove('flipping');
                 
-                // Увеличиваем множитель на рандомное значение от 0.1 до 0.3
-                const multiplierIncrease = 0.1 + (Math.random() * 0.2);
-                seriesMultiplier += multiplierIncrease;
-                
-                // Пересчитываем выигрыш (базовая ставка * множитель)
-                seriesWinAmount = baseBetAmount * seriesMultiplier;
-                
-                updateSeriesDisplay();
-                
-                // Проверяем максимальную длину серии (20)
-                if (seriesCount >= 20) {
-                    processSeriesWin();
-                    showToast('win', 'Максимальная серия!', `Достигнута максимальная серия из 20 побед!`);
-                    return;
+                // Обновляем баланс если ставка была снята или это одиночная игра
+                if (result.balance_updated || !isSeriesActive) {
+                    document.getElementById('balance').textContent = result.new_balance.toFixed(2);
                 }
                 
-                // Шанс 15% что серия прервется после победы
-                if (Math.random() < 0.15 && seriesCount > 3) {
-                    processSeriesWin();
-                    showToast('info', 'Серия завершена', `Серия прервана после ${seriesCount} побед`);
-                }
-            } else {
-                // Проигрыш - серия прерывается, ставка теряется
-                if (seriesCount > 0) {
-                    showToast('error', 'Серия прервана', `Проигрыш после ${seriesCount} побед. Ставка ${baseBetAmount} TON потеряна`);
+                // Обрабатываем результат для серии
+                if (isSeriesActive) {
+                    processSeriesResult(result.win);
                 } else {
-                    showToast('error', 'Проигрыш', `Ставка ${baseBetAmount} TON потеряна`);
-                }
-                
-                resetSeries();
-            }
-        }
-
-        async function processSeriesWin() {
-            if (seriesWinAmount <= 0) return;
-            
-            try {
-                // Отправляем запрос на сервер для обработки выигрыша серии
-                const response = await fetch('/api/coin/series-win', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        winAmount: seriesWinAmount,
-                        seriesLength: seriesCount,
-                        baseBet: baseBetAmount,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        // Обновляем баланс
-                        document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-                        showToast('success', 'Серия завершена', `Вы забрали выигрыш ${seriesWinAmount.toFixed(2)} TON`);
+                    // Показываем результат для одиночной игры
+                    if (result.win) {
+                        showWinNotification(result.win_amount, result.result);
+                    } else {
+                        showLossNotification(betAmount, result.result);
                     }
                 }
-            } catch (error) {
-                console.error('Series win processing error:', error);
-                showToast('error', 'Ошибка', 'Не удалось обработать выигрыш серии');
-            } finally {
-                resetSeries();
-            }
-        }
-
-        async function flipCoin() {
-            if (isFlipping || !selectedChoice) return;
-            
-            const betAmount = isSeriesActive ? baseBetAmount : currentBetAmount;
-            isFlipping = true;
-            
-            // Блокируем кнопки
-            document.getElementById('flipButton').disabled = true;
-            document.getElementById('flipButton').classList.add('loading');
-            
-            try {
-                // Для серии: если ставка еще не снята, снимаем ее при первом броске
-                let deductBet = false;
-                if (isSeriesActive && !seriesBetDeducted) {
-                    deductBet = true;
-                    seriesBetDeducted = true;
+                
+                // Сбрасываем выбор (только если не в серии)
+                if (!isSeriesActive) {
+                    selectedChoice = null;
+                    document.querySelectorAll('.choice-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
                 }
                 
-                const response = await fetch('/api/coin/flip', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        betAmount: betAmount,
-                        choice: selectedChoice,
-                        demoMode: isDemoMode,
-                        isSeries: isSeriesActive,
-                        deductBet: deductBet
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network error');
-                }
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Анимация монетки
-                    const coin = document.getElementById('coin');
-                    coin.classList.add('flipping');
-                    
-                    // Ждем окончания анимации
-                    setTimeout(() => {
-                        coin.classList.remove('flipping');
-                        
-                        // Обновляем баланс если ставка была снята или это одиночная игра
-                        if (result.balance_updated || !isSeriesActive) {
-                            document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-                        }
-                        
-                        // Обрабатываем результат для серии
-                        if (isSeriesActive) {
-                            processSeriesResult(result.win);
-                        } else {
-                            // Показываем результат для одиночной игры
-                            if (result.win) {
-                                showWinNotification(result.win_amount, result.result);
-                            } else {
-                                showLossNotification(betAmount, result.result);
-                            }
-                        }
-                        
-                        // Сбрасываем выбор (только если не в серии)
-                        if (!isSeriesActive) {
-                            selectedChoice = null;
-                            document.querySelectorAll('.choice-btn').forEach(btn => {
-                                btn.classList.remove('active');
-                            });
-                        }
-                        
-                        isFlipping = false;
-                        document.getElementById('flipButton').classList.remove('loading');
-                        
-                    }, 1000);
-                    
-                } else {
-                    throw new Error(result.error);
-                }
-                
-            } catch (error) {
-                console.error('Flip error:', error);
-                showError(error.message || 'Ошибка при броске монетки');
                 isFlipping = false;
                 document.getElementById('flipButton').classList.remove('loading');
-                document.getElementById('flipButton').disabled = false;
-            }
-        }
-
-        // Toast уведомления
-        function showToast(type, title, message, duration = 3000) {
-            const toastContainer = document.getElementById('toast-container');
-            
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            const icons = {
-                success: 'bi bi-check-circle-fill',
-                error: 'bi bi-x-circle-fill',
-                win: 'bi bi-trophy-fill',
-                info: 'bi bi-info-circle-fill'
-            };
-            
-            toast.innerHTML = `
-                <i class="toast-icon ${icons[type] || 'bi bi-info-circle-fill'}"></i>
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close" onclick="this.parentElement.remove()">
-                    <i class="bi bi-x"></i>
-                </button>
-            `;
-            
-            toastContainer.appendChild(toast);
-            
-            setTimeout(() => toast.classList.add('show'), 10);
-            
-            if (duration > 0) {
-                setTimeout(() => hideToast(toast), duration);
-            }
-        }
-
-        function hideToast(toast) {
-            toast.classList.remove('show');
-            toast.classList.add('hide');
-            setTimeout(() => toast.remove(), 300);
-        }
-
-        function showWinNotification(amount, result) {
-            const resultText = result === 'heads' ? 'ОРЁЛ' : 'РЕШКА';
-            showToast('win', '🎉 ВЫИГРЫШ!', `+${amount.toFixed(2)} TON (${resultText})`);
-        }
-
-        function showLossNotification(amount, result) {
-            const resultText = result === 'heads' ? 'ОРЁЛ' : 'РЕШКА';
-            showToast('error', '💔 ПРОИГРЫШ', `-${amount.toFixed(2)} TON (${resultText})`);
-        }
-
-        function showError(message) {
-            showToast('error', 'Ошибка', message);
-        }
-
-        // Функции пополнения баланса
-        function openDepositModal() {
-            document.getElementById('deposit-modal').style.display = 'block';
-        }
-
-        function closeDepositModal() {
-            document.getElementById('deposit-modal').style.display = 'none';
-        }
-
-        async function processDeposit() {
-            const amount = parseFloat(document.getElementById('deposit-amount').value);
-            
-            if (!amount || amount < 3) {
-                alert('Минимальный депозит: 3 TON');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        amount: amount,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                const result = await response.json();
                 
-                if (result.success) {
-                    if (isDemoMode) {
-                        await loadUserData();
-                        showToast('success', '✅ Успешно', `Демо-депозит ${amount} TON зачислен!`);
-                    } else {
-                        window.open(result.invoice_url, '_blank');
-                        showToast('info', 'Оплата TON', `Откройте Crypto Bot для оплаты ${amount} TON`);
-                        checkDepositStatus(result.invoice_id);
-                    }
-                    closeDepositModal();
-                } else {
-                    showError('Ошибка при создании депозита: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Deposit error:', error);
-                showError('Ошибка при создании депозита');
-            }
+            }, 1000);
+            
+        } else {
+            throw new Error(result.error);
         }
+        
+    } catch (error) {
+        console.error('Flip error:', error);
+        showError(error.message || 'Ошибка при броске монетки');
+        isFlipping = false;
+        document.getElementById('flipButton').classList.remove('loading');
+        document.getElementById('flipButton').disabled = false;
+    }
+}
 
-        async function checkDepositStatus(invoiceId) {
-            const checkInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/api/check-invoice', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            invoiceId: invoiceId,
-                            demoMode: isDemoMode
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.status === 'paid') {
-                        clearInterval(checkInterval);
-                        showToast('success', '✅ Успешно', 'Депозит успешно зачислен!');
-                        await loadUserData();
-                    } else if (result.status === 'expired' || result.status === 'cancelled') {
-                        clearInterval(checkInterval);
-                        showError('Платеж отменен или просрочен');
-                    }
-                } catch (error) {
-                    console.error('Status check error:', error);
-                }
-            }, 5000);
-        }
+// Toast уведомления
+function showToast(type, title, message, duration = 3000) {
+    const toastContainer = document.getElementById('toast-container');
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icons = {
+        success: 'bi bi-check-circle-fill',
+        error: 'bi bi-x-circle-fill',
+        win: 'bi bi-trophy-fill',
+        info: 'bi bi-info-circle-fill'
+    };
+    
+    toast.innerHTML = `
+        <i class="toast-icon ${icons[type] || 'bi bi-info-circle-fill'}"></i>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="bi bi-x"></i>
+        </button>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    if (duration > 0) {
+        setTimeout(() => hideToast(toast), duration);
+    }
+}
 
-        // Обработчик клика вне модального окна
-        window.onclick = function(event) {
-            const depositModal = document.getElementById('deposit-modal');
-            if (event.target === depositModal) {
-                closeDepositModal();
+function hideToast(toast) {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+}
+
+function showWinNotification(amount, result) {
+    const resultText = result === 'heads' ? 'ОРЁЛ' : 'РЕШКА';
+    showToast('win', '🎉 ВЫИГРЫШ!', `+${amount.toFixed(2)} TON (${resultText})`);
+}
+
+function showLossNotification(amount, result) {
+    const resultText = result === 'heads' ? 'ОРЁЛ' : 'РЕШКА';
+    showToast('error', '💔 ПРОИГРЫШ', `-${amount.toFixed(2)} TON (${resultText})`);
+}
+
+function showError(message) {
+    showToast('error', 'Ошибка', message);
+}
+
+// Функции пополнения баланса
+function openDepositModal() {
+    document.getElementById('deposit-modal').style.display = 'block';
+}
+
+function closeDepositModal() {
+    document.getElementById('deposit-modal').style.display = 'none';
+}
+
+async function processDeposit() {
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    
+    if (!amount || amount < 3) {
+        alert('Минимальный депозит: 3 TON');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: currentUser.id,
+                amount: amount,
+                demoMode: isDemoMode
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            if (isDemoMode) {
+                await loadUserData();
+                showToast('success', '✅ Успешно', `Демо-депозит ${amount} TON зачислен!`);
+            } else {
+                window.open(result.invoice_url, '_blank');
+                showToast('info', 'Оплата TON', `Откройте Crypto Bot для оплаты ${amount} TON`);
+                checkDepositStatus(result.invoice_id);
             }
+            closeDepositModal();
+        } else {
+            showError('Ошибка при создании депозита: ' + result.error);
         }
+    } catch (error) {
+        console.error('Deposit error:', error);
+        showError('Ошибка при создании депозита');
+    }
+}
+
+async function checkDepositStatus(invoiceId) {
+    const checkInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/check-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    invoiceId: invoiceId,
+                    demoMode: isDemoMode
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'paid') {
+                clearInterval(checkInterval);
+                showToast('success', '✅ Успешно', 'Депозит успешно зачислен!');
+                await loadUserData();
+            } else if (result.status === 'expired' || result.status === 'cancelled') {
+                clearInterval(checkInterval);
+                showError('Платеж отменен или просрочен');
+            }
+        } catch (error) {
+            console.error('Status check error:', error);
+        }
+    }, 5000);
+}
+
+// Обработчик клика вне модального окна
+window.onclick = function(event) {
+    const depositModal = document.getElementById('deposit-modal');
+    if (event.target === depositModal) {
+        closeDepositModal();
+    }
+}
     </script>
 </body>
 </html>
