@@ -326,3 +326,49 @@
     margin-bottom: 20px;
     color: #fff;
 }
+
+
+.mines-counter {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 5px;
+    gap: 8px;
+}
+
+.mines-counter-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mines-counter-btn:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.mines-counter-btn:active {
+    transform: scale(0.95);
+}
+
+.mines-counter-display {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 60px;
+    text-align: center;
+    padding: 5px 10px;
+    background: rgba(0, 123, 255, 0.3);
+    border-radius: 6px;
+}

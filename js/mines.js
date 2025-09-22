@@ -189,7 +189,7 @@ window.onclick = function(event) {
     }
 }
 
-// ==================== ТВОЙ СТАРЫЙ КОД MINES (БЕЗ ИЗМЕНЕНИЙ) ====================
+
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
@@ -197,7 +197,43 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUserData();
     document.getElementById('startGame').addEventListener('click', startGame);
     document.getElementById('cashoutBtn').addEventListener('click', cashout);
+    
+    // НОВЫЙ КОД ДЛЯ УПРАВЛЕНИЯ КОЛИЧЕСТВОМ МИН
+    const minesDecrease = document.getElementById('minesDecrease');
+    const minesIncrease = document.getElementById('minesIncrease');
+    const minesValue = document.getElementById('minesValue');
+    const minesSelect = document.getElementById('minesCount');
+    
+    // Доступные значения мин
+    const minesOptions = [3, 5, 7];
+    let currentMinesIndex = 0;
+    
+    // Обновление отображения
+    function updateMinesDisplay() {
+        minesValue.textContent = minesOptions[currentMinesIndex];
+        minesSelect.value = minesOptions[currentMinesIndex];
+    }
+    
+    // Уменьшение количества мин
+    minesDecrease.addEventListener('click', function() {
+        if (currentMinesIndex > 0) {
+            currentMinesIndex--;
+            updateMinesDisplay();
+        }
+    });
+    
+    // Увеличение количества мин
+    minesIncrease.addEventListener('click', function() {
+        if (currentMinesIndex < minesOptions.length - 1) {
+            currentMinesIndex++;
+            updateMinesDisplay();
+        }
+    });
+    
+    // Инициализация
+    updateMinesDisplay();
 });
+
 
 function goBack() {
     window.location.href = 'index.html';
