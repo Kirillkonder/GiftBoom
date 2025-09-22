@@ -198,23 +198,23 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('startGame').addEventListener('click', startGame);
     document.getElementById('cashoutBtn').addEventListener('click', cashout);
     
-    // НОВЫЙ КОД ДЛЯ УПРАВЛЕНИЯ КОЛИЧЕСТВОМ МИН
+    // Создаем поле сразу при загрузке страницы
+    createGrid();
+    
+    // Управление количеством мин
     const minesDecrease = document.getElementById('minesDecrease');
     const minesIncrease = document.getElementById('minesIncrease');
     const minesValue = document.getElementById('minesValue');
     const minesSelect = document.getElementById('minesCount');
     
-    // Доступные значения мин
     const minesOptions = [3, 5, 7];
     let currentMinesIndex = 0;
     
-    // Обновление отображения
     function updateMinesDisplay() {
         minesValue.textContent = minesOptions[currentMinesIndex];
         minesSelect.value = minesOptions[currentMinesIndex];
     }
     
-    // Уменьшение количества мин
     minesDecrease.addEventListener('click', function() {
         if (currentMinesIndex > 0) {
             currentMinesIndex--;
@@ -222,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Увеличение количества мин
     minesIncrease.addEventListener('click', function() {
         if (currentMinesIndex < minesOptions.length - 1) {
             currentMinesIndex++;
@@ -230,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Инициализация
     updateMinesDisplay();
 });
 
@@ -323,14 +321,20 @@ async function startGame() {
     }
 }
 
+
 function setupGameUI() {
     document.getElementById('gameInfo').style.display = 'flex';
-    document.getElementById('minesGrid').style.display = 'grid';
     document.getElementById('cashoutBtn').disabled = false;
     document.getElementById('startGame').disabled = true;
 
     updateMultiplier();
-    createGrid();
+    
+    // Сбрасываем поле для новой игры
+    document.querySelectorAll('.mine-cell').forEach(cell => {
+        cell.className = 'mine-cell';
+        cell.style.pointerEvents = 'auto';
+        cell.style.backgroundImage = "url('../images/poin.png')";
+    });
 }
 
 function createGrid() {
@@ -341,9 +345,12 @@ function createGrid() {
         const cell = document.createElement('div');
         cell.className = 'mine-cell';
         cell.dataset.index = i;
-        cell.textContent = '?';
         
-        cell.addEventListener('click', () => revealCell(i));
+        cell.addEventListener('click', () => {
+            if (currentGame && !currentGame.gameOver) {
+                revealCell(i);
+            }
+        });
         grid.appendChild(cell);
     }
 }
@@ -405,12 +412,12 @@ function updateCellUI(cellIndex, isMine) {
     
     if (isMine) {
         cell.className = 'mine-cell mine';
-        cell.textContent = '💣';
-        cell.style.background = '#dc3545';
+        cell.style.borderColor = '#dc3545';
+        cell.style.backgroundColor = 'rgba(220, 53, 69, 0.3)';
     } else {
         cell.className = 'mine-cell revealed';
-        cell.textContent = '💰';
-        cell.style.background = '#28a745';
+        cell.style.borderColor = '#28a745';
+        cell.style.backgroundColor = 'rgba(40, 167, 69, 0.3)';
     }
     
     cell.style.pointerEvents = 'none';
@@ -461,10 +468,6 @@ async function cashout() {
 function endGame(isWin, winAmount = 0) {
     document.getElementById('cashoutBtn').disabled = true;
     document.getElementById('startGame').disabled = false;
-
-    // УБИРАЕМ отображение результата внизу
-    const resultMessage = document.getElementById('resultMessage');
-    resultMessage.style.display = 'none';
 
     // Блокируем все ячейки
     document.querySelectorAll('.mine-cell').forEach(cell => {
