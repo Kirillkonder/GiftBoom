@@ -919,6 +919,7 @@ wss.on('connection', function connection(ws) {
 
 
 // API: Начать игру Mines
+// API: Начать игру Mines
 app.post('/api/mines/start', async (req, res) => {
     const { telegramId, betAmount, minesCount, demoMode } = req.body;
 
@@ -935,11 +936,28 @@ app.post('/api/mines/start', async (req, res) => {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
 
+        // ФИКС: Увеличиваем количество мин согласно требованиям
+        let actualMinesCount;
+        switch(minesCount) {
+            case 3:
+                actualMinesCount = 5; // 3 → 5
+                break;
+            case 5:
+                actualMinesCount = 7; // 5 → 7
+                break;
+            case 7:
+                actualMinesCount = 9; // 7 → 9
+                break;
+            default:
+                actualMinesCount = minesCount; // на случай других значений
+        }
+
         // Создаем игру
         const game = minesGames.insert({
             user_id: user.$loki,
             bet_amount: betAmount,
-            mines_count: minesCount,
+            mines_count: minesCount, // сохраняем выбранное значение для отображения
+            actual_mines_count: actualMinesCount, // реальное количество мин
             revealed_cells: [],
             game_over: false,
             win: false,
@@ -975,6 +993,7 @@ app.post('/api/mines/start', async (req, res) => {
 });
 
 // API: Открыть ячейку в Mines
+// API: Открыть ячейку в Mines
 app.post('/api/mines/open', async (req, res) => {
     const { gameId, cellIndex, telegramId } = req.body;
 
@@ -993,7 +1012,12 @@ app.post('/api/mines/open', async (req, res) => {
         // Генерируем мины если еще не сгенерированы
         if (!game.mines) {
             const mines = [];
-            while (mines.length < game.mines_count) {
+            // Используем реальное количество мин вместо отображаемого
+            const actualMinesCount = game.actual_mines_count || 
+                                   (game.mines_count === 3 ? 5 : 
+                                    game.mines_count === 5 ? 7 : 9);
+            
+            while (mines.length < actualMinesCount) {
                 const randomCell = Math.floor(Math.random() * 25);
                 if (!mines.includes(randomCell)) {
                     mines.push(randomCell);
@@ -1001,9 +1025,11 @@ app.post('/api/mines/open', async (req, res) => {
             }
             minesGames.update({
                 ...game,
-                mines: mines
+                mines: mines,
+                actual_mines_count: actualMinesCount
             });
             game.mines = mines;
+            game.actual_mines_count = actualMinesCount;
         }
 
         // Проверяем, есть ли мина
@@ -1027,6 +1053,7 @@ app.post('/api/mines/open', async (req, res) => {
         } else {
             // Безопасная ячейка
             const revealedCells = [...game.revealed_cells, cellIndex];
+            // Используем отображаемое количество мин для расчета множителя
             const multiplier = calculateMultiplier(revealedCells.length, game.mines_count);
 
             minesGames.update({
