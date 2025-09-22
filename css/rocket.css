@@ -66,15 +66,16 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.7); /* Полупрозрачный черный */
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
     position: relative;
     z-index: 10;
+    width: 100%;
 }
 
 .close-btn {
     display: flex;
-    align-items: left;
+    align-items: center;
     gap: 6px;
     font-size: 14px;
     color: #fff;
@@ -84,6 +85,9 @@ body {
     border-radius: 8px;
     background: rgba(0, 0, 0, 0.4);
     transition: all 0.3s ease;
+    position: absolute;
+    left: 16px;
+    z-index: 11;
 }
 
 
@@ -105,6 +109,9 @@ body {
     align-items: center;
     gap: 12px;
     margin-left: auto;
+    position: absolute;
+    right: 16px;
+    z-index: 11;
 }
 
 .balance {
@@ -1095,5 +1102,60 @@ body {
     
     .ton-label {
         font-size: 13px;
+    }
+}
+
+@media (max-width: 390px) {
+    .top-panel {
+        padding: 10px 12px;
+    }
+    
+    .close-btn {
+        left: 12px;
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+    
+    .top-right {
+        right: 12px;
+        gap: 8px;
+    }
+    
+    .balance {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+    
+    .players-counter {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 320px) {
+    .close-btn {
+        left: 8px;
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+    
+    .top-right {
+        right: 8px;
+        gap: 6px;
+    }
+    
+    .balance {
+        font-size: 11px;
+    }
+    
+    .players-counter {
+        font-size: 11px;
+    }
+    
+    .balance-plus-btn {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
     }
 }
