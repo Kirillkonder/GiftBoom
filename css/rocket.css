@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: transparent; /* Убрали черный фон - теперь только сетка */
+    background: #000; /* Базовый одинарный фон: чёрный */
     color: #fff;
     overflow-x: hidden;
     user-select: none;
@@ -15,29 +15,29 @@ body {
     position: relative;
 }
 
-/* Фон с сеткой на всю страницу */
+/* Фон с сеткой на всю страницу (безграничный) */
 .grid-background {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: -1;
-    background: 
-        #000, /* Добавили черный базовый фон сюда */
+    z-index: 0; /* не уходим в -1, чтобы не пропадал на некоторых устройствах */
+    pointer-events: none; /* фон не мешает кликам */
+
+    /* Один базовый фон + 4 слоя сетки */
+    background-color: transparent; /* чёрный уже в body */
+    background-image:
         linear-gradient(rgba(30, 92, 184, 0.2) 1px, transparent 1px),
         linear-gradient(90deg, rgba(30, 92, 184, 0.2) 1px, transparent 1px),
         linear-gradient(rgba(30, 92, 184, 0.1) 1px, transparent 1px),
         linear-gradient(90deg, rgba(30, 92, 184, 0.1) 1px, transparent 1px);
-    
-    background-size: 
-        100% 100%,
+    background-size:
         80px 80px,
         80px 80px,
         40px 40px,
         40px 40px;
-    
-    /* Анимация пульсации сетки */
+
     animation: grid-pulse 4s ease-in-out infinite;
 }
 
