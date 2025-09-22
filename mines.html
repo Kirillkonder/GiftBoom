@@ -5,24 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mines - Casino Gift Contract</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/mines.css">
-    
-    
 </head>
 <body>
-    <div class="container">
-        <button class="back-button" onclick="goBack()">←</button>
-        
-        <header>
-            <h1>💣 Mines Game</h1>
-            <div class="balance">
-                Баланс: <span id="balance">0</span> TON
-                <span id="demo-badge" style="margin-left: 10px; padding: 2px 8px; background: #ffc107; border-radius: 10px; font-size: 12px;">TESTNET</span>
+    <!-- Фон с сеткой на всю страницу -->
+    <div class="grid-background"></div>
+    
+    <div class="game-container">
+        <!-- Верхняя панель как в Rocket -->
+        <div class="top-panel">
+            <div class="close-btn" onclick="goBack()">
+                <span>←</span>
             </div>
-        </header>
+            <div class="top-right">
+                <!-- Счетчик игроков (можно скрыть для Mines) -->
+                <div class="players-counter" style="display: none;">
+                    <i class="bi bi-people-fill" style="color: #00c851;"></i>
+                    <span id="playersCount">0</span>
+                </div>
+                <div class="balance">
+                    <i class="bi bi-currency-exchange"></i>
+                    <span id="balance">0.00</span>
+                    <button class="balance-plus-btn" onclick="openDepositModal()">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                <div id="demo-badge" style="display: none; background: #ff9500; color: black; padding: 2px 6px; border-radius: 8px; font-size: 10px;">
+                    DEMO
+                </div>
+            </div>
+        </div>
 
-        <div class="mines-container">
+        <div class="mines-content">
+            <h1>💣 Mines Game</h1>
+            
             <div class="bet-controls">
                 <input type="number" class="bet-input" id="betAmount" min="0.1" max="10" step="0.1" value="0.1" placeholder="Ставка">
                 <select class="mines-select" id="minesCount">
@@ -48,6 +66,27 @@
         </div>
     </div>
 
-    <script src="/js/mines.js"></script>
+    <!-- Модальное окно пополнения баланса как в Rocket -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Пополнить баланс</h3>
+                <span class="close" onclick="closeDepositModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="deposit-info">
+                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
+                </div>
+                <div class="input-group">
+                    <label for="deposit-amount">Сумма (TON):</label>
+                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
+                </div>
+                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/mines.js"></script>
+    <div id="toast-container" class="toast-container"></div>
 </body>
 </html>
