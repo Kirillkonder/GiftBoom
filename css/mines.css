@@ -372,45 +372,41 @@
 .mines-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
+    gap: 0; /* Убираем промежутки между ячейками */
     margin-bottom: 20px;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+    border: 2px solid #007bff; /* Рамка вокруг всего поля */
+    border-radius: 10px;
+    overflow: hidden; /* Чтобы углы были скругленные */
 }
 
 .mine-cell {
     aspect-ratio: 1;
     background: url('images/poin.png') center/cover no-repeat;
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 18px;
-    color: white;
-    transition: all 0.3s ease;
-    border: 2px solid #007bff;
     position: relative;
-    overflow: hidden;
-    width: 100%;
+    border: none; /* Убираем границы у ячеек */
+    margin: 0; /* Убираем отступы */
 }
 
 .mine-cell:hover {
-    transform: scale(1.05);
-    border-color: #0056b3;
+    background-color: rgba(0, 123, 255, 0.2); /* Легкое подсвечивание при наведении */
 }
 
 .mine-cell.revealed {
     background: url('images/poin.png') center/cover no-repeat;
-    border-color: #28a745;
+    
     background-color: rgba(40, 167, 69, 0.3);
 }
 
 .mine-cell.mine {
     background: url('images/poin.png') center/cover no-repeat;
-    border-color: #dc3545;
+    
     background-color: rgba(220, 53, 69, 0.3);
 }
 
@@ -418,14 +414,14 @@
 
 .mine-cell.revealed::after {
     content: '💰';
-    font-size: 32px;
+    font-size: 24px;
     position: absolute;
 }
 
 
 .mine-cell.mine::after {
     content: '💣';
-    font-size: 32px;
+    font-size: 24px;
     position: absolute;
 }
 .mine-cell:not(.revealed):not(.mine)::before {
@@ -433,8 +429,9 @@
 }
 
 .mine-cell:not(.revealed):not(.mine) {
-    background-size: 90% 90%;
+    background-size: cover;
     background-color: transparent;
+    border: none;
 }
 
 .balance-updated {
