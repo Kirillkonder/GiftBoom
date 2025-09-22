@@ -1,3 +1,42 @@
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    position: relative;
+    background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+    overflow-x: hidden;
+}
+
+.grid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.3;
+    background-image: 
+        linear-gradient(rgba(0, 255, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.2) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(50px, 50px);
+    }
+}
+
+.game-container {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+}
+
 .mines-container {
     max-width: 600px;
     margin: 0 auto;
@@ -372,14 +411,16 @@
 .mines-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0; /* Убираем промежутки между ячейками */
+    gap: 3px;
     margin-bottom: 20px;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
-    border: 2px solid #007bff; /* Рамка вокруг всего поля */
-    border-radius: 10px;
-    overflow: hidden; /* Чтобы углы были скругленные */
+    border: 3px solid rgba(0, 255, 255, 0.5);
+    border-radius: 15px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
 }
 
 .mine-cell {
@@ -390,24 +431,33 @@
     justify-content: center;
     cursor: pointer;
     position: relative;
-    border: none; /* Убираем границы у ячеек */
-    margin: 0; /* Убираем отступы */
+    border: 2px solid rgba(0, 255, 255, 0.3);
+    margin: 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    background-color: rgba(0, 100, 200, 0.2);
 }
 
 .mine-cell:hover {
-    background-color: rgba(0, 123, 255, 0.2); /* Легкое подсвечивание при наведении */
+    background-color: rgba(0, 255, 255, 0.3);
+    border-color: rgba(0, 255, 255, 0.6);
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
 
 .mine-cell.revealed {
     background: url('images/poin.png') center/cover no-repeat;
-    
-    background-color: rgba(40, 167, 69, 0.3);
+    background-color: rgba(40, 167, 69, 0.5);
+    border-color: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.4);
 }
 
 .mine-cell.mine {
     background: url('images/poin.png') center/cover no-repeat;
-    
-    background-color: rgba(220, 53, 69, 0.3);
+    background-color: rgba(220, 53, 69, 0.5);
+    border-color: #dc3545;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.4);
 }
 
 
@@ -446,12 +496,13 @@
 
 /* Новые стили для улучшенного интерфейса ставок */
 .bet-controls-container {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 255, 255, 0.1);
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    border: 2px solid rgba(0, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);
 }
 
 .bet-section, .mines-section {
@@ -466,51 +517,24 @@
     opacity: 0.8;
 }
 
-.bet-amount-selector {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.bet-option {
-    padding: 12px 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 14px;
-}
-
-.bet-option:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-.bet-option.active {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    border-color: #00c851;
-    color: #000;
-    transform: scale(1.05);
-}
+/* Убираем стили для кнопок выбора ставки, которые больше не используются */
 
 .custom-bet input {
     width: 100%;
     padding: 12px;
     background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(0, 255, 255, 0.3);
     border-radius: 10px;
     color: #fff;
     font-size: 16px;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 .custom-bet input:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: #00ffff;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
 }
 
 .mines-counter {
@@ -571,11 +595,12 @@
     justify-content: center;
     gap: 10px;
     margin-top: 10px;
+    box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
 }
 
 .start-game-btn:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 200, 81, 0.3);
+    box-shadow: 0 10px 25px rgba(0, 200, 81, 0.5);
 }
 
 .start-game-btn:disabled {
@@ -628,11 +653,12 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    box-shadow: 0 5px 15px rgba(255, 149, 0, 0.3);
 }
 
 .cashout-btn:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(255, 149, 0, 0.3);
+    box-shadow: 0 10px 25px rgba(255, 149, 0, 0.5);
 }
 
 .cashout-btn:disabled {

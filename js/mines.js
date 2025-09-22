@@ -250,41 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateMinesDisplay();
     
-    // Обработчики для кнопок выбора ставки
-    document.querySelectorAll('.bet-option').forEach(button => {
-        button.addEventListener('click', function() {
-            // Убираем активный класс у всех кнопок
-            document.querySelectorAll('.bet-option').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Добавляем активный класс к текущей кнопке
-            this.classList.add('active');
-            
-            // Устанавливаем значение ставки
-            const betValue = parseFloat(this.getAttribute('data-bet'));
-            document.getElementById('betAmount').value = betValue;
-        });
-    });
     
-    // Активируем первую кнопку ставки по умолчанию
-    document.querySelector('.bet-option[data-bet="0.1"]').classList.add('active');
-    
-    // Обновляем активную кнопку при изменении поля ввода
-    document.getElementById('betAmount').addEventListener('input', function() {
-        const betValue = parseFloat(this.value);
-        
-        // Убираем активный класс у всех кнопок
-        document.querySelectorAll('.bet-option').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Находим кнопку с соответствующим значением и активируем ее
-        const matchingButton = document.querySelector(`.bet-option[data-bet="${betValue}"]`);
-        if (matchingButton) {
-            matchingButton.classList.add('active');
-        }
-    });
+    // Активируем поле ввода ставки по умолчанию
+    document.getElementById('betAmount').focus();
     
     // Обработчики кнопок игры
     document.getElementById('startGame').addEventListener('click', startGame);
