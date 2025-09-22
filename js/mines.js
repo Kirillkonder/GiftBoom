@@ -199,11 +199,15 @@ function resetGrid() {
         cell.className = 'mine-cell';
         cell.dataset.index = i;
         
-        // Устанавливаем изображение poin.png как фон
+        // Устанавливаем изображение poin.png как основное поле
         cell.style.backgroundImage = "url('images/poin.png')";
-        cell.style.backgroundSize = 'cover';
+        cell.style.backgroundSize = '90% 90%';
         cell.style.backgroundPosition = 'center';
         cell.style.backgroundRepeat = 'no-repeat';
+        cell.style.backgroundColor = 'transparent';
+        
+        // Убираем любые текстовые элементы
+        cell.textContent = '';
         
         cell.addEventListener('click', () => {
             if (currentGame && !currentGame.gameOver) {

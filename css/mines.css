@@ -372,8 +372,11 @@
 .mines-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    gap: 5px;
     margin-bottom: 20px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .mine-cell {
@@ -391,7 +394,9 @@
     border: 2px solid #007bff;
     position: relative;
     overflow: hidden;
+    width: 100%;
 }
+
 .mine-cell:hover {
     transform: scale(1.05);
     border-color: #0056b3;
@@ -413,21 +418,23 @@
 
 .mine-cell.revealed::after {
     content: '💰';
-    font-size: 24px;
+    font-size: 32px;
     position: absolute;
 }
+
 
 .mine-cell.mine::after {
     content: '💣';
-    font-size: 24px;
+    font-size: 32px;
     position: absolute;
 }
-
 .mine-cell:not(.revealed):not(.mine)::before {
-    content: '?';
-    font-size: 20px;
-    color: #fff;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    content: '';
+}
+
+.mine-cell:not(.revealed):not(.mine) {
+    background-size: 90% 90%;
+    background-color: transparent;
 }
 
 .balance-updated {
