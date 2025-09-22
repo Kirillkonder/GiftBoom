@@ -2,8 +2,6 @@ let currentGame = null;
 let isDemoMode = true;
 let userData = null;
 let currentUser = null;
-let currentBetAmount = 10;
-let currentMinesCount = 3;
 
 // ==================== НОВЫЙ ФУНКЦИОНАЛ БАЛАНСА ИЗ ROCKET ====================
 
@@ -117,7 +115,7 @@ async function checkDepositStatus(invoiceId) {
     }, 5000);
 }
 
-// Toast уведомления
+// Toast уведомления из Rocket
 function showToast(type, title, message, duration = 3000) {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     
@@ -191,8 +189,8 @@ window.onclick = function(event) {
     }
 }
 
-// Функция создания сетки
-function createGrid() {
+// Функция сброса поля для новой игры
+function resetGrid() {
     const grid = document.getElementById('minesGrid');
     grid.innerHTML = '';
     
@@ -201,76 +199,58 @@ function createGrid() {
         cell.className = 'mine-cell';
         cell.dataset.index = i;
         
+        // Ваше изображение будет фоном всей ячейки
+        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.style.backgroundSize = 'cover';
+        cell.style.backgroundPosition = 'center';
+        cell.style.border = 'none';
+        
         cell.addEventListener('click', () => {
-            if (!currentGame) {
-                startGame();
-            } else if (!currentGame.gameOver) {
+            if (currentGame && !currentGame.gameOver) {
                 revealCell(i);
             }
         });
-        
         grid.appendChild(cell);
     }
-}
-
-// Обновление отображения ставки
-function updateBetDisplay() {
-    document.getElementById('betAmount').textContent = currentBetAmount;
-    if (document.getElementById('betInput')) {
-        document.getElementById('betInput').value = currentBetAmount;
-    }
-}
-
-// Обновление отображения мин
-function updateMinesDisplay() {
-    document.getElementById('minesValue').textContent = currentMinesCount;
 }
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
     loadUserData();
-    createGrid();
-    updateBetDisplay();
+    document.getElementById('startGame').addEventListener('click', startGame);
+    document.getElementById('cashoutBtn').addEventListener('click', cashout);
+    
+    // Создаем поле сразу при загрузке страницы
+    resetGrid();
+    
+    // Управление количеством мин
+    const minesDecrease = document.getElementById('minesDecrease');
+    const minesIncrease = document.getElementById('minesIncrease');
+    const minesValue = document.getElementById('minesValue');
+    
+    const minesOptions = [3, 5, 7];
+    let currentMinesIndex = 0;
+    
+    function updateMinesDisplay() {
+        minesValue.textContent = minesOptions[currentMinesIndex];
+    }
+    
+    minesDecrease.addEventListener('click', function() {
+        if (currentMinesIndex > 0) {
+            currentMinesIndex--;
+            updateMinesDisplay();
+        }
+    });
+    
+    minesIncrease.addEventListener('click', function() {
+        if (currentMinesIndex < minesOptions.length - 1) {
+            currentMinesIndex++;
+            updateMinesDisplay();
+        }
+    });
+    
     updateMinesDisplay();
-    
-    // Контроль мин
-    document.getElementById('minesDecrease').addEventListener('click', function() {
-        if (currentMinesCount > 1) {
-            currentMinesCount--;
-            updateMinesDisplay();
-        }
-    });
-    
-    document.getElementById('minesIncrease').addEventListener('click', function() {
-        if (currentMinesCount < 24) {
-            currentMinesCount++;
-            updateMinesDisplay();
-        }
-    });
-    
-    // Контроль ставок
-    document.getElementById('betMinus').addEventListener('click', function() {
-        if (currentBetAmount > 1) {
-            currentBetAmount -= 1;
-            updateBetDisplay();
-        }
-    });
-    
-    document.getElementById('betPlus').addEventListener('click', function() {
-        if (currentBetAmount < 100) {
-            currentBetAmount += 1;
-            updateBetDisplay();
-        }
-    });
-
-    // Совместимость со старым кодом
-    if (document.getElementById('startGame')) {
-        document.getElementById('startGame').addEventListener('click', startGame);
-    }
-    if (document.getElementById('cashoutBtn')) {
-        document.getElementById('cashoutBtn').addEventListener('click', cashout);
-    }
 });
 
 function goBack() {
@@ -283,12 +263,17 @@ async function loadUserData() {
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             const telegramId = tg.initDataUnsafe.user.id;
             
+            // Используем правильный endpoint для получения баланса
             const response = await fetch(`/api/user/balance/${telegramId}`);
             if (response.ok) {
                 userData = await response.json();
+                // Исправляем здесь - используем правильное поле баланса
                 const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
                 document.getElementById('balance').textContent = balance.toFixed(2);
                 isDemoMode = userData.demo_mode;
+                document.getElementById('demo-badge').textContent = isDemoMode ? 'TESTNET' : 'MAINNET';
+                document.getElementById('demo-badge').style.background = isDemoMode ? '#ffc107' : '#007bff';
+                document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
             }
         }
     } catch (error) {
@@ -297,11 +282,11 @@ async function loadUserData() {
 }
 
 async function startGame() {
-    const betAmount = currentBetAmount;
-    const minesCount = currentMinesCount;
+    const betAmount = parseFloat(document.getElementById('betAmount').value);
+    const minesCount = parseInt(document.getElementById('minesValue').textContent);
     
-    if (betAmount < 0.1 || betAmount > 100) {
-        showToast('error', 'Ошибка', 'Ставка должна быть от 0.1 до 100 TON');
+    if (betAmount < 0.1 || betAmount > 10) {
+        showToast('error', 'Ошибка', 'Ставка должна быть от 0.1 до 10 TON');
         return;
     }
 
@@ -309,6 +294,7 @@ async function startGame() {
         const tg = window.Telegram.WebApp;
         const telegramId = tg.initDataUnsafe.user.id;
 
+        // ИСПРАВЛЕННЫЙ ENDPOINT - убрал лишний слэш
         const response = await fetch('/api/mines/start', {
             method: 'POST',
             headers: {
@@ -330,8 +316,10 @@ async function startGame() {
 
         const result = await response.json();
         if (result.success) {
+            // Обновляем баланс после успешной ставки
             await updateBalance();
             
+            // Создаем объект игры на клиенте
             currentGame = {
                 gameId: result.game_id,
                 betAmount: betAmount,
@@ -354,15 +342,9 @@ async function startGame() {
 }
 
 function setupGameUI() {
-    if (document.getElementById('gameInfo')) {
-        document.getElementById('gameInfo').style.display = 'flex';
-    }
-    if (document.getElementById('cashoutBtn')) {
-        document.getElementById('cashoutBtn').disabled = false;
-    }
-    if (document.getElementById('startGame')) {
-        document.getElementById('startGame').disabled = true;
-    }
+    document.getElementById('gameInfo').style.display = 'flex';
+    document.getElementById('cashoutBtn').disabled = false;
+    document.getElementById('startGame').disabled = true;
 
     updateMultiplier();
     
@@ -370,6 +352,10 @@ function setupGameUI() {
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
+        cell.style.backgroundImage = "url('images/poin.png')";
+        cell.innerHTML = ''; // Очищаем эмодзи
+        cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
+        cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
     });
 }
 
@@ -398,10 +384,12 @@ async function revealCell(cellIndex) {
         const result = await response.json();
         
         if (result.mine_hit) {
+            // Попали на мину
             updateCellUI(cellIndex, true);
             endGame(false);
             showToast('error', 'Проигрыш', 'Вы попали на мину!');
             
+            // Показываем все мины после проигрыша
             if (result.mines) {
                 result.mines.forEach(mineIndex => {
                     if (mineIndex !== cellIndex) {
@@ -410,6 +398,7 @@ async function revealCell(cellIndex) {
                 });
             }
         } else {
+            // Ячейка безопасна
             currentGame.revealedCells.push(cellIndex);
             currentGame.currentMultiplier = result.multiplier;
             updateCellUI(cellIndex, false);
@@ -426,19 +415,23 @@ function updateCellUI(cellIndex, isMine) {
     
     if (isMine) {
         cell.className = 'mine-cell mine';
+        cell.style.borderColor = '#dc3545';
+        cell.style.backgroundColor = 'rgba(220, 53, 69, 0.3)';
+        cell.innerHTML = '💣'; // Добавляем эмодзи мины
     } else {
         cell.className = 'mine-cell revealed';
+        cell.style.borderColor = '#28a745';
+        cell.style.backgroundColor = 'rgba(40, 167, 69, 0.3)';
+        cell.innerHTML = '💰'; // Добавляем эмодзи монеты
     }
     
     cell.style.pointerEvents = 'none';
 }
 
 function updateMultiplier() {
-    if (document.getElementById('multiplier')) {
-        document.getElementById('multiplier').textContent = currentGame.currentMultiplier.toFixed(2) + 'x';
-    }
+    document.getElementById('multiplier').textContent = currentGame.currentMultiplier.toFixed(2) + 'x';
     
-    if (currentGame.betAmount > 0 && document.getElementById('potentialWin')) {
+    if (currentGame.betAmount > 0) {
         const potentialWin = currentGame.betAmount * currentGame.currentMultiplier;
         document.getElementById('potentialWin').textContent = potentialWin.toFixed(2);
     }
@@ -479,16 +472,10 @@ async function cashout() {
 
 function endGame(isWin, winAmount = 0) {
     currentGame.gameOver = true;
-    if (document.getElementById('startGame')) {
-        document.getElementById('startGame').disabled = false;
-    }
-    if (document.getElementById('cashoutBtn')) {
-        document.getElementById('cashoutBtn').disabled = true;
-    }
-    if (document.getElementById('gameInfo')) {
-        document.getElementById('gameInfo').style.display = 'none';
-    }
-    
+    document.getElementById('cashoutBtn').disabled = true;
+    document.getElementById('startGame').disabled = false;
+    document.getElementById('gameInfo').style.display = 'none';
+
     // Блокируем все ячейки
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.style.pointerEvents = 'none';
@@ -506,22 +493,16 @@ function resetGameUI() {
     currentGame = null;
     
     // Сбрасываем поле
-    createGrid();
+    resetGrid();
     
     // Сбрасываем информацию о игре
-    if (document.getElementById('multiplier')) {
-        document.getElementById('multiplier').textContent = '1x';
-    }
-    if (document.getElementById('potentialWin')) {
-        document.getElementById('potentialWin').textContent = '0';
-    }
+    document.getElementById('multiplier').textContent = '1x';
+    document.getElementById('potentialWin').textContent = '0';
     
     // Показываем сообщение о результате (если нужно)
     const resultMessage = document.getElementById('resultMessage');
-    if (resultMessage) {
-        resultMessage.style.display = 'none';
-        resultMessage.className = 'result-message';
-    }
+    resultMessage.style.display = 'none';
+    resultMessage.className = 'result-message';
 }
 
 async function updateBalance() {
@@ -532,17 +513,16 @@ async function updateBalance() {
         const response = await fetch(`/api/user/balance/${telegramId}`);
         if (response.ok) {
             const userData = await response.json();
+            // Исправляем здесь
             const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
             document.getElementById('balance').textContent = balance.toFixed(2);
             
-            // Анимация обновления баланса
+            // Анимация обновления баланса как в Rocket
             const balanceElement = document.getElementById('balance');
-            if (balanceElement && balanceElement.classList) {
-                balanceElement.classList.add('balance-updated');
-                setTimeout(() => {
-                    balanceElement.classList.remove('balance-updated');
-                }, 1000);
-            }
+            balanceElement.classList.add('balance-updated');
+            setTimeout(() => {
+                balanceElement.classList.remove('balance-updated');
+            }, 1000);
         }
     } catch (error) {
         console.error('Error updating balance:', error);

@@ -6,85 +6,72 @@
     <title>Mines - Casino Gift Contract</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/mines.css">
 </head>
 <body>
-    <div class="mines-app">
-        <!-- Верхняя панель -->
+    <!-- Фон с сеткой на всю страницу -->
+    <div class="grid-background"></div>
+    
+    <div class="game-container">
+        <!-- Верхняя панель как в Rocket -->
         <div class="top-panel">
             <div class="close-btn" onclick="goBack()">
-                <span>✕</span>
-                <span>Закрыть</span>
+                <span>←</span>
             </div>
-            <div class="top-center">
-                <div class="players-counter">
-                    <span class="players-icon">👥</span>
-                    <span id="playersCount">190</span>
+            <div class="top-right">
+                <!-- Счетчик игроков (можно скрыть для Mines) -->
+                <div class="players-counter" style="display: none;">
+                    <i class="bi bi-people-fill" style="color: #00c851;"></i>
+                    <span id="playersCount">0</span>
                 </div>
-                <div class="menu-dots">⋯</div>
-            </div>
-            <div class="timer">
-                <span>⏱</span>
-                <span id="timer">0:00</span>
-                <span class="sound-btn">🔊</span>
-            </div>
-        </div>
-
-        <!-- Заголовок MINES -->
-        <div class="game-header">
-            <h1 class="game-title">MINES</h1>
-        </div>
-
-        <!-- Баланс -->
-        <div class="balance-container">
-            <div class="balance-display">
-                <div class="balance-icon">💎</div>
-                <span class="balance-amount" id="balance">1278.12</span>
-                <div class="balance-plus" onclick="openDepositModal()">+</div>
+                <div class="balance">
+                    <i class="bi bi-currency-exchange"></i>
+                    <span id="balance">0.00</span>
+                    <button class="balance-plus-btn" onclick="openDepositModal()">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                <div id="demo-badge" style="display: none; background: #ff9500; color: black; padding: 2px 6px; border-radius: 8px; font-size: 10px;">
+                    DEMO
+                </div>
             </div>
         </div>
 
-        <!-- Игровое поле -->
-        <div class="game-field">
-            <div class="mines-grid" id="minesGrid">
-                <!-- 25 ячеек будут созданы через JS -->
+        <div class="mines-content">
+    <h1>💣 Mines Game</h1>
+    
+    <div class="bet-controls">
+        <input type="number" class="bet-input" id="betAmount" min="0.1" max="10" step="0.1" value="0.1" placeholder="Ставка">
+        
+        <!-- Счетчик мин -->
+        <div class="mines-counter">
+            <button class="mines-counter-btn" id="minesDecrease">-</button>
+            <div class="mines-counter-display">
+                <span id="minesValue">3</span> мин
             </div>
+            <button class="mines-counter-btn" id="minesIncrease">+</button>
         </div>
-
-        <!-- Контроль мин -->
-        <div class="mines-control">
-            <button class="control-btn" id="minesDecrease">&lt;</button>
-            <div class="mines-display">
-                <span id="minesValue">3</span>
-                <span class="mines-label">ловушек</span>
-            </div>
-            <button class="control-btn" id="minesIncrease">&gt;</button>
-        </div>
-
-        <!-- Контроль ставок -->
-        <div class="bet-control">
-            <button class="bet-btn minus" id="betMinus">—</button>
-            <div class="bet-display">
-                <span class="bet-amount" id="betAmount">10</span>
-                <span class="bet-currency">TON</span>
-            </div>
-            <button class="bet-btn plus" id="betPlus">+</button>
-        </div>
-
-        <!-- Скрытые элементы для совместимости -->
-        <div style="display: none;">
-            <input type="number" id="betInput" value="10">
-            <button id="startGame">Начать игру</button>
-            <button id="cashoutBtn">Забрать</button>
-            <div id="gameInfo">
-                <span id="multiplier">1x</span>
-                <span id="potentialWin">0</span>
-            </div>
-            <div id="resultMessage"></div>
-        </div>
+        
+        <button class="start-btn" id="startGame">Начать игру</button>
     </div>
 
-    <!-- Модальное окно пополнения баланса -->
+    <div class="game-info" id="gameInfo" style="display: none;">
+        <div>Множитель: <span id="multiplier">1x</span></div>
+        <div>Выигрыш: <span id="potentialWin">0</span> TON</div>
+    </div>
+
+    <!-- Поле с увеличенными ячейками -->
+    <div class="mines-grid" id="minesGrid"></div>
+
+    <div class="game-controls">
+        <button class="cashout-btn" id="cashoutBtn" disabled>Забрать</button>
+    </div>
+
+    <div id="resultMessage" class="result-message" style="display: none;"></div>
+</div>
+
+    <!-- Модальное окно пополнения баланса как в Rocket -->
     <div id="deposit-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -107,4 +94,4 @@
     <script src="js/mines.js"></script>
     <div id="toast-container" class="toast-container"></div>
 </body>
-</html>>
+</html>
