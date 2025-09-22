@@ -331,13 +331,14 @@ body::after {
 
 /* Список игроков */
 .players-list {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
     max-height: 260px;
     overflow-y: auto;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
-    border-radius: 10px;
-    margin: 0 16px;
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
 }
 
 .player-item:nth-child(1) { animation-delay: 0.1s; }
@@ -498,8 +499,9 @@ body::after {
     }
     
     .players-list {
-        padding: 0 12px 12px;
-        margin: 0 12px;
+        padding: 0 0 12px;
+        margin: 0;
+        width: 100%;
     }
 }
 
@@ -598,8 +600,9 @@ body::after {
 }
 
 .players-section {
-    padding: 0 16px 5px !important;
+    padding: 0 0 5px !important;
     margin-top: 5px;
+    width: 100%;
 }
 
 .players-header {
@@ -1242,5 +1245,33 @@ body::after {
     
     .ton-label {
         font-size: 13px;
+    }
+}
+
+/* Дополнительные стили для игроков на всю ширину */
+.players-list .player-item {
+    padding: 8px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.players-section .player-item {
+    padding: 8px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Обеспечиваем полную ширину для всех размеров экрана */
+@media (max-width: 390px) {
+    .players-list .player-item,
+    .players-section .player-item {
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 320px) {
+    .players-list .player-item,
+    .players-section .player-item {
+        padding: 8px 10px;
     }
 }
