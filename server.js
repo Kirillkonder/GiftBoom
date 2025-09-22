@@ -1349,8 +1349,9 @@ app.post('/api/coin/flip', async (req, res) => {
     }
 });
 
+// API: Обработка выигрыша серии в Coin
 app.post('/api/coin/series-win', async (req, res) => {
-    const { telegramId, winAmount, seriesLength, demoMode } = req.body;
+    const { telegramId, winAmount, seriesLength, baseBet, demoMode } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -1384,8 +1385,9 @@ app.post('/api/coin/series-win', async (req, res) => {
             demo_mode: demoMode,
             details: {
                 series_length: seriesLength,
+                base_bet: baseBet,
                 win_amount: winAmount,
-                multiplier: (winAmount / (currentBetAmount || 0.1)).toFixed(2)
+                multiplier: (winAmount / baseBet).toFixed(2)
             },
             created_at: new Date()
         });
@@ -1397,6 +1399,45 @@ app.post('/api/coin/series-win', async (req, res) => {
 
     } catch (error) {
         console.error('Coin series win error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Обработка проигрыша серии в Coin
+app.post('/api/coin/series-loss', async (req, res) => {
+    const { telegramId, lossAmount, seriesLength, demoMode } = req.body;
+
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Ставка уже была списана в начале серии, просто обновляем баланс для отображения
+        const currentBalance = demoMode ? user.demo_balance : user.main_balance;
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            user_id: user.$loki,
+            amount: -lossAmount,
+            type: 'coin_series_loss',
+            status: 'completed',
+            demo_mode: demoMode,
+            details: {
+                series_length: seriesLength,
+                loss_amount: lossAmount
+            },
+            created_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            new_balance: currentBalance
+        });
+
+    } catch (error) {
+        console.error('Coin series loss error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
