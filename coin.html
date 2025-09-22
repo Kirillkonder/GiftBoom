@@ -220,7 +220,7 @@ function validateBetAmount() {
 
 // Функции для серийной игры
 function toggleSeries() {
-    if (seriesBetLocked) return;
+    if (seriesBetLocked && !isSeriesActive) return;
     
     isSeriesActive = !isSeriesActive;
     
@@ -230,7 +230,7 @@ function toggleSeries() {
     if (isSeriesActive) {
         // Начинаем новую серию
         seriesCount = 0;
-        seriesMultiplier = 1.00; // Начинаем с 1.00
+        seriesMultiplier = 1.00;
         seriesWinAmount = 0;
         seriesResults = [];
         baseBetAmount = currentBetAmount;
@@ -335,14 +335,20 @@ function processSeriesResult(isWin) {
             showToast('info', 'Серия завершена', `Серия прервана после ${seriesCount} побед`);
         }
     } else {
-        // Проигрыш - серия прерывается, ставка теряется
-        if (seriesCount > 0) {
-            showToast('error', 'Серия прервана', `Проигрыш после ${seriesCount} побед. Ставка ${baseBetAmount} TON потеряна`);
-        } else {
-            showToast('error', 'Проигрыш', `Ставка ${baseBetAmount} TON потеряна`);
-        }
+        // Проигрыш - серия НЕ прерывается автоматически
+        // Игрок может продолжать серию с тем же множителем
+        showToast('error', 'Проигрыш в серии', `Проигрыш! Серия продолжается. Текущая серия: ${seriesCount} побед`);
         
-        resetSeries();
+        // Сбрасываем счетчик серии при проигрыше
+        seriesCount = 0;
+        seriesMultiplier = 1.00;
+        seriesWinAmount = 0;
+        seriesBetDeducted = false; // Разрешаем списание ставки для следующей попытки
+        
+        updateSeriesDisplay();
+        
+        // Показываем сообщение о возможности продолжения
+        showToast('info', 'Серия продолжается', 'Сделайте следующую ставку для продолжения серии');
     }
 }
 
@@ -392,7 +398,7 @@ async function flipCoin() {
     document.getElementById('flipButton').classList.add('loading');
     
     try {
-        // Для серии: если ставка еще не снята, снимаем ее при первом броске
+        // Для серии: если ставка еще не снята, снимаем ее при каждом броске
         let deductBet = false;
         if (isSeriesActive && !seriesBetDeducted) {
             deductBet = true;
@@ -437,6 +443,18 @@ async function flipCoin() {
                 // Обрабатываем результат для серии
                 if (isSeriesActive) {
                     processSeriesResult(result.win);
+                    
+                    // После обработки результата, если серия активна, разрешаем следующий бросок
+                    if (isSeriesActive) {
+                        // Сбрасываем выбор для следующего броска в серии
+                        selectedChoice = null;
+                        document.querySelectorAll('.choice-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        
+                        // Активируем кнопку для следующего броска
+                        document.getElementById('flipButton').disabled = false;
+                    }
                 } else {
                     // Показываем результат для одиночной игры
                     if (result.win) {
@@ -444,10 +462,8 @@ async function flipCoin() {
                     } else {
                         showLossNotification(betAmount, result.result);
                     }
-                }
-                
-                // Сбрасываем выбор (только если не в серии)
-                if (!isSeriesActive) {
+                    
+                    // Сбрасываем выбор для одиночной игры
                     selectedChoice = null;
                     document.querySelectorAll('.choice-btn').forEach(btn => {
                         btn.classList.remove('active');
@@ -456,6 +472,11 @@ async function flipCoin() {
                 
                 isFlipping = false;
                 document.getElementById('flipButton').classList.remove('loading');
+                
+                // Если это не серия или серия завершена, кнопка остается заблокированной
+                if (!isSeriesActive) {
+                    document.getElementById('flipButton').disabled = true;
+                }
                 
             }, 1000);
             
@@ -468,7 +489,11 @@ async function flipCoin() {
         showError(error.message || 'Ошибка при броске монетки');
         isFlipping = false;
         document.getElementById('flipButton').classList.remove('loading');
-        document.getElementById('flipButton').disabled = false;
+        
+        // В случае ошибки разрешаем повторную попытку
+        if (isSeriesActive) {
+            document.getElementById('flipButton').disabled = false;
+        }
     }
 }
 
