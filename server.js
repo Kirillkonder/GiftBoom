@@ -1258,7 +1258,7 @@ app.get('/api/rocket/current', async (req, res) => {
 
 // Coin Game Functions
 app.post('/api/coin/flip', async (req, res) => {
-    const { telegramId, betAmount, choice, demoMode } = req.body;
+    const { telegramId, betAmount, choice, demoMode, isSeries, deductBet } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -1269,7 +1269,8 @@ app.post('/api/coin/flip', async (req, res) => {
 
         const balance = demoMode ? user.demo_balance : user.main_balance;
         
-        if (balance < betAmount) {
+        // Проверяем достаточно ли средств (только если нужно списывать ставку)
+        if ((deductBet || !isSeries) && balance < betAmount) {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
 
@@ -1278,43 +1279,64 @@ app.post('/api/coin/flip', async (req, res) => {
             return res.status(400).json({ error: 'Invalid choice' });
         }
 
-        // Списываем ставку
-        if (demoMode) {
-            users.update({
-                ...user,
-                demo_balance: user.demo_balance - betAmount
-            });
-            updateCasinoDemoBank(betAmount);
-        } else {
-            users.update({
-                ...user,
-                main_balance: user.main_balance - betAmount
-            });
-            updateCasinoBank(betAmount);
-            updateRTPStats('realBank', betAmount, 0);
+        let newBalance = balance;
+        let balanceUpdated = false;
+
+        // Списываем ставку если нужно
+        if (deductBet || !isSeries) {
+            if (demoMode) {
+                users.update({
+                    ...user,
+                    demo_balance: user.demo_balance - betAmount
+                });
+                updateCasinoDemoBank(betAmount);
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: user.main_balance - betAmount
+                });
+                updateCasinoBank(betAmount);
+                if (!isSeries) updateRTPStats('realBank', betAmount, 0);
+            }
+            newBalance = demoMode ? user.demo_balance - betAmount : user.main_balance - betAmount;
+            balanceUpdated = true;
         }
 
         // Генерируем результат (50/50)
         const result = Math.random() < 0.5 ? 'heads' : 'tails';
         const win = result === choice;
-        const winAmount = win ? betAmount * 1.95 : 0; // 1.95x для RTP ~97.5%
+        
+        // Для серии возвращаем только результат, без списания/начисления
+        if (isSeries) {
+            return res.json({
+                success: true,
+                result: result,
+                win: win,
+                balance_updated: balanceUpdated,
+                new_balance: newBalance
+            });
+        }
+
+        // Для одиночной игры обрабатываем выигрыш/проигрыш
+        const winAmount = win ? betAmount * 1.95 : 0;
 
         // Начисляем выигрыш если победил
         if (win) {
             if (demoMode) {
                 users.update({
                     ...user,
-                    demo_balance: user.demo_balance + winAmount
+                    demo_balance: newBalance + winAmount
                 });
                 updateCasinoDemoBank(-winAmount);
             } else {
                 users.update({
                     ...user,
-                    main_balance: user.main_balance + winAmount
+                    main_balance: newBalance + winAmount
                 });
                 updateCasinoBank(-winAmount);
                 updateRTPStats('realBank', 0, winAmount);
             }
+            newBalance += winAmount;
         }
 
         // Сохраняем транзакцию
@@ -1328,7 +1350,8 @@ app.post('/api/coin/flip', async (req, res) => {
                 choice: choice,
                 result: result,
                 bet_amount: betAmount,
-                win_amount: winAmount
+                win_amount: winAmount,
+                is_series: isSeries || false
             },
             created_at: new Date()
         });
@@ -1338,9 +1361,8 @@ app.post('/api/coin/flip', async (req, res) => {
             result: result,
             win: win,
             win_amount: winAmount,
-            new_balance: demoMode ? 
-                (win ? user.demo_balance + winAmount : user.demo_balance - betAmount) :
-                (win ? user.main_balance + winAmount : user.main_balance - betAmount)
+            balance_updated: true,
+            new_balance: newBalance
         });
 
     } catch (error) {
@@ -1360,17 +1382,19 @@ app.post('/api/coin/series-win', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        const currentBalance = demoMode ? user.demo_balance : user.main_balance;
+
         // Начисляем выигрыш
         if (demoMode) {
             users.update({
                 ...user,
-                demo_balance: user.demo_balance + winAmount
+                demo_balance: currentBalance + winAmount
             });
             updateCasinoDemoBank(-winAmount);
         } else {
             users.update({
                 ...user,
-                main_balance: user.main_balance + winAmount
+                main_balance: currentBalance + winAmount
             });
             updateCasinoBank(-winAmount);
             updateRTPStats('realBank', 0, winAmount);
@@ -1394,50 +1418,11 @@ app.post('/api/coin/series-win', async (req, res) => {
 
         res.json({
             success: true,
-            new_balance: demoMode ? user.demo_balance + winAmount : user.main_balance + winAmount
+            new_balance: demoMode ? currentBalance + winAmount : currentBalance + winAmount
         });
 
     } catch (error) {
         console.error('Coin series win error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// API: Обработка проигрыша серии в Coin
-app.post('/api/coin/series-loss', async (req, res) => {
-    const { telegramId, lossAmount, seriesLength, demoMode } = req.body;
-
-    try {
-        const user = users.findOne({ telegram_id: parseInt(telegramId) });
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Ставка уже была списана в начале серии, просто обновляем баланс для отображения
-        const currentBalance = demoMode ? user.demo_balance : user.main_balance;
-
-        // Сохраняем транзакцию
-        transactions.insert({
-            user_id: user.$loki,
-            amount: -lossAmount,
-            type: 'coin_series_loss',
-            status: 'completed',
-            demo_mode: demoMode,
-            details: {
-                series_length: seriesLength,
-                loss_amount: lossAmount
-            },
-            created_at: new Date()
-        });
-
-        res.json({
-            success: true,
-            new_balance: currentBalance
-        });
-
-    } catch (error) {
-        console.error('Coin series loss error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

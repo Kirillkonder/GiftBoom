@@ -114,6 +114,7 @@
         let baseBetAmount = 0.1;
         let seriesResults = [];
         let seriesBetLocked = false;
+        let seriesBetDeducted = false;
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -233,7 +234,8 @@
                 seriesWinAmount = 0;
                 seriesResults = [];
                 baseBetAmount = currentBetAmount;
-                seriesBetLocked = true; // Блокируем изменение ставки
+                seriesBetLocked = true;
+                seriesBetDeducted = false;
                 
                 // Блокируем кнопки изменения ставки
                 document.querySelectorAll('.bet-amount-btn').forEach(btn => {
@@ -263,10 +265,6 @@
             
             // Выплачиваем выигрыш за серию
             processSeriesWin();
-            
-            // Сбрасываем серию
-            resetSeries();
-            showToast('success', 'Серия завершена', `Вы забрали выигрыш ${seriesWinAmount.toFixed(2)} TON`);
         }
 
         function updateSeriesDisplay() {
@@ -282,6 +280,7 @@
             seriesWinAmount = 0;
             seriesResults = [];
             seriesBetLocked = false;
+            seriesBetDeducted = false;
             
             // Разблокируем кнопки изменения ставки
             document.querySelectorAll('.bet-amount-btn').forEach(btn => {
@@ -322,7 +321,6 @@
                 if (seriesCount >= 20) {
                     processSeriesWin();
                     showToast('win', 'Максимальная серия!', `Достигнута максимальная серия из 20 побед!`);
-                    resetSeries();
                     return;
                 }
                 
@@ -330,7 +328,6 @@
                 if (Math.random() < 0.15 && seriesCount > 3) {
                     processSeriesWin();
                     showToast('info', 'Серия завершена', `Серия прервана после ${seriesCount} побед`);
-                    resetSeries();
                 }
             } else {
                 // Проигрыш - серия прерывается, ставка теряется
@@ -340,8 +337,6 @@
                     showToast('error', 'Проигрыш', `Ставка ${baseBetAmount} TON потеряна`);
                 }
                 
-                // Списываем ставку при проигрыше
-                processSeriesLoss();
                 resetSeries();
             }
         }
@@ -370,38 +365,14 @@
                     if (result.success) {
                         // Обновляем баланс
                         document.getElementById('balance').textContent = result.new_balance.toFixed(2);
+                        showToast('success', 'Серия завершена', `Вы забрали выигрыш ${seriesWinAmount.toFixed(2)} TON`);
                     }
                 }
             } catch (error) {
                 console.error('Series win processing error:', error);
-            }
-        }
-
-        async function processSeriesLoss() {
-            try {
-                // Отправляем запрос на сервер для обработки проигрыша
-                const response = await fetch('/api/coin/series-loss', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        lossAmount: baseBetAmount,
-                        seriesLength: seriesCount,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        // Обновляем баланс
-                        document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-                    }
-                }
-            } catch (error) {
-                console.error('Series loss processing error:', error);
+                showToast('error', 'Ошибка', 'Не удалось обработать выигрыш серии');
+            } finally {
+                resetSeries();
             }
         }
 
@@ -416,6 +387,13 @@
             document.getElementById('flipButton').classList.add('loading');
             
             try {
+                // Для серии: если ставка еще не снята, снимаем ее при первом броске
+                let deductBet = false;
+                if (isSeriesActive && !seriesBetDeducted) {
+                    deductBet = true;
+                    seriesBetDeducted = true;
+                }
+                
                 const response = await fetch('/api/coin/flip', {
                     method: 'POST',
                     headers: {
@@ -426,7 +404,8 @@
                         betAmount: betAmount,
                         choice: selectedChoice,
                         demoMode: isDemoMode,
-                        isSeries: isSeriesActive
+                        isSeries: isSeriesActive,
+                        deductBet: deductBet
                     })
                 });
 
@@ -445,6 +424,11 @@
                     setTimeout(() => {
                         coin.classList.remove('flipping');
                         
+                        // Обновляем баланс если ставка была снята или это одиночная игра
+                        if (result.balance_updated || !isSeriesActive) {
+                            document.getElementById('balance').textContent = result.new_balance.toFixed(2);
+                        }
+                        
                         // Обрабатываем результат для серии
                         if (isSeriesActive) {
                             processSeriesResult(result.win);
@@ -455,9 +439,6 @@
                             } else {
                                 showLossNotification(betAmount, result.result);
                             }
-                            
-                            // Обновляем баланс для одиночной игры
-                            document.getElementById('balance').textContent = result.new_balance.toFixed(2);
                         }
                         
                         // Сбрасываем выбор (только если не в серии)
