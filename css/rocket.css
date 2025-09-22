@@ -76,7 +76,7 @@ body {
     left: 0;
     right: 0;
     z-index: 10;
-    width: 100vw;
+    width: 100%;
 }
 
 .close-btn {
@@ -89,7 +89,7 @@ body {
     padding: 8px 12px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
-    background: rgba(0, 0, 0, 0.4);
+    background: transparent;
     transition: all 0.3s ease;
     margin-right: auto;
     flex-shrink: 0;
@@ -113,6 +113,7 @@ body {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    margin-left: auto; /* Прижимаем вправо */
 }
 
 .balance {
