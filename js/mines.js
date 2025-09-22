@@ -352,7 +352,6 @@ async function revealCell(cellIndex) {
     if (!currentGame || currentGame.gameOver) return;
 
     try {
-        // ИСПРАВЛЕННЫЙ ENDPOINT
         const response = await fetch('/api/mines/open', {
             method: 'POST',
             headers: {
@@ -377,12 +376,12 @@ async function revealCell(cellIndex) {
             // Попали на мину
             updateCellUI(cellIndex, true);
             endGame(false);
-            showToast('error', 'Мина!', 'Вы попали на мину! Игра окончена.');
+            showToast('error', 'Проигрыш', 'Вы попали на мину!');
             
             // Показываем все мины после проигрыша
             if (result.mines) {
                 result.mines.forEach(mineIndex => {
-                    if (mineIndex !== cellIndex) { // Не перезаписываем уже открытую мину
+                    if (mineIndex !== cellIndex) {
                         updateCellUI(mineIndex, true);
                     }
                 });
@@ -393,7 +392,7 @@ async function revealCell(cellIndex) {
             currentGame.currentMultiplier = result.multiplier;
             updateCellUI(cellIndex, false);
             updateMultiplier();
-            showToast('success', 'Успех!', `Безопасно! Множитель: ${result.multiplier.toFixed(2)}x`);
+            // Убрал уведомление об успехе при открытии ячейки
         }
     } catch (error) {
         console.error('Error revealing cell:', error);
@@ -430,7 +429,6 @@ async function cashout() {
     if (!currentGame || currentGame.gameOver) return;
 
     try {
-        // ИСПРАВЛЕННЫЙ ENDPOINT
         const response = await fetch('/api/mines/cashout', {
             method: 'POST',
             headers: {
@@ -452,7 +450,7 @@ async function cashout() {
         if (result.success) {
             endGame(true, result.win_amount);
             await updateBalance();
-            showToast('success', 'Поздравляем!', `Вы выиграли ${result.win_amount.toFixed(2)} TON!`);
+            showToast('success', 'Победа!', `Вы выиграли ${result.win_amount.toFixed(2)} TON!`);
         }
     } catch (error) {
         console.error('Error cashing out:', error);
@@ -464,16 +462,9 @@ function endGame(isWin, winAmount = 0) {
     document.getElementById('cashoutBtn').disabled = true;
     document.getElementById('startGame').disabled = false;
 
+    // УБИРАЕМ отображение результата внизу
     const resultMessage = document.getElementById('resultMessage');
-    resultMessage.style.display = 'block';
-
-    if (isWin) {
-        resultMessage.className = 'result-message win';
-        resultMessage.textContent = `Поздравляем! Вы выиграли ${winAmount.toFixed(2)} TON!`;
-    } else {
-        resultMessage.className = 'result-message lose';
-        resultMessage.textContent = 'Игра окончена! Вы проиграли.';
-    }
+    resultMessage.style.display = 'none';
 
     // Блокируем все ячейки
     document.querySelectorAll('.mine-cell').forEach(cell => {
