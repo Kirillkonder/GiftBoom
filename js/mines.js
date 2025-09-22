@@ -199,11 +199,8 @@ function resetGrid() {
         cell.className = 'mine-cell';
         cell.dataset.index = i;
         
-        // Устанавливаем изображение poin.png как фон
-        cell.style.backgroundImage = "url('images/poin.png')";
-        cell.style.backgroundSize = 'cover';
-        cell.style.backgroundPosition = 'center';
-        cell.style.backgroundRepeat = 'no-repeat';
+        // Убираем фоновое изображение из ячеек - теперь оно на общем поле
+        cell.style.backgroundImage = "none";
         
         cell.addEventListener('click', () => {
             if (currentGame && !currentGame.gameOver) {
