@@ -190,18 +190,24 @@ window.onclick = function(event) {
     }
 }
 
-// Функция сброса поля для новой игры
+// Функция сброса поля для новой игры с двумя изображениями
 function resetGrid() {
     const grid = document.getElementById('minesGrid');
     grid.innerHTML = '';
+    
+    // Создаем массив с двумя изображениями в случайном порядке
+    const images = ['poin.png', 'poin_two.png'];
     
     for (let i = 0; i < 25; i++) {
         const cell = document.createElement('div');
         cell.className = 'mine-cell';
         cell.dataset.index = i;
         
-        // Ваше изображение будет фоном всей ячейки
-        cell.style.backgroundImage = "url('images/poin.png')";
+        // Случайный выбор изображения
+        const randomImage = images[Math.floor(Math.random() * images.length)];
+        
+        // Устанавливаем случайное изображение как фон
+        cell.style.backgroundImage = `url('images/${randomImage}')`;
         cell.style.backgroundSize = 'cover';
         cell.style.backgroundPosition = 'center';
         cell.style.border = 'none';
@@ -419,7 +425,12 @@ function setupGameUI() {
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
-        cell.style.backgroundImage = "url('images/poin.png')";
+        
+        // Сохраняем случайное изображение при начале игры
+        const images = ['poin.png', 'poin_two.png'];
+        const randomImage = images[Math.floor(Math.random() * images.length)];
+        cell.style.backgroundImage = `url('images/${randomImage}')`;
+        
         cell.innerHTML = ''; // Очищаем эмодзи
         cell.style.borderColor = '#007bff';
         cell.style.backgroundColor = 'transparent';
@@ -561,7 +572,7 @@ function resetGameUI() {
     // Сбрасываем текущую игру
     currentGame = null;
     
-    // Сбрасываем поле
+    // Сбрасываем поле с двумя случайными изображениями
     resetGrid();
     
     // Сбрасываем информацию о игре
