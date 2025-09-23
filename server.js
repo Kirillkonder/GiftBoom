@@ -62,12 +62,12 @@ let rtpSystem = {
 
 let minesPsychology = {
     userStats: {}, // Статистика по пользователям
-    winStreakThreshold: 3, // Порог серии выигрышей для активации доп мин (3-5)
-    loseStreakThreshold: 6, // Порог серии проигрышей для деактивации (6-8)
-    extraMinesCount: 3, // Количество дополнительных мин
-    trapModeDuration: 2 // Количество ходов в режиме "ловушки"
+    minWinStreak: 3, // Минимум выигрышей для активации доп. мин
+    maxWinStreak: 5, // Максимум выигрышей для активации доп. мин
+    minLoseStreak: 3, // Минимум проигрышей для сброса доп. мин
+    maxLoseStreak: 8, // Максимум проигрышей для сброса доп. мин
+    extraMinesCount: 3 // Количество дополнительных мин
 };
-
 
 // Функция для получения статистики пользователя
 function getUserMinesStats(telegramId) {
@@ -76,11 +76,8 @@ function getUserMinesStats(telegramId) {
             winStreak: 0,
             loseStreak: 0,
             lastGames: [], // Последние 10 игр
-            trapMode: false,
-            trapCounter: 0,
-            extraMinesActive: false, // Флаг дополнительных мин
-            consecutiveWins: 0, // Счетчик последовательных выигрышей
-            consecutiveLosses: 0 // Счетчик последовательных проигрышей
+            extraMinesMode: false, // Режим дополнительных мин
+            extraMinesActivatedAt: 0 // Когда активированы доп. мины
         };
     }
     return minesPsychology.userStats[telegramId];
@@ -93,33 +90,9 @@ function updateUserMinesStats(telegramId, isWin) {
     if (isWin) {
         stats.winStreak++;
         stats.loseStreak = 0;
-        stats.consecutiveWins++;
-        stats.consecutiveLosses = 0;
-        
-        console.log(`✅ Пользователь ${telegramId} выиграл! Серия побед: ${stats.consecutiveWins}`);
-        
-        // Активируем дополнительные мины при достижении порога ВЫИГРЫШЕЙ ПОДРЯД
-        if (stats.consecutiveWins >= minesPsychology.winStreakThreshold && !stats.extraMinesActive) {
-            stats.extraMinesActive = true;
-            stats.trapMode = true;
-            stats.trapCounter = minesPsychology.trapModeDuration;
-            console.log(`🎯 Активированы дополнительные мины для пользователя ${telegramId} (серия выигрышей подряд: ${stats.consecutiveWins})`);
-        }
     } else {
         stats.loseStreak++;
         stats.winStreak = 0;
-        stats.consecutiveLosses++;
-        stats.consecutiveWins = 0; // Сбрасываем счетчик выигрышей при проигрыше
-        
-        console.log(`❌ Пользователь ${telegramId} проиграл! Серия проигрышей: ${stats.consecutiveLosses}`);
-        
-        // Деактивируем дополнительные мины при достижении порога ПРОИГРЫШЕЙ ПОДРЯД
-        if (stats.consecutiveLosses >= minesPsychology.loseStreakThreshold && stats.extraMinesActive) {
-            stats.extraMinesActive = false;
-            stats.trapMode = false;
-            stats.trapCounter = 0;
-            console.log(`🔄 Дополнительные мины деактивированы для пользователя ${telegramId} (серия проигрышей подряд: ${stats.consecutiveLosses})`);
-        }
     }
     
     // Добавляем игру в историю (максимум 10 игр)
@@ -127,109 +100,38 @@ function updateUserMinesStats(telegramId, isWin) {
     if (stats.lastGames.length > 10) {
         stats.lastGames.pop();
     }
+    
+    // Активируем режим дополнительных мин при серии выигрышей (3-5)
+    if (stats.winStreak >= minesPsychology.minWinStreak && 
+        stats.winStreak <= minesPsychology.maxWinStreak && 
+        !stats.extraMinesMode) {
+        stats.extraMinesMode = true;
+        stats.extraMinesActivatedAt = stats.winStreak;
+        console.log(`💣 Активирован режим +${minesPsychology.extraMinesCount} мин для пользователя ${telegramId} (серия выигрышей: ${stats.winStreak})`);
+    }
+    
+    // Деактивируем режим дополнительных мин при серии проигрышей (3-8)
+    if (stats.loseStreak >= minesPsychology.minLoseStreak && 
+        stats.loseStreak <= minesPsychology.maxLoseStreak && 
+        stats.extraMinesMode) {
+        stats.extraMinesMode = false;
+        stats.extraMinesActivatedAt = 0;
+        console.log(`🔄 Сброс режима дополнительных мин для пользователя ${telegramId} (серия проигрышей: ${stats.loseStreak})`);
+    }
 }
 
-// Функция генерации "умных мин" с ловушкой
-function generateSmartMines(game, cellIndex, telegramId) {
+// Функция генерации мин с дополнительными минами
+function generateAdaptiveMines(originalMinesCount, telegramId) {
     const stats = getUserMinesStats(telegramId);
-    const standardMines = game.mines;
     
-    console.log(`🔍 Статистика пользователя ${telegramId}:`);
-    console.log(`   - Выигрышей подряд: ${stats.consecutiveWins}`);
-    console.log(`   - Проигрышей подряд: ${stats.consecutiveLosses}`);
-    console.log(`   - Доп. мины активны: ${stats.extraMinesActive}`);
-    
-    // Если активны дополнительные мины (после серии выигрышей)
-    if (stats.extraMinesActive) {
-        console.log(`💣 Режим дополнительных мин активен для пользователя ${telegramId}`);
-        
-        // Создаем копию стандартных мин
-        let smartMines = [...standardMines];
-        
-        // Добавляем дополнительные мины в случайные безопасные ячейки
-        let addedMines = 0;
-        const maxAttempts = 50;
-        
-        while (addedMines < minesPsychology.extraMinesCount && addedMines < maxAttempts) {
-            const randomCell = Math.floor(Math.random() * 25);
-            
-            // Проверяем, что ячейка не является уже миной и не является открываемой
-            if (!smartMines.includes(randomCell) && 
-                randomCell !== cellIndex && 
-                !game.revealed_cells.includes(randomCell)) {
-                
-                smartMines.push(randomCell);
-                addedMines++;
-                console.log(`💣 Добавлена дополнительная мина на ячейку ${randomCell}`);
-            }
-        }
-        
-        console.log(`✅ Добавлено ${addedMines} дополнительных мин. Всего мин: ${smartMines.length}`);
-        
-        // Уменьшаем счетчик ловушки
-        if (stats.trapCounter > 0) {
-            stats.trapCounter--;
-            
-            // Деактивируем режим ловушки после использования
-            if (stats.trapCounter === 0) {
-                stats.trapMode = false;
-                console.log(`🔄 Режим ловушки деактивирован`);
-            }
-        }
-        
-        return smartMines;
+    // Если активен режим дополнительных мин, добавляем их
+    if (stats.extraMinesMode) {
+        const totalMines = originalMinesCount + minesPsychology.extraMinesCount;
+        console.log(`💣 Генерируем ${totalMines} мин (${originalMinesCount} + ${minesPsychology.extraMinesCount} доп.) для пользователя ${telegramId}`);
+        return Math.min(totalMines, 24); // Максимум 24 мины на поле 5x5
     }
     
-    // Стандартная логика для режима ловушки (если активна)
-    if (stats.trapMode && stats.trapCounter > 0) {
-        console.log(`🎯 Режим ловушки активен, счетчик: ${stats.trapCounter}`);
-        
-        // Уменьшаем счетчик ловушки
-        stats.trapCounter--;
-        
-        // На втором ходу в режиме ловушки ставим мину на следующую ячейку
-        if (stats.trapCounter === minesPsychology.trapModeDuration - 2) {
-            const adjacentCells = getAdjacentCells(cellIndex);
-            const safeAdjacentCells = adjacentCells.filter(cell => 
-                !standardMines.includes(cell) && 
-                !game.revealed_cells.includes(cell)
-            );
-            
-            if (safeAdjacentCells.length > 0) {
-                const trapMineIndex = safeAdjacentCells[Math.floor(Math.random() * safeAdjacentCells.length)];
-                const smartMines = [...standardMines, trapMineIndex];
-                
-                console.log(`💣 Установлена мина-ловушка на ячейку ${trapMineIndex}`);
-                return smartMines;
-            }
-        }
-        
-        if (stats.trapCounter === 0) {
-            stats.trapMode = false;
-            console.log(`🔄 Режим ловушки деактивирован`);
-        }
-    }
-    
-    // Возвращаем стандартные мины, если нет активных модификаторов
-    console.log(`⚡ Стандартные мины: ${standardMines.length} шт.`);
-    return standardMines;
-}
-
-// Функция получения соседних ячеек
-function getAdjacentCells(cellIndex) {
-    const adjacent = [];
-    const gridSize = 5;
-    const row = Math.floor(cellIndex / gridSize);
-    const col = cellIndex % gridSize;
-    
-    for (let r = Math.max(0, row - 1); r <= Math.min(gridSize - 1, row + 1); r++) {
-        for (let c = Math.max(0, col - 1); c <= Math.min(gridSize - 1, col + 1); c++) {
-            if (r !== row || c !== col) {
-                adjacent.push(r * gridSize + c);
-            }
-        }
-    }
-    return adjacent;
+    return originalMinesCount;
 }
 
 // Боты для ракетки
@@ -1164,26 +1066,29 @@ app.post('/api/mines/open', async (req, res) => {
 
         // Генерируем мины если еще не сгенерированы
         if (!game.mines) {
+            // 🔥 НОВАЯ ЛОГИКА: Определяем количество мин с учетом адаптивного алгоритма
+            const adaptiveMinesCount = generateAdaptiveMines(game.mines_count, parseInt(telegramId));
+            
             const mines = [];
-            while (mines.length < game.mines_count) {
+            while (mines.length < adaptiveMinesCount) {
                 const randomCell = Math.floor(Math.random() * 25);
                 if (!mines.includes(randomCell)) {
                     mines.push(randomCell);
                 }
             }
+            
+            // Обновляем игру с новым количеством мин
             minesGames.update({
                 ...game,
-                mines: mines
+                mines: mines,
+                actual_mines_count: adaptiveMinesCount // Сохраняем фактическое количество мин
             });
             game.mines = mines;
+            game.actual_mines_count = adaptiveMinesCount;
         }
 
-        // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА: Применяем умные мины с отслеживанием серий
+        // Используем фактические мины
         let actualMines = game.mines;
-        const userStats = getUserMinesStats(parseInt(telegramId));
-        
-        // Применяем алгоритм для всех пользователей (и демо, и реальных)
-        actualMines = generateSmartMines(game, cellIndex, parseInt(telegramId));
 
         // Проверяем, есть ли мина
         if (actualMines.includes(cellIndex)) {
@@ -1204,12 +1109,7 @@ app.post('/api/mines/open', async (req, res) => {
                 mine_hit: true,
                 multiplier: 0,
                 revealed_cells: [...game.revealed_cells, cellIndex],
-                mines: actualMines,
-                stats: { // Добавляем статистику для отладки
-                    consecutiveWins: userStats.consecutiveWins,
-                    consecutiveLosses: userStats.consecutiveLosses,
-                    extraMinesActive: userStats.extraMinesActive
-                }
+                mines: actualMines
             });
         } else {
             // Безопасная ячейка
@@ -1222,20 +1122,12 @@ app.post('/api/mines/open', async (req, res) => {
                 current_multiplier: multiplier
             });
 
-            // 🔥 ОБНОВЛЯЕМ СТАТИСТИКУ: Выигрыш
-            updateUserMinesStats(parseInt(telegramId), true);
-
             res.json({
                 success: true,
                 game_over: false,
                 mine_hit: false,
                 multiplier: multiplier,
-                revealed_cells: revealedCells,
-                stats: { // Добавляем статистику для отладки
-                    consecutiveWins: userStats.consecutiveWins,
-                    consecutiveLosses: userStats.consecutiveLosses,
-                    extraMinesActive: userStats.extraMinesActive
-                }
+                revealed_cells: revealedCells
             });
         }
     } catch (error) {
@@ -1243,7 +1135,6 @@ app.post('/api/mines/open', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
 
 // API: Забрать выигрыш в Mines
 // API: Забрать выигрыш в Mines (ОБНОВЛЕННЫЙ)
@@ -1302,20 +1193,6 @@ app.post('/api/mines/cashout', async (req, res) => {
     }
 });
 
-app.get('/api/mines/stats/:telegramId', async (req, res) => {
-    const telegramId = parseInt(req.params.telegramId);
-    
-    try {
-        const stats = getUserMinesStats(telegramId);
-        res.json({
-            success: true,
-            stats: stats
-        });
-    } catch (error) {
-        console.error('Get mines stats error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 
 // API: Сброс статистики Mines (для тестирования)
 app.post('/api/mines/reset-stats', async (req, res) => {
@@ -1328,8 +1205,7 @@ app.post('/api/mines/reset-stats', async (req, res) => {
                 loseStreak: 0,
                 lastGames: [],
                 trapMode: false,
-                trapCounter: 0,
-                extraMinesActive: false
+                trapCounter: 0
             };
         }
 
