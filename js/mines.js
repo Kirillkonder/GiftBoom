@@ -565,7 +565,7 @@ function endGame(isWin, winAmount = 0) {
     // Через 3 секунды сбрасываем поле для новой игры
     setTimeout(() => {
         resetGameUI();
-    }, 1000);
+    }, 500);
 }
 
 // Функция сброса UI для новой игры
