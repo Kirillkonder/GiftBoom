@@ -390,16 +390,16 @@ body::after {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: rgba(40, 167, 69, 0.5);
-    border-color: #28a745;
+    background-color: rgb(0, 255, 60);
+    border-color: #00ff3c;
 }
 
 .mine-cell.mine {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: rgba(220, 53, 69, 0.5);
-    border-color: #dc3545;
+    background-color: rgb(255, 0, 25);
+    border-color: #ff0019;
 }
 .game-controls {
     display: flex;
