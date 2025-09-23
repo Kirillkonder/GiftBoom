@@ -2,6 +2,7 @@ let currentGame = null;
 let isDemoMode = true;
 let userData = null;
 let currentUser = null;
+let isGridReady = false;
 
 // ==================== НОВЫЙ ФУНКЦИОНАЛ БАЛАНСА ИЗ ROCKET ====================
 
@@ -215,6 +216,24 @@ function resetGrid() {
         });
         grid.appendChild(cell);
     }
+    
+    // Поле готово к игре
+    isGridReady = true;
+    updateStartButtonState();
+}
+
+// Обновление состояния кнопки "Играть"
+function updateStartButtonState() {
+    const startButton = document.getElementById('startGame');
+    const betAmount = parseFloat(document.getElementById('betAmount').value);
+    
+    if (isGridReady && betAmount >= 0.1 && betAmount <= 10) {
+        startButton.disabled = false;
+        startButton.classList.remove('disabled');
+    } else {
+        startButton.disabled = true;
+        startButton.classList.add('disabled');
+    }
 }
 
 // Инициализация
@@ -253,13 +272,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateMinesDisplay();
     
-    
     // Активируем поле ввода ставки по умолчанию
     document.getElementById('betAmount').focus();
     
     // Обработчики кнопок игры
     document.getElementById('startGame').addEventListener('click', startGame);
     document.getElementById('cashoutBtn').addEventListener('click', cashout);
+    
+    // Слушаем изменения в поле ставки
+    document.getElementById('betAmount').addEventListener('input', function() {
+        updateStartButtonState();
+    });
 });
 
 function goBack() {
@@ -291,6 +314,12 @@ async function loadUserData() {
 }
 
 async function startGame() {
+    // Дополнительная проверка на готовность поля
+    if (!isGridReady) {
+        showToast('error', 'Ошибка', 'Поле еще не готово к игре');
+        return;
+    }
+
     const betAmount = parseFloat(document.getElementById('betAmount').value);
     const minesCount = parseInt(document.getElementById('minesValue').textContent);
     
@@ -302,6 +331,11 @@ async function startGame() {
     try {
         const tg = window.Telegram.WebApp;
         const telegramId = tg.initDataUnsafe.user.id;
+
+        // Блокируем кнопку на время начала игры
+        const startButton = document.getElementById('startGame');
+        startButton.disabled = true;
+        startButton.classList.add('disabled');
 
         // ИСПРАВЛЕННЫЙ ENDPOINT - убрал лишний слэш
         const response = await fetch('/api/mines/start', {
@@ -320,6 +354,10 @@ async function startGame() {
         if (!response.ok) {
             const error = await response.json();
             showToast('error', 'Ошибка', error.error || 'Ошибка начала игры');
+            
+            // Разблокируем кнопку при ошибке
+            startButton.disabled = false;
+            startButton.classList.remove('disabled');
             return;
         }
 
@@ -353,10 +391,19 @@ async function startGame() {
             }, 100);
         } else {
             showToast('error', 'Ошибка', 'Ошибка начала игры');
+            
+            // Разблокируем кнопку при ошибке
+            startButton.disabled = false;
+            startButton.classList.remove('disabled');
         }
     } catch (error) {
         console.error('Error starting game:', error);
         showToast('error', 'Ошибка', 'Ошибка начала игры: ' + error.message);
+        
+        // Разблокируем кнопку при ошибке
+        const startButton = document.getElementById('startGame');
+        startButton.disabled = false;
+        startButton.classList.remove('disabled');
     }
 }
 
@@ -493,13 +540,15 @@ async function cashout() {
 function endGame(isWin, winAmount = 0) {
     currentGame.gameOver = true;
     document.getElementById('cashoutBtn').disabled = true;
-    document.getElementById('startGame').disabled = false;
     document.getElementById('gameInfo').style.display = 'none';
 
     // Блокируем все ячейки
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.style.pointerEvents = 'none';
     });
+
+    // Поле не готово к новой игре до сброса
+    isGridReady = false;
 
     // Через 3 секунды сбрасываем поле для новой игры
     setTimeout(() => {
@@ -520,14 +569,11 @@ function resetGameUI() {
     document.getElementById('potentialWin').textContent = '0';
     document.getElementById('gameInfo').style.display = 'none';
     
-    // Активируем кнопку начала игры
+    // Активируем кнопку начала игры только когда поле готово
     document.getElementById('startGame').disabled = false;
     document.getElementById('cashoutBtn').disabled = true;
     
-    // Гарантируем, что все ячейки кликабельны
-    document.querySelectorAll('.mine-cell').forEach(cell => {
-        cell.style.pointerEvents = 'auto';
-    });
+    // Поле будет готово после завершения resetGrid()
 }
 
 async function updateBalance() {
