@@ -354,7 +354,7 @@ function setupGameUI() {
 
     updateMultiplier();
     
-    // Сбрасываем поле для новой игры
+    // Сбрасываем поле для новой игры - ИСПРАВЛЕННАЯ ВЕРСИЯ
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
@@ -362,7 +362,22 @@ function setupGameUI() {
         cell.innerHTML = ''; // Очищаем эмодзи
         cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
         cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
+        
+        // ВАЖНОЕ ИСПРАВЛЕНИЕ: Убеждаемся, что обработчик клика работает
+        const cellIndex = cell.dataset.index;
+        cell.onclick = null; // Удаляем старые обработчики
+        cell.addEventListener('click', () => {
+            if (currentGame && !currentGame.gameOver) {
+                revealCell(parseInt(cellIndex));
+            }
+        });
     });
+    
+    // Сбрасываем массив открытых клеток в текущей игре
+    if (currentGame) {
+        currentGame.revealedCells = [];
+        currentGame.gameOver = false;
+    }
 }
 
 async function revealCell(cellIndex) {
