@@ -300,9 +300,6 @@ async function startGame() {
         const tg = window.Telegram.WebApp;
         const telegramId = tg.initDataUnsafe.user.id;
 
-        // СБРАСЫВАЕМ ПОЛЕ ПЕРЕД НАЧАЛОМ НОВОЙ ИГРЫ
-        resetGrid();
-
         // ИСПРАВЛЕННЫЙ ENDPOINT - убрал лишний слэш
         const response = await fetch('/api/mines/start', {
             method: 'POST',
@@ -325,9 +322,12 @@ async function startGame() {
 
         const result = await response.json();
         if (result.success) {
-            // Обновляем баланс после успешной ставки
+            // ОБНОВЛЯЕМ БАЛАНС И ОЧИЩАЕМ ПОЛЕ ОДНОВРЕМЕННО
             await updateBalance();
             
+            // СБРАСЫВАЕМ ПОЛЕ ПОСЛЕ УСПЕШНОГО НАЧАЛА ИГРЫ
+            resetGrid();
+
             // Создаем объект игры на клиенте
             currentGame = {
                 gameId: result.game_id,
