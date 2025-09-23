@@ -490,19 +490,19 @@ async function revealCell(cellIndex) {
         const result = await response.json();
         
         if (result.mine_hit) {
-            // Попали на мину
+            // Попали на мину - показываем только эту мину
             updateCellUI(cellIndex, true);
             endGame(false);
             showToast('error', 'Проигрыш', 'Вы попали на мину!');
             
-            // Показываем все мины после проигрыша
-            if (result.mines) {
-                result.mines.forEach(mineIndex => {
-                    if (mineIndex !== cellIndex) {
-                        updateCellUI(mineIndex, true);
-                    }
-                });
-            }
+            // УБРАЛИ ПОКАЗ ВСЕХ МИН ПОСЛЕ ПРОИГРЫША
+            // if (result.mines) {
+            //     result.mines.forEach(mineIndex => {
+            //         if (mineIndex !== cellIndex) {
+            //             updateCellUI(mineIndex, true);
+            //         }
+            //     });
+            // }
         } else {
             // Ячейка безопасна
             currentGame.revealedCells.push(cellIndex);
