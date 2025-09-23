@@ -750,3 +750,12 @@ body::after {
     cursor: not-allowed;
     transform: none;
 }
+
+.mine-cell {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mine-cell:active {
+    transform: scale(0.95);
+}

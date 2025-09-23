@@ -204,10 +204,13 @@ function resetGrid() {
         cell.style.backgroundSize = 'cover';
         cell.style.backgroundPosition = 'center';
         cell.style.border = 'none';
+        cell.style.pointerEvents = 'auto'; // Гарантируем кликабельность
         
         cell.addEventListener('click', () => {
             if (currentGame && !currentGame.gameOver) {
                 revealCell(i);
+            } else {
+                console.log('Game not started or already over');
             }
         });
         grid.appendChild(cell);
@@ -325,8 +328,8 @@ async function startGame() {
             // ОБНОВЛЯЕМ БАЛАНС И ОЧИЩАЕМ ПОЛЕ ОДНОВРЕМЕННО
             await updateBalance();
             
-            // СБРАСЫВАЕМ ПОЛЕ ПОСЛЕ УСПЕШНОГО НАЧАЛА ИГРЫ
-            resetGrid();
+            // ВАЖНОЕ ИСПРАВЛЕНИЕ: Сначала сбрасываем UI, потом создаем игру
+            resetGameUI();
 
             // Создаем объект игры на клиенте
             currentGame = {
@@ -341,6 +344,13 @@ async function startGame() {
             
             setupGameUI();
             showToast('success', 'Успех', 'Игра началась!');
+            
+            // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: Убеждаемся, что ячейки кликабельны
+            setTimeout(() => {
+                document.querySelectorAll('.mine-cell').forEach(cell => {
+                    cell.style.pointerEvents = 'auto';
+                });
+            }, 100);
         } else {
             showToast('error', 'Ошибка', 'Ошибка начала игры');
         }
@@ -350,6 +360,7 @@ async function startGame() {
     }
 }
 
+
 function setupGameUI() {
     document.getElementById('gameInfo').style.display = 'flex';
     document.getElementById('cashoutBtn').disabled = false;
@@ -357,14 +368,14 @@ function setupGameUI() {
 
     updateMultiplier();
     
-    // Сбрасываем поле для новой игры
+    // Гарантируем, что все ячейки кликабельны и в правильном состоянии
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
         cell.style.backgroundImage = "url('images/poin.png')";
         cell.innerHTML = ''; // Очищаем эмодзи
-        cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
-        cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
+        cell.style.borderColor = '#007bff';
+        cell.style.backgroundColor = 'transparent';
     });
 }
 
@@ -513,10 +524,10 @@ function resetGameUI() {
     document.getElementById('startGame').disabled = false;
     document.getElementById('cashoutBtn').disabled = true;
     
-    // Показываем сообщение о результате (если нужно)
-    const resultMessage = document.getElementById('resultMessage');
-    resultMessage.style.display = 'none';
-    resultMessage.className = 'result-message';
+    // Гарантируем, что все ячейки кликабельны
+    document.querySelectorAll('.mine-cell').forEach(cell => {
+        cell.style.pointerEvents = 'auto';
+    });
 }
 
 async function updateBalance() {
