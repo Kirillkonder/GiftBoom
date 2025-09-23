@@ -60,6 +60,120 @@ let rtpSystem = {
   }
 };
 
+let minesPsychology = {
+    userStats: {}, // Статистика по пользователям
+    winStreakThreshold: 3, // Порог серии выигрышей (3-5)
+    loseStreakThreshold: 6, // Порог серии проигрышей (6-8)
+    trapModeDuration: 2 // Количество ходов в режиме "ловушки"
+};
+
+// Функция для получения статистики пользователя
+function getUserMinesStats(telegramId) {
+    if (!minesPsychology.userStats[telegramId]) {
+        minesPsychology.userStats[telegramId] = {
+            winStreak: 0,
+            loseStreak: 0,
+            lastGames: [], // Последние 10 игр
+            trapMode: false,
+            trapCounter: 0
+        };
+    }
+    return minesPsychology.userStats[telegramId];
+}
+
+// Функция обновления статистики после игры
+function updateUserMinesStats(telegramId, isWin) {
+    const stats = getUserMinesStats(telegramId);
+    
+    if (isWin) {
+        stats.winStreak++;
+        stats.loseStreak = 0;
+    } else {
+        stats.loseStreak++;
+        stats.winStreak = 0;
+    }
+    
+    // Добавляем игру в историю (максимум 10 игр)
+    stats.lastGames.unshift(isWin ? 'win' : 'lose');
+    if (stats.lastGames.length > 10) {
+        stats.lastGames.pop();
+    }
+    
+    // Активируем режим ловушки при серии выигрышей
+    if (stats.winStreak >= minesPsychology.winStreakThreshold && !stats.trapMode) {
+        stats.trapMode = true;
+        stats.trapCounter = minesPsychology.trapModeDuration;
+        console.log(`🎯 Активирован режим ловушки для пользователя ${telegramId} (серия выигрышей: ${stats.winStreak})`);
+    }
+    
+    // Деактивируем режим ловушки при серии проигрышей
+    if (stats.loseStreak >= minesPsychology.loseStreakThreshold && stats.trapMode) {
+        stats.trapMode = false;
+        stats.trapCounter = 0;
+        console.log(`🔄 Сброс режима ловушки для пользователя ${telegramId} (серия проигрышей: ${stats.loseStreak})`);
+    }
+}
+
+// Функция генерации "умных мин" с ловушкой
+function generateSmartMines(game, cellIndex, telegramId) {
+    const stats = getUserMinesStats(telegramId);
+    const standardMines = game.mines;
+    
+    // Если режим ловушки активен и это второй ход в режиме
+    if (stats.trapMode && stats.trapCounter > 0) {
+        console.log(`🎯 Режим ловушки активен для пользователя ${telegramId}, счетчик: ${stats.trapCounter}`);
+        
+        // Уменьшаем счетчик ловушки
+        stats.trapCounter--;
+        
+        // На втором ходу в режиме ловушки ставим мину на следующую ячейку
+        if (stats.trapCounter === minesPsychology.trapModeDuration - 2) {
+            // Ищем безопасные ячейки рядом с текущей
+            const adjacentCells = getAdjacentCells(cellIndex);
+            const safeAdjacentCells = adjacentCells.filter(cell => 
+                !standardMines.includes(cell) && 
+                !game.revealed_cells.includes(cell)
+            );
+            
+            if (safeAdjacentCells.length > 0) {
+                // Выбираем случайную безопасную соседнюю ячейку для мины-ловушки
+                const trapMineIndex = safeAdjacentCells[Math.floor(Math.random() * safeAdjacentCells.length)];
+                
+                // Создаем новый массив мин с добавленной ловушкой
+                const smartMines = [...standardMines, trapMineIndex];
+                
+                console.log(`💣 Установлена мина-ловушка на ячейку ${trapMineIndex} для пользователя ${telegramId}`);
+                return smartMines;
+            }
+        }
+        
+        // Деактивируем режим ловушки после использования
+        if (stats.trapCounter === 0) {
+            stats.trapMode = false;
+            console.log(`🔄 Режим ловушки деактивирован для пользователя ${telegramId}`);
+        }
+    }
+    
+    return standardMines;
+}
+
+// Функция получения соседних ячеек
+function getAdjacentCells(cellIndex) {
+    const adjacent = [];
+    const gridSize = 5;
+    const row = Math.floor(cellIndex / gridSize);
+    const col = cellIndex % gridSize;
+    
+    for (let r = Math.max(0, row - 1); r <= Math.min(gridSize - 1, row + 1); r++) {
+        for (let c = Math.max(0, col - 1); c <= Math.min(gridSize - 1, col + 1); c++) {
+            if (r !== row || c !== col) {
+                adjacent.push(r * gridSize + c);
+            }
+        }
+    }
+    return adjacent;
+}
+
 // Боты для ракетки
 const rocketBots = [
   { name: "niwssomi", minBet: 1, maxBet: 10, risk: "medium" },
@@ -1006,8 +1120,16 @@ app.post('/api/mines/open', async (req, res) => {
             game.mines = mines;
         }
 
+        // 🔥 НОВАЯ ЛОГИКА: Применяем умные мины если нужно
+        let actualMines = game.mines;
+        const userStats = getUserMinesStats(parseInt(telegramId));
+        
+        if (userStats.trapMode && userStats.trapCounter > 0) {
+            actualMines = generateSmartMines(game, cellIndex, parseInt(telegramId));
+        }
+
         // Проверяем, есть ли мина
-        if (game.mines.includes(cellIndex)) {
+        if (actualMines.includes(cellIndex)) {
             // Мина! Игра окончена
             minesGames.update({
                 ...game,
@@ -1016,13 +1138,16 @@ app.post('/api/mines/open', async (req, res) => {
                 revealed_cells: [...game.revealed_cells, cellIndex]
             });
 
+            // 🔥 ОБНОВЛЯЕМ СТАТИСТИКУ: Проигрыш
+            updateUserMinesStats(parseInt(telegramId), false);
+
             res.json({
                 success: true,
                 game_over: true,
                 mine_hit: true,
                 multiplier: 0,
                 revealed_cells: [...game.revealed_cells, cellIndex],
-                mines: game.mines
+                mines: actualMines
             });
         } else {
             // Безопасная ячейка
@@ -1050,6 +1175,7 @@ app.post('/api/mines/open', async (req, res) => {
 });
 
 // API: Забрать выигрыш в Mines
+// API: Забрать выигрыш в Mines (ОБНОВЛЕННЫЙ)
 app.post('/api/mines/cashout', async (req, res) => {
     const { gameId, telegramId } = req.body;
 
@@ -1081,14 +1207,17 @@ app.post('/api/mines/cashout', async (req, res) => {
                 ...user,
                 demo_balance: user.demo_balance + winAmount
             });
-            updateCasinoDemoBank(-winAmount); // Выплата из банка казино
+            updateCasinoDemoBank(-winAmount);
         } else {
             users.update({
                 ...user,
                 main_balance: user.main_balance + winAmount
             });
-            updateCasinoBank(-winAmount); // Выплата из банка казино
+            updateCasinoBank(-winAmount);
         }
+
+        // 🔥 ОБНОВЛЯЕМ СТАТИСТИКУ: Выигрыш
+        updateUserMinesStats(parseInt(telegramId), true);
 
         res.json({
             success: true,
@@ -1098,6 +1227,29 @@ app.post('/api/mines/cashout', async (req, res) => {
         });
     } catch (error) {
         console.error('Mines cashout error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+
+// API: Сброс статистики Mines (для тестирования)
+app.post('/api/mines/reset-stats', async (req, res) => {
+    const { telegramId } = req.body;
+
+    try {
+        if (minesPsychology.userStats[telegramId]) {
+            minesPsychology.userStats[telegramId] = {
+                winStreak: 0,
+                loseStreak: 0,
+                lastGames: [],
+                trapMode: false,
+                trapCounter: 0
+            };
+        }
+
+        res.json({ success: true, message: 'Статистика сброшена' });
+    } catch (error) {
+        console.error('Reset stats error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
