@@ -48,17 +48,18 @@ let rtpSystem = {
     dailyDeposits: 0,      // Общие депозиты за день
     dailyPayouts: 0,       // Общие выплаты за день
     currentRTP: 0,         // Текущий RTP в процентах
-    targetRTP: 50,         // Целевой RTP 50%
+    targetRTP: 70,         // Целевой RTP 70% (было 50)
     lastResetDate: new Date().toDateString()
   },
   demoBank: {
     dailyDeposits: 0,
     dailyPayouts: 0,
     currentRTP: 0,
-    targetRTP: 50,         // Целевой RTP 50%
+    targetRTP: 70,         // Целевой RTP 70% (было 50)
     lastResetDate: new Date().toDateString()
   }
 };
+
 
 let minesPsychology = {
     userStats: {}, // Статистика по пользователям
@@ -418,7 +419,7 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 50,  // Снижено до 50%
+            targetRTP: 70,  // Обновлено до 70%
             lastResetDate: today
         };
         
@@ -442,7 +443,7 @@ function resetDailyRTP() {
             dailyDeposits: 0,
             dailyPayouts: 0,
             currentRTP: 0,
-            targetRTP: 50,  // Снижено до 50%
+            targetRTP: 70,  // Обновлено до 70%
             lastResetDate: today
         };
     }
@@ -487,15 +488,15 @@ function shouldWin(betAmount) {
     const currentRTP = gameStats.totalBets > 0 ? (gameStats.totalPayouts / gameStats.totalBets) * 100 : 0;
     
     // Базовый шанс выигрыша зависит от текущего RTP
-    let winChance = 45; // Базовый шанс 45%
+    let winChance = 65; // Базовый шанс 65% (было 45)
     
     // Если RTP ниже целевого - немного увеличиваем шанс
-    if (currentRTP < 45) {
-        winChance += Math.min(8, (45 - currentRTP) * 1.5);
+    if (currentRTP < 65) {  // Обновлено с 45 до 65
+        winChance += Math.min(8, (65 - currentRTP) * 1.5);  // Обновлено пороговое значение
     }
     // Если RTP выше целевого - уменьшаем шанс
-    else if (currentRTP > 55) {
-        winChance -= Math.min(12, (currentRTP - 55) * 1.5);
+    else if (currentRTP > 75) {  // Обновлено с 55 до 75
+        winChance -= Math.min(12, (currentRTP - 75) * 1.5);  // Обновлено пороговое значение
     }
     
     return random < winChance;
@@ -505,38 +506,38 @@ function shouldWin(betAmount) {
 function generateRandomRealBankCrashPoint(totalBet, bankBalance) {
     // Если банк меньше 5 TON - сливы, RTP не работает
     if (bankBalance < 5) {
-        if (Math.random() < 0.85) {
-            return Math.random() * 0.15 + 1.0; // 85% слив 1.0-1.15x
+        if (Math.random() < 0.70) {  // Уменьшено с 85% до 70%
+            return Math.random() * 0.15 + 1.0; // 70% слив 1.0-1.15x (было 85%)
         }
-        return Math.random() * 0.4 + 1.15; // 15% малый выигрыш 1.15-1.55x
+        return Math.random() * 0.4 + 1.15; // 30% малый выигрыш 1.15-1.55x (было 15%)
     }
     
     // RTP активирован при 5+ TON - сложный непредсказуемый алгоритм
     const shouldPlayerWin = shouldWin(totalBet);
     const random = getRandomFloat() * 100;
     
-    // Шанс на большой икс (добавлено по просьбе)
+    // Шанс на большой икс увеличен для 70% RTP
     const bigWinChance = Math.random() * 100;
-    if (bigWinChance < 3) { // 3% шанс на очень большой выигрыш
+    if (bigWinChance < 5) { // Увеличено с 3% до 5% шанс на очень большой выигрыш
         return Math.random() * 50.0 + 20.0; // 20x-70x большие иксы!
     }
     
-    // Более сложная логика с дополнительной рандомизацией
+    // Более щедрая логика для 70% RTP
     const extraRandom = Math.random() * Math.sin(Date.now() / 1000) * 50;
     const adjustedRandom = random + extraRandom;
     
     if (shouldPlayerWin) {
-        // Игрок выигрывает - непредсказуемые множители
-        if (adjustedRandom < 25) return Math.random() * 0.9 + 1.1; // 1.1-2.0x
-        if (adjustedRandom < 50) return Math.random() * 2.0 + 2.0; // 2.0-4.0x  
-        if (adjustedRandom < 75) return Math.random() * 4.0 + 4.0; // 4.0-8.0x
-        if (adjustedRandom < 92) return Math.random() * 8.0 + 8.0; // 8.0-16.0x
+        // Игрок выигрывает - более щедрые множители для 70% RTP
+        if (adjustedRandom < 30) return Math.random() * 0.9 + 1.1; // 1.1-2.0x
+        if (adjustedRandom < 60) return Math.random() * 2.0 + 2.0; // 2.0-4.0x  
+        if (adjustedRandom < 85) return Math.random() * 4.0 + 4.0; // 4.0-8.0x
+        if (adjustedRandom < 96) return Math.random() * 8.0 + 8.0; // 8.0-16.0x
         return Math.random() * 15.0 + 15.0; // 15.0-30.0x крупные выигрыши
     } else {
-        // Игрок проигрывает - но с защитой от паттернов
+        // Игрок проигрывает - но реже и с меньшими потерями
         const lossRandom = Math.random() * Math.cos(Date.now() / 2000) * 30;
-        if (lossRandom + random < 65) return Math.random() * 0.12 + 1.0; // 1.0-1.12x
-        if (lossRandom + random < 85) return Math.random() * 0.25 + 1.12; // 1.12-1.37x
+        if (lossRandom + random < 50) return Math.random() * 0.12 + 1.0; // 1.0-1.12x (уменьшена вероятность)
+        if (lossRandom + random < 75) return Math.random() * 0.25 + 1.12; // 1.12-1.37x
         return Math.random() * 0.4 + 1.37; // 1.37-1.77x
     }
 }
@@ -547,15 +548,15 @@ function generateRandomDemoBankCrashPoint(totalBet) {
     const random = getRandomFloat() * 100;
     
     if (shouldPlayerWin) {
-        // Демо банк чуть щедрее - но не намного
-        if (random < 25) return Math.random() * 0.8 + 1.2; // 1.2-2.0x
-        if (random < 55) return Math.random() * 1.5 + 2.0; // 2.0-3.5x
-        if (random < 80) return Math.random() * 3.0 + 3.5; // 3.5-6.5x
+        // Демо банк еще щедрее для 70% RTP
+        if (random < 35) return Math.random() * 0.8 + 1.2; // 1.2-2.0x (увеличена вероятность)
+        if (random < 65) return Math.random() * 1.5 + 2.0; // 2.0-3.5x
+        if (random < 85) return Math.random() * 3.0 + 3.5; // 3.5-6.5x
         return Math.random() * 12.0 + 6.5; // 6.5-18.5x
     } else {
-        // Проигрыши такие же как в реальном банке
-        if (random < 65) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
-        if (random < 85) return Math.random() * 0.25 + 1.15; // 1.15-1.4x
+        // Более мягкие проигрыши для демо
+        if (random < 55) return Math.random() * 0.15 + 1.0; // 1.0-1.15x (уменьшена вероятность)
+        if (random < 80) return Math.random() * 0.25 + 1.15; // 1.15-1.4x
         return Math.random() * 0.4 + 1.4; // 1.4-1.8x
     }
 }
@@ -564,9 +565,10 @@ function generateRandomDemoBankCrashPoint(totalBet) {
 function generateRandomBotCrashPoint() {
     const random = Math.random() * 100;
     
-    if (random < 30) return Math.random() * 0.15 + 1.0; // 1.0-1.15x
-    if (random < 60) return Math.random() * 1.0 + 1.5; // 1.5-2.5x
-    if (random < 85) return Math.random() * 3.0 + 2.5; // 2.5-5.5x
+    // Боты получают более щедрые условия для соответствия 70% RTP
+    if (random < 25) return Math.random() * 0.15 + 1.0; // 1.0-1.15x (уменьшена вероятность проигрыша)
+    if (random < 55) return Math.random() * 1.0 + 1.5; // 1.5-2.5x
+    if (random < 80) return Math.random() * 3.0 + 2.5; // 2.5-5.5x
     return Math.random() * 10.0 + 5.5; // 5.5-15.5x
 }
 
