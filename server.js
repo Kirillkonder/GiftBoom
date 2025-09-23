@@ -86,7 +86,6 @@ function getUserMinesStats(telegramId) {
     return minesPsychology.userStats[telegramId];
 }
 
-
 // Функция обновления статистики после игры
 function updateUserMinesStats(telegramId, isWin) {
     const stats = getUserMinesStats(telegramId);
