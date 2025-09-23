@@ -117,7 +117,7 @@ async function checkDepositStatus(invoiceId) {
 }
 
 // Toast уведомления из Rocket
-function showToast(type, title, message, duration = 3000) {
+function showToast(type, title, message, duration = 1000) {
     const toastContainer = document.getElementById('toast-container') || createToastContainer();
     
     const toast = document.createElement('div');
@@ -565,7 +565,7 @@ function endGame(isWin, winAmount = 0) {
     // Через 3 секунды сбрасываем поле для новой игры
     setTimeout(() => {
         resetGameUI();
-    }, 3000);
+    }, 1000);
 }
 
 // Функция сброса UI для новой игры
