@@ -195,7 +195,7 @@ function resetGrid() {
     const grid = document.getElementById('minesGrid');
     grid.innerHTML = '';
     
-    // Создаем массив с двумя изображениями в случайном порядке
+    // Создаем массив с двумя изображениями
     const images = ['poin.png', 'poin_two.png'];
     
     for (let i = 0; i < 25; i++) {
@@ -203,11 +203,12 @@ function resetGrid() {
         cell.className = 'mine-cell';
         cell.dataset.index = i;
         
-        // Случайный выбор изображения
-        const randomImage = images[Math.floor(Math.random() * images.length)];
+        // Чередуем изображения последовательно: 0, 1, 0, 1, ...
+        const imageIndex = i % 2; // 0 для четных, 1 для нечетных
+        const currentImage = images[imageIndex];
         
-        // Устанавливаем случайное изображение как фон
-        cell.style.backgroundImage = `url('images/${randomImage}')`;
+        // Устанавливаем изображение как фон
+        cell.style.backgroundImage = `url('images/${currentImage}')`;
         cell.style.backgroundSize = 'cover';
         cell.style.backgroundPosition = 'center';
         cell.style.border = 'none';
