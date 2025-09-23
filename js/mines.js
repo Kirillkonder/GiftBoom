@@ -567,7 +567,7 @@ function endGame(isWin, winAmount = 0) {
         resetGameUI();
     }, 500);
 }
-
+//ddd
 // Функция сброса UI для новой игры
 function resetGameUI() {
     // Сбрасываем текущую игру
