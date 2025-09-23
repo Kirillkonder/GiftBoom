@@ -60,6 +60,25 @@ let rtpSystem = {
   }
 };
 
+function monitorRTP() {
+    console.log('\n=== RTP МОНИТОРИНГ ===');
+    console.log(`💰 РЕАЛЬНЫЙ БАНК: ${rtpSystem.realBank.currentRTP.toFixed(2)}%`);
+    console.log(`   Депозиты: ${rtpSystem.realBank.dailyDeposits.toFixed(2)} TON`);
+    console.log(`   Выплаты: ${rtpSystem.realBank.dailyPayouts.toFixed(2)} TON`);
+    console.log(`🎮 ДЕМО БАНК: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
+    console.log(`   Депозиты: ${rtpSystem.demoBank.dailyDeposits.toFixed(2)} TON`);
+    console.log(`   Выплаты: ${rtpSystem.demoBank.dailyPayouts.toFixed(2)} TON`);
+    console.log('======================\n');
+}
+
+// Запускаем мониторинг каждые 10 игр
+let gamesCounter = 0;
+function incrementGamesCounter() {
+    gamesCounter++;
+    if (gamesCounter % 10 === 0) {
+        monitorRTP();
+    }
+}
 
 let minesPsychology = {
     userStats: {}, // Статистика по пользователям
@@ -453,19 +472,40 @@ function resetDailyRTP() {
 function calculateCurrentRTP(bankType) {
     const bank = rtpSystem[bankType];
     if (bank.dailyDeposits === 0) return 0;
-    return (bank.dailyPayouts / bank.dailyDeposits) * 100;
+    
+    const rtp = (bank.dailyPayouts / bank.dailyDeposits) * 100;
+    
+    // 🔥 ЗАЩИТА ОТ НЕКОРРЕКТНЫХ ЗНАЧЕНИЙ
+    if (isNaN(rtp) || !isFinite(rtp)) {
+        console.warn(`⚠️ Некорректный RTP расчет: выплаты=${bank.dailyPayouts}, депозиты=${bank.dailyDeposits}`);
+        return 0;
+    }
+    
+    return Math.min(rtp, 1000); // Ограничиваем максимальное значение
 }
-
 // Функция обновления RTP статистики
 function updateRTPStats(bankType, deposit, payout) {
     resetDailyRTP(); // Проверяем, нужно ли сбросить дневную статистику
     
     const bank = rtpSystem[bankType];
+    const oldDeposits = bank.dailyDeposits;
+    const oldPayouts = bank.dailyPayouts;
+    const oldRTP = bank.currentRTP;
+    
     bank.dailyDeposits += deposit;
     bank.dailyPayouts += payout;
     bank.currentRTP = calculateCurrentRTP(bankType);
     
-    console.log(`${bankType} RTP: ${bank.currentRTP.toFixed(2)}% (Депозиты: ${bank.dailyDeposits}, Выплаты: ${bank.dailyPayouts})`);
+    // 🔥 ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ДЛЯ ОТЛАДКИ
+    if (deposit > 0 || payout > 0) {
+        console.log(`🔄 RTP ${bankType}:`);
+        console.log(`   📥 Депозит: +${deposit.toFixed(2)} TON`);
+        console.log(`   📤 Выплата: +${payout.toFixed(2)} TON`);
+        console.log(`   💰 Депазиты: ${oldDeposits.toFixed(2)} → ${bank.dailyDeposits.toFixed(2)} TON`);
+        console.log(`   🎁 Выплаты: ${oldPayouts.toFixed(2)} → ${bank.dailyPayouts.toFixed(2)} TON`);
+        console.log(`   📊 RTP: ${oldRTP.toFixed(2)}% → ${bank.currentRTP.toFixed(2)}%`);
+        console.log(`   🎯 Целевой RTP: ${bank.targetRTP}%`);
+    }
 }
 
 // ПРОСТОЙ РАНДОМНЫЙ АЛГОРИТМ с RTP 50%
@@ -876,7 +916,7 @@ function processRocketGameEnd() {
     maxMultiplier: rocketGame.multiplier,
     startTime: new Date(rocketGame.startTime),
     endTime: new Date(),
-    playerCount: rocketGame.players.filter(p => !p.isBot).length, // Только реальные игроки
+    playerCount: rocketGame.players.filter(p => !p.isBot).length,
     botCount: rocketGame.players.filter(p => p.isBot).length,
     totalBets: rocketGame.players.reduce((sum, p) => sum + p.betAmount, 0),
     totalPayouts: rocketGame.players.reduce((sum, p) => sum + (p.cashedOut ? p.winAmount : 0), 0),
@@ -884,7 +924,7 @@ function processRocketGameEnd() {
     botLosses: losingBots.length
   });
 
-  // Обрабатываем выплаты для реальных игроков
+  // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА RTP: Обрабатываем выплаты для реальных игроков
   rocketGame.players.forEach(player => {
     if (!player.isBot) {
       const user = users.findOne({ telegram_id: parseInt(player.userId) });
@@ -901,6 +941,13 @@ function processRocketGameEnd() {
             created_at: new Date()
           });
 
+          // 🔥 ОБНОВЛЯЕМ RTP ДЛЯ ВЫИГРЫША
+          if (player.demoMode) {
+            updateRTPStats('demoBank', 0, player.winAmount);
+          } else {
+            updateRTPStats('realBank', 0, player.winAmount);
+          }
+
           // Сохраняем ставку
           rocketBets.insert({
             game_id: gameRecord.$loki,
@@ -912,7 +959,14 @@ function processRocketGameEnd() {
             created_at: new Date()
           });
         } else {
-          // Игрок проиграл - ставка остается в банке казино (уже была добавлена при ставке)
+          // 🔥 ИГРОК ПРОИГРАЛ - ОБНОВЛЯЕМ RTP
+          // Игрок проиграл свою ставку, значит выплата = 0
+          if (player.demoMode) {
+            updateRTPStats('demoBank', 0, 0); // Депазит уже учтен, выплата = 0
+          } else {
+            updateRTPStats('realBank', 0, 0); // Депазит уже учтен, выплата = 0
+          }
+
           transactions.insert({
             user_id: user.$loki,
             amount: -player.betAmount,
@@ -949,6 +1003,10 @@ function processRocketGameEnd() {
     rocketGame.history.pop();
   }
 
+  // 🔥 ЛОГИРУЕМ АКТУАЛЬНЫЙ RTP ПОСЛЕ ИГРЫ
+  console.log(`💰 РЕАЛЬНЫЙ RTP после игры: ${rtpSystem.realBank.currentRTP.toFixed(2)}%`);
+  console.log(`🎮 ДЕМО RTP после игры: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
+  incrementGamesCounter();
   broadcastRocketUpdate();
 
   // Через 5 секунд начинаем новую игру
@@ -1220,7 +1278,7 @@ app.post('/api/mines/reset-stats', async (req, res) => {
 
 // API: Сделать ставку в Rocket
 app.post('/api/rocket/bet', async (req, res) => {
-    const { telegramId, betAmount, demoMode, username} = req.body;
+    const { telegramId, betAmount, demoMode, username } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -1255,21 +1313,26 @@ app.post('/api/rocket/bet', async (req, res) => {
                 ...user,
                 demo_balance: user.demo_balance - betAmount
             });
-            updateCasinoDemoBank(betAmount); // Ставка идет в демо-банк
-            updateRTPStats('demoBank', betAmount, 0);
+            updateCasinoDemoBank(betAmount);
         } else {
             users.update({
                 ...user,
                 main_balance: user.main_balance - betAmount
             });
-            updateCasinoBank(betAmount); // Ставка идет в реальный банк
+            updateCasinoBank(betAmount);
+        }
+
+        // 🔥 ОБНОВЛЯЕМ RTP ПРИ СТАВКЕ (ДЕПОЗИТ)
+        if (demoMode) {
+            updateRTPStats('demoBank', betAmount, 0);
+        } else {
             updateRTPStats('realBank', betAmount, 0);
         }
 
         // Добавляем игрока в текущую игру
-       const player = {
+        const player = {
             userId: telegramId,
-            name: username || getUserDisplayName(user), // Теперь передается корректный объект user
+            name: username || getUserDisplayName(user),
             betAmount: parseFloat(betAmount),
             demoMode: demoMode,
             cashedOut: false,
@@ -1322,16 +1385,17 @@ app.post('/api/rocket/cashout', async (req, res) => {
                 ...user,
                 demo_balance: user.demo_balance + winAmount
             });
-            updateCasinoDemoBank(-winAmount); // Выплата из демо-банка
-            updateRTPStats('demoBank', 0, winAmount);
+            updateCasinoDemoBank(-winAmount);
         } else {
             users.update({
                 ...user,
                 main_balance: user.main_balance + winAmount
             });
-            updateCasinoBank(-winAmount); // Выплата из реального банка
-            updateRTPStats('realBank', 0, winAmount);
+            updateCasinoBank(-winAmount);
         }
+
+        // 🔥 ОБНОВЛЯЕМ RTP ПРИ ВЫПЛАТЕ (выплата учитывается в processRocketGameEnd)
+        // Не обновляем здесь, чтобы избежать двойного учета
 
         // Обновляем данные игрока
         player.cashedOut = true;
@@ -1351,6 +1415,8 @@ app.post('/api/rocket/cashout', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+
 
 // API: Получить историю Rocket
 app.get('/api/rocket/history', async (req, res) => {
