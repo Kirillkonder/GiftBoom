@@ -3,6 +3,30 @@ let isDemoMode = true;
 let userData = null;
 let currentUser = null;
 let isGridReady = false;
+let onlinePlayers = 43;
+let onlineUpdateInterval = null;
+
+// ==================== НОВЫЙ ФУНКЦИОНАЛ ОНЛАЙНА ====================
+
+function initializeOnlineCounter() {
+    // Устанавливаем начальное значение
+    updateOnlineCounter(onlinePlayers);
+    
+    // Запускаем обновление каждые 5 минут (300000 мс)
+    onlineUpdateInterval = setInterval(() => {
+        // Случайное изменение от -10 до +10 игроков
+        const change = Math.floor(Math.random() * 21) - 10;
+        onlinePlayers = Math.max(3, onlinePlayers + change);
+        updateOnlineCounter(onlinePlayers);
+    }, 300000); // 5 минут
+}
+
+function updateOnlineCounter(count) {
+    const playersCountElement = document.getElementById('playersCount');
+    if (playersCountElement) {
+        playersCountElement.textContent = count;
+    }
+}
 
 // ==================== НОВЫЙ ФУНКЦИОНАЛ БАЛАНСА ИЗ ROCKET ====================
 
@@ -247,6 +271,9 @@ function updateStartButtonState() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
     loadUserData();
+    
+    // Инициализируем счетчик онлайна
+    initializeOnlineCounter();
     
     // Создаем поле сразу при загрузке страницы
     resetGrid();
