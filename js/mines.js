@@ -300,6 +300,9 @@ async function startGame() {
         const tg = window.Telegram.WebApp;
         const telegramId = tg.initDataUnsafe.user.id;
 
+        // СБРАСЫВАЕМ ПОЛЕ ПЕРЕД НАЧАЛОМ НОВОЙ ИГРЫ
+        resetGrid();
+
         // ИСПРАВЛЕННЫЙ ENDPOINT - убрал лишний слэш
         const response = await fetch('/api/mines/start', {
             method: 'POST',
@@ -354,7 +357,7 @@ function setupGameUI() {
 
     updateMultiplier();
     
-    // Сбрасываем поле для новой игры - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // Сбрасываем поле для новой игры
     document.querySelectorAll('.mine-cell').forEach(cell => {
         cell.className = 'mine-cell';
         cell.style.pointerEvents = 'auto';
@@ -362,22 +365,7 @@ function setupGameUI() {
         cell.innerHTML = ''; // Очищаем эмодзи
         cell.style.borderColor = '#007bff'; // Возвращаем стандартный цвет границы
         cell.style.backgroundColor = 'transparent'; // Убираем цвет фона
-        
-        // ВАЖНОЕ ИСПРАВЛЕНИЕ: Убеждаемся, что обработчик клика работает
-        const cellIndex = cell.dataset.index;
-        cell.onclick = null; // Удаляем старые обработчики
-        cell.addEventListener('click', () => {
-            if (currentGame && !currentGame.gameOver) {
-                revealCell(parseInt(cellIndex));
-            }
-        });
     });
-    
-    // Сбрасываем массив открытых клеток в текущей игре
-    if (currentGame) {
-        currentGame.revealedCells = [];
-        currentGame.gameOver = false;
-    }
 }
 
 async function revealCell(cellIndex) {
@@ -519,6 +507,11 @@ function resetGameUI() {
     // Сбрасываем информацию о игре
     document.getElementById('multiplier').textContent = '1x';
     document.getElementById('potentialWin').textContent = '0';
+    document.getElementById('gameInfo').style.display = 'none';
+    
+    // Активируем кнопку начала игры
+    document.getElementById('startGame').disabled = false;
+    document.getElementById('cashoutBtn').disabled = true;
     
     // Показываем сообщение о результате (если нужно)
     const resultMessage = document.getElementById('resultMessage');
