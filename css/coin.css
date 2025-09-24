@@ -83,7 +83,7 @@ body::after {
 /* Верхняя панель - адаптированная как в rocket.css */
 .top-panel {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
     box-sizing: border-box;
