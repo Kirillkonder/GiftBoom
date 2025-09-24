@@ -1438,6 +1438,96 @@ app.get('/api/rocket/current', async (req, res) => {
     }
 });
 
+// Система контроля выигрышных серий для монетки
+let coinPsychology = {
+    userStats: {}, // Статистика по пользователям
+    minWinStreak: 3, // Минимум выигрышей для активации режима слива
+    maxWinStreak: 5, // Максимум выигрышей для активации режима слива
+    minLoseStreak: 3, // Минимум проигрышей для деактивации режима слива
+    maxLoseStreak: 8, // Максимум проигрышей для деактивации режима слива
+    drainModeWinChance: 5 // Шанс выигрыша в режиме слива (5%)
+};
+
+// Функция для получения статистики пользователя
+function getUserCoinStats(telegramId) {
+    if (!coinPsychology.userStats[telegramId]) {
+        coinPsychology.userStats[telegramId] = {
+            winStreak: 0,
+            loseStreak: 0,
+            lastGames: [], // Последние 20 игр
+            drainMode: false, // Режим слива
+            drainModeActivatedAt: 0 // Когда активирован режим слива
+        };
+    }
+    return coinPsychology.userStats[telegramId];
+}
+
+// Функция обновления статистики после игры
+function updateUserCoinStats(telegramId, isWin) {
+    const stats = getUserCoinStats(telegramId);
+    
+    if (isWin) {
+        stats.winStreak++;
+        stats.loseStreak = 0;
+    } else {
+        stats.loseStreak++;
+        stats.winStreak = 0;
+    }
+    
+    // Добавляем игру в историю (максимум 20 игр)
+    stats.lastGames.unshift(isWin ? 'win' : 'lose');
+    if (stats.lastGames.length > 20) {
+        stats.lastGames.pop();
+    }
+    
+    // Активируем режим слива при серии выигрышей (3-5)
+    if (stats.winStreak >= coinPsychology.minWinStreak && 
+        stats.winStreak <= coinPsychology.maxWinStreak && 
+        !stats.drainMode) {
+        stats.drainMode = true;
+        stats.drainModeActivatedAt = stats.winStreak;
+        console.log(`💧 Активирован режим слива для пользователя ${telegramId} (серия выигрышей: ${stats.winStreak})`);
+    }
+    
+    // Деактивируем режим слива при серии проигрышей (3-8)
+    if (stats.loseStreak >= coinPsychology.minLoseStreak && 
+        stats.loseStreak <= coinPsychology.maxLoseStreak && 
+        stats.drainMode) {
+        stats.drainMode = false;
+        stats.drainModeActivatedAt = 0;
+        console.log(`🔄 Сброс режима слива для пользователя ${telegramId} (серия проигрышей: ${stats.loseStreak})`);
+    }
+}
+
+// Функция определения результата с учетом режима слива
+function getCoinFlipResult(telegramId, userChoice) {
+    const stats = getUserCoinStats(telegramId);
+    
+    // Если активен режим слива - шанс выигрыша всего 5%
+    if (stats.drainMode) {
+        const willWin = Math.random() * 100 < coinPsychology.drainModeWinChance;
+        const result = willWin ? userChoice : (userChoice === 'heads' ? 'tails' : 'heads');
+        
+        console.log(`💧 Режим слива для ${telegramId}: выбор ${userChoice}, результат ${result}, выигрыш: ${willWin}`);
+        return {
+            result: result,
+            win: willWin,
+            drainMode: true
+        };
+    }
+    
+    // Нормальный режим - 50/50
+    const result = Math.random() < 0.5 ? 'heads' : 'tails';
+    const win = result === userChoice;
+    
+    return {
+        result: result,
+        win: win,
+        drainMode: false
+    };
+}
+
+
 // Coin Game Functions
 app.post('/api/coin/flip', async (req, res) => {
     const { telegramId, betAmount, choice, demoMode, isSeries, deductBet } = req.body;
@@ -1484,9 +1574,14 @@ app.post('/api/coin/flip', async (req, res) => {
             balanceUpdated = true;
         }
 
-        // Генерируем результат (50/50)
-        const result = Math.random() < 0.5 ? 'heads' : 'tails';
-        const win = result === choice;
+        // 🔥 НОВАЯ ЛОГИКА: Генерируем результат с учетом режима слива
+        const flipResult = getCoinFlipResult(parseInt(telegramId), choice);
+        const result = flipResult.result;
+        const win = flipResult.win;
+        const drainMode = flipResult.drainMode;
+        
+        // 🔥 ОБНОВЛЯЕМ СТАТИСТИКУ ПОЛЬЗОВАТЕЛЯ
+        updateUserCoinStats(parseInt(telegramId), win);
         
         // Для серии возвращаем только результат, без списания/начисления
         if (isSeries) {
@@ -1495,7 +1590,8 @@ app.post('/api/coin/flip', async (req, res) => {
                 result: result,
                 win: win,
                 balance_updated: balanceUpdated,
-                new_balance: newBalance
+                new_balance: newBalance,
+                drain_mode: drainMode // Добавляем информацию о режиме слива
             });
         }
 
@@ -1521,7 +1617,7 @@ app.post('/api/coin/flip', async (req, res) => {
             newBalance += winAmount;
         }
 
-        // Сохраняем транзакцию
+        // Сохраняем транзакцию с дополнительной информацией
         transactions.insert({
             user_id: user.$loki,
             amount: win ? winAmount : -betAmount,
@@ -1533,7 +1629,10 @@ app.post('/api/coin/flip', async (req, res) => {
                 result: result,
                 bet_amount: betAmount,
                 win_amount: winAmount,
-                is_series: isSeries || false
+                is_series: isSeries || false,
+                drain_mode: drainMode, // Сохраняем информацию о режиме слива
+                win_streak: getUserCoinStats(parseInt(telegramId)).winStreak,
+                lose_streak: getUserCoinStats(parseInt(telegramId)).loseStreak
             },
             created_at: new Date()
         });
@@ -1544,7 +1643,8 @@ app.post('/api/coin/flip', async (req, res) => {
             win: win,
             win_amount: winAmount,
             balance_updated: true,
-            new_balance: newBalance
+            new_balance: newBalance,
+            drain_mode: drainMode // Добавляем информацию о режиме слива
         });
 
     } catch (error) {
@@ -1553,6 +1653,41 @@ app.post('/api/coin/flip', async (req, res) => {
     }
 });
 
+app.get('/api/coin/stats/:telegramId', async (req, res) => {
+    try {
+        const telegramId = parseInt(req.params.telegramId);
+        const stats = getUserCoinStats(telegramId);
+        
+        res.json({
+            success: true,
+            stats: stats
+        });
+    } catch (error) {
+        console.error('Get coin stats error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/coin/reset-stats', async (req, res) => {
+    const { telegramId } = req.body;
+
+    try {
+        if (coinPsychology.userStats[telegramId]) {
+            coinPsychology.userStats[telegramId] = {
+                winStreak: 0,
+                loseStreak: 0,
+                lastGames: [],
+                drainMode: false,
+                drainModeActivatedAt: 0
+            };
+        }
+
+        res.json({ success: true, message: 'Статистика монетки сброшена' });
+    } catch (error) {
+        console.error('Reset coin stats error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 // API: Обработка выигрыша серии в Coin
 app.post('/api/coin/series-win', async (req, res) => {
