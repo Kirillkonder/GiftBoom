@@ -185,8 +185,8 @@ body::after {
 }
 
 .coin-container {
-    width: 150px;
-    height: 150px;
+    width: 375px; /* 150px * 2.5 = 375px */
+    height: 375px;
     margin: 20px auto;
     position: relative;
     perspective: 1000px;
@@ -689,6 +689,11 @@ body::after {
     .top-panel {
         padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
     }
+
+    .coin-container {
+        width: 300px;
+        height: 300px;
+    }
     
     .close-btn {
         padding: 6px 10px;
@@ -715,6 +720,11 @@ body::after {
         padding-top: 55px;
     }
     
+    .coin-container {
+        width: 280px;
+        height: 280px;
+    }
+
     .top-panel {
         padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
     }
@@ -762,6 +772,11 @@ body::after {
         padding: 8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left));
     }
     
+    .coin-container {
+        width: 250px;
+        height: 250px;
+    }
+
     .close-btn {
         padding: 5px 6px;
         font-size: 11px;

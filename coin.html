@@ -31,24 +31,7 @@
         <!-- Игровое поле -->
         <div class="coin-game-area">
             
-            <!-- Панель серии -->
-            <div class="series-panel" id="seriesPanel">
-                <div class="series-info">
-                    <span class="series-label">СЕРИЯ: </span>
-                    <span class="series-count" id="seriesCount">0</span>
-                    <span class="series-multiplier" id="seriesMultiplier">x1.00</span>
-                    <span class="series-win" id="seriesWinAmount">+0.00 TON</span>
-                </div>
-                <div class="series-controls">
-                    <button class="series-btn" id="seriesToggle" onclick="toggleSeries()">
-                        <i class="bi bi-play-fill"></i>
-                    </button>
-                    <button class="series-btn cashout-btn" id="seriesCashout" onclick="cashoutSeries()" disabled>
-                        <i class="bi bi-cash-coin"></i>
-                    </button>
-                </div>
-            </div>
-            
+            <!-- Увеличенная монетка -->
             <div class="coin-container">
                 <div class="coin" id="coin">
                     <div class="coin-face heads">
@@ -73,6 +56,24 @@
                     <button class="bet-amount-btn" onclick="increaseBet()">+</button>
                 </div>
                 <button class="flip-button" id="flipButton" onclick="flipCoin()" disabled>КИНУТЬ МОНЕТКУ</button>
+            </div>
+
+            <!-- Панель серии ПЕРЕМЕЩЕНА ВНИЗ -->
+            <div class="series-panel" id="seriesPanel">
+                <div class="series-info">
+                    <span class="series-label">СЕРИЯ: </span>
+                    <span class="series-count" id="seriesCount">0</span>
+                    <span class="series-multiplier" id="seriesMultiplier">x1.00</span>
+                    <span class="series-win" id="seriesWinAmount">+0.00 TON</span>
+                </div>
+                <div class="series-controls">
+                    <button class="series-btn" id="seriesToggle" onclick="toggleSeries()">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                    <button class="series-btn cashout-btn" id="seriesCashout" onclick="cashoutSeries()" disabled>
+                        <i class="bi bi-cash-coin"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
