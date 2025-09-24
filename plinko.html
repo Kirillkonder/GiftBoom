@@ -138,28 +138,31 @@
             document.getElementById('current-balance').textContent = balance.toFixed(2);
         }
 
-        // Создание поля плинко как в 1win
+        // Создание треугольного поля плинко как в 1win
         function createPlinkoField() {
             const board = document.getElementById('plinko-board');
             board.innerHTML = '';
             
-            const rows = 12;
-            const pinSpacingX = 35;
-            const pinSpacingY = 25;
+            const rows = 12; // Количество рядов штифтов
+            const pinRadius = 4; // Радиус штифта
             
-            // Создаем штифты в шахматном порядке
+            // Создаем штифты в треугольном порядке
             for (let row = 0; row < rows; row++) {
-                for (let col = 0; col <= row; col++) {
+                const pinsInRow = row + 1;
+                const rowTop = 20 + row * 25; // Отступ сверху для каждого ряда
+                
+                for (let col = 0; col < pinsInRow; col++) {
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
-                    // Шахматное расположение
-                    const offset = row % 2 === 0 ? pinSpacingX / 2 : 0;
-                    const x = 50 + (col - row/2) * pinSpacingX + offset;
-                    const y = 10 + row * pinSpacingY;
+                    // Равномерное распределение штифтов по ширине
+                    const pinSpacing = 100 / (pinsInRow + 1);
+                    const left = pinSpacing * (col + 1);
                     
-                    pin.style.left = x + '%';
-                    pin.style.top = y + 'px';
+                    pin.style.left = left + '%';
+                    pin.style.top = rowTop + 'px';
+                    pin.style.width = pinRadius * 2 + 'px';
+                    pin.style.height = pinRadius * 2 + 'px';
                     
                     board.appendChild(pin);
                 }
@@ -222,7 +225,7 @@
             }
         }
 
-        // РЕАЛИСТИЧНАЯ АНИМАЦИЯ КАК В 1WIN
+        // РЕАЛИСТИЧНАЯ АНИМАЦИЯ ПАДЕНИЯ ШАРИКА КАК В 1WIN
         function realisticPlinkoAnimation(targetSlot) {
             return new Promise((resolve) => {
                 const board = document.getElementById('plinko-board');
@@ -233,6 +236,11 @@
                 const multipliers = document.querySelectorAll('.multiplier');
                 const targetMultiplier = multipliers[targetSlot];
 
+                // Определяем целевую позицию для шарика (центр выбранного множителя)
+                const multiplierRects = Array.from(multipliers).map(m => m.getBoundingClientRect());
+                const boardRect = board.getBoundingClientRect();
+                const targetX = (multiplierRects[targetSlot].left + multiplierRects[targetSlot].width/2 - boardRect.left) / boardRect.width * 100;
+
                 // Начальная позиция (центр сверху)
                 let x = 50; // %
                 let y = 0;  // px
@@ -241,15 +249,29 @@
                 ball.style.top = y + 'px';
 
                 const pins = document.querySelectorAll('.pin');
+                let velocityX = 0;
+                const gravity = 0.2;
+                let velocityY = 1;
+
                 const animation = setInterval(() => {
-                    // Двигаем шарик вниз
-                    y += 4;
+                    // Применяем гравитацию
+                    velocityY += gravity;
+                    y += velocityY;
                     
-                    // Случайное движение влево-вправо (как в реальном плинко)
-                    x += (Math.random() - 0.5) * 3;
+                    // Добавляем случайное движение влево-вправо
+                    velocityX += (Math.random() - 0.5) * 0.5;
+                    velocityX *= 0.98; // Сопротивление воздуха
+                    x += velocityX;
                     
                     // Ограничиваем движение по горизонтали
-                    x = Math.max(10, Math.min(90, x));
+                    if (x < 5) {
+                        x = 5;
+                        velocityX *= -0.8; // Отскок от левой стенки
+                    }
+                    if (x > 95) {
+                        x = 95;
+                        velocityX *= -0.8; // Отскок от правой стенки
+                    }
                     
                     ball.style.left = x + '%';
                     ball.style.top = y + 'px';
@@ -259,13 +281,18 @@
                         const pinRect = pin.getBoundingClientRect();
                         const ballRect = ball.getBoundingClientRect();
                         
-                        // Простое определение столкновения
-                        const dx = Math.abs(pinRect.left + pinRect.width/2 - (ballRect.left + ballRect.width/2));
-                        const dy = Math.abs(pinRect.top + pinRect.height/2 - (ballRect.top + ballRect.height/2));
+                        const dx = (pinRect.left + pinRect.width/2) - (ballRect.left + ballRect.width/2);
+                        const dy = (pinRect.top + pinRect.height/2) - (ballRect.top + ballRect.height/2);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (dx < 15 && dy < 15) {
+                        // Столкновение происходит когда расстояние меньше суммы радиусов
+                        if (distance < (pinRect.width/2 + ballRect.width/2)) {
                             // Отскакивание от штифта
-                            x += (Math.random() - 0.5) * 20;
+                            const angle = Math.atan2(dy, dx);
+                            const force = 2;
+                            
+                            velocityX -= Math.cos(angle) * force;
+                            velocityY -= Math.sin(angle) * force;
                             
                             // Подсвечиваем штифт при столкновении
                             pin.style.background = '#ff9500';
@@ -273,26 +300,21 @@
                         }
                     });
 
-                    // Когда шарик достигает низа
-                    if (y >= 250) {
+                    // Когда шарик достигает низа (области множителей)
+                    if (y >= boardRect.height - 50) {
                         clearInterval(animation);
                         
-                        // Плавно перемещаем к выбранному множителю
-                        const multiplierRects = Array.from(multipliers).map(m => m.getBoundingClientRect());
-                        const boardRect = board.getBoundingClientRect();
-                        
-                        const targetX = (multiplierRects[targetSlot].left + multiplierRects[targetSlot].width/2 - boardRect.left) / boardRect.width * 100;
-                        
-                        // Анимация к целевому множителю
-                        let finalX = x;
+                        // Плавное движение к целевому множителю
                         const finalAnimation = setInterval(() => {
-                            finalX += (targetX - finalX) * 0.2;
-                            y += 1;
+                            // Плавное приближение к целевой позиции
+                            x += (targetX - x) * 0.1;
+                            y += 2;
                             
-                            ball.style.left = finalX + '%';
+                            ball.style.left = x + '%';
                             ball.style.top = y + 'px';
                             
-                            if (Math.abs(finalX - targetX) < 1 && y >= 280) {
+                            // Когда шарик достиг целевой позиции
+                            if (Math.abs(x - targetX) < 1 && y >= boardRect.height - 20) {
                                 clearInterval(finalAnimation);
                                 
                                 // Подсвечиваем множитель

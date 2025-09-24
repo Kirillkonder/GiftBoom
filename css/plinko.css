@@ -137,7 +137,7 @@ body::before {
 /* Доска плинко */
 .plinko-board {
     position: relative;
-    height: 300px;
+    height: 350px;
     background: rgba(10, 10, 20, 0.9);
     border-radius: 10px;
     margin-bottom: 20px;
@@ -145,11 +145,9 @@ body::before {
     border: 2px solid #333;
 }
 
-/* Штифты */
+/* Штифты в треугольном порядке */
 .pin {
     position: absolute;
-    width: 12px;
-    height: 12px;
     background: #00c851;
     border-radius: 50%;
     transform: translate(-50%, -50%);
@@ -332,17 +330,17 @@ body::before {
     }
     
     .plinko-board {
-        height: 250px;
+        height: 300px;
     }
     
     .pin {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
     }
     
     .ball {
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
     }
     
     .multiplier {
