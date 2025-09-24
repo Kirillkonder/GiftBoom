@@ -677,11 +677,11 @@ body::after {
 }
 
 .cashout-btn {
-    background: rgba(0, 200, 81, 0.2);
+    background: rgb(0, 255, 102);
 }
 
 .cashout-btn:not(:disabled):hover {
-    background: rgba(0, 200, 81, 0.3);
+    background: rgb(0, 255, 102);
 }
 
 /* Адаптация для мобильных устройств */
