@@ -607,7 +607,7 @@ body::after {
 .series-panel.active {
     opacity: 1;
     background: rgba(38, 39, 36, 0.76);
-    border-color: #ffd700;
+    border-color: #000000;
     box-shadow: 0 0 15px rgba(38, 39, 36, 0.76);
 }
 
