@@ -185,8 +185,8 @@ body::after {
 }
 
 .coin-container {
-    width: 375px; /* 150px * 2.5 = 375px */
-    height: 375px;
+    width: 350px; /* Увеличено с 375px */
+    height: 350px;
     margin: 20px auto;
     position: relative;
     perspective: 1000px;
@@ -210,7 +210,6 @@ body::after {
     align-items: center;
     justify-content: center;
 }
-
 .heads {
     background: url('coin.png') center/cover no-repeat;
     transform: rotateY(0deg);
@@ -235,7 +234,7 @@ body::after {
 .choice-label {
     position: absolute;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 20px; /* Увеличено с 16px */
     color: #000;
     text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
@@ -691,8 +690,8 @@ body::after {
     }
 
     .coin-container {
-        width: 300px;
-        height: 300px;
+        width: 320px;
+        height: 320px;
     }
     
     .close-btn {
@@ -721,8 +720,8 @@ body::after {
     }
     
     .coin-container {
-        width: 280px;
-        height: 280px;
+        width: 300px;
+        height: 300px;
     }
 
     .top-panel {
@@ -752,8 +751,8 @@ body::after {
     }
     
     .coin-container {
-        width: 130px;
-        height: 130px;
+        width: 180px;
+        height: 180px;
     }
     
     .choice-buttons {
@@ -773,8 +772,8 @@ body::after {
     }
     
     .coin-container {
-        width: 250px;
-        height: 250px;
+        width: 280px;
+        height: 280px;
     }
 
     .close-btn {
@@ -797,8 +796,8 @@ body::after {
     }
     
     .coin-container {
-        width: 120px;
-        height: 120px;
+        width: 180px;
+        height: 180px;
     }
     
     .choice-btn {
