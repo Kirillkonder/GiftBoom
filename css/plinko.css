@@ -41,7 +41,7 @@ body::before {
     justify-content: space-between;
     align-items: center;
     padding: 12px 15px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
     position: fixed;
     top: 0;
     left: 0;
@@ -49,6 +49,7 @@ body::before {
     z-index: 10;
     max-width: 500px;
     margin: 0 auto;
+    border-bottom: 1px solid #333;
 }
 
 .close-btn {
@@ -69,7 +70,7 @@ body::before {
 .balance {
     background: linear-gradient(135deg, #00c851, #32cd32);
     color: #000;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 10px;
     font-weight: bold;
     font-size: 14px;
@@ -90,13 +91,13 @@ body::before {
 /* Контент */
 .plinko-content {
     padding: 20px;
-    text-align: center;
 }
 
 .plinko-title {
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 20px;
+    text-align: center;
     color: #fff;
 }
 
@@ -111,43 +112,37 @@ body::before {
 
 .plinko-drop-zone {
     height: 60px;
-    background: rgba(0, 200, 81, 0.1);
+    background: linear-gradient(135deg, #00c851, #32cd32);
     border-radius: 10px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    border: 2px dashed #00c851;
     margin-bottom: 20px;
     cursor: pointer;
     transition: all 0.3s;
+    border: none;
 }
 
 .plinko-drop-zone:active {
     transform: scale(0.95);
-    background: rgba(0, 200, 81, 0.2);
-}
-
-.drop-indicator {
-    font-size: 24px;
-    margin-bottom: 5px;
+    background: linear-gradient(135deg, #00a842, #28a728);
 }
 
 .drop-text {
-    font-size: 14px;
-    color: #00c851;
-    font-weight: 500;
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
 }
 
-/* Доска */
+/* Доска плинко */
 .plinko-board {
     position: relative;
     height: 300px;
-    background: rgba(20, 20, 35, 0.8);
+    background: rgba(10, 10, 20, 0.9);
     border-radius: 10px;
     margin-bottom: 20px;
     overflow: hidden;
-    border: 1px solid #333;
+    border: 2px solid #333;
 }
 
 /* Штифты */
@@ -158,7 +153,7 @@ body::before {
     background: #00c851;
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 8px rgba(0, 200, 81, 0.7);
+    box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
     z-index: 2;
 }
 
@@ -169,34 +164,34 @@ body::before {
     height: 20px;
     background: radial-gradient(circle at 30% 30%, #fff, #ff9500);
     border-radius: 50%;
-    box-shadow: 0 0 15px rgba(255, 149, 0, 0.8);
+    box-shadow: 0 0 15px rgba(255, 149, 0, 0.9);
     z-index: 3;
     transform: translate(-50%, -50%);
-    transition: top 0.1s linear, left 0.1s linear;
 }
-
 
 /* Множители */
 .plinko-multipliers {
     display: flex;
     justify-content: space-between;
-    gap: 5px;
+    gap: 3px;
 }
 
 .multiplier {
     flex: 1;
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
+    background: linear-gradient(135deg, #1a1a2a, #2a2a3a);
+    color: #fff;
     padding: 12px 5px;
     border-radius: 8px;
     font-weight: bold;
     font-size: 12px;
     text-align: center;
+    border: 1px solid #333;
     transition: all 0.3s;
 }
 
 .multiplier.highlight {
     background: linear-gradient(135deg, #ff9500, #ffcc00);
+    color: #000;
     transform: scale(1.1);
     box-shadow: 0 0 20px rgba(255, 149, 0, 0.8);
 }
@@ -224,6 +219,7 @@ body::before {
 .bet-input-group label {
     color: #fff;
     font-weight: 500;
+    font-size: 14px;
 }
 
 .bet-input-group input {
@@ -240,6 +236,7 @@ body::before {
     color: #ccc;
     font-size: 14px;
     font-weight: 500;
+    text-align: center;
 }
 
 .drop-ball-btn {
@@ -255,7 +252,7 @@ body::before {
 }
 
 .drop-ball-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
 /* Модальное окно */
@@ -267,12 +264,12 @@ body::before {
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
 }
 
 .modal-content {
     background: #1a1a1a;
-    margin: 20% auto;
+    margin: 15% auto;
     padding: 0;
     border-radius: 15px;
     width: 90%;
@@ -335,7 +332,7 @@ body::before {
     }
     
     .plinko-board {
-        height: 350px;
+        height: 250px;
     }
     
     .pin {
@@ -346,5 +343,10 @@ body::before {
     .ball {
         width: 18px;
         height: 18px;
+    }
+    
+    .multiplier {
+        font-size: 10px;
+        padding: 10px 3px;
     }
 }
