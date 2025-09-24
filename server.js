@@ -1769,7 +1769,7 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // 🔥 ОГРАНИЧЕНИЯ СТАВОК: 0.1 - 100 TON для всех
+        // ОГРАНИЧЕНИЯ СТАВОК: 0.1 - 100 TON
         const minBet = 0.1;
         const maxBet = 100;
         
@@ -1781,26 +1781,10 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(400).json({ error: `Максимальная ставка: ${maxBet} TON` });
         }
 
-        const balance = demoMode ? user.demo_balance : user.main_balance;
+        const currentBalance = demoMode ? user.demo_balance : user.main_balance;
         
-        if (balance < betAmount) {
+        if (currentBalance < betAmount) {
             return res.status(400).json({ error: 'Недостаточно средств' });
-        }
-
-        // Списываем ставку
-        if (demoMode) {
-            users.update({
-                ...user,
-                demo_balance: user.demo_balance - betAmount
-            });
-            updateCasinoDemoBank(betAmount);
-        } else {
-            users.update({
-                ...user,
-                main_balance: user.main_balance - betAmount
-            });
-            updateCasinoBank(betAmount);
-            updateRTPStats('realBank', betAmount, 0);
         }
 
         // Генерируем случайный множитель (равные шансы для каждого)
@@ -1808,22 +1792,25 @@ app.post('/api/plinko/drop', async (req, res) => {
         const randomIndex = Math.floor(Math.random() * multipliers.length);
         const multiplier = multipliers[randomIndex];
         
-        const winAmount = betAmount * multiplier;
+        const winAmount = parseFloat((betAmount * multiplier).toFixed(2));
 
-        // Начисляем выигрыш
+        // 🔥 ИСПРАВЛЕННЫЙ РАСЧЕТ БАЛАНСА
+        let newBalance;
         if (demoMode) {
+            newBalance = parseFloat((user.demo_balance - betAmount + winAmount).toFixed(2));
             users.update({
                 ...user,
-                demo_balance: user.demo_balance + winAmount
+                demo_balance: newBalance
             });
-            updateCasinoDemoBank(-winAmount);
+            updateCasinoDemoBank(betAmount - winAmount);
         } else {
+            newBalance = parseFloat((user.main_balance - betAmount + winAmount).toFixed(2));
             users.update({
                 ...user,
-                main_balance: user.main_balance + winAmount
+                main_balance: newBalance
             });
-            updateCasinoBank(-winAmount);
-            updateRTPStats('realBank', 0, winAmount);
+            updateCasinoBank(betAmount - winAmount);
+            updateRTPStats('realBank', betAmount, winAmount);
         }
 
         // Сохраняем транзакцию
@@ -1847,14 +1834,14 @@ app.post('/api/plinko/drop', async (req, res) => {
             multiplier: multiplier,
             win_amount: winAmount,
             slot_index: randomIndex,
-            new_balance: demoMode ? user.demo_balance + winAmount : user.main_balance + winAmount
+            new_balance: newBalance
         });
 
     } catch (error) {
         console.error('Plinko drop error:', error);
         res.status(500).json({ error: 'Server error' });
     }
-});;
+});
 
 // Запуск сервера
 async function startServer() {

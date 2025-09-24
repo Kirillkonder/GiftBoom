@@ -1,4 +1,4 @@
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -10,69 +10,24 @@ body {
     color: #fff;
     overflow-x: hidden;
     user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    position: relative;
 }
 
-/* Глобальный фон-сетка и пульсация */
+/* Фон с сеткой */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: 0;
-    pointer-events: none;
-    background-color: transparent;
-    background-image:
-        linear-gradient(rgba(30, 92, 184, 0.22) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.22) 1px, transparent 1px);
-    background-size:
-        80px 80px,
-        80px 80px;
-    background-position: 0 0, 0 0;
-    opacity: 0.55;
-    animation: grid-pulse 4s ease-in-out infinite;
-    will-change: transform, opacity;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(circle at center, transparent 0%, rgba(30, 92, 184, 0.18) 100%);
-    opacity: 0.5;
-    animation: glow-pulse 5s ease-in-out infinite;
-    will-change: transform, opacity;
-}
-
-@keyframes glow-pulse {
-    0%, 100% {
-        opacity: 0.25;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.08);
-    }
-}
-
-@keyframes grid-pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.45;
-    }
-    50% {
-        transform: scale(1.035);
-        opacity: 0.95;
-    }
+    background-image: 
+        linear-gradient(rgba(30, 92, 184, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.15) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.3;
 }
 
 .game-container {
-    max-width: 100%;
-    width: 100%;
-    margin: 0;
+    max-width: 500px;
+    margin: 0 auto;
     min-height: 100vh;
     background: transparent;
     position: relative;
@@ -83,110 +38,56 @@ body::after {
 /* Верхняя панель */
 .top-panel {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
-    flex-wrap: nowrap;
-    box-sizing: border-box;
-    padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
-    background: transparent;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.8);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 10;
-    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .close-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
     color: #fff;
-    font-weight: 500;
+    font-size: 18px;
     padding: 8px 12px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid #333;
     border-radius: 8px;
-    background: transparent;
-    transition: all 0.3s ease;
-    margin-right: auto;
-    flex-shrink: 0;
     cursor: pointer;
-}
-
-.close-btn i {
-    font-size: 16px;
-}
-
-.close-btn:active {
-    transform: scale(0.95);
-}
-
-.close-btn:hover {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(0, 0, 0, 0.6);
 }
 
 .top-right {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-    margin-left: auto;
+    gap: 10px;
 }
 
 .balance {
     background: linear-gradient(135deg, #00c851, #32cd32);
     color: #000;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 10px;
     font-weight: bold;
-    font-size: 13px;
+    font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 4px;
-    position: relative;
-}
-
-.balance-plus-btn {
-    background: rgba(0, 0, 0, 0.2);
-    border: none;
-    color: #000;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 4px;
-}
-
-.balance-plus-btn:hover {
-    background: rgba(0, 0, 0, 0.3);
-    transform: scale(1.1);
-}
-
-.balance-plus-btn:active {
-    transform: scale(0.95);
-}
-
-.balance i {
-    font-size: 12px;
+    gap: 5px;
 }
 
 #demo-badge {
-    display: none;
     background: #ff9500;
     color: black;
-    padding: 2px 6px;
-    border-radius: 8px;
-    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: none;
 }
 
-/* Контент Plinko */
+/* Контент */
 .plinko-content {
     padding: 20px;
     text-align: center;
@@ -195,25 +96,17 @@ body::after {
 .plinko-title {
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     color: #fff;
 }
 
-.plinko-description {
-    font-size: 14px;
-    color: #ccc;
-    margin-bottom: 20px;
-}
-
-/* Поле Plinko */
+/* Игровое поле */
 .plinko-game {
-    max-width: 500px;
-    margin: 0 auto 20px;
-    background: rgba(30, 30, 45, 0.8);
+    background: rgba(30, 30, 45, 0.9);
     border-radius: 15px;
-    padding: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
     border: 2px solid rgba(0, 200, 81, 0.3);
-    box-shadow: 0 10px 30px rgba(0, 200, 81, 0.1);
 }
 
 .plinko-drop-zone {
@@ -224,121 +117,94 @@ body::after {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border: 2px dashed rgba(0, 200, 81, 0.3);
-    margin-bottom: 15px;
+    border: 2px dashed #00c851;
+    margin-bottom: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
 
-.plinko-drop-zone:hover {
+.plinko-drop-zone:active {
+    transform: scale(0.95);
     background: rgba(0, 200, 81, 0.2);
-    border-color: rgba(0, 200, 81, 0.5);
 }
 
 .drop-indicator {
-    width: 20px;
-    height: 20px;
-    background: rgba(0, 200, 81, 0.7);
-    border-radius: 50%;
-    animation: pulse 2s infinite;
+    font-size: 24px;
     margin-bottom: 5px;
 }
 
 .drop-text {
-    font-size: 12px;
+    font-size: 14px;
     color: #00c851;
     font-weight: 500;
 }
 
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.7;
-    }
-    50% {
-        transform: scale(1.2);
-        opacity: 1;
-    }
-}
-
+/* Доска */
 .plinko-board {
-    background: rgba(20, 20, 35, 0.9);
-    border-radius: 10px;
-    padding: 20px 10px;
-    margin-bottom: 15px;
-    border: 1px solid rgba(0, 200, 81, 0.2);
-    min-height: 300px;
     position: relative;
+    height: 400px;
+    background: rgba(20, 20, 35, 0.8);
+    border-radius: 10px;
+    margin-bottom: 20px;
     overflow: hidden;
+    border: 1px solid #333;
 }
 
-.plinko-grid {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.pin-row {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
+/* Штифты */
 .pin {
-    width: 8px;
-    height: 8px;
+    position: absolute;
+    width: 12px;
+    height: 12px;
     background: #00c851;
     border-radius: 50%;
-    box-shadow: 0 0 5px rgba(0, 200, 81, 0.5);
-}
-
-.plinko-multipliers {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    padding: 0 5px;
-}
-
-.multiplier {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
-    padding: 8px 6px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 12px;
-    min-width: 40px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-.multiplier.highlight {
-    background: linear-gradient(135deg, #ff9500, #ffcc00);
-    transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(255, 149, 0, 0.7);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px rgba(0, 200, 81, 0.7);
+    z-index: 2;
 }
 
 /* Шарик */
 .ball {
     position: absolute;
-    width: 16px;
-    height: 16px;
-    background: radial-gradient(circle at 30% 30%, #fff, #00c851);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle at 30% 30%, #fff, #ff9500);
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
-    z-index: 5;
-    transition: all 0.1s linear;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: none;
+    box-shadow: 0 0 15px rgba(255, 149, 0, 0.8);
+    z-index: 3;
+    transform: translate(-50%, -50%);
 }
 
-/* Панель управления */
+/* Множители */
+.plinko-multipliers {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+}
+
+.multiplier {
+    flex: 1;
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    color: #000;
+    padding: 10px 5px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.multiplier.highlight {
+    background: linear-gradient(135deg, #ff9500, #ffcc00);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 149, 0, 0.8);
+}
+
+/* Управление */
 .plinko-controls {
-    max-width: 300px;
-    margin: 0 auto;
+    background: rgba(30, 30, 45, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    border: 2px solid rgba(0, 200, 81, 0.3);
 }
 
 .bet-controls {
@@ -350,21 +216,18 @@ body::after {
 .bet-input-group {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 8px;
 }
 
 .bet-input-group label {
     color: #fff;
     font-weight: 500;
-    font-size: 14px;
 }
 
 .bet-input-group input {
-    width: 120px;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #333;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #1a1a1a;
     color: #fff;
     font-size: 16px;
@@ -377,6 +240,22 @@ body::after {
     font-weight: 500;
 }
 
+.drop-ball-btn {
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    color: #000;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.drop-ball-btn:active {
+    transform: scale(0.95);
+}
+
 /* Модальное окно */
 .modal {
     display: none;
@@ -386,72 +265,31 @@ body::after {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.8);
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-    margin: 15% auto;
+    background: #1a1a1a;
+    margin: 20% auto;
     padding: 0;
-    border: 1px solid #333;
     border-radius: 15px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    border: 2px solid #333;
 }
 
 .modal-header {
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    padding: 20px;
+    border-radius: 15px 15px 0 0;
+    color: #000;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #333;
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    border-radius: 15px 15px 0 0;
-    color: #000;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.close {
-    color: #000;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-    transition: opacity 0.2s ease;
-}
-
-.close:hover {
-    opacity: 0.7;
 }
 
 .modal-body {
     padding: 20px;
-}
-
-.deposit-info {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #ccc;
-    font-size: 14px;
 }
 
 .input-group {
@@ -462,8 +300,6 @@ body::after {
     display: block;
     margin-bottom: 8px;
     color: #fff;
-    font-weight: 500;
-    font-size: 14px;
 }
 
 .input-group input {
@@ -471,21 +307,8 @@ body::after {
     padding: 12px;
     border: 1px solid #333;
     border-radius: 10px;
-    background: #1a1a1a;
+    background: #2a2a2a;
     color: #fff;
-    font-size: 16px;
-    box-sizing: border-box;
-    transition: border-color 0.2s ease;
-}
-
-.input-group input:focus {
-    outline: none;
-    border-color: #00c851;
-    box-shadow: 0 0 0 2px rgba(0, 200, 81, 0.2);
-}
-
-.input-group input::placeholder {
-    color: #666;
 }
 
 .modal-btn {
@@ -496,8 +319,6 @@ body::after {
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 10px;
 }
 
 .deposit-btn {
@@ -505,155 +326,23 @@ body::after {
     color: #000;
 }
 
-.deposit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
-}
-
-.deposit-btn:active {
-    transform: translateY(0);
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 480px) {
-    .top-panel {
-        padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+/* Адаптация */
+@media (max-width: 500px) {
+    .game-container {
+        padding-top: 50px;
     }
     
-    .close-btn {
-        padding: 6px 10px;
-        font-size: 13px;
-    }
-    
-    .close-btn i {
-        font-size: 14px;
-    }
-    
-    .top-right {
-        gap: 8px;
-    }
-    
-    .balance {
-        padding: 4px 6px;
-        font-size: 12px;
-    }
-
-    .plinko-content {
-        padding: 15px;
-    }
-
-    .plinko-game {
-        margin: 0 auto 15px;
-        padding: 10px;
-    }
-
     .plinko-board {
-        padding: 15px 8px;
-        min-height: 250px;
+        height: 350px;
     }
-
-    .pin-row {
-        gap: 15px;
-    }
-
+    
     .pin {
-        width: 6px;
-        height: 6px;
-    }
-
-    .multiplier {
-        padding: 6px 4px;
-        font-size: 10px;
-        min-width: 35px;
-    }
-
-    .plinko-drop-zone {
-        height: 50px;
-    }
-
-    .drop-text {
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 390px) {
-    .top-panel {
-        padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+        width: 10px;
+        height: 10px;
     }
     
-    .close-btn {
-        padding: 6px 8px;
-        font-size: 12px;
-    }
-    
-    .close-btn i {
-        font-size: 13px;
-    }
-    
-    .top-right {
-        gap: 6px;
-    }
-    
-    .balance {
-        padding: 3px 6px;
-        font-size: 11px;
-    }
-
-    .multiplier {
-        padding: 5px 3px;
-        font-size: 9px;
-        min-width: 30px;
-    }
-
-    .pin-row {
-        gap: 12px;
-    }
-
-    .plinko-grid {
-        gap: 12px;
-    }
-}
-
-@media (max-width: 320px) {
-    .top-panel {
-        padding: 8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left));
-    }
-    
-    .close-btn {
-        padding: 5px 6px;
-        font-size: 11px;
-        gap: 4px;
-    }
-    
-    .close-btn i {
-        font-size: 12px;
-    }
-    
-    .top-right {
-        gap: 4px;
-    }
-    
-    .balance {
-        padding: 2px 4px;
-        font-size: 10px;
-    }
-
-    .plinko-game {
-        padding: 8px;
-    }
-
-    .multiplier {
-        padding: 4px 2px;
-        font-size: 8px;
-        min-width: 25px;
-    }
-
-    .pin-row {
-        gap: 10px;
-    }
-
-    .pin {
-        width: 5px;
-        height: 5px;
+    .ball {
+        width: 18px;
+        height: 18px;
     }
 }

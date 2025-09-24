@@ -9,9 +9,6 @@
     <link rel="stylesheet" href="css/plinko.css">
 </head>
 <body>
-    <!-- Фон с сеткой на всю страницу -->
-    <div class="grid-background"></div>
-    
     <div class="game-container">
         <!-- Верхняя панель -->
         <div class="top-panel">
@@ -33,34 +30,31 @@
         <!-- Контент Plinko -->
         <div class="plinko-content">
             <div class="plinko-title">Plinko</div>
-            <div class="plinko-description">Сбросьте шарик и выиграйте множитель!</div>
             
             <!-- Поле Plinko -->
             <div class="plinko-game">
                 <!-- Область для сброса шарика -->
                 <div class="plinko-drop-zone" onclick="dropBall()">
-                    <div class="drop-indicator"></div>
-                    <div class="drop-text">Нажмите чтобы сбросить шарик</div>
+                    <div class="drop-indicator">⬇️</div>
+                    <div class="drop-text">Кинуть шарик</div>
                 </div>
                 
-                <!-- Игровое поле с штифтами -->
-                <div class="plinko-board">
-                    <div class="plinko-grid" id="plinko-grid">
-                        <!-- Ряды штифтов будут сгенерированы JavaScript -->
-                    </div>
+                <!-- Игровое поле -->
+                <div class="plinko-board" id="plinko-board">
+                    <!-- Шарик будет создаваться здесь -->
                 </div>
                 
                 <!-- Множители -->
                 <div class="plinko-multipliers" id="multipliers">
-                    <div class="multiplier">X5.8</div>
-                    <div class="multiplier">X2.2</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X0.4</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X2.2</div>
-                    <div class="multiplier">X5.8</div>
+                    <div class="multiplier" data-value="5.8">X5.8</div>
+                    <div class="multiplier" data-value="2.2">X2.2</div>
+                    <div class="multiplier" data-value="1.1">X1.1</div>
+                    <div class="multiplier" data-value="1.1">X1.1</div>
+                    <div class="multiplier" data-value="0.4">X0.4</div>
+                    <div class="multiplier" data-value="1.1">X1.1</div>
+                    <div class="multiplier" data-value="1.1">X1.1</div>
+                    <div class="multiplier" data-value="2.2">X2.2</div>
+                    <div class="multiplier" data-value="5.8">X5.8</div>
                 </div>
             </div>
             
@@ -69,11 +63,14 @@
                 <div class="bet-controls">
                     <div class="bet-input-group">
                         <label for="bet-amount">Ставка (TON):</label>
-                        <input type="number" id="bet-amount" value="1.0" min="0.1" step="0.1">
+                        <input type="number" id="bet-amount" value="1.0" min="0.1" step="0.1" max="100">
                     </div>
                     <div class="balance-info">
                         Баланс: <span id="current-balance">0.00</span> TON
                     </div>
+                    <button class="drop-ball-btn" onclick="dropBall()">
+                        🎯 Кинуть шарик
+                    </button>
                 </div>
             </div>
         </div>
@@ -87,9 +84,6 @@
                 <span class="close" onclick="closeDepositModal()">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="deposit-info">
-                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
-                </div>
                 <div class="input-group">
                     <label for="deposit-amount">Сумма (TON):</label>
                     <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
@@ -102,12 +96,12 @@
     <script>
         let currentUser = null;
         let isDemoMode = false;
-        let isDropping = false;
+        let isAnimating = false;
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             initializeGame();
-            initPlinkoField();
+            createPins();
         });
 
         function goBack() {
@@ -119,9 +113,7 @@
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 currentUser = {
                     id: tg.initDataUnsafe.user.id,
-                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`,
-                    firstName: tg.initDataUnsafe.user.first_name,
-                    lastName: tg.initDataUnsafe.user.last_name
+                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
                 };
                 loadUserData();
             }
@@ -132,7 +124,7 @@
                 const response = await fetch(`/api/user/balance/${currentUser.id}`);
                 if (response.ok) {
                     const userData = await response.json();
-                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+                    const balance = userData.demo_mode ? userData.demo_balance : user.data.main_balance;
                     document.getElementById('balance').textContent = balance.toFixed(2);
                     document.getElementById('current-balance').textContent = balance.toFixed(2);
                     isDemoMode = userData.demo_mode;
@@ -143,123 +135,144 @@
             }
         }
 
-        // Инициализация поля Plinko
-        function initPlinkoField() {
-            const grid = document.getElementById('plinko-grid');
-            const rows = 8; // Оптимальное количество рядов
+        // Создание штифтов
+        function createPins() {
+            const board = document.getElementById('plinko-board');
+            const rows = 12;
+            const pinSpacing = 35;
             
-            // Очищаем поле
-            grid.innerHTML = '';
+            // Очищаем доску
+            board.innerHTML = '';
             
+            // Создаем штифты
             for (let row = 0; row < rows; row++) {
-                const rowElement = document.createElement('div');
-                rowElement.className = 'pin-row';
-                
-                // Количество штифтов в ряду: row + 1
-                const pinsInRow = row + 1;
-                
-                for (let pin = 0; pin < pinsInRow; pin++) {
-                    const pinElement = document.createElement('div');
-                    pinElement.className = 'pin';
-                    rowElement.appendChild(pinElement);
+                for (let col = 0; col <= row; col++) {
+                    const pin = document.createElement('div');
+                    pin.className = 'pin';
+                    pin.style.left = `${50 + (col - row/2) * pinSpacing}%`;
+                    pin.style.top = `${15 + row * 7}%`;
+                    board.appendChild(pin);
                 }
-                
-                grid.appendChild(rowElement);
             }
         }
 
-        // Функция сброса шарика
+        // Функция сброса шарика с РЕАЛЬНОЙ физикой
         async function dropBall() {
-    const betAmount = parseFloat(document.getElementById('bet-amount').value);
-    if (isNaN(betAmount) || betAmount <= 0) {
-        alert('Введите корректную ставку');
-        return;
-    }
-
-    // 🔥 ПРОВЕРКА ОГРАНИЧЕНИЙ СТАВОК
-    if (betAmount < 0.1) {
-        alert('Минимальная ставка: 0.1 TON');
-        return;
-    }
-    
-    if (betAmount > 100) {
-        alert('Максимальная ставка: 100 TON');
-        return;
-    }
-
-    const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
-    if (currentBalance < betAmount) {
-        alert('Недостаточно средств');
-        return;
-    }
-
-    try {
-        // Отправляем запрос на сервер
-        const response = await fetch('/api/plinko/drop', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                betAmount: betAmount,
-                demoMode: isDemoMode
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Анимируем падение шарика
-            await animateBallDrop(result.slot_index);
+            if (isAnimating) return;
             
-            // Обновляем баланс
-            document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-            document.getElementById('current-balance').textContent = result.new_balance.toFixed(2);
-            
-            // Показываем результат
-            showResult(result.multiplier, result.win_amount, betAmount);
-        } else {
-            alert('Ошибка: ' + result.error);
+            const betAmount = parseFloat(document.getElementById('bet-amount').value);
+            if (betAmount < 0.1 || betAmount > 100) {
+                alert('Ставка должна быть от 0.1 до 100 TON');
+                return;
+            }
+
+            const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
+            if (currentBalance < betAmount) {
+                alert('Недостаточно средств');
+                return;
+            }
+
+            isAnimating = true;
+
+            try {
+                const response = await fetch('/api/plinko/drop', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        betAmount: betAmount,
+                        demoMode: isDemoMode
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Запускаем анимацию ПЕРЕД обновлением баланса
+                    await animateBallPhysics(result.slot_index);
+                    
+                    // Обновляем баланс после анимации
+                    document.getElementById('balance').textContent = result.new_balance.toFixed(2);
+                    document.getElementById('current-balance').textContent = result.new_balance.toFixed(2);
+                    
+                    showResult(result.multiplier, result.win_amount, betAmount);
+                } else {
+                    alert('Ошибка: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Drop error:', error);
+                alert('Ошибка соединения');
+            } finally {
+                isAnimating = false;
+            }
         }
-    } catch (error) {
-        console.error('Drop ball error:', error);
-        alert('Ошибка соединения');
-    }
-}
 
-        // Анимация падения шарика
-        function animateBallDrop(slotIndex) {
+        // РЕАЛЬНАЯ ФИЗИКА ПАДЕНИЯ ШАРИКА
+        function animateBallPhysics(targetSlot) {
             return new Promise((resolve) => {
+                const board = document.getElementById('plinko-board');
                 const ball = document.createElement('div');
                 ball.className = 'ball';
                 ball.id = 'plinko-ball';
-                document.querySelector('.plinko-board').appendChild(ball);
+                board.appendChild(ball);
 
                 const multipliers = document.querySelectorAll('.multiplier');
-                const targetMultiplier = multipliers[slotIndex];
-                const targetRect = targetMultiplier.getBoundingClientRect();
-                const boardRect = document.querySelector('.plinko-board').getBoundingClientRect();
+                const targetMultiplier = multipliers[targetSlot];
 
-                // Позиционируем шарик
-                ball.style.display = 'block';
-                ball.style.top = '10px';
-                ball.style.left = '50%';
+                let posX = 50; // Старт по центру
+                let posY = 5;
+                let velocityX = 0;
+                let velocityY = 2;
+                const gravity = 0.2;
+                const friction = 0.9;
+                const bounce = 0.6;
 
-                let position = 10;
-                const fallInterval = setInterval(() => {
-                    position += 8; // Скорость падения
-                    ball.style.top = position + 'px';
-                    
-                    // Реалистичное движение влево-вправо
-                    const progress = position / 350;
-                    const targetX = 10 + (slotIndex * 80); // Позиция целевого слота
-                    const currentX = 50 + (targetX - 50) * progress;
-                    ball.style.left = currentX + 'px';
-                    
-                    if (position >= 350) {
-                        clearInterval(fallInterval);
+                const animate = () => {
+                    // Применяем гравитацию
+                    velocityY += gravity;
+                    posY += velocityY;
+                    posX += velocityX;
+
+                    // Получаем все штифты
+                    const pins = document.querySelectorAll('.pin');
+                    let hitPin = false;
+
+                    // Проверяем столкновения с штифтами
+                    pins.forEach(pin => {
+                        const pinRect = pin.getBoundingClientRect();
+                        const ballRect = ball.getBoundingClientRect();
                         
+                        if (ballRect.left < pinRect.right && 
+                            ballRect.right > pinRect.left && 
+                            ballRect.top < pinRect.bottom && 
+                            ballRect.bottom > pinRect.top) {
+                            
+                            hitPin = true;
+                            // Отскакивание от штифта
+                            const dx = (pinRect.left + pinRect.width/2) - (ballRect.left + ballRect.width/2);
+                            const dy = (pinRect.top + pinRect.height/2) - (ballRect.top + ballRect.height/2);
+                            
+                            velocityX = -dx * 0.1 * bounce;
+                            velocityY = -dy * 0.1 * bounce;
+                            
+                            // Эффект столкновения
+                            pin.style.background = '#ff9500';
+                            setTimeout(() => pin.style.background = '#00c851', 200);
+                        }
+                    });
+
+                    // Столкновения со стенками
+                    if (posX < 5 || posX > 95) {
+                        velocityX = -velocityX * friction;
+                        posX = posX < 5 ? 5 : 95;
+                    }
+
+                    // Обновляем позицию шарика
+                    ball.style.left = posX + '%';
+                    ball.style.top = posY + '%';
+
+                    // Когда шарик достигает низа
+                    if (posY >= 85) {
                         // Подсвечиваем выигравший множитель
                         targetMultiplier.classList.add('highlight');
                         
@@ -267,30 +280,35 @@
                             ball.remove();
                             targetMultiplier.classList.remove('highlight');
                             resolve();
-                        }, 1500);
+                        }, 1000);
+                    } else {
+                        requestAnimationFrame(animate);
                     }
-                }, 30);
+                };
+
+                // Запускаем анимацию
+                animate();
             });
         }
 
         // Показ результата
         function showResult(multiplier, winAmount, betAmount) {
-    const message = multiplier >= 1 ? 
-        `🎉 Вы выиграли ${winAmount.toFixed(2)} TON (x${multiplier})!` : 
-        `💸 Вы проиграли ${betAmount.toFixed(2)} TON (x${multiplier})`;
-    
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.showPopup({
-            title: multiplier >= 1 ? "🎉 Победа!" : "💸 Проигрыш",
-            message: message,
-            buttons: [{ type: "ok" }]
-        });
-    } else {
-        alert(message);
-    }
-}
+            const message = multiplier >= 1 ? 
+                `🎉 Выигрыш: ${winAmount.toFixed(2)} TON (x${multiplier})` : 
+                `💸 Проигрыш: -${betAmount.toFixed(2)} TON`;
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    title: multiplier >= 1 ? "🎉 Победа!" : "💸 Проигрыш",
+                    message: message,
+                    buttons: [{ type: "ok" }]
+                });
+            } else {
+                alert(message);
+            }
+        }
 
-        // Функции для пополнения баланса
+        // Функции пополнения баланса
         function openDepositModal() {
             document.getElementById('deposit-modal').style.display = 'block';
         }
@@ -301,18 +319,15 @@
 
         async function processDeposit() {
             const amount = parseFloat(document.getElementById('deposit-amount').value);
-            
-            if (isNaN(amount) || amount < 1) {
-                alert('Введите сумму от 1 TON');
+            if (amount < 1) {
+                alert('Минимальное пополнение: 1 TON');
                 return;
             }
 
             try {
                 const response = await fetch('/api/create-invoice', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         telegramId: currentUser.id,
                         amount: amount,
@@ -321,19 +336,14 @@
                 });
 
                 const result = await response.json();
-
                 if (result.success) {
-                    // Открываем ссылку на оплату
                     window.open(result.pay_url, '_blank');
-                    
-                    // Начинаем проверку статуса
                     checkDepositStatus(result.invoice_id);
                     closeDepositModal();
                 } else {
-                    alert('Ошибка создания инвойса: ' + result.error);
+                    alert('Ошибка: ' + result.error);
                 }
             } catch (error) {
-                console.error('Deposit error:', error);
                 alert('Ошибка соединения');
             }
         }
@@ -343,49 +353,29 @@
                 try {
                     const response = await fetch('/api/check-invoice', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            invoiceId: invoiceId,
-                            demoMode: isDemoMode
-                        })
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ invoiceId, demoMode: isDemoMode })
                     });
                     
                     const result = await response.json();
                     
                     if (result.status === 'paid') {
                         clearInterval(checkInterval);
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "✅ Успешно",
-                                message: 'Депозит успешно зачислен!',
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert('Депозит успешно зачислен!');
-                        }
-                        await loadUserData();
-                    } else if (result.status === 'expired' || result.status === 'cancelled') {
+                        alert('✅ Депозит зачислен!');
+                        loadUserData();
+                    } else if (result.status === 'expired') {
                         clearInterval(checkInterval);
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "❌ Ошибка",
-                                message: 'Платеж отменен или просрочен',
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert('Платеж отменен или просрочен');
-                        }
+                        alert('❌ Время оплаты истекло');
                     }
                 } catch (error) {
                     console.error('Status check error:', error);
                 }
-            }, 5000);
+            }, 3000);
         }
 
-        // Обработчик клика вне модального окна
-        window.onclick = function(event) {
-            const depositModal = document.getElementById('deposit-modal');
-            if (event.target === depositModal) {
+        // Клик вне модалки
+        window.onclick = (event) => {
+            if (event.target === document.getElementById('deposit-modal')) {
                 closeDepositModal();
             }
         }
