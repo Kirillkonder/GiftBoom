@@ -1794,7 +1794,7 @@ app.post('/api/plinko/drop', async (req, res) => {
         
         const winAmount = parseFloat((betAmount * multiplier).toFixed(2));
 
-        // 🔥 ИСПРАВЛЕННЫЙ РАСЧЕТ БАЛАНСА
+        // 🔥 СРАЗУ ОБНОВЛЯЕМ БАЛАНС КАК В ДРУГИХ ИГРАХ
         let newBalance;
         if (demoMode) {
             newBalance = parseFloat((user.demo_balance - betAmount + winAmount).toFixed(2));
@@ -1802,14 +1802,24 @@ app.post('/api/plinko/drop', async (req, res) => {
                 ...user,
                 demo_balance: newBalance
             });
-            updateCasinoDemoBank(betAmount - winAmount);
+            // Обновляем демо-банк казино
+            const demoBank = getCasinoDemoBank();
+            casinoDemoBank.update({
+                ...demoBank,
+                total_balance: demoBank.total_balance + (betAmount - winAmount)
+            });
         } else {
             newBalance = parseFloat((user.main_balance - betAmount + winAmount).toFixed(2));
             users.update({
                 ...user,
                 main_balance: newBalance
             });
-            updateCasinoBank(betAmount - winAmount);
+            // Обновляем реальный банк казино
+            const realBank = getCasinoBank();
+            casinoBank.update({
+                ...realBank,
+                total_balance: realBank.total_balance + (betAmount - winAmount)
+            });
             updateRTPStats('realBank', betAmount, winAmount);
         }
 
