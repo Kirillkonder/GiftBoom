@@ -1,725 +1,414 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plinko Game</title>
-    <meta name="description" content="Играйте в Plinko - захватывающую игру с шариками и множителями!" />
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #0f1e3d 0%, #1a365d 50%, #0f1e3d 100%);
-            min-height: 100vh;
-            color: white;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-        }
-
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-            gap: 15px;
-        }
-
-        .header {
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            color: #00d4ff;
-            margin-bottom: 5px;
-            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-        }
-
-        .plinko-board {
-            position: relative;
-            width: calc(100vw - 20px);
-            max-width: 380px;
-            height: 300px;
-            margin: 0 auto 15px;
-            background: rgba(15, 30, 61, 0.8);
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 15px;
-            overflow: hidden;
-        }
-
-        .peg {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #ffffff;
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-        }
-
-        .ball {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: linear-gradient(145deg, #ff6b6b, #ff4757);
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(255, 107, 107, 0.8);
-            transition: all 0.1s ease-out;
-            z-index: 100;
-        }
-
-        .multiplier-zone {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
-        }
-
-        .multiplier {
-            background: linear-gradient(145deg, #ffd700, #ffed4e);
-            color: #000;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-            min-width: 50px;
-            text-align: center;
-        }
-
-        .control-panel {
-            background: rgba(15, 30, 61, 0.9);
-            border: 2px solid rgba(0, 212, 255, 0.2);
-            border-radius: 15px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .left-controls, .right-controls {
-            display: flex;
-            flex-direction: row;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .center-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px 0;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .control-label {
-            color: #a0aec0;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 5px;
-        }
-
-        .btn {
-            background: rgba(45, 55, 72, 0.8);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            min-height: 44px;
-            min-width: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn:hover {
-            background: rgba(0, 212, 255, 0.2);
-            border-color: rgba(0, 212, 255, 0.6);
-        }
-
-        .btn.active {
-            background: linear-gradient(145deg, #00d4ff, #0ea5e9);
-            border-color: #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
-        }
-
-        .play-button {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #00d4ff, #0ea5e9);
-            border: 4px solid rgba(0, 212, 255, 0.3);
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .balls-control {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .balls-selector {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .win-display {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(145deg, #00d4ff, #0ea5e9);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.5s ease;
-        }
-
-        .win-display.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-
-        .play-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
-        }
-
-        .play-button:active {
-            transform: scale(0.95);
-        }
-
-        .bet-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(45, 55, 72, 0.5);
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-        }
-
-        .bet-input {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 18px;
-            width: 100px;
-            text-align: center;
-        }
-
-        .bet-button {
-            background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.4);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .balance {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 18px;
-            color: #ffd700;
-            font-weight: bold;
-        }
-
-        select.btn {
-            background: rgba(45, 55, 72, 0.8);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            min-height: 44px;
-            width: 80px;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-8px); }
-            60% { transform: translateY(-4px); }
-        }
-
-        .ball.bouncing {
-            animation: bounce 0.3s ease-out;
-        }
-    </style>
-</head>
-<body>
-    <div class="game-container">
-        <div class="header">
-            <h1>PLINKO</h1>
-        </div>
-
-        <div class="plinko-board" id="plinkoBoard">
-            <canvas id="gameCanvas" width="380" height="300"></canvas>
-            <div class="multiplier-zone">
-                <div class="multiplier" data-multiplier="5.6">×5.6</div>
-                <div class="multiplier" data-multiplier="2.2">×2.2</div>
-                <div class="multiplier" data-multiplier="1.1">×1.1</div>
-                <div class="multiplier" data-multiplier="1.4">×1.4</div>
-                <div class="multiplier" data-multiplier="0.8">×0.8</div>
-                <div class="multiplier" data-multiplier="1.4">×1.4</div>
-                <div class="multiplier" data-multiplier="3.1">×3.1</div>
-                <div class="multiplier" data-multiplier="2.2">×2.2</div>
-                <div class="multiplier" data-multiplier="5.6">×5.6</div>
-            </div>
-        </div>
-
-        <div class="control-panel">
-            <div class="left-controls">
-                <div class="control-group">
-                    <div class="control-label">Уровень</div>
-                    <div class="button-group">
-                        <button class="btn" onclick="setRisk('low')">Низкий</button>
-                        <button class="btn active" onclick="setRisk('medium')">Средний</button>
-                        <button class="btn" onclick="setRisk('high')">Высокий</button>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <div class="control-label">Линии</div>
-                    <select class="btn" onchange="setLines(parseInt(this.value))">
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10</option>
-                        <option value="11">11</option>
-                        <option value="12" selected>12</option>
-                        <option value="13">13</option>
-                        <option value="14">14</option>
-                        <option value="15">15</option>
-                        <option value="16">16</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="center-controls">
-                <div class="balls-control">
-                    <div class="control-label">Количество</div>
-                    <div class="balls-selector">
-                        <button class="btn active" onclick="setBallCount(1)">1</button>
-                        <button class="btn" onclick="setBallCount(10)">10</button>
-                        <button class="btn" onclick="setBallCount(100)">100</button>
-                    </div>
-                    <button class="play-button" onclick="dropBalls()">ИГРАТЬ</button>
-                </div>
-            </div>
-
-            <div class="right-controls">
-                <div class="control-group">
-                    <div class="control-label">Режим</div>
-                    <div class="button-group">
-                        <button class="btn active" onclick="setBetMode('manual')">🎮</button>
-                        <button class="btn" onclick="setBetMode('auto')">⚡</button>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <div class="control-label">Ставка</div>
-                    <div class="bet-controls">
-                        <button class="bet-button" onclick="adjustBet(-0.1)">−</button>
-                        <input type="text" class="bet-input" value="1,00 FUN" readonly>
-                        <button class="bet-button" onclick="adjustBet(0.1)">+</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="balance">
-            Баланс 1 000,00 FUN
-        </div>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div class="w-[547px] h-[956px] relative">
+      <img
+        class="w-[250px] h-[250px] absolute top-[226px] left-[9.69%] right-[44.61%]"
+        src="https://picsum.photos/250/250"
+        style="object-fit: cover" />
+      <div
+        class="w-[440px] h-[956px] bg-[#0A0F1E] rounded-[40px] absolute top-[0%] bottom-[0%] left-[0%] right-[19.56%]"></div>
+      <div
+        class="absolute top-[3.03%] bottom-[94.46%] left-[65.45%] right-[22.67%]">
+        <img
+          src="https://picsum.photos/id/65/24"
+          alt="Rectangle 91 placeholder" />
+      </div>
+      <div
+        class="absolute top-[3.03%] bottom-[94.46%] left-[2.19%] right-[78.79%]">
+        <img
+          src="https://picsum.photos/id/104/24"
+          alt="Rectangle 92 placeholder" />
+      </div>
+      <div
+        class="absolute top-[10.98%] bottom-[89.02%] left-[74.41%] right-[24.13%]"
+        style="transform: rotate(0deg)">
+        <img src="https://picsum.photos/id/8/0" alt="Line 73 placeholder" />
+      </div>
+      <div
+        class="absolute top-[10.15%] bottom-[88.18%] left-[75.14%] right-[21.94%]">
+        <img
+          src="https://picsum.photos/id/16/16"
+          alt="Ellipse 18 placeholder" />
+      </div>
+      <div
+        class="text-[#FFFFFF] text-xs font-['Inter'] absolute top-[10.15%] bottom-[84.73%] left-[69.29%] right-[16.27%]">
+        0.00
+      </div>
+      <img
+        class="w-[16px] h-[16px] absolute top-[97px] left-[64.9%] right-[32.18%]"
+        src="https://picsum.photos/16/16"
+        style="object-fit: cover" />
+      <div
+        class="w-[52px] h-[27px] bg-[rgba(217,217,217,0.33)] border-solid border-[rgba(0,0,0,0)] border rounded-[101px] absolute top-[7.32%] bottom-[89.85%] left-[2.93%] right-[87.57%]"></div>
+      <img
+        class="w-[66px] h-[66px] shadow-[_0px_4px_4px_0px_rgba(0,0,0,0.25)] absolute top-[51px] left-[1.65%] right-[86.29%]"
+        src="https://picsum.photos/66/66"
+        style="object-fit: cover" />
+      <div
+        class="absolute top-[9.73%] bottom-[87.76%] left-[63.8%] right-[20.29%]">
+        <img
+          src="https://picsum.photos/id/87/24"
+          alt="Rectangle 94 placeholder" />
+      </div>
+      <div
+        class="text-[#FFFFFF] text-[15px] font-['Inter'] absolute top-[3.35%] bottom-[73.22%] left-[8.23%] right-[33.09%]">
+        Закрыть
+      </div>
+      <div
+        class="w-[15px] h-0 border-solid border-[#FFFFFF] border-b-2 absolute top-[4.88%] bottom-[95.12%] left-[4.2%] right-[93.05%]"
+        style="transform: rotate(-45deg)"></div>
+      <div
+        class="w-[15px] h-0 border-solid border-[#FFFFFF] border-b-2 absolute top-[3.77%] bottom-[96.23%] left-[4.02%] right-[93.24%]"
+        style="transform: rotate(45deg)"></div>
+      <div
+        class="w-[11px] h-0 border-solid border-[#FFFFFF] border-b-2 absolute top-[4.97%] bottom-[95.03%] left-[68.19%] right-[29.8%]"
+        style="transform: rotate(-60deg)"></div>
+      <div
+        class="w-[11px] h-0 border-solid border-[#FFFFFF] border-b-2 absolute top-[3.97%] bottom-[96.03%] left-[66.91%] right-[31.08%]"
+        style="transform: rotate(60deg)"></div>
+      <div
+        class="absolute top-[4.08%] bottom-[95.4%] left-[73.13%] right-[25.96%]">
+        <img src="https://picsum.photos/id/5/5" alt="Ellipse 15 placeholder" />
+      </div>
+      <div
+        class="absolute top-[4.08%] bottom-[95.4%] left-[71.12%] right-[27.97%]">
+        <img src="https://picsum.photos/id/5/5" alt="Ellipse 16 placeholder" />
+      </div>
+      <div
+        class="absolute top-[4.08%] bottom-[95.4%] left-[75.14%] right-[23.95%]">
+        <img src="https://picsum.photos/id/5/5" alt="Ellipse 17 placeholder" />
+      </div>
+      <div
+        class="w-[7px] h-0 border-solid border-[#000000] border-b absolute top-[10.88%] bottom-[89.12%] left-[77.15%] right-[21.57%]"
+        style="transform: rotate(180deg)"></div>
+      <div
+        class="w-[7px] h-0 border-solid border-[#000000] border-b absolute top-[11.3%] bottom-[88.7%] left-[76.6%] right-[22.12%]"
+        style="transform: rotate(-90deg)"></div>
+      <img
+        class="w-[91px] h-[137px] absolute top-[93px] left-[32.54%] right-[50.82%]"
+        src="https://picsum.photos/91/137"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[68px] absolute top-[529px] left-[1.1%] right-[90.68%]"
+        src="https://picsum.photos/45/68"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[67px] absolute top-[530px] left-[8.96%] right-[82.82%]"
+        src="https://picsum.photos/45/67"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[67px] absolute top-[530px] left-[16.82%] right-[74.95%]"
+        src="https://picsum.photos/45/67"
+        style="object-fit: cover" />
+      <img
+        class="w-[46px] h-[69px] absolute top-[529px] left-[24.13%] right-[67.46%]"
+        src="https://picsum.photos/46/69"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[67px] absolute top-[530px] left-[32.36%] right-[59.41%]"
+        src="https://picsum.photos/45/67"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[67px] absolute top-[530px] left-[40.59%] right-[51.19%]"
+        src="https://picsum.photos/45/67"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[68px] absolute top-[529px] left-[48.63%] right-[43.14%]"
+        src="https://picsum.photos/45/68"
+        style="object-fit: cover" />
+      <img
+        class="w-[44px] h-[67px] absolute top-[530px] left-[56.49%] right-[35.47%]"
+        src="https://picsum.photos/44/67"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[67px] absolute top-[531px] left-[64.53%] right-[27.24%]"
+        src="https://picsum.photos/45/67"
+        style="object-fit: cover" />
+      <img
+        class="w-[45px] h-[68px] absolute top-[529px] left-[72.21%] right-[19.56%]"
+        src="https://picsum.photos/45/68"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[476px] left-[5.12%] right-[87.02%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[7.68%] right-[84.46%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[65px] absolute top-[373px] left-[12.8%] right-[79.34%]"
+        src="https://picsum.photos/43/65"
+        style="object-fit: cover" />
+      <img
+        class="w-[41px] h-[62px] absolute top-[320px] left-[18.28%] right-[74.22%]"
+        src="https://picsum.photos/41/62"
+        style="object-fit: cover" />
+      <img
+        class="w-[39px] h-[58px] absolute top-[272px] left-[23.03%] right-[69.84%]"
+        src="https://picsum.photos/39/58"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[63px] absolute top-[221px] left-[25.96%] right-[66.36%]"
+        src="https://picsum.photos/42/63"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[476px] left-[14.63%] right-[77.51%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[17.73%] right-[74.41%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[44px] h-[65px] absolute top-[373px] left-[22.3%] right-[69.65%]"
+        src="https://picsum.photos/44/65"
+        style="object-fit: cover" />
+      <img
+        class="w-[41px] h-[62px] absolute top-[320px] left-[27.97%] right-[64.53%]"
+        src="https://picsum.photos/41/62"
+        style="object-fit: cover" />
+      <img
+        class="w-[38px] h-[58px] absolute top-[272px] left-[32.72%] right-[60.33%]"
+        src="https://picsum.photos/38/58"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[63px] absolute top-[221px] left-[36.93%] right-[55.39%]"
+        src="https://picsum.photos/42/63"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[476px] left-[23.77%] right-[68.37%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[27.06%] right-[65.08%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[65px] absolute top-[373px] left-[31.63%] right-[60.51%]"
+        src="https://picsum.photos/43/65"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[62px] absolute top-[320px] left-[36.93%] right-[55.39%]"
+        src="https://picsum.photos/42/62"
+        style="object-fit: cover" />
+      <img
+        class="w-[39px] h-[58px] absolute top-[272px] left-[41.68%] right-[51.19%]"
+        src="https://picsum.photos/39/58"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[63px] absolute top-[221px] left-[48.99%] right-[43.33%]"
+        src="https://picsum.photos/42/63"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[476px] left-[32.54%] right-[59.6%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[36.2%] right-[55.94%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[44px] h-[65px] absolute top-[373px] left-[40.4%] right-[51.55%]"
+        src="https://picsum.photos/44/65"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[62px] absolute top-[320px] left-[45.52%] right-[46.8%]"
+        src="https://picsum.photos/42/62"
+        style="object-fit: cover" />
+      <img
+        class="w-[39px] h-[58px] absolute top-[272px] left-[51.74%] right-[41.13%]"
+        src="https://picsum.photos/39/58"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[476px] left-[41.86%] right-[50.27%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[45.7%] right-[46.44%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[65px] absolute top-[373px] left-[49.73%] right-[42.41%]"
+        src="https://picsum.photos/43/65"
+        style="object-fit: cover" />
+      <img
+        class="w-[41px] h-[62px] absolute top-[320px] left-[55.94%] right-[36.56%]"
+        src="https://picsum.photos/41/62"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[64px] absolute top-[476px] left-[50.82%] right-[41.5%]"
+        src="https://picsum.photos/42/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[55.03%] right-[37.11%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[65px] absolute top-[373px] left-[59.6%] right-[32.54%]"
+        src="https://picsum.photos/43/65"
+        style="object-fit: cover" />
+      <img
+        class="w-[42px] h-[64px] absolute top-[476px] left-[59.78%] right-[32.54%]"
+        src="https://picsum.photos/42/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[428px] left-[65.45%] right-[26.69%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <img
+        class="w-[43px] h-[64px] absolute top-[476px] left-[69.65%] right-[22.49%]"
+        src="https://picsum.photos/43/64"
+        style="object-fit: cover" />
+      <div
+        class="text-[#FFFFFF] text-8xl font-['Jomhuria'] absolute top-[3.56%] bottom-[82.95%] left-[28.52%] right-[40.4%]">
+        Plinko
+      </div>
+      <div
+        class="w-[38px] h-[24px] bg-[#FF1010] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[1.65%] right-[91.41%]"></div>
+      <div
+        class="w-[38px] h-[24px] bg-[#F3DB02] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[18.1%] right-[74.95%]"></div>
+      <div
+        class="w-[38px] h-[24px] bg-[#3FFF19] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[36.56%] right-[56.49%]"></div>
+      <div
+        class="w-[38px] h-[24px] bg-[#8EEC14] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[46.44%] right-[46.62%]"></div>
+      <div
+        class="absolute top-[62.87%] bottom-[34.62%] left-[72.76%] right-[20.29%]">
+        <img
+          src="https://picsum.photos/id/38/24"
+          alt="Rectangle 98 placeholder" />
+      </div>
+      <div
+        class="w-[38px] h-[24px] bg-[#F9A010] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[9.69%] right-[83.36%]"></div>
+      <div
+        class="w-[38px] h-[24px] bg-[#8EEC14] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[27.06%] right-[66%]"></div>
+      <div
+        class="w-[38px] h-[24px] bg-[#F3DB02] rounded-[7px] absolute top-[62.87%] bottom-[34.62%] left-[55.21%] right-[37.84%]"></div>
+      <div
+        class="absolute top-[62.87%] bottom-[34.62%] left-[64.17%] right-[28.88%]">
+        <img
+          src="https://picsum.photos/id/38/24"
+          alt="Rectangle 99 placeholder" />
+      </div>
+      <div
+        class="text-[#FFFFFF] text-xl font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[68.83%] bottom-[23.64%] left-[1.1%] right-[69.29%]">
+        Уровень Риска
+      </div>
+      <div
+        class="w-[117px] h-[117px] bg-[rgba(255,255,255,0.33)] rounded-2xl absolute top-[71.86%] bottom-[15.9%] left-[1.1%] right-[77.51%]"></div>
+      <div
+        class="w-[95px] h-0 border-solid border-[#FFFFFF] border-b-2 absolute top-[75%] bottom-[25%] left-[20.48%] right-[62.16%]"
+        style="transform: rotate(180deg)"></div>
+      <div
+        class="absolute top-[79.81%] bottom-[20.19%] left-[20.84%] right-[61.61%]"
+        style="transform: rotate(180deg)">
+        <img src="https://picsum.photos/id/96/0" alt="Line 78 placeholder" />
+      </div>
+      <div
+        class="text-[#FFFFFF] text-[13px] font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[72.7%] bottom-[20.19%] left-[8.04%] right-[78.61%]">
+        Высокий
+      </div>
+      <div
+        class="text-[#FFFFFF] text-[13px] font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[76.36%] bottom-[16.84%] left-[8.04%] right-[70.75%]">
+        Средний
+      </div>
+      <div
+        class="text-[#FFFFFF] text-sm font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[80.65%] bottom-[10.25%] left-[8.96%] right-[63.62%]">
+        Низкий
+      </div>
+      <img
+        class="w-[18px] h-[19px] absolute top-[693px] left-[3.29%] right-[93.42%]"
+        src="https://picsum.photos/18/19"
+        style="object-fit: cover" />
+      <img
+        class="w-[33px] h-[33px] absolute top-[720px] left-[2.19%] right-[91.77%]"
+        src="https://picsum.photos/33/33"
+        style="object-fit: cover" />
+      <img
+        class="w-[37px] h-[23px] absolute top-[770px] left-[1.83%] right-[91.41%]"
+        src="https://picsum.photos/37/23"
+        style="object-fit: cover" />
+      <div
+        class="text-[#000000] text-[15px] font-['Inter'] absolute top-[63.28%] bottom-[35.15%] left-[2.19%] right-[88.12%]">
+        x5.8
+      </div>
+      <div
+        class="text-[#000000] text-[15px] font-['Inter'] absolute top-[63.18%] bottom-[35.25%] left-[73.49%] right-[16.82%]">
+        x5.8
+      </div>
+      <div
+        class="text-[#000000] text-[15px] font-['Inter'] absolute top-[63.18%] bottom-[35.25%] left-[10.24%] right-[80.07%]">
+        x2.2
+      </div>
+      <div
+        class="text-[#000000] text-[15px] font-['Inter'] absolute top-[63.18%] bottom-[35.25%] left-[64.72%] right-[25.59%]">
+        x2.2
+      </div>
+      <div
+        class="text-[#000000] font-['Inter'] absolute top-[63.18%] bottom-[35.25%] left-[19.2%] right-[71.12%]">
+        x1.1
+      </div>
+      <div
+        class="text-[#000000] font-['Inter'] absolute top-[63.08%] bottom-[35.36%] left-[56.12%] right-[34.19%]">
+        x1.1
+      </div>
+      <div
+        class="text-[#000000] font-['Inter'] absolute top-[63.08%] bottom-[34.73%] left-[28.88%] right-[60.33%]">
+        x1
+      </div>
+      <div
+        class="text-[#000000] font-['Inter'] absolute top-[63.08%] bottom-[34.73%] left-[48.45%] right-[40.77%]">
+        x1
+      </div>
+      <div
+        class="text-[#000000] text-[15px] font-['Inter'] absolute top-[63.18%] bottom-[34%] left-[37.11%] right-[55.21%]">
+        x0.4
+      </div>
+      <div
+        class="w-[119px] h-[54px] bg-[rgba(175,175,175,0.33)] rounded-2xl absolute top-[84.52%] bottom-[9.83%] left-[0.91%] right-[77.33%]"></div>
+      <div
+        class="w-[119px] h-[54px] bg-[rgba(175,175,175,0.33)] rounded-2xl absolute top-[90.69%] bottom-[3.66%] left-[0.91%] right-[77.33%]"></div>
+      <div
+        class="text-[#727272] text-xl font-['Inter'] border-solid border-[#727272] border absolute top-[86.19%] bottom-[11.51%] left-[3.11%] right-[87.93%]">
+        Мин
+      </div>
+      <div
+        class="text-[#727272] text-xl font-['Inter'] border-solid border-[#727272] border absolute top-[92.47%] bottom-[5.13%] left-[2.74%] right-[87.02%]">
+        Макс
+      </div>
+      <div
+        class="w-[28px] h-0 border-solid border-[#727272] border-b-[3px] absolute top-[87.24%] bottom-[12.76%] left-[21.39%] right-[73.49%]"
+        style="transform: rotate(180deg)"></div>
+      <div
+        class="w-[31px] h-0 border-solid border-[#727272] border-b-[3px] absolute top-[93.51%] bottom-[6.49%] left-[22.12%] right-[72.21%]"
+        style="transform: rotate(180deg)"></div>
+      <div
+        class="w-[31px] h-0 border-solid border-[#727272] border-b-[3px] absolute top-[92.15%] bottom-[7.85%] left-[19.01%] right-[75.32%]"
+        style="transform: rotate(90deg)"></div>
+      <div
+        class="w-[158px] h-[34px] bg-[rgba(217,217,217,0.22)] rounded-[9px] absolute top-[68.83%] bottom-[27.62%] left-[50.82%] right-[20.29%]"></div>
+      <div
+        class="w-[158px] h-[34px] bg-[rgba(217,217,217,0.22)] rounded-[9px] absolute top-[72.7%] bottom-[23.74%] left-[50.82%] right-[20.29%]"></div>
+      <div
+        class="text-[#FFFFFF] text-xl font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[69.35%] bottom-[18.72%] left-[53.02%] right-[0%]">
+        Ставка: 1 TON
+      </div>
+      <div
+        class="text-[#FFFFFF] text-lg font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[73.01%] bottom-[17.36%] left-[52.29%] right-[17%]">
+        Баланс: 128 TON
+      </div>
+      <div
+        class="w-[228px] h-[83px] bg-[#014FF6] rounded-[33px] absolute top-[78.56%] bottom-[12.76%] left-[38.03%] right-[20.29%]"></div>
+      <div
+        class="text-[#FFFFFF] text-4xl font-['Inter'] border-solid border-[#FFFFFF] border absolute top-[80.33%] bottom-[15.06%] left-[48.63%] right-[24.31%]">
+        Играть
+      </div>
     </div>
-
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        let gameState = {
-            risk: 'medium',
-            lines: 12,
-            betMode: 'manual',
-            betAmount: 1.00,
-            balance: 1000.00,
-            ballCount: 1,
-            pegs: [],
-            balls: [],
-            isPlaying: false,
-            totalWin: 0
-        };
-
-        // Инициализация пегов с улучшенным позиционированием
-        function initializePegs() {
-            gameState.pegs = [];
-            const rows = gameState.lines;
-            const pegRadius = 4;
-            const boardWidth = 340;
-            const boardHeight = 240;
-            const startY = 40;
-            const startX = 20;
-            
-            for (let row = 0; row < rows; row++) {
-                const pegsInRow = row + 3;
-                const spacing = boardWidth / (pegsInRow + 1);
-                const y = startY + (row * (boardHeight - startY) / (rows - 1));
-                const offsetX = (row % 2) * (spacing / 2);
-                
-                for (let col = 0; col < pegsInRow; col++) {
-                    const x = startX + offsetX + spacing * (col + 1);
-                    gameState.pegs.push({ 
-                        x, 
-                        y, 
-                        radius: pegRadius,
-                        glow: 0 
-                    });
-                }
-            }
-        }
-
-        // Улучшенная отрисовка пегов
-        function drawPegs() {
-            gameState.pegs.forEach(peg => {
-                // Основной пег
-                ctx.beginPath();
-                ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#ffffff';
-                ctx.shadowBlur = 8 + peg.glow;
-                ctx.shadowColor = `rgba(255, 255, 255, ${0.6 + peg.glow * 0.4})`;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                
-                // Уменьшаем свечение
-                peg.glow = Math.max(0, peg.glow - 0.1);
-            });
-        }
-
-        // Улучшенный класс шарика с реалистичной физикой
-        class Ball {
-            constructor(x, y, delay = 0) {
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 1;
-                this.vy = 0;
-                this.radius = 5;
-                this.gravity = 0.25;
-                this.bounciness = 0.75;
-                this.friction = 0.98;
-                this.active = true;
-                this.delay = delay;
-                this.age = 0;
-                this.trail = [];
-                this.color = {
-                    r: 255 + Math.random() * 50,
-                    g: 100 + Math.random() * 100,
-                    b: 100 + Math.random() * 100
-                };
-            }
-
-            update() {
-                if (this.delay > 0) {
-                    this.delay--;
-                    return;
-                }
-                
-                if (!this.active) return;
-
-                this.age++;
-                
-                // Добавляем в след
-                this.trail.push({x: this.x, y: this.y});
-                if (this.trail.length > 8) this.trail.shift();
-
-                // Физика
-                this.vy += this.gravity;
-                
-                // Проверка столкновений с пегами
-                let hasCollision = false;
-                gameState.pegs.forEach(peg => {
-                    const dx = this.x - peg.x;
-                    const dy = this.y - peg.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = this.radius + peg.radius;
-                    
-                    if (distance < minDistance && distance > 0) {
-                        hasCollision = true;
-                        
-                        // Нормализованный вектор столкновения
-                        const nx = dx / distance;
-                        const ny = dy / distance;
-                        
-                        // Отделяем шарик от пега
-                        const overlap = minDistance - distance;
-                        this.x += nx * overlap * 0.5;
-                        this.y += ny * overlap * 0.5;
-                        
-                        // Скорость столкновения
-                        const dotProduct = this.vx * nx + this.vy * ny;
-                        
-                        // Отражение с потерей энергии
-                        this.vx -= 2 * dotProduct * nx;
-                        this.vy -= 2 * dotProduct * ny;
-                        
-                        // Добавляем случайность и энергию
-                        this.vx *= this.bounciness + (Math.random() - 0.5) * 0.3;
-                        this.vy *= this.bounciness + (Math.random() - 0.5) * 0.2;
-                        
-                        // Минимальная скорость отскока
-                        const minBounce = 2;
-                        if (Math.abs(this.vx) < minBounce) {
-                            this.vx = (Math.random() - 0.5) * minBounce * 2;
-                        }
-                        
-                        // Эффект свечения пега
-                        peg.glow = Math.min(1, peg.glow + 0.5);
-                    }
-                });
-
-                // Движение
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Отскок от стен
-                if (this.x <= this.radius) {
-                    this.x = this.radius;
-                    this.vx = Math.abs(this.vx) * this.bounciness;
-                }
-                if (this.x >= canvas.width - this.radius) {
-                    this.x = canvas.width - this.radius;
-                    this.vx = -Math.abs(this.vx) * this.bounciness;
-                }
-
-                // Трение воздуха
-                this.vx *= this.friction;
-                this.vy *= 0.999;
-
-                // Проверка достижения дна
-                if (this.y >= canvas.height - 50 - this.radius) {
-                    this.y = canvas.height - 50 - this.radius;
-                    this.vy = 0;
-                    this.vx *= 0.8;
-                    
-                    if (Math.abs(this.vx) < 0.5) {
-                        this.active = false;
-                        this.calculateWin();
-                    }
-                }
-            }
-
-            calculateWin() {
-                const multipliers = [5.6, 2.2, 1.1, 1.4, 0.8, 1.4, 3.1, 2.2, 5.6];
-                const sectionWidth = canvas.width / multipliers.length;
-                const section = Math.max(0, Math.min(multipliers.length - 1, Math.floor(this.x / sectionWidth)));
-                const multiplier = multipliers[section];
-                
-                const winAmount = gameState.betAmount * multiplier;
-                gameState.totalWin += winAmount;
-                
-                // Подсвечиваем множитель
-                const multiplierElements = document.querySelectorAll('.multiplier');
-                if (multiplierElements[section]) {
-                    multiplierElements[section].style.background = 'linear-gradient(145deg, #00ff00, #32cd32)';
-                    multiplierElements[section].style.transform = 'scale(1.2)';
-                    setTimeout(() => {
-                        multiplierElements[section].style.background = 'linear-gradient(145deg, #ffd700, #ffed4e)';
-                        multiplierElements[section].style.transform = 'scale(1)';
-                    }, 300);
-                }
-            }
-
-            draw() {
-                if (this.delay > 0 || !this.active) return;
-
-                // Рисуем след
-                this.trail.forEach((point, i) => {
-                    const alpha = i / this.trail.length * 0.3;
-                    const radius = this.radius * (i / this.trail.length) * 0.5;
-                    ctx.beginPath();
-                    ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha})`;
-                    ctx.fill();
-                });
-
-                // Основной шарик
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                
-                const gradient = ctx.createRadialGradient(
-                    this.x - 2, this.y - 2, 0,
-                    this.x, this.y, this.radius
-                );
-                gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 1)`);
-                gradient.addColorStop(1, `rgba(${this.color.r - 50}, ${this.color.g - 50}, ${this.color.b - 50}, 1)`);
-                
-                ctx.fillStyle = gradient;
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.8)`;
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-        }
-
-        // Анимационный цикл с улучшенной производительностью
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            drawPegs();
-            
-            let activeBalls = 0;
-            gameState.balls.forEach((ball, index) => {
-                ball.update();
-                ball.draw();
-                
-                if (ball.active || ball.delay > 0) {
-                    activeBalls++;
-                } else if (ball.y >= canvas.height - 50 - ball.radius && Math.abs(ball.vx) < 0.5) {
-                    setTimeout(() => {
-                        gameState.balls.splice(index, 1);
-                    }, 100);
-                }
-            });
-            
-            if (gameState.isPlaying && activeBalls === 0 && gameState.balls.length === 0) {
-                gameState.isPlaying = false;
-                showWinMessage();
-            }
-            
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Показ сообщения о выигрыше
-        function showWinMessage() {
-            const netWin = gameState.totalWin - (gameState.betAmount * gameState.ballCount);
-            gameState.balance += netWin;
-            
-            const winDisplay = document.createElement('div');
-            winDisplay.className = 'win-display show';
-            winDisplay.innerHTML = `
-                <div>Общий выигрыш: ${gameState.totalWin.toFixed(2)} FUN</div>
-                <div>Чистая прибыль: ${netWin >= 0 ? '+' : ''}${netWin.toFixed(2)} FUN</div>
-            `;
-            document.body.appendChild(winDisplay);
-            
-            setTimeout(() => {
-                winDisplay.classList.remove('show');
-                setTimeout(() => document.body.removeChild(winDisplay), 500);
-            }, 2500);
-            
-            gameState.totalWin = 0;
-            updateBalance();
-        }
-
-        // Запуск шариков
-        function dropBalls() {
-            if (gameState.isPlaying) return;
-            
-            const totalCost = gameState.betAmount * gameState.ballCount;
-            if (gameState.balance < totalCost) {
-                alert('Недостаточно средств!');
-                return;
-            }
-            
-            gameState.isPlaying = true;
-            gameState.balls = [];
-            gameState.totalWin = 0;
-            
-            for (let i = 0; i < gameState.ballCount; i++) {
-                const delay = Math.floor(i / 10) * 5; // Задержка для группового запуска
-                const startX = canvas.width / 2 + (Math.random() - 0.5) * 40;
-                const ball = new Ball(startX, 20, delay);
-                gameState.balls.push(ball);
-            }
-        }
-
-        // Функции управления
-        function setRisk(risk) {
-            gameState.risk = risk;
-            updateActiveButton('.left-controls .btn', event.target);
-        }
-
-        function setLines(lines) {
-            gameState.lines = lines;
-            updateActiveButton('.lines-selector .btn', event.target);
-            initializePegs();
-        }
-
-        function setBetMode(mode) {
-            gameState.betMode = mode;
-            updateActiveButton('.right-controls .button-group .btn', event.target);
-        }
-
-        function setBallCount(count) {
-            gameState.ballCount = count;
-            updateActiveButton('.balls-selector .btn', event.target);
-        }
-
-        function updateActiveButton(selector, activeButton) {
-            document.querySelectorAll(selector).forEach(btn => btn.classList.remove('active'));
-            activeButton.classList.add('active');
-        }
-
-        function adjustBet(amount) {
-            gameState.betAmount = Math.max(0.1, Math.round((gameState.betAmount + amount) * 100) / 100);
-            document.querySelector('.bet-input').value = gameState.betAmount.toFixed(2) + ' FUN';
-        }
-
-        function updateBalance() {
-            document.querySelector('.balance').textContent = `Баланс ${gameState.balance.toFixed(2)} FUN`;
-        }
-
-        // Инициализация игры
-        initializePegs();
-        gameLoop();
-    </script>
-</body>
+  </body>
 </html>
