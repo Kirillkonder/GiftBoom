@@ -31,30 +31,33 @@
         </div>
 
         <!-- Контент Plinko -->
-        <div class="plinko-content">
-            <h1 class="plinko-title">Plinko Game</h1>
-            
-            <!-- Поле Plinko -->
-            <div class="plinko-game">
-                <!-- Множители внизу -->
-                <div class="plinko-multipliers">
-                    <div class="multiplier">X5.8</div>
-                    <div class="multiplier">X2.2</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X0.4</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X1.1</div>
-                    <div class="multiplier">X2.2</div>
-                    <div class="multiplier">X5.8</div>
-                </div>
-                
-                <!-- Игровое поле с штифтами -->
-                <div class="plinko-board">
-                    <div class="plinko-grid">
-                        <!-- Ряды штифтов будут сгенерированы JavaScript -->
-                    </div>
-                </div>
+        <!-- Поле Plinko -->
+<div class="plinko-game">
+    <!-- Область для сброса шарика (ВВЕРХУ) -->
+    <div class="plinko-drop-zone">
+        <div class="drop-indicator"></div>
+    </div>
+    
+    <!-- Игровое поле с штифтами -->
+    <div class="plinko-board">
+        <div class="plinko-grid">
+            <!-- Ряды штифтов будут сгенерированы JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Множители (ВНИЗУ) -->
+    <div class="plinko-multipliers">
+        <div class="multiplier">X5.8</div>
+        <div class="multiplier">X2.2</div>
+        <div class="multiplier">X1.1</div>
+        <div class="multiplier">X1.1</div>
+        <div class="multiplier">X0.4</div>
+        <div class="multiplier">X1.1</div>
+        <div class="multiplier">X1.1</div>
+        <div class="multiplier">X2.2</div>
+        <div class="multiplier">X5.8</div>
+    </div>
+</div>
                 
                 <!-- Область для сброса шарика -->
                 <div class="plinko-drop-zone">
@@ -140,115 +143,79 @@
         }
 
         // Инициализация поля Plinko
-        function initPlinkoField() {
-            const grid = document.querySelector('.plinko-grid');
-            const rows = 8; // Количество рядов штифтов
-            
-            for (let row = 0; row < rows; row++) {
-                const rowElement = document.createElement('div');
-                rowElement.className = 'pin-row';
-                
-                // Количество штифтов в ряду: row + 1
-                const pinsInRow = row + 1;
-                
-                for (let pin = 0; pin < pinsInRow; pin++) {
-                    const pinElement = document.createElement('div');
-                    pinElement.className = 'pin';
-                    rowElement.appendChild(pinElement);
-                }
-                
-                grid.appendChild(rowElement);
-            }
+       function initPlinkoField() {
+    const grid = document.querySelector('.plinko-grid');
+    const rows = 12; // Увеличено количество рядов
+    
+    // Очищаем поле
+    grid.innerHTML = '';
+    
+    // Создаем шарик (но пока скрыт)
+    const ball = document.createElement('div');
+    ball.className = 'ball';
+    ball.id = 'plinko-ball';
+    document.querySelector('.plinko-board').appendChild(ball);
+    
+    for (let row = 0; row < rows; row++) {
+        const rowElement = document.createElement('div');
+        rowElement.className = 'pin-row';
+        
+        // Количество штифтов в ряду: row + 1
+        const pinsInRow = row + 1;
+        
+        for (let pin = 0; pin < pinsInRow; pin++) {
+            const pinElement = document.createElement('div');
+            pinElement.className = 'pin';
+            rowElement.appendChild(pinElement);
         }
+        
+        grid.appendChild(rowElement);
+    }
+}
 
         // Функция сброса шарика
         function dropBall() {
-            const betAmount = parseFloat(document.getElementById('bet-amount').value);
-            const balance = parseFloat(document.getElementById('balance').textContent);
+    const ball = document.getElementById('plinko-ball');
+    const dropZone = document.querySelector('.plinko-drop-zone');
+    
+    // Показываем шарик
+    ball.style.display = 'block';
+    ball.style.top = '10px';
+    ball.style.left = '50%';
+    
+    // Анимация падения
+    let position = 10;
+    const fallInterval = setInterval(() => {
+        position += 5; // Скорость падения
+        ball.style.top = position + 'px';
+        
+        // Случайное смещение влево-вправо (эффект отскакивания от штифтов)
+        const currentLeft = parseInt(ball.style.left) || 50;
+        const randomShift = (Math.random() - 0.5) * 4; // Случайное смещение
+        ball.style.left = (currentLeft + randomShift) + '%';
+        
+        // Когда шарик достигает низа
+        if (position >= 380) {
+            clearInterval(fallInterval);
             
-            if (betAmount <= 0) {
-                alert('Введите корректную ставку');
-                return;
-            }
-            
-            if (balance < betAmount) {
-                alert('Недостаточно средств');
-                return;
-            }
-            
-            // Здесь будет логика сброса шарика и анимация
-            console.log(`Сбрасываем шарик со ставкой ${betAmount} TON`);
-            // В будущем добавим анимацию и логику игры
-        }
-
-        // Функции для пополнения баланса
-        function openDepositModal() {
-            document.getElementById('deposit-modal').style.display = 'block';
-        }
-
-        function closeDepositModal() {
-            document.getElementById('deposit-modal').style.display = 'none';
-            document.getElementById('deposit-amount').value = '';
-        }
-
-        async function processDeposit() {
-            const amount = parseFloat(document.getElementById('deposit-amount').value);
-            
-            if (!amount || amount < 1) {
-                alert('Минимальный депозит: 1 TON');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        amount: amount,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                const result = await response.json();
+            // Через секунду скрываем шарик
+            setTimeout(() => {
+                ball.style.display = 'none';
                 
-                if (result.success) {
-                    if (isDemoMode) {
-                        // Для демо-режима сразу обновляем баланс
-                        await loadUserData();
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "✅ Демо-пополнение",
-                                message: `Демо-депозит ${amount} TON успешно зачислен!`,
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert(`Демо-депозит ${amount} TON успешно зачислен!`);
-                        }
-                    } else {
-                        // Для реального режима открываем инвойс
-                        window.open(result.invoice_url, '_blank');
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "Оплата TON",
-                                message: `Откройте Crypto Bot для оплаты ${amount} TON`,
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert(`Откройте Crypto Bot для оплаты ${amount} TON`);
-                        }
-                        checkDepositStatus(result.invoice_id);
-                    }
-                    
-                    closeDepositModal();
-                } else {
-                    alert('Ошибка при создании депозита: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Deposit error:', error);
-                alert('Ошибка при создании депозита');
-            }
+                // Показываем попадание в случайный множитель
+                const multipliers = document.querySelectorAll('.multiplier');
+                const randomIndex = Math.floor(Math.random() * multipliers.length);
+                
+                // Подсвечиваем множитель
+                multipliers[randomIndex].style.background = 'linear-gradient(135deg, #ff9500, #ffcc00)';
+                setTimeout(() => {
+                    multipliers[randomIndex].style.background = 'linear-gradient(135deg, #00c851, #32cd32)';
+                }, 1000);
+            }, 1000);
         }
+    }, 30);
+}
+document.querySelector('.plinko-drop-zone').addEventListener('click', dropBall);
 
         async function checkDepositStatus(invoiceId) {
             const checkInterval = setInterval(async () => {
