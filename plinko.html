@@ -34,57 +34,44 @@
         <div class="plinko-content">
             <h1 class="plinko-title">Plinko Game</h1>
             
-            <!-- Панель настроек игры -->
-            <div class="game-settings">
-                <div class="bet-controls">
-                    <label>Ставка (TON):</label>
-                    <div class="bet-input-group">
-                        <button class="bet-btn" onclick="changeBet(-0.1)">-0.1</button>
-                        <input type="number" id="bet-amount" value="1.0" min="0.1" max="100" step="0.1">
-                        <button class="bet-btn" onclick="changeBet(0.1)">+0.1</button>
-                    </div>
-                    <div class="quick-bets">
-                        <button class="quick-bet-btn" onclick="setBet(0.1)">0.1</button>
-                        <button class="quick-bet-btn" onclick="setBet(1)">1</button>
-                        <button class="quick-bet-btn" onclick="setBet(5)">5</button>
-                        <button class="quick-bet-btn" onclick="setBet(10)">10</button>
+            <!-- Поле Plinko -->
+            <div class="plinko-game">
+                <!-- Множители внизу -->
+                <div class="plinko-multipliers">
+                    <div class="multiplier">X5.8</div>
+                    <div class="multiplier">X2.2</div>
+                    <div class="multiplier">X1.1</div>
+                    <div class="multiplier">X1.1</div>
+                    <div class="multiplier">X0.4</div>
+                    <div class="multiplier">X1.1</div>
+                    <div class="multiplier">X1.1</div>
+                    <div class="multiplier">X2.2</div>
+                    <div class="multiplier">X5.8</div>
+                </div>
+                
+                <!-- Игровое поле с штифтами -->
+                <div class="plinko-board">
+                    <div class="plinko-grid">
+                        <!-- Ряды штифтов будут сгенерированы JavaScript -->
                     </div>
                 </div>
                 
-                <div class="risk-controls">
-                    <label>Уровень риска:</label>
-                    <div class="risk-buttons">
-                        <button class="risk-btn active" data-risk="low">Низкий</button>
-                        <button class="risk-btn" data-risk="medium">Средний</button>
-                        <button class="risk-btn" data-risk="high">Высокий</button>
+                <!-- Область для сброса шарика -->
+                <div class="plinko-drop-zone">
+                    <div class="drop-indicator"></div>
+                </div>
+            </div>
+            
+            <!-- Панель управления -->
+            <div class="plinko-controls">
+                <div class="bet-controls">
+                    <div class="bet-input-group">
+                        <label for="bet-amount">Ставка (TON):</label>
+                        <input type="number" id="bet-amount" value="1.0" min="0.1" step="0.1">
                     </div>
-                </div>
-            </div>
-
-            <!-- Игровое поле Plinko -->
-            <div class="plinko-board">
-                <div class="plinko-grid">
-                    <!-- Пины будут сгенерированы через JavaScript -->
-                </div>
-                <div class="multipliers-row">
-                    <!-- Множители будут сгенерированы через JavaScript -->
-                </div>
-            </div>
-
-            <!-- Кнопка игры -->
-            <button class="play-btn" id="play-btn" onclick="playPlinko()">
-                <span>Играть</span>
-                <span class="bet-amount" id="current-bet">1.0 TON</span>
-            </button>
-
-            <!-- Область для шариков -->
-            <div class="balls-container" id="balls-container"></div>
-
-            <!-- История игр -->
-            <div class="history-section">
-                <h3>История игр</h3>
-                <div class="history-list" id="history-list">
-                    <!-- История будет загружена через JavaScript -->
+                    <button class="drop-ball-btn" onclick="dropBall()">
+                        Сбросить шарик
+                    </button>
                 </div>
             </div>
         </div>
@@ -113,24 +100,11 @@
     <script>
         let currentUser = null;
         let isDemoMode = false;
-        let currentBet = 1.0;
-        let currentRisk = 'low';
-        let gameActive = false;
-        let ballsCount = 0;
-        const maxBalls = 10;
-
-        // Множители как в 1win
-        const multipliers = {
-            low: [1.2, 1.4, 1.6, 2, 2.5, 3, 4, 5, 10, 20],
-            medium: [0.4, 0.6, 0.8, 1.2, 1.6, 2, 3, 5, 12, 26],
-            high: [0.2, 0.4, 0.6, 0.8, 1.2, 2, 4, 8, 18, 100]
-        };
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             initializeGame();
-            createPlinkoBoard();
-            loadGameHistory();
+            initPlinkoField();
         });
 
         function goBack() {
@@ -165,205 +139,49 @@
             }
         }
 
-        // Создание игрового поля Plinko
-        function createPlinkoBoard() {
+        // Инициализация поля Plinko
+        function initPlinkoField() {
             const grid = document.querySelector('.plinko-grid');
-            const multipliersRow = document.querySelector('.multipliers-row');
+            const rows = 8; // Количество рядов штифтов
             
-            // Очищаем поле
-            grid.innerHTML = '';
-            multipliersRow.innerHTML = '';
-            
-            const rows = 8;
-            const cols = 9;
-            
-            // Создаем пины
             for (let row = 0; row < rows; row++) {
-                for (let col = 0; col <= row; col++) {
-                    const pin = document.createElement('div');
-                    pin.className = 'pin';
-                    pin.style.left = `${(col * 100 / row) - (50 / row) + 50}%`;
-                    pin.style.top = `${row * 12 + 10}%`;
-                    grid.appendChild(pin);
+                const rowElement = document.createElement('div');
+                rowElement.className = 'pin-row';
+                
+                // Количество штифтов в ряду: row + 1
+                const pinsInRow = row + 1;
+                
+                for (let pin = 0; pin < pinsInRow; pin++) {
+                    const pinElement = document.createElement('div');
+                    pinElement.className = 'pin';
+                    rowElement.appendChild(pinElement);
                 }
-            }
-            
-            // Создаем множители
-            const currentMultipliers = multipliers[currentRisk];
-            for (let i = 0; i < currentMultipliers.length; i++) {
-                const multiplier = document.createElement('div');
-                multiplier.className = 'multiplier';
-                multiplier.textContent = currentMultipliers[i] + 'x';
-                multiplier.style.left = `${i * 10 + 5}%`;
-                multipliersRow.appendChild(multiplier);
+                
+                grid.appendChild(rowElement);
             }
         }
 
-        // Управление ставкой
-        function changeBet(amount) {
-            currentBet = Math.max(0.1, Math.min(100, currentBet + amount));
-            updateBetDisplay();
-        }
-
-        function setBet(amount) {
-            currentBet = Math.max(0.1, Math.min(100, amount));
-            updateBetDisplay();
-        }
-
-        function updateBetDisplay() {
-            document.getElementById('bet-amount').value = currentBet.toFixed(1);
-            document.getElementById('current-bet').textContent = currentBet.toFixed(1) + ' TON';
-        }
-
-        // Управление риском
-        document.querySelectorAll('.risk-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.risk-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentRisk = this.dataset.risk;
-                createPlinkoBoard();
-            });
-        });
-
-        // Основная игровая функция
-        async function playPlinko() {
-            if (gameActive || ballsCount >= maxBalls) return;
-            
+        // Функция сброса шарика
+        function dropBall() {
+            const betAmount = parseFloat(document.getElementById('bet-amount').value);
             const balance = parseFloat(document.getElementById('balance').textContent);
-            if (balance < currentBet) {
+            
+            if (betAmount <= 0) {
+                alert('Введите корректную ставку');
+                return;
+            }
+            
+            if (balance < betAmount) {
                 alert('Недостаточно средств');
                 return;
             }
-
-            gameActive = true;
-            ballsCount++;
             
-            try {
-                const response = await fetch('/api/plinko/play', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        betAmount: currentBet,
-                        riskLevel: currentRisk,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Создаем шарик и анимируем его падение
-                    createBall(result.path, result.multiplier, result.win_amount);
-                    
-                    // Обновляем баланс
-                    document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-                    
-                    // Добавляем в историю
-                    addToHistory(result.multiplier, result.win_amount, currentBet);
-                    
-                } else {
-                    alert('Ошибка: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Plinko play error:', error);
-                alert('Ошибка соединения');
-            }
-            
-            gameActive = false;
+            // Здесь будет логика сброса шарика и анимация
+            console.log(`Сбрасываем шарик со ставкой ${betAmount} TON`);
+            // В будущем добавим анимацию и логику игры
         }
 
-        // Создание и анимация шарика
-        function createBall(path, multiplier, winAmount) {
-            const container = document.getElementById('balls-container');
-            const ball = document.createElement('div');
-            ball.className = 'ball';
-            ball.style.left = '50%';
-            ball.style.top = '0%';
-            
-            container.appendChild(ball);
-            
-            // Анимация падения
-            let currentStep = 0;
-            const animation = setInterval(() => {
-                if (currentStep >= path.length) {
-                    clearInterval(animation);
-                    // Показываем результат
-                    showResult(multiplier, winAmount);
-                    // Удаляем шарик через 2 секунды
-                    setTimeout(() => {
-                        ball.remove();
-                        ballsCount--;
-                    }, 2000);
-                    return;
-                }
-                
-                const position = path[currentStep];
-                ball.style.left = `${position * 11.11 + 5.55}%`;
-                ball.style.top = `${(currentStep + 1) * 12 + 10}%`;
-                currentStep++;
-            }, 200);
-        }
-
-        // Показ результата
-        function showResult(multiplier, winAmount) {
-            const resultDiv = document.createElement('div');
-            resultDiv.className = winAmount > 0 ? 'result-win' : 'result-lose';
-            resultDiv.innerHTML = `
-                <div>${multiplier}x</div>
-                <div>${winAmount > 0 ? '+' + winAmount.toFixed(2) : '0.00'} TON</div>
-            `;
-            
-            document.querySelector('.plinko-board').appendChild(resultDiv);
-            
-            setTimeout(() => {
-                resultDiv.remove();
-            }, 2000);
-        }
-
-        // Управление историей
-        function addToHistory(multiplier, winAmount, betAmount) {
-            const historyList = document.getElementById('history-list');
-            const historyItem = document.createElement('div');
-            historyItem.className = winAmount > 0 ? 'history-item win' : 'history-item lose';
-            historyItem.innerHTML = `
-                <span class="multiplier">${multiplier}x</span>
-                <span class="amount">${winAmount > 0 ? '+' + winAmount.toFixed(2) : betAmount.toFixed(2)} TON</span>
-                <span class="risk">${getRiskLabel(currentRisk)}</span>
-            `;
-            
-            historyList.insertBefore(historyItem, historyList.firstChild);
-            
-            // Ограничиваем историю 10 элементами
-            if (historyList.children.length > 10) {
-                historyList.removeChild(historyList.lastChild);
-            }
-        }
-
-        async function loadGameHistory() {
-            if (!currentUser) return;
-            
-            try {
-                const response = await fetch(`/api/plinko/history/${currentUser.id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        data.history.forEach(game => {
-                            addToHistory(game.multiplier, game.win_amount, game.bet_amount);
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading history:', error);
-            }
-        }
-
-        function getRiskLabel(risk) {
-            const labels = { low: 'Низ', medium: 'Ср', high: 'Выс' };
-            return labels[risk] || risk;
-        }
-
-        // Функции для пополнения баланса (остаются без изменений)
+        // Функции для пополнения баланса
         function openDepositModal() {
             document.getElementById('deposit-modal').style.display = 'block';
         }
@@ -396,6 +214,7 @@
                 
                 if (result.success) {
                     if (isDemoMode) {
+                        // Для демо-режима сразу обновляем баланс
                         await loadUserData();
                         if (window.Telegram && window.Telegram.WebApp) {
                             window.Telegram.WebApp.showPopup({
@@ -407,6 +226,7 @@
                             alert(`Демо-депозит ${amount} TON успешно зачислен!`);
                         }
                     } else {
+                        // Для реального режима открываем инвойс
                         window.open(result.invoice_url, '_blank');
                         if (window.Telegram && window.Telegram.WebApp) {
                             window.Telegram.WebApp.showPopup({
