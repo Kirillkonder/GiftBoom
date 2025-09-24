@@ -77,7 +77,7 @@ body::after {
     position: relative;
     z-index: 1;
     padding-bottom: 20px;
-    padding-top: 60px;
+    padding-top: 20px; /* Уменьшено с 60px */
 }
 
 /* Верхняя панель - адаптированная как в rocket.css */
@@ -181,16 +181,17 @@ body::after {
 /* Игровое поле */
 .coin-game-area {
     text-align: center;
-    padding: 20px;
+    padding: 10px 20px; /* Уменьшен верхний отступ */
 }
 
 .coin-container {
-    width: 350px; /* Увеличено с 375px */
+    width: 350px;
     height: 350px;
-    margin: 20px auto;
+    margin: 10px auto; /* Уменьшено с 20px */
     position: relative;
     perspective: 1000px;
 }
+
 
 .coin {
     width: 100%;
@@ -256,7 +257,7 @@ body::after {
     display: flex;
     gap: 15px;
     justify-content: center;
-    margin: 20px 0;
+    margin: 15px 0; /* Уменьшено с 20px */
 }
 
 .choice-btn {
@@ -286,7 +287,7 @@ body::after {
 
 /* Контролы ставки */
 .bet-controls {
-    margin: 20px 0;
+    margin: 15px 0; /* Уменьшено с 20px */
     padding: 0 20px;
 }
 
