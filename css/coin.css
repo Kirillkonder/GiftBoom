@@ -595,8 +595,8 @@ body::after {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
+    background: rgba(38, 39, 36, 0.76);
+    border: 2px solid rgba(38, 39, 36, 0.76);
     border-radius: 12px;
     padding: 10px 15px;
     margin-bottom: 20px;
@@ -606,9 +606,9 @@ body::after {
 
 .series-panel.active {
     opacity: 1;
-    background: rgba(255, 215, 0, 0.2);
+    background: rgba(38, 39, 36, 0.76);
     border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 0 15px rgba(38, 39, 36, 0.76);
 }
 
 .series-info {
