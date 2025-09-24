@@ -1443,8 +1443,8 @@ let coinPsychology = {
     userStats: {}, // Статистика по пользователям
     minWinStreak: 3, // Минимум выигрышей для активации режима слива
     maxWinStreak: 5, // Максимум выигрышей для активации режима слива
-    minLoseStreak: 3, // Минимум проигрышей для деактивации режима слива
-    maxLoseStreak: 8, // Максимум проигрышей для деактивации режима слива
+    minLoseStreak: 6, // 🔥 ИСПРАВЛЕНО: Минимум проигрышей для деактивации режима слива (было 3)
+    maxLoseStreak: 8, // 🔥 ИСПРАВЛЕНО: Максимум проигрышей для деактивации режима слива
     drainModeWinChance: 5 // Шанс выигрыша в режиме слива (5%)
 };
 
@@ -1456,12 +1456,14 @@ function getUserCoinStats(telegramId) {
             loseStreak: 0,
             lastGames: [], // Последние 20 игр
             drainMode: false, // Режим слива
-            drainModeActivatedAt: 0 // Когда активирован режим слива
+            drainModeActivatedAt: 0, // Когда активирован режим слива
+            drainLoseCounter: 0 // 🔥 ДОБАВЛЕНО: Счетчик проигрышей в режиме слива
         };
     }
     return coinPsychology.userStats[telegramId];
 }
 
+// Функция обновления статистики после игры
 // Функция обновления статистики после игры
 function updateUserCoinStats(telegramId, isWin) {
     const stats = getUserCoinStats(telegramId);
@@ -1469,9 +1471,17 @@ function updateUserCoinStats(telegramId, isWin) {
     if (isWin) {
         stats.winStreak++;
         stats.loseStreak = 0;
+        
+        // 🔥 ИСПРАВЛЕНИЕ: Сбрасываем счетчик проигрышей при выигрыше
+        stats.drainLoseCounter = 0;
     } else {
         stats.loseStreak++;
         stats.winStreak = 0;
+        
+        // 🔥 ИСПРАВЛЕНИЕ: Увеличиваем счетчик проигрышей в режиме слива
+        if (stats.drainMode) {
+            stats.drainLoseCounter = (stats.drainLoseCounter || 0) + 1;
+        }
     }
     
     // Добавляем игру в историю (максимум 20 игр)
@@ -1480,22 +1490,25 @@ function updateUserCoinStats(telegramId, isWin) {
         stats.lastGames.pop();
     }
     
-    // Активируем режим слива при серии выигрышей (3-5)
+    // 🔥 ИСПРАВЛЕНИЕ: Активируем режим слива при серии выигрышей (3-5)
     if (stats.winStreak >= coinPsychology.minWinStreak && 
         stats.winStreak <= coinPsychology.maxWinStreak && 
         !stats.drainMode) {
         stats.drainMode = true;
         stats.drainModeActivatedAt = stats.winStreak;
+        stats.drainLoseCounter = 0; // Сбрасываем счетчик проигрышей
         console.log(`💧 Активирован режим слива для пользователя ${telegramId} (серия выигрышей: ${stats.winStreak})`);
     }
     
-    // Деактивируем режим слива при серии проигрышей (3-8)
-    if (stats.loseStreak >= coinPsychology.minLoseStreak && 
-        stats.loseStreak <= coinPsychology.maxLoseStreak && 
-        stats.drainMode) {
-        stats.drainMode = false;
-        stats.drainModeActivatedAt = 0;
-        console.log(`🔄 Сброс режима слива для пользователя ${telegramId} (серия проигрышей: ${stats.loseStreak})`);
+    // 🔥 ИСПРАВЛЕНИЕ: Деактивируем режим слива только после 6-8 проигрышей подряд в этом режиме
+    if (stats.drainMode && stats.drainLoseCounter) {
+        if (stats.drainLoseCounter >= coinPsychology.minLoseStreak && 
+            stats.drainLoseCounter <= coinPsychology.maxLoseStreak) {
+            stats.drainMode = false;
+            stats.drainModeActivatedAt = 0;
+            stats.drainLoseCounter = 0;
+            console.log(`🔄 Сброс режима слива для пользователя ${telegramId} (проигрышей в режиме: ${stats.drainLoseCounter})`);
+        }
     }
 }
 
@@ -1668,6 +1681,7 @@ app.get('/api/coin/stats/:telegramId', async (req, res) => {
     }
 });
 
+// API: Сбросить статистику монетки (для тестирования)
 app.post('/api/coin/reset-stats', async (req, res) => {
     const { telegramId } = req.body;
 
@@ -1678,7 +1692,8 @@ app.post('/api/coin/reset-stats', async (req, res) => {
                 loseStreak: 0,
                 lastGames: [],
                 drainMode: false,
-                drainModeActivatedAt: 0
+                drainModeActivatedAt: 0,
+                drainLoseCounter: 0 // 🔥 ДОБАВЛЕНО
             };
         }
 
