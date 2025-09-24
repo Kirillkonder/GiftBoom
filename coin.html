@@ -17,6 +17,11 @@
                 <span>←</span>
             </div>
             <div class="top-right">
+                <!-- Добавляем счетчик онлайн игроков -->
+                <div class="players-counter">
+                    <i class="bi bi-person-fill"></i>
+                    <span id="playersCount">117</span>
+                </div>
                 <div class="balance">
                     <i class="bi bi-currency-exchange"></i>
                     <span id="balance">0.00</span>
@@ -117,9 +122,14 @@ let seriesResults = [];
 let seriesBetLocked = false;
 let seriesBetDeducted = false;
 
+// Переменные для онлайн счетчика
+let onlinePlayers = 117;
+let onlineUpdateInterval = null;
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     initializeGame();
+    initializeOnlineCounter(); // Инициализируем счетчик онлайн
 });
 
 function goBack() {
@@ -134,6 +144,27 @@ function initializeGame() {
             username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
         };
         loadUserData();
+    }
+}
+
+// Функции для онлайн счетчика
+function initializeOnlineCounter() {
+    // Устанавливаем начальное значение
+    updateOnlineCounter(onlinePlayers);
+    
+    // Запускаем обновление каждые 5 минут (300000 мс)
+    onlineUpdateInterval = setInterval(() => {
+        // Случайное изменение от -10 до +10 игроков
+        const change = Math.floor(Math.random() * 21) - 10;
+        onlinePlayers = Math.max(3, onlinePlayers + change);
+        updateOnlineCounter(onlinePlayers);
+    }, 300000); // 5 минут
+}
+
+function updateOnlineCounter(count) {
+    const playersCountElement = document.getElementById('playersCount');
+    if (playersCountElement) {
+        playersCountElement.textContent = count;
     }
 }
 

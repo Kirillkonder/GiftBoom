@@ -807,3 +807,49 @@ body::after {
         max-width: 100px;
     }
 }
+
+
+/* Стили для счетчика онлайн игроков */
+.players-counter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.players-counter i {
+    font-size: 14px;
+    color: #00c851 !important;
+}
+
+.players-counter span {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 480px) {
+    .players-counter {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+    
+    .players-counter i {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 390px) {
+    .players-counter {
+        font-size: 11px;
+        padding: 2px 5px;
+    }
+    
+    .players-counter i {
+        font-size: 12px;
+    }
+}
