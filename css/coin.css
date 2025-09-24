@@ -1,131 +1,582 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #000;
-    color: #fff;
-    overflow-x: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
 
-.game-container {
-    max-width: 390px;
-    margin: 0 auto;
-    min-height: 100vh;
-    background: transparent;
-    position: relative;
-    padding-bottom: 20px;
-}
+        .game-container {
+            max-width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: transparent;
+            position: relative;
+            padding-bottom: 20px;
+        }
 
-/* Верхняя панель */
-.top-panel {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
-    position: relative;
-    z-index: 10;
-}
+        /* Верхняя панель */
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            position: relative;
+            z-index: 10;
+        }
 
-.close-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    color: #fff;
-    font-weight: 500;
-    padding: 8px 12px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease;
-}
+        .close-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #fff;
+            font-weight: 500;
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
 
-.close-btn:active {
-    transform: scale(0.95);
-}
+        .close-btn:active {
+            transform: scale(0.95);
+        }
 
-.top-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-.balance {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
+        .balance {
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-.balance-plus-btn {
-    background: rgba(0, 0, 0, 0.2);
-    border: none;
-    color: #000;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 4px;
-}
+        .balance-plus-btn {
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: #000;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+        }
 
-/* Заголовок игры */
-.game-title {
-    text-align: center;
-    padding: 20px 16px 10px;
-}
+        /* Игровое поле */
+        .coin-game-area {
+            text-align: center;
+            padding: 20px;
+        }
 
-.game-title h1 {
-    font-size: 32px;
-    font-weight: bold;
-    background: linear-gradient(45deg, #ffd700, #ffed4e);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
-}
+        .coin-container {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            position: relative;
+            perspective: 1000px;
+        }
 
-.game-subtitle {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
+        .coin {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s ease-in-out;
+        }
 
-.game-subtitle span {
-    font-size: 12px;
-    color: #ccc;
-    font-weight: 500;
-    padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-}
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* Игровое поле */
-.coin-game-area {
-    text-align: center;
-    padding: 10px 16px;
-}
+        .heads {
+            background: url('coin.png') center/cover no-repeat;
+            transform: rotateY(0deg);
+        }
 
-/* Панель серии */
+        .tails {
+            background: url('coin.png') center/cover no-repeat;
+            transform: rotateY(180deg);
+        }
+
+        .coin.flipping {
+            animation: flip 1s ease-in-out;
+        }
+
+        @keyframes flip {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(900deg); }
+            100% { transform: rotateY(1800deg); }
+        }
+
+        /* Надписи на кнопках */
+        .choice-label {
+            position: absolute;
+            font-weight: bold;
+            font-size: 16px;
+            color: #000;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .heads-label {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .tails-label {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotateY(180deg);
+        }
+
+        /* Выбор стороны */
+        .choice-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .choice-btn {
+            padding: 15px 25px;
+            border: 2px solid #333;
+            border-radius: 12px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .choice-btn.active {
+            border-color: #00c851;
+            background: rgba(0, 200, 81, 0.2);
+            transform: scale(1.05);
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Контролы ставки */
+        .bet-controls {
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        .bet-amount-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .bet-amount-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 10px;
+            background: #00c851;
+            color: #000;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bet-amount-btn:active {
+            transform: scale(0.95);
+        }
+
+        #betAmount {
+            flex: 1;
+            background: transparent;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 10px;
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .ton-label {
+            color: #00c851;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .flip-button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            color: #000;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .flip-button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .flip-button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
+        }
+
+        .flip-button:not(:disabled):active {
+            transform: translateY(0);
+        }
+
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+
+        .toast {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-success .toast-icon {
+            color: #00c851;
+        }
+
+        .toast-error .toast-icon {
+            color: #ff4757;
+        }
+
+        .toast-win .toast-icon {
+            color: #ffd700;
+        }
+
+        .toast-content {
+            flex-grow: 1;
+        }
+
+        .toast-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.3;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #demo-badge {
+            display: none;
+            background: #ff9500;
+            color: black;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #1a1a2e;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2d2d4d;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2d2d4d;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 10px 0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #2d2d4d;
+            border-radius: 8px;
+            background-color: #0f0f1e;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #00c851, #007e33);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn:hover {
+            background: linear-gradient(45deg, #007e33, #00c851);
+            transform: translateY(-2px);
+        }
+
+        .deposit-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #0f0f1e;
+            border-radius: 8px;
+            border-left: 4px solid #00c851;
+        }
+
+        .deposit-info p {
+            margin: 0;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #1a1a2e;
+            border: 1px solid #2d2d4d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.hide {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-success .toast-icon { color: #00c851; }
+        .toast-error .toast-icon { color: #ff4444; }
+        .toast-warning .toast-icon { color: #ffbb33; }
+        .toast-info .toast-icon { color: #33b5e5; }
+        .toast-win .toast-icon { color: #ffd700; }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .toast-message {
+            color: #ccc;
+            font-size: 13px;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: #fff;
+        }
+
+        /* Стили для серийной игры */
 .series-panel {
     display: flex;
     justify-content: space-between;
@@ -217,460 +668,4 @@ body {
 
 .cashout-btn:not(:disabled):hover {
     background: rgba(0, 200, 81, 0.3);
-}
-
-/* Монетка */
-.coin-container {
-    width: 120px;
-    height: 120px;
-    margin: 20px auto;
-    position: relative;
-    perspective: 1000px;
-}
-
-.coin {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 1s ease-in-out;
-}
-
-.coin-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid #ffd700;
-    background: radial-gradient(circle at 30% 30%, #ffd700, #b8860b);
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-}
-
-.heads {
-    transform: rotateY(0deg);
-}
-
-.tails {
-    transform: rotateY(180deg);
-}
-
-.coin.flipping {
-    animation: flip 1s ease-in-out;
-}
-
-@keyframes flip {
-    0% { transform: rotateY(0deg); }
-    50% { transform: rotateY(900deg); }
-    100% { transform: rotateY(1800deg); }
-}
-
-.choice-label {
-    font-weight: bold;
-    font-size: 14px;
-    color: #000;
-    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
-}
-
-/* Панели выбора */
-.choice-panels {
-    display: flex;
-    gap: 15px;
-    margin: 25px 0;
-}
-
-.choice-panel {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 15px;
-    transition: all 0.3s ease;
-}
-
-.choice-panel:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-.choice-header h3 {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #ffd700;
-}
-
-.choice-info {
-    margin-bottom: 15px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.info-label {
-    font-size: 12px;
-    color: #ccc;
-}
-
-.info-value {
-    font-size: 14px;
-    font-weight: bold;
-    color: #fff;
-}
-
-.choice-select-btn {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.choice-select-btn.active {
-    background: #ffd700;
-    color: #000;
-    transform: scale(1.02);
-}
-
-.choice-select-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Управление ставками */
-.bet-controls {
-    margin-top: 20px;
-}
-
-.bet-amount-selector {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.bet-amount-btn {
-    width: 40px;
-    height: 40px;
-    border: 2px solid rgba(255, 215, 0, 0.5);
-    background: rgba(255, 215, 0, 0.1);
-    color: #ffd700;
-    border-radius: 50%;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.bet-amount-btn:active {
-    transform: scale(0.9);
-}
-
-#betAmount {
-    width: 80px;
-    padding: 8px;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.ton-label {
-    font-size: 14px;
-    color: #ffd700;
-    font-weight: bold;
-}
-
-.flip-button {
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    border: none;
-    border-radius: 12px;
-    color: #000;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-}
-
-.flip-button:disabled {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.flip-button:not(:disabled):hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
-}
-
-.flip-button.loading {
-    opacity: 0.7;
-    cursor: wait;
-}
-
-/* Модальное окно */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
-}
-
-.modal-content {
-    background: #1a1a1a;
-    margin: 10% auto;
-    padding: 0;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 350px;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-header h3 {
-    color: #ffd700;
-    font-size: 18px;
-}
-
-.close {
-    color: #fff;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s ease;
-}
-
-.close:hover {
-    color: #ffd700;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.deposit-info {
-    background: rgba(255, 215, 0, 0.1);
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border-left: 4px solid #ffd700;
-}
-
-.deposit-info p {
-    font-size: 14px;
-    color: #ffd700;
-    line-height: 1.4;
-}
-
-.input-group {
-    margin-bottom: 20px;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #ccc;
-    font-size: 14px;
-}
-
-.input-group input {
-    width: 100%;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 16px;
-}
-
-.modal-btn {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    border: none;
-    border-radius: 10px;
-    color: #000;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.modal-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
-}
-
-/* Toast уведомления */
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-    max-width: 350px;
-}
-
-.toast {
-    background: #1a1a1a;
-    border: 2px solid;
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.toast.show {
-    transform: translateX(0);
-}
-
-.toast.hide {
-    transform: translateX(400px);
-}
-
-.toast-success {
-    border-color: #00c851;
-}
-
-.toast-error {
-    border-color: #ff4444;
-}
-
-.toast-win {
-    border-color: #ffd700;
-    background: linear-gradient(135deg, #1a1a1a, #2a2a1a);
-}
-
-.toast-info {
-    border-color: #33b5e5;
-}
-
-.toast-icon {
-    font-size: 20px;
-}
-
-.toast-success .toast-icon {
-    color: #00c851;
-}
-
-.toast-error .toast-icon {
-    color: #ff4444;
-}
-
-.toast-win .toast-icon {
-    color: #ffd700;
-}
-
-.toast-info .toast-icon {
-    color: #33b5e5;
-}
-
-.toast-content {
-    flex: 1;
-}
-
-.toast-title {
-    font-weight: bold;
-    margin-bottom: 4px;
-    font-size: 14px;
-}
-
-.toast-message {
-    font-size: 12px;
-    color: #ccc;
-    line-height: 1.3;
-}
-
-.toast-close {
-    background: none;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    transition: background 0.3s ease;
-}
-
-.toast-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* Badge DEMO */
-#demo-badge {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: none;
-}
-
-/* Адаптивность */
-@media (max-width: 360px) {
-    .game-container {
-        padding: 0 10px;
-    }
-    
-    .choice-panels {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .coin-container {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .game-title h1 {
-        font-size: 28px;
-    }
-}
-
-/* Анимации */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.pulse {
-    animation: pulse 0.5s ease-in-out;
 }
