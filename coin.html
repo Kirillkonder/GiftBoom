@@ -28,6 +28,16 @@
             </div>
         </div>
 
+        <!-- Заголовок -->
+        <div class="game-title">
+            <h1>СОЛУГЕР</h1>
+            <div class="game-subtitle">
+                <span>СИТВООА</span>
+                <span>СитиВоол</span>
+                <span>СТВООМ</span>
+            </div>
+        </div>
+
         <!-- Игровое поле -->
         <div class="coin-game-area">
             
@@ -52,17 +62,41 @@
             <div class="coin-container">
                 <div class="coin" id="coin">
                     <div class="coin-face heads">
-                        <div class="choice-label heads-label"></div>
+                        <div class="choice-label heads-label">ОРЁЛ</div>
                     </div>
                     <div class="coin-face tails">
-                        <div class="choice-label tails-label"></div>
+                        <div class="choice-label tails-label">РЕШКА</div>
                     </div>
                 </div>
             </div>
 
-            <div class="choice-buttons">
-                <button class="choice-btn" onclick="selectChoice('heads')">ОРЁЛ</button>
-                <button class="choice-btn" onclick="selectChoice('tails')">РЕШКА</button>
+            <!-- Панели выбора -->
+            <div class="choice-panels">
+                <div class="choice-panel heads-panel">
+                    <div class="choice-header">
+                        <h3>Орел</h3>
+                    </div>
+                    <div class="choice-info">
+                        <div class="info-item">
+                            <span class="info-label">Возможный выигрыш</span>
+                            <span class="info-value" id="headsWinAmount">190 TON</span>
+                        </div>
+                    </div>
+                    <button class="choice-select-btn" onclick="selectChoice('heads')">ВЫБРАТЬ</button>
+                </div>
+
+                <div class="choice-panel tails-panel">
+                    <div class="choice-header">
+                        <h3>Решка</h3>
+                    </div>
+                    <div class="choice-info">
+                        <div class="info-item">
+                            <span class="info-label">Множитель</span>
+                            <span class="info-value" id="tailsMultiplier">x1.96</span>
+                        </div>
+                    </div>
+                    <button class="choice-select-btn" onclick="selectChoice('tails')">ВЫБРАТЬ</button>
+                </div>
             </div>
 
             <div class="bet-controls">
@@ -100,6 +134,87 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script>
+// Обновленная функция selectChoice для нового дизайна
+function selectChoice(choice) {
+    if (isFlipping) return;
+    
+    selectedChoice = choice;
+    
+    // Убираем активный класс со всех кнопок
+    document.querySelectorAll('.choice-select-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Добавляем активный класс выбранной кнопке
+    document.querySelector(`.${choice}-panel .choice-select-btn`).classList.add('active');
+    
+    // Обновляем информацию о возможном выигрыше
+    updateChoiceInfo();
+    
+    // Активируем кнопку броска
+    document.getElementById('flipButton').disabled = false;
+}
+
+// Функция для обновления информации о выборе
+function updateChoiceInfo() {
+    const betAmount = isSeriesActive ? baseBetAmount : currentBetAmount;
+    const headsWin = (betAmount * 1.96).toFixed(2);
+    document.getElementById('headsWinAmount').textContent = `${headsWin} TON`;
+    document.getElementById('tailsMultiplier').textContent = `x1.96`;
+}
+
+// Обновляем информацию при изменении ставки
+function updateBetInfo() {
+    updateChoiceInfo();
+}
+
+// Модифицируем функции изменения ставки
+function decreaseBet() {
+    if (seriesBetLocked) return;
+    
+    const betInput = document.getElementById('betAmount');
+    let value = parseFloat(betInput.value);
+    if (value > 0.1) {
+        value = Math.max(0.1, value - 0.1);
+        betInput.value = value.toFixed(1);
+        currentBetAmount = value;
+        baseBetAmount = value;
+        updateBetInfo();
+    }
+}
+
+function increaseBet() {
+    if (seriesBetLocked) return;
+    
+    const betInput = document.getElementById('betAmount');
+    let value = parseFloat(betInput.value);
+    if (value < 10) {
+        value = Math.min(10, value + 0.1);
+        betInput.value = value.toFixed(1);
+        currentBetAmount = value;
+        baseBetAmount = value;
+        updateBetInfo();
+    }
+}
+
+function validateBetAmount() {
+    if (seriesBetLocked) return;
+    
+    const betInput = document.getElementById('betAmount');
+    let value = parseFloat(betInput.value);
+    
+    if (isNaN(value)) {
+        value = 0.1;
+    }
+    
+    value = Math.max(0.1, Math.min(10, value));
+    betInput.value = value.toFixed(1);
+    currentBetAmount = value;
+    baseBetAmount = value;
+    updateBetInfo();
+}
+
+// Остальной код остается без изменений
 let currentUser = null;
 let isDemoMode = false;
 let currentBetAmount = 0.1;
@@ -119,6 +234,7 @@ let seriesBetDeducted = false;
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     initializeGame();
+    updateBetInfo(); // Инициализируем информацию о выборе
 });
 
 function goBack() {
@@ -157,65 +273,6 @@ async function loadUserData() {
     } catch (error) {
         console.error('Error loading user data:', error);
     }
-}
-
-function selectChoice(choice) {
-    if (isFlipping) return;
-    
-    selectedChoice = choice;
-    
-    // Убираем активный класс со всех кнопок
-    document.querySelectorAll('.choice-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Добавляем активный класс выбранной кнопке
-    document.querySelector(`.choice-btn:nth-child(${choice === 'heads' ? 1 : 2})`).classList.add('active');
-    
-    // Активируем кнопку броска
-    document.getElementById('flipButton').disabled = false;
-}
-
-function decreaseBet() {
-    if (seriesBetLocked) return;
-    
-    const betInput = document.getElementById('betAmount');
-    let value = parseFloat(betInput.value);
-    if (value > 0.1) {
-        value = Math.max(0.1, value - 0.1);
-        betInput.value = value.toFixed(1);
-        currentBetAmount = value;
-        baseBetAmount = value;
-    }
-}
-
-function increaseBet() {
-    if (seriesBetLocked) return;
-    
-    const betInput = document.getElementById('betAmount');
-    let value = parseFloat(betInput.value);
-    if (value < 10) {
-        value = Math.min(10, value + 0.1);
-        betInput.value = value.toFixed(1);
-        currentBetAmount = value;
-        baseBetAmount = value;
-    }
-}
-
-function validateBetAmount() {
-    if (seriesBetLocked) return;
-    
-    const betInput = document.getElementById('betAmount');
-    let value = parseFloat(betInput.value);
-    
-    if (isNaN(value)) {
-        value = 0.1;
-    }
-    
-    value = Math.max(0.1, Math.min(10, value));
-    betInput.value = value.toFixed(1);
-    currentBetAmount = value;
-    baseBetAmount = value;
 }
 
 // Функции для серийной игры
@@ -488,7 +545,7 @@ async function flipCoin() {
                         } else {
                             // Сбрасываем выбор для следующего броска в серии
                             selectedChoice = null;
-                            document.querySelectorAll('.choice-btn').forEach(btn => {
+                            document.querySelectorAll('.choice-select-btn').forEach(btn => {
                                 btn.classList.remove('active');
                             });
                             
@@ -506,7 +563,7 @@ async function flipCoin() {
                     
                     // Сбрасываем выбор для одиночной игры
                     selectedChoice = null;
-                    document.querySelectorAll('.choice-btn').forEach(btn => {
+                    document.querySelectorAll('.choice-select-btn').forEach(btn => {
                         btn.classList.remove('active');
                     });
                 }
