@@ -1760,6 +1760,189 @@ app.post('/api/coin/series-win', async (req, res) => {
     }
 });
 
+
+// Plinko Game Routes
+app.post('/api/plinko/play', async (req, res) => {
+    const { telegramId, betAmount, riskLevel, demoMode } = req.body;
+
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const balance = demoMode ? user.demo_balance : user.main_balance;
+        
+        if (balance < betAmount) {
+            return res.status(400).json({ error: 'Недостаточно средств' });
+        }
+
+        // Проверяем валидность уровня риска
+        if (!['low', 'medium', 'high'].includes(riskLevel)) {
+            return res.status(400).json({ error: 'Invalid risk level' });
+        }
+
+        // Списываем ставку
+        if (demoMode) {
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance - betAmount
+            });
+            updateCasinoDemoBank(betAmount);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance - betAmount
+            });
+            updateCasinoBank(betAmount);
+            updateRTPStats('realBank', betAmount, 0);
+        }
+
+        // Генерируем путь шарика и множитель
+        const result = generatePlinkoResult(riskLevel);
+        const winAmount = result.multiplier > 0 ? betAmount * result.multiplier : 0;
+
+        // Начисляем выигрыш если есть
+        if (winAmount > 0) {
+            if (demoMode) {
+                users.update({
+                    ...user,
+                    demo_balance: (user.demo_balance - betAmount) + winAmount
+                });
+                updateCasinoDemoBank(-winAmount);
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: (user.main_balance - betAmount) + winAmount
+                });
+                updateCasinoBank(-winAmount);
+                updateRTPStats('realBank', 0, winAmount);
+            }
+        }
+
+        // Сохраняем транзакцию
+        transactions.insert({
+            user_id: user.$loki,
+            amount: winAmount > 0 ? winAmount - betAmount : -betAmount,
+            type: winAmount > 0 ? 'plinko_win' : 'plinko_loss',
+            status: 'completed',
+            demo_mode: demoMode,
+            details: {
+                bet_amount: betAmount,
+                risk_level: riskLevel,
+                multiplier: result.multiplier,
+                win_amount: winAmount,
+                path: result.path
+            },
+            created_at: new Date()
+        });
+
+        const newBalance = demoMode ? 
+            (user.demo_balance - betAmount) + winAmount : 
+            (user.main_balance - betAmount) + winAmount;
+
+        res.json({
+            success: true,
+            multiplier: result.multiplier,
+            win_amount: winAmount,
+            path: result.path,
+            new_balance: newBalance
+        });
+
+    } catch (error) {
+        console.error('Plinko play error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Функция генерации результата Plinko
+function generatePlinkoResult(riskLevel) {
+    const rows = 8; // Количество рядов пинов
+    
+    // Множители в зависимости от уровня риска (как в 1win)
+    const multipliers = {
+        low: [1.2, 1.4, 1.6, 2, 2.5, 3, 4, 5, 10, 20],
+        medium: [0.4, 0.6, 0.8, 1.2, 1.6, 2, 3, 5, 12, 26],
+        high: [0.2, 0.4, 0.6, 0.8, 1.2, 2, 4, 8, 18, 100]
+    };
+    
+    const currentMultipliers = multipliers[riskLevel];
+    const path = [];
+    let position = 4; // Стартовая позиция (центр)
+    
+    // Симулируем падение шарика
+    for (let row = 0; row < rows; row++) {
+        // Случайное направление: 0 - влево, 1 - вправо
+        const direction = Math.random() < 0.5 ? -1 : 1;
+        position += direction;
+        
+        // Ограничиваем позицию в пределах поля
+        position = Math.max(0, Math.min(8, position));
+        path.push(position);
+    }
+    
+    // Определяем финальный множитель на основе позиции
+    let multiplierIndex;
+    if (position <= 1) multiplierIndex = 0;
+    else if (position <= 2) multiplierIndex = 1;
+    else if (position <= 3) multiplierIndex = 2;
+    else if (position <= 4) multiplierIndex = 3;
+    else if (position <= 5) multiplierIndex = 4;
+    else if (position <= 6) multiplierIndex = 5;
+    else if (position <= 7) multiplierIndex = 6;
+    else multiplierIndex = 7;
+    
+    // Небольшой шанс на максимальные множители
+    if (Math.random() < 0.02) { // 2% шанс
+        multiplierIndex = riskLevel === 'high' ? 9 : 8;
+    }
+    
+    return {
+        multiplier: currentMultipliers[multiplierIndex],
+        path: path,
+        finalPosition: position
+    };
+}
+
+// API: Получить историю Plinko
+app.get('/api/plinko/history/:telegramId', async (req, res) => {
+    try {
+        const telegramId = parseInt(req.params.telegramId);
+        const user = users.findOne({ telegram_id: telegramId });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userTransactions = transactions.find({
+            user_id: user.$loki,
+            type: { $in: ['plinko_win', 'plinko_loss'] }
+        });
+        
+        const history = userTransactions
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 20)
+            .map(tx => ({
+                multiplier: tx.details.multiplier,
+                win_amount: tx.details.win_amount,
+                bet_amount: tx.details.bet_amount,
+                risk_level: tx.details.risk_level,
+                timestamp: tx.created_at,
+                type: tx.type
+            }));
+            
+        res.json({
+            success: true,
+            history: history
+        });
+        
+    } catch (error) {
+        console.error('Get plinko history error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Запуск сервера
 async function startServer() {
     await initDatabase();
