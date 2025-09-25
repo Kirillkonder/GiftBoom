@@ -18,7 +18,10 @@
             <div class="top-right">
                 <div class="balance">
                     <i class="bi bi-currency-exchange"></i>
-                    <span id="balance">1000.00</span>
+                    <span id="balance">0.00</span>
+                    <button class="balance-plus-btn" onclick="openDepositModal()">
+                        <i class="bi bi-plus"></i>
+                    </button>
                 </div>
                 <div id="demo-badge">DEMO</div>
             </div>
@@ -37,31 +40,31 @@
                 
                 <!-- Множители -->
                 <div class="plinko-multipliers" id="multipliers">
-                    <div class="multiplier high-mult" data-mult="5.8">
+                    <div class="multiplier high-mult" data-mult="5.8" data-index="0">
                         <span class="mult-value">x5.8</span>
                     </div>
-                    <div class="multiplier medium-mult" data-mult="2.2">
+                    <div class="multiplier medium-mult" data-mult="2.2" data-index="1">
                         <span class="mult-value">x2.2</span>
                     </div>
-                    <div class="multiplier low-mult" data-mult="1.1">
+                    <div class="multiplier low-mult" data-mult="1.1" data-index="2">
                         <span class="mult-value">x1.1</span>
                     </div>
-                    <div class="multiplier low-mult" data-mult="1.1">
+                    <div class="multiplier low-mult" data-mult="1.1" data-index="3">
                         <span class="mult-value">x1.1</span>
                     </div>
-                    <div class="multiplier minimal-mult" data-mult="0.4">
+                    <div class="multiplier minimal-mult" data-mult="0.4" data-index="4">
                         <span class="mult-value">x0.4</span>
                     </div>
-                    <div class="multiplier low-mult" data-mult="1.1">
+                    <div class="multiplier low-mult" data-mult="1.1" data-index="5">
                         <span class="mult-value">x1.1</span>
                     </div>
-                    <div class="multiplier low-mult" data-mult="1.1">
+                    <div class="multiplier low-mult" data-mult="1.1" data-index="6">
                         <span class="mult-value">x1.1</span>
                     </div>
-                    <div class="multiplier medium-mult" data-mult="2.2">
+                    <div class="multiplier medium-mult" data-mult="2.2" data-index="7">
                         <span class="mult-value">x2.2</span>
                     </div>
-                    <div class="multiplier high-mult" data-mult="5.8">
+                    <div class="multiplier high-mult" data-mult="5.8" data-index="8">
                         <span class="mult-value">x5.8</span>
                     </div>
                 </div>
@@ -77,12 +80,29 @@
                         </div>
                     </div>
                     <div class="balance-info">
-                        Баланс: <span id="current-balance">1000.00</span> TON
+                        Баланс: <span id="current-balance">0.00</span> TON
                     </div>
                     <button class="drop-ball-btn" onclick="dropBall()">
                         <span class="btn-text">🎯 Кинуть шарик</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно пополнения баланса -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Пополнить баланс</h3>
+                <span class="close" onclick="closeDepositModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="deposit-amount">Сумма (TON):</label>
+                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
+                </div>
+                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
             </div>
         </div>
     </div>
@@ -95,6 +115,11 @@
     </div>
 
     <script>
+        let currentUser = null;
+        let isDemoMode = false;
+        let activeBalls = 0;
+        let plinkoGame;
+
         class OptimizedPlinko {
             constructor() {
                 this.canvas = document.getElementById('plinko-canvas');
@@ -103,7 +128,7 @@
                 this.balls = [];
                 this.particlePool = [];
                 this.isAnimating = false;
-                this.balance = 1000;
+                this.balance = 0;
                 
                 this.setupCanvas();
                 this.createPins();
@@ -248,6 +273,9 @@
                         ball.x = pin.x - cos * pushDistance;
                         ball.y = pin.y - sin * pushDistance;
                         
+                        // Создаем эффекты столкновения
+                        this.createCollisionSpark(pin.x, pin.y);
+                        
                         break;
                     }
                 }
@@ -321,6 +349,19 @@
                 this.ctx.shadowBlur = 0;
             }
             
+            createCollisionSpark(x, y) {
+                // Создаем эффект искры при столкновении
+                for (let i = 0; i < 3; i++) {
+                    const spark = document.createElement('div');
+                    spark.className = 'collision-spark';
+                    spark.style.left = x + 'px';
+                    spark.style.top = y + 'px';
+                    document.body.appendChild(spark);
+                    
+                    setTimeout(() => spark.remove(), 250);
+                }
+            }
+            
             finalizeBall(ball) {
                 // Определяем в какой слот попал шарик
                 const slotWidth = this.canvasWidth / 9;
@@ -336,102 +377,242 @@
                     targetMultiplier.classList.remove('multiplier-win');
                 }, 800);
                 
-                // Обновляем баланс
-                const betAmount = parseFloat(document.getElementById('bet-amount').value);
-                const winAmount = betAmount * mult;
-                this.balance = this.balance - betAmount + winAmount;
-                
-                this.updateBalanceDisplay();
-                
-                // Показываем результат
-                if (mult > 1) {
-                    this.showNotification(`Выигрыш: ${winAmount.toFixed(2)} TON! (x${mult})`, 'success');
-                } else {
-                    this.showNotification(`Проигрыш: x${mult}`, 'error');
-                }
-                
-                // Создаем эффект частиц для больших выигрышей
-                if (mult >= 2) {
-                    this.createWinEffect(targetMultiplier);
-                }
-            }
-            
-            createWinEffect(element) {
-                const rect = element.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top;
-                
-                for (let i = 0; i < 12; i++) {
-                    setTimeout(() => {
-                        const particle = document.createElement('div');
-                        particle.className = 'win-particle';
-                        particle.style.left = x + (Math.random() - 0.5) * 60 + 'px';
-                        particle.style.top = y + 'px';
-                        document.body.appendChild(particle);
-                        
-                        setTimeout(() => particle.remove(), 1000);
-                    }, i * 30);
-                }
-            }
-            
-            updateBalanceDisplay() {
-                document.getElementById('balance').textContent = this.balance.toFixed(2);
-                document.getElementById('current-balance').textContent = this.balance.toFixed(2);
-            }
-            
-            showNotification(message, type) {
-                const notification = document.getElementById('result-notification');
-                const messageEl = document.getElementById('notification-message');
-                
-                messageEl.textContent = message;
-                notification.className = `notification ${type}`;
-                notification.style.display = 'block';
-                
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 3000);
+                activeBalls--;
             }
         }
-        
-        // Инициализация игры
-        let plinkoGame;
-        
+
+        // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
+            initializeGame();
             plinkoGame = new OptimizedPlinko();
         });
-        
+
+        function initializeGame() {
+            const tg = window.Telegram.WebApp;
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                currentUser = {
+                    id: tg.initDataUnsafe.user.id,
+                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`
+                };
+                loadUserData();
+            } else {
+                // Демо режим для тестирования
+                isDemoMode = true;
+                updateBalanceDisplay(1000);
+                document.getElementById('demo-badge').style.display = 'block';
+            }
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await fetch(`/api/user/balance/${currentUser.id}`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+                    updateBalanceDisplay(balance);
+                    isDemoMode = userData.demo_mode;
+                    document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                // Fallback на демо режим
+                isDemoMode = true;
+                updateBalanceDisplay(1000);
+                document.getElementById('demo-badge').style.display = 'block';
+            }
+        }
+
+        function updateBalanceDisplay(balance) {
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            document.getElementById('current-balance').textContent = balance.toFixed(2);
+        }
+
         function goBack() {
             window.location.href = 'index.html';
         }
-        
-        function dropBall() {
+
+        // Плавная анимация с 60 FPS
+        async function dropBall() {
             const betAmount = parseFloat(document.getElementById('bet-amount').value);
-            
             if (betAmount < 0.1 || betAmount > 100) {
-                plinkoGame.showNotification('Ставка должна быть от 0.1 до 100 TON', 'error');
+                showNotification('Ставка должна быть от 0.1 до 100 TON', 'error');
                 return;
             }
-            
-            if (plinkoGame.balance < betAmount) {
-                plinkoGame.showNotification('Недостаточно средств', 'error');
+
+            const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
+            if (currentBalance < betAmount) {
+                showNotification('Недостаточно средств', 'error');
                 return;
             }
-            
-            // Генерируем случайный слот (с учетом вероятностей)
-            const weights = [0.02, 0.08, 0.15, 0.25, 0.25, 0.25, 0.15, 0.08, 0.02];
-            const random = Math.random();
-            let sum = 0;
-            let targetSlot = 4; // по умолчанию средний слот
-            
-            for (let i = 0; i < weights.length; i++) {
-                sum += weights[i];
-                if (random <= sum) {
-                    targetSlot = i;
-                    break;
+
+            updateBalanceDisplay(currentBalance - betAmount);
+
+            if (isDemoMode || !currentUser) {
+                // Демо режим - генерируем результат локально
+                const weights = [0.02, 0.08, 0.15, 0.25, 0.25, 0.25, 0.15, 0.08, 0.02];
+                const random = Math.random();
+                let sum = 0;
+                let targetSlot = 4;
+                
+                for (let i = 0; i < weights.length; i++) {
+                    sum += weights[i];
+                    if (random <= sum) {
+                        targetSlot = i;
+                        break;
+                    }
                 }
+
+                const multipliers = [5.8, 2.2, 1.1, 1.1, 0.4, 1.1, 1.1, 2.2, 5.8];
+                const multiplier = multipliers[targetSlot];
+                const winAmount = betAmount * multiplier;
+                const newBalance = currentBalance - betAmount + winAmount;
+                
+                setTimeout(() => {
+                    updateBalanceDisplay(newBalance);
+                    
+                    if (multiplier > 1) {
+                        showNotification(`Выигрыш: ${winAmount.toFixed(2)} TON! (x${multiplier})`, 'success');
+                        if (multiplier >= 2) {
+                            createWinEffect(document.querySelectorAll('.multiplier')[targetSlot]);
+                        }
+                    } else {
+                        showNotification(`Проигрыш: x${multiplier}`, 'error');
+                    }
+                }, 3000);
+                
+                plinkoGame.createBall(targetSlot);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/plinko/drop', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        betAmount: betAmount,
+                        demoMode: isDemoMode
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    plinkoGame.createBall(result.slot_index);
+                    
+                    setTimeout(() => {
+                        updateBalanceDisplay(result.new_balance);
+                        
+                        if (result.win_amount > 0) {
+                            showNotification(`Выигрыш: ${result.win_amount.toFixed(2)} TON! (x${result.multiplier})`, 'success');
+                            if (result.multiplier >= 2) {
+                                createWinEffect(document.querySelectorAll('.multiplier')[result.slot_index]);
+                            }
+                        } else {
+                            showNotification(`Проигрыш: x${result.multiplier}`, 'error');
+                        }
+                    }, 3000);
+                } else {
+                    showNotification('Ошибка: ' + result.error, 'error');
+                    updateBalanceDisplay(currentBalance);
+                }
+            } catch (error) {
+                console.error('Drop error:', error);
+                showNotification('Ошибка соединения', 'error');
+                updateBalanceDisplay(currentBalance);
+            }
+        }
+
+        function createWinEffect(element) {
+            const rect = element.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top;
+            
+            for (let i = 0; i < 12; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'win-particle';
+                    particle.style.left = x + (Math.random() - 0.5) * 60 + 'px';
+                    particle.style.top = y + 'px';
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => particle.remove(), 1000);
+                }, i * 30);
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('result-notification');
+            const messageEl = document.getElementById('notification-message');
+            
+            messageEl.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Модальные окна
+        function openDepositModal() {
+            document.getElementById('deposit-modal').style.display = 'block';
+        }
+
+        function closeDepositModal() {
+            document.getElementById('deposit-modal').style.display = 'none';
+            document.getElementById('deposit-amount').value = '';
+        }
+
+        async function processDeposit() {
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            
+            if (!amount || amount < 1) {
+                showNotification('Минимальная сумма пополнения: 1 TON', 'error');
+                return;
             }
             
-            plinkoGame.createBall(targetSlot);
+            if (isDemoMode) {
+                // В демо режиме просто добавляем к балансу
+                const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
+                updateBalanceDisplay(currentBalance + amount);
+                closeDepositModal();
+                showNotification(`Баланс пополнен на ${amount} TON`, 'success');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/deposit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        amount: amount,
+                        demoMode: isDemoMode
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateBalanceDisplay(result.new_balance);
+                    closeDepositModal();
+                    showNotification(`Баланс пополнен на ${amount} TON`, 'success');
+                } else {
+                    showNotification('Ошибка пополнения: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Deposit error:', error);
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+
+        // Закрытие модального окна по клику вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('deposit-modal');
+            if (event.target == modal) {
+                closeDepositModal();
+            }
         }
     </script>
 </body>
