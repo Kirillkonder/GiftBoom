@@ -105,21 +105,22 @@ body {
     letter-spacing: 2px;
 }
 
-/* Игровое поле */
+/* Игровое поле - ОДИН фон */
 .plinko-game {
     display: flex;
     flex-direction: column;
     gap: 0;
     margin-bottom: 20px;
+    background: linear-gradient(180deg, rgba(26, 32, 44, 0.9) 0%, rgba(16, 23, 35, 0.95) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
 }
 
 .plinko-board-container {
     position: relative;
     height: 500px;
-    background: linear-gradient(180deg, rgba(26, 32, 44, 0.6) 0%, rgba(16, 23, 35, 0.8) 100%);
-    border-radius: 15px 15px 0 0;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-bottom: none;
+    background: transparent;
     overflow: hidden;
 }
 
@@ -151,7 +152,7 @@ body {
         0 0 15px rgba(0, 188, 212, 0.8),
         0 2px 8px rgba(0, 0, 0, 0.5),
         inset 0 1px 2px rgba(255, 255, 255, 0.4);
-    z-index: 3;
+    z-index: 10;
     border: 2px solid rgba(255, 255, 255, 0.3);
     animation: ballGlow 2s ease-in-out infinite;
 }
@@ -162,12 +163,10 @@ body {
     justify-content: space-between;
     gap: 0;
     height: 60px;
-    background: rgba(16, 23, 35, 0.9);
-    border-radius: 0 0 15px 15px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-top: none;
+    background: transparent;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
-    margin-top: -1px;
+    margin-top: 0;
 }
 
 .multiplier {
@@ -530,18 +529,4 @@ body {
 .plinko-board {
     transform: translateZ(0);
     will-change: contents;
-}
-
-.plinko-multipliers {
-    position: relative;
-    z-index: 5;
-}
-
-.plinko-board-container {
-    z-index: 4;
-}
-
-/* Шарик поверх множителей при анимации */
-.ball {
-    z-index: 10;
 }

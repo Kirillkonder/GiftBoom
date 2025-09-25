@@ -208,10 +208,10 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
-        function updatePhysics(deltaTime) {
+ function updatePhysics(deltaTime) {
     const board = document.getElementById('plinko-board');
     const boardWidth = board.offsetWidth;
-    const boardHeight = board.offsetHeight - 60;
+    const boardHeight = board.offsetHeight;
     
     for (let i = balls.length - 1; i >= 0; i--) {
         const ball = balls[i];
@@ -224,13 +224,6 @@
         // Обновление позиции
         ball.x += ball.vx * deltaTime;
         ball.y += ball.vy * deltaTime;
-        
-        // Специальное отклонение к центральным слотам
-        if (ball.y > boardHeight * 0.3) {
-            const centerX = boardWidth / 2;
-            const targetBias = (centerX - ball.x) * 0.0005 * deltaTime;
-            ball.vx += targetBias;
-        }
         
         // Столкновение с границами
         if (ball.x < ball.radius) {
@@ -266,18 +259,12 @@
         // Трение воздуха
         ball.vx *= 0.999;
         
-        // Проверка достижения дна - ФИКС: точное определение
-        if (ball.y >= boardHeight - ball.radius && !ball.finished) {
-            ball.vy = 0;
-            ball.vx = 0;
-            
-            // Точное определение слота на основе позиции X
+        // Проверка достижения дна - ФИКС: шарик падает прямо на множитель
+        if (ball.y >= boardHeight - ball.radius - 30 && !ball.finished) {
+            // Определяем слот по текущей позиции X шарика
             const multipliers = document.querySelectorAll('.multiplier');
             const slotWidth = boardWidth / multipliers.length;
-            
-            // Определяем слот по центру шарика
-            const ballCenterX = ball.x;
-            const slotIndex = Math.floor(ballCenterX / slotWidth);
+            const slotIndex = Math.floor(ball.x / slotWidth);
             const finalSlot = Math.max(0, Math.min(multipliers.length - 1, slotIndex));
             
             // Запоминаем реальный слот
@@ -285,27 +272,26 @@
             ball.slotAnimation = true;
             ball.finished = true;
             
-            // Анимация падения на множитель
+            // Позиция центра множителя
             ball.targetX = (finalSlot * slotWidth) + (slotWidth / 2);
             ball.targetY = boardHeight + 30; // Центр множителя
             
-            // Завершение через короткое время
+            // Завершение
             setTimeout(() => {
                 finishBallAnimation(ball, finalSlot);
-            }, 800);
+            }, 500);
         }
         
-        // Анимация движения к множителю после достижения дна
+        // Анимация движения к множителю
         if (ball.slotAnimation && ball.finished) {
             const dx = ball.targetX - ball.x;
             const dy = ball.targetY - ball.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > 2) {
-                ball.x += dx * 0.15;
-                ball.y += dy * 0.15;
-            } else {
-                // Достигли цели - останавливаемся точно на множителе
+            ball.x += dx * 0.2;
+            ball.y += dy * 0.2;
+            
+            // Останавливаем когда близко к цели
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
                 ball.x = ball.targetX;
                 ball.y = ball.targetY;
             }
@@ -313,8 +299,9 @@
     }
 }
 
+
 function finishBallAnimation(ball, slotIndex) {
-    // Подсветка множителя
+    // Подсветка множителя куда упал шарик
     const multipliers = document.querySelectorAll('.multiplier');
     if (multipliers[slotIndex]) {
         multipliers[slotIndex].classList.add('highlight');
@@ -323,16 +310,13 @@ function finishBallAnimation(ball, slotIndex) {
         }, 1500);
     }
     
-    // Удаляем шарик из DOM
+    // Удаляем шарик
     const ballElement = document.querySelector(`.ball[data-ball-id="${ball.id}"]`);
     if (ballElement) {
         ballElement.remove();
     }
     
-    // Удаляем шарик из массива
     balls = balls.filter(b => b.id !== ball.id);
-    
-    // Обновляем баланс
     updateBalanceDisplay(ball.newBalance);
     
     if (ball.winAmount > 0) {
@@ -386,80 +370,9 @@ function finishBallAnimation(ball, slotIndex) {
             });
         }
 
-        function finishBallAnimation(ball, slotIndex) {
-            // Подсветка множителя
-            const multipliers = document.querySelectorAll('.multiplier');
-            if (multipliers[slotIndex]) {
-                multipliers[slotIndex].classList.add('highlight');
-                setTimeout(() => {
-                    multipliers[slotIndex].classList.remove('highlight');
-                }, 1500);
-            }
-            
-            // Удаляем шарик из DOM
-            const ballElement = document.querySelector(`.ball[data-ball-id="${ball.id}"]`);
-            if (ballElement) {
-                ballElement.remove();
-            }
-            
-            // Удаляем шарик из массива
-            balls = balls.filter(b => b.id !== ball.id);
-            
-            // Обновляем баланс
-            updateBalanceDisplay(ball.newBalance);
-            
-            if (ball.winAmount > 0) {
-                showNotification(`Выигрыш: ${ball.winAmount.toFixed(2)} TON (x${ball.multiplier})`, 'success');
-            } else {
-                showNotification('Удачи в следующий раз!', 'info');
-            }
-        }
+        
 
-        // Запуск нового шарика
-        async function dropBall() {
-            const betAmount = parseFloat(document.getElementById('bet-amount').value);
-            if (betAmount < 0.1 || betAmount > 100) {
-                showNotification('Ставка должна быть от 0.1 до 100 TON', 'error');
-                return;
-            }
-
-            const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
-            if (currentBalance < betAmount) {
-                showNotification('Недостаточно средств', 'error');
-                return;
-            }
-
-            // Сразу списываем ставку
-            updateBalanceDisplay(currentBalance - betAmount);
-
-            try {
-                const response = await fetch('/api/plinko/drop', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        betAmount: betAmount,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // Создаем новый шарик
-                    createNewBall(result.slot_index, result.multiplier, result.win_amount, result.new_balance);
-                } else {
-                    showNotification('Ошибка: ' + result.error, 'error');
-                    updateBalanceDisplay(currentBalance);
-                }
-            } catch (error) {
-                console.error('Drop error:', error);
-                showNotification('Ошибка соединения', 'error');
-                updateBalanceDisplay(currentBalance);
-            }
-        }
-
-       function createNewBall(targetSlot, multiplier, winAmount, newBalance) {
+      function createNewBall(targetSlot, multiplier, winAmount, newBalance) {
     const board = document.getElementById('plinko-board');
     const boardWidth = board.offsetWidth;
     
@@ -474,7 +387,7 @@ function finishBallAnimation(ball, slotIndex) {
         slotAnimation: false,
         targetX: 0,
         targetY: 0,
-        finalSlot: targetSlot, // Запоминаем целевой слот
+        finalSlot: targetSlot,
         multiplier: multiplier,
         winAmount: winAmount,
         newBalance: newBalance
