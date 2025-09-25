@@ -109,149 +109,101 @@ body {
 .plinko-game {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
-/* Кнопка старта */
-.start-button {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
-.start-circle {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #00bcd4, #0097a7);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 20px rgba(0, 188, 212, 0.4);
-    border: 3px solid rgba(255, 255, 255, 0.2);
-}
-
-.start-circle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 25px rgba(0, 188, 212, 0.6);
-}
-
-.start-circle:active {
-    transform: scale(0.95);
-}
-
-.start-text {
-    color: #fff;
-    font-weight: 700;
-    font-size: 12px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-/* Игровое поле */
-.plinko-board {
+.plinko-board-container {
     position: relative;
-    height: 500px;
+    height: 400px;
     background: linear-gradient(180deg, rgba(44, 62, 80, 0.3) 0%, rgba(26, 37, 47, 0.5) 100%);
-    margin-bottom: 15px;
-    overflow: hidden;
     border-radius: 15px;
     border: 2px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.plinko-board {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 /* Штифты */
 .pin {
     position: absolute;
-    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+    background: radial-gradient(circle at 30% 30%, #ecf0f1, #bdc3c7);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 
-        0 3px 8px rgba(0, 0, 0, 0.4),
-        inset 0 1px 3px rgba(255, 255, 255, 0.5),
-        inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+        0 2px 6px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.6);
     z-index: 2;
-    transition: all 0.15s ease-out;
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Шарик */
 .ball {
     position: absolute;
-    width: 18px;
-    height: 18px;
     background: radial-gradient(circle at 30% 30%, #ffffff, #00bcd4);
     border-radius: 50%;
     box-shadow: 
-        0 0 20px rgba(0, 188, 212, 0.9),
-        0 3px 12px rgba(0, 0, 0, 0.4),
+        0 0 15px rgba(0, 188, 212, 0.8),
+        0 2px 8px rgba(0, 0, 0, 0.3),
         inset 0 1px 2px rgba(255, 255, 255, 0.4);
     z-index: 3;
-    transition: transform 0.05s ease-out;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    animation: ballGlow 1.5s ease-in-out infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: ballGlow 2s ease-in-out infinite;
 }
 
-/* Множители */
+/* Множители ПОД полем */
 .plinko-multipliers {
     display: flex;
     justify-content: space-between;
-    gap: 2px;
-    padding: 0 5px;
+    gap: 1px;
+    margin-top: 10px;
 }
 
 .multiplier {
     flex: 1;
-    padding: 12px 4px;
+    padding: 12px 2px;
     border-radius: 8px;
     font-weight: 700;
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-    min-height: 40px;
+    min-height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .multiplier.high {
     background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    box-shadow: 0 3px 15px rgba(231, 76, 60, 0.4);
 }
 
 .multiplier.medium {
     background: linear-gradient(135deg, #f39c12, #e67e22);
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    box-shadow: 0 3px 15px rgba(243, 156, 18, 0.4);
 }
 
 .multiplier.low {
     background: linear-gradient(135deg, #3498db, #2980b9);
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    box-shadow: 0 3px 15px rgba(52, 152, 219, 0.4);
 }
 
 .multiplier.ultra-low {
     background: linear-gradient(135deg, #95a5a6, #7f8c8d);
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    box-shadow: 0 3px 15px rgba(149, 165, 166, 0.4);
 }
 
 .multiplier.highlight {
-    transform: scale(1.2);
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
     z-index: 10;
-    animation: multiplierWin 0.5s ease-out;
+    animation: multiplierWin 0.6s ease-out;
 }
 
 /* Управление */
@@ -317,7 +269,6 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .drop-ball-btn:hover {
@@ -494,28 +445,14 @@ body {
         font-size: 28px;
     }
     
-    .plinko-board {
-        height: 400px;
-    }
-    
-    .start-circle {
-        width: 70px;
-        height: 70px;
-    }
-    
-    .start-text {
-        font-size: 11px;
-    }
-    
-    .ball {
-        width: 16px;
-        height: 16px;
+    .plinko-board-container {
+        height: 350px;
     }
     
     .multiplier {
         font-size: 10px;
-        padding: 10px 3px;
-        min-height: 35px;
+        padding: 10px 1px;
+        min-height: 40px;
     }
     
     .plinko-controls {
@@ -526,20 +463,20 @@ body {
 /* Анимации */
 @keyframes ballGlow {
     0%, 100% { 
-        box-shadow: 0 0 20px rgba(0, 188, 212, 0.9), 0 3px 12px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
     }
     50% { 
-        box-shadow: 0 0 30px rgba(0, 188, 212, 1), 0 4px 15px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 25px rgba(0, 188, 212, 1);
     }
 }
 
 @keyframes multiplierWin {
-    0% { transform: scale(1.2); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1.2); }
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1.1); }
 }
 
-/* Оптимизации */
+/* Оптимизации для 60 FPS */
 .ball, .pin {
     will-change: transform;
     transform: translateZ(0);
