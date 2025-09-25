@@ -12,7 +12,7 @@ body {
     user-select: none;
 }
 
-/* Фон с сеткой */
+/* Фон с сеткой и игровым полем */
 body::before {
     content: '';
     position: fixed;
@@ -101,13 +101,9 @@ body::before {
     color: #fff;
 }
 
-/* Игровое поле */
+/* Игровое поле на фоне */
 .plinko-game {
-    background: rgba(30, 30, 45, 0.9);
-    border-radius: 15px;
-    padding: 20px;
     margin-bottom: 20px;
-    border: 2px solid rgba(0, 200, 81, 0.3);
 }
 
 .plinko-drop-zone {
@@ -134,15 +130,13 @@ body::before {
     color: #000;
 }
 
-/* Доска плинко */
+/* Доска плинко на фоне */
 .plinko-board {
     position: relative;
     height: 350px;
-    background: rgba(10, 10, 20, 0.9);
-    border-radius: 10px;
+    background: transparent;
     margin-bottom: 20px;
     overflow: hidden;
-    border: 2px solid #333;
 }
 
 /* Штифты в треугольном порядке */
