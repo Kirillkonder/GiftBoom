@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(180deg, #1a2332 0%, #0f1419 100%);
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
     color: #fff;
     overflow-x: hidden;
     user-select: none;
@@ -29,7 +29,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background: rgba(26, 35, 50, 0.95);
+    background: rgba(44, 62, 80, 0.95);
     position: fixed;
     top: 0;
     left: 0;
@@ -65,7 +65,7 @@ body {
 }
 
 .balance {
-    background: linear-gradient(135deg, #00a8ff, #0078d4);
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: #fff;
     padding: 8px 16px;
     border-radius: 20px;
@@ -76,12 +76,12 @@ body {
     gap: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
+    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
 }
 
 .balance:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0, 168, 255, 0.4);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
 }
 
 /* Контент */
@@ -113,7 +113,7 @@ body {
     margin-bottom: 20px;
 }
 
-/* Кнопка старта в центре */
+/* Кнопка старта */
 .start-button {
     display: flex;
     justify-content: center;
@@ -123,20 +123,20 @@ body {
 .start-circle {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #00d4aa, #00b894);
+    background: linear-gradient(135deg, #00bcd4, #0097a7);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 188, 212, 0.4);
     border: 3px solid rgba(255, 255, 255, 0.2);
 }
 
 .start-circle:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 25px rgba(0, 212, 170, 0.6);
+    box-shadow: 0 6px 25px rgba(0, 188, 212, 0.6);
 }
 
 .start-circle:active {
@@ -153,30 +153,35 @@ body {
 /* Игровое поле */
 .plinko-board {
     position: relative;
-    height: 360px;
-    background: transparent;
+    height: 400px;
+    background: linear-gradient(180deg, rgba(44, 62, 80, 0.3) 0%, rgba(26, 37, 47, 0.5) 100%);
     margin-bottom: 15px;
     overflow: hidden;
     border-radius: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Штифты */
+/* Штифты - точно как на изображении */
 .pin {
     position: absolute;
-    background: linear-gradient(135deg, #e0e6ed, #c7d2fe);
+    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 
-        0 2px 8px rgba(0, 0, 0, 0.3),
-        inset 0 1px 2px rgba(255, 255, 255, 0.4);
+        0 3px 8px rgba(0, 0, 0, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.5),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1);
     z-index: 2;
-    transition: all 0.2s ease-out;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.15s ease-out;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .pin:hover {
-    background: linear-gradient(135deg, #f0f6ff, #d7e4fd);
+    background: linear-gradient(135deg, #ffffff, #ecf0f1);
     transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.5),
+        inset 0 1px 4px rgba(255, 255, 255, 0.6);
 }
 
 /* Шарик */
@@ -184,15 +189,17 @@ body {
     position: absolute;
     width: 18px;
     height: 18px;
-    background: radial-gradient(circle at 30% 30%, #ffffff, #00d4aa);
+    background: radial-gradient(circle at 30% 30%, #ffffff, #00bcd4);
     border-radius: 50%;
     box-shadow: 
-        0 0 15px rgba(0, 212, 170, 0.8),
-        0 2px 10px rgba(0, 0, 0, 0.3);
+        0 0 20px rgba(0, 188, 212, 0.9),
+        0 3px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4);
     z-index: 3;
     transform: translate(-50%, -50%);
-    transition: transform 0.1s ease-out;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.05s ease-out;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    animation: ballGlow 1.5s ease-in-out infinite;
 }
 
 /* Множители */
@@ -211,47 +218,69 @@ body {
     font-size: 11px;
     text-align: center;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
     min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.multiplier::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.multiplier:hover::before {
+    left: 100%;
 }
 
 .multiplier.high {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 15px rgba(231, 76, 60, 0.4);
 }
 
 .multiplier.medium {
-    background: linear-gradient(135deg, #feca57, #ff9ff3);
-    color: #000;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 15px rgba(243, 156, 18, 0.4);
 }
 
 .multiplier.low {
-    background: linear-gradient(135deg, #48dbfb, #0abde3);
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 15px rgba(52, 152, 219, 0.4);
 }
 
 .multiplier.ultra-low {
-    background: linear-gradient(135deg, #ff9f43, #ff7675);
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 15px rgba(149, 165, 166, 0.4);
 }
 
 .multiplier.highlight {
-    transform: scale(1.15);
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+    transform: scale(1.2);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
     z-index: 10;
+    animation: multiplierWin 0.5s ease-out;
 }
 
 /* Управление */
 .plinko-controls {
-    background: rgba(26, 35, 50, 0.8);
+    background: rgba(44, 62, 80, 0.8);
     border-radius: 15px;
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -290,8 +319,8 @@ body {
 
 .bet-input-group input:focus {
     outline: none;
-    border-color: #00d4aa;
-    box-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
+    border-color: #00bcd4;
+    box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
 }
 
 .balance-info {
@@ -302,7 +331,7 @@ body {
 }
 
 .drop-ball-btn {
-    background: linear-gradient(135deg, #00d4aa, #00b894);
+    background: linear-gradient(135deg, #00bcd4, #0097a7);
     color: #fff;
     border: none;
     padding: 15px;
@@ -311,13 +340,13 @@ body {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .drop-ball-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
 }
 
 .drop-ball-btn:active {
@@ -338,7 +367,7 @@ body {
 }
 
 .modal-content {
-    background: linear-gradient(180deg, #1a2332 0%, #0f1419 100%);
+    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
     margin: 15% auto;
     padding: 0;
     border-radius: 20px;
@@ -350,7 +379,7 @@ body {
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #00d4aa, #00b894);
+    background: linear-gradient(135deg, #00bcd4, #0097a7);
     padding: 20px;
     color: #fff;
     display: flex;
@@ -404,8 +433,8 @@ body {
 
 .input-group input:focus {
     outline: none;
-    border-color: #00d4aa;
-    box-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
+    border-color: #00bcd4;
+    box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
 }
 
 .modal-btn {
@@ -420,14 +449,14 @@ body {
 }
 
 .deposit-btn {
-    background: linear-gradient(135deg, #00d4aa, #00b894);
+    background: linear-gradient(135deg, #00bcd4, #0097a7);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
 }
 
 .deposit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
 }
 
 /* Уведомления */
@@ -448,17 +477,17 @@ body {
 }
 
 .notification.success {
-    background: linear-gradient(135deg, #00d4aa, #00b894);
+    background: linear-gradient(135deg, #27ae60, #229954);
     color: #fff;
 }
 
 .notification.error {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: #fff;
 }
 
 .notification.info {
-    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: #fff;
 }
 
@@ -490,7 +519,7 @@ body {
     }
     
     .plinko-board {
-        height: 320px;
+        height: 350px;
     }
     
     .start-circle {
@@ -500,11 +529,6 @@ body {
     
     .start-text {
         font-size: 11px;
-    }
-    
-    .pin {
-        width: 10px !important;
-        height: 10px !important;
     }
     
     .ball {
@@ -526,33 +550,20 @@ body {
 /* Анимации */
 @keyframes ballGlow {
     0%, 100% { 
-        box-shadow: 0 0 15px rgba(0, 212, 170, 0.8), 0 2px 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 20px rgba(0, 188, 212, 0.9), 0 3px 12px rgba(0, 0, 0, 0.4);
     }
     50% { 
-        box-shadow: 0 0 25px rgba(0, 212, 170, 1), 0 2px 15px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 0 30px rgba(0, 188, 212, 1), 0 4px 15px rgba(0, 0, 0, 0.5);
     }
-}
-
-.ball {
-    animation: ballGlow 1s ease-in-out infinite;
-}
-
-@keyframes pinPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.05); }
 }
 
 @keyframes multiplierWin {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1.15); }
+    0% { transform: scale(1.2); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1.2); }
 }
 
-.multiplier.highlight {
-    animation: multiplierWin 0.3s ease-out;
-}
-
-/* Улучшенные градиенты для глубины */
+/* Улучшенные эффекты глубины */
 .plinko-board::before {
     content: '';
     position: absolute;
@@ -560,7 +571,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(ellipse at center top, rgba(0, 212, 170, 0.08) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center top, rgba(0, 188, 212, 0.1) 0%, transparent 70%);
     pointer-events: none;
     z-index: 1;
 }
