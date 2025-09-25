@@ -367,3 +367,36 @@ body::before {
     background: radial-gradient(ellipse at center, rgba(0, 200, 81, 0.1) 0%, transparent 70%);
     pointer-events: none;
 }
+
+
+/* Стили для уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    text-align: center;
+    max-width: 90%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    color: #000;
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: #fff;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
