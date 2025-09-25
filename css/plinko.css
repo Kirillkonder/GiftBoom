@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
     color: #fff;
     overflow-x: hidden;
     user-select: none;
@@ -23,13 +23,13 @@ body {
     padding-top: 60px;
 }
 
-/* Верхняя панель */
+/* Верхняя панель - темная */
 .top-panel {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background: rgba(44, 62, 80, 0.95);
+    background: rgba(26, 26, 26, 0.95);
     position: fixed;
     top: 0;
     left: 0;
@@ -65,7 +65,7 @@ body {
 }
 
 .balance {
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: linear-gradient(135deg, #2d3748, #4a5568);
     color: #fff;
     padding: 8px 16px;
     border-radius: 20px;
@@ -76,12 +76,12 @@ body {
     gap: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 2px 10px rgba(45, 55, 72, 0.3);
 }
 
 .balance:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 4px 15px rgba(45, 55, 72, 0.4);
 }
 
 /* Контент */
@@ -101,44 +101,101 @@ body {
     font-size: 32px;
     font-weight: 800;
     color: #fff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     letter-spacing: 2px;
 }
 
-/* Игровое поле */
+/* Игровое поле с интегрированными множителями */
 .plinko-game {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
     margin-bottom: 20px;
 }
 
 .plinko-board-container {
     position: relative;
-    height: 400px;
-    background: linear-gradient(180deg, rgba(44, 62, 80, 0.3) 0%, rgba(26, 37, 47, 0.5) 100%);
+    height: 500px;
+    background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
     border-radius: 15px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .plinko-board {
     position: relative;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 60px);
+}
+
+/* Интегрированные множители */
+.integrated-multipliers {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.6);
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.imultiplier {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.imultiplier:last-child {
+    border-right: none;
+}
+
+.imultiplier.high {
+    background: linear-gradient(135deg, #c53030, #9b2c2c);
+    color: #fff;
+}
+
+.imultiplier.medium {
+    background: linear-gradient(135deg, #d69e2e, #b7791f);
+    color: #fff;
+}
+
+.imultiplier.low {
+    background: linear-gradient(135deg, #3182ce, #2c5aa0);
+    color: #fff;
+}
+
+.imultiplier.ultra-low {
+    background: linear-gradient(135deg, #4a5568, #2d3748);
+    color: #fff;
+}
+
+.imultiplier.highlight {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    animation: multiplierWin 0.6s ease-out;
 }
 
 /* Штифты */
 .pin {
     position: absolute;
-    background: radial-gradient(circle at 30% 30%, #ecf0f1, #bdc3c7);
+    background: radial-gradient(circle at 30% 30%, #a0aec0, #718096);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 
-        0 2px 6px rgba(0, 0, 0, 0.4),
-        inset 0 1px 2px rgba(255, 255, 255, 0.6);
+        0 2px 6px rgba(0, 0, 0, 0.6),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
     z-index: 2;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Шарик */
@@ -147,72 +204,22 @@ body {
     background: radial-gradient(circle at 30% 30%, #ffffff, #00bcd4);
     border-radius: 50%;
     box-shadow: 
-        0 0 15px rgba(0, 188, 212, 0.8),
-        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(0, 188, 212, 0.9),
+        0 3px 12px rgba(0, 0, 0, 0.5),
         inset 0 1px 2px rgba(255, 255, 255, 0.4);
     z-index: 3;
     border: 2px solid rgba(255, 255, 255, 0.3);
     animation: ballGlow 2s ease-in-out infinite;
 }
 
-/* Множители ПОД полем */
-.plinko-multipliers {
-    display: flex;
-    justify-content: space-between;
-    gap: 1px;
-    margin-top: 10px;
-}
-
-.multiplier {
-    flex: 1;
-    padding: 12px 2px;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 12px;
-    text-align: center;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    min-height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.multiplier.high {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: #fff;
-}
-
-.multiplier.medium {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: #fff;
-}
-
-.multiplier.low {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: #fff;
-}
-
-.multiplier.ultra-low {
-    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-    color: #fff;
-}
-
-.multiplier.highlight {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-    z-index: 10;
-    animation: multiplierWin 0.6s ease-out;
-}
-
-/* Управление */
+/* Управление - темное */
 .plinko-controls {
-    background: rgba(44, 62, 80, 0.8);
+    background: rgba(45, 55, 72, 0.9);
     border-radius: 15px;
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .bet-controls {
@@ -228,7 +235,7 @@ body {
 }
 
 .bet-input-group label {
-    color: #fff;
+    color: #e2e8f0;
     font-weight: 500;
     font-size: 14px;
 }
@@ -248,11 +255,11 @@ body {
 .bet-input-group input:focus {
     outline: none;
     border-color: #00bcd4;
-    box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+    box-shadow: 0 0 15px rgba(0, 188, 212, 0.3);
 }
 
 .balance-info {
-    color: rgba(255, 255, 255, 0.7);
+    color: #a0aec0;
     font-size: 14px;
     font-weight: 500;
     text-align: center;
@@ -269,6 +276,7 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .drop-ball-btn:hover {
@@ -280,7 +288,7 @@ body {
     transform: translateY(0);
 }
 
-/* Модальное окно */
+/* Модальное окно - темное */
 .modal {
     display: none;
     position: fixed;
@@ -289,19 +297,19 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+    background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
     margin: 15% auto;
     padding: 0;
     border-radius: 20px;
     width: 90%;
     max-width: 350px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     overflow: hidden;
 }
 
@@ -342,7 +350,7 @@ body {
 .input-group label {
     display: block;
     margin-bottom: 8px;
-    color: #fff;
+    color: #e2e8f0;
     font-weight: 500;
 }
 
@@ -361,7 +369,7 @@ body {
 .input-group input:focus {
     outline: none;
     border-color: #00bcd4;
-    box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+    box-shadow: 0 0 15px rgba(0, 188, 212, 0.3);
 }
 
 .modal-btn {
@@ -398,23 +406,23 @@ body {
     font-weight: 600;
     text-align: center;
     max-width: 90%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .notification.success {
-    background: linear-gradient(135deg, #27ae60, #229954);
+    background: linear-gradient(135deg, #38a169, #2f855a);
     color: #fff;
 }
 
 .notification.error {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #e53e3e, #c53030);
     color: #fff;
 }
 
 .notification.info {
-    background: linear-gradient(135deg, #3498db, #2980b9);
+    background: linear-gradient(135deg, #3182ce, #2b6cb0);
     color: #fff;
 }
 
@@ -446,13 +454,11 @@ body {
     }
     
     .plinko-board-container {
-        height: 350px;
+        height: 450px;
     }
     
-    .multiplier {
-        font-size: 10px;
-        padding: 10px 1px;
-        min-height: 40px;
+    .imultiplier {
+        font-size: 12px;
     }
     
     .plinko-controls {
@@ -463,17 +469,17 @@ body {
 /* Анимации */
 @keyframes ballGlow {
     0%, 100% { 
-        box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
+        box-shadow: 0 0 20px rgba(0, 188, 212, 0.8);
     }
     50% { 
-        box-shadow: 0 0 25px rgba(0, 188, 212, 1);
+        box-shadow: 0 0 30px rgba(0, 188, 212, 1);
     }
 }
 
 @keyframes multiplierWin {
     0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1.1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1.05); }
 }
 
 /* Оптимизации для 60 FPS */
@@ -484,31 +490,4 @@ body {
 
 .plinko-board {
     transform: translateZ(0);
-}
-
-plinko-board {
-    transform: translateZ(0);
-    will-change: contents;
-}
-
-.ball {
-    will-change: transform;
-    transform: translateZ(0);
-}
-
-/* Убедись что контейнер правильно размещен */
-.plinko-board-container {
-    position: relative;
-    height: 400px;
-    background: linear-gradient(180deg, rgba(44, 62, 80, 0.3) 0%, rgba(26, 37, 47, 0.5) 100%);
-    border-radius: 15px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
-    margin-bottom: 10px;
-}
-
-.plinko-multipliers {
-    display: flex;
-    justify-content: space-between;
-    gap: 1px;
 }

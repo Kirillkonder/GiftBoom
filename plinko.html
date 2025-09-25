@@ -34,24 +34,23 @@
             
             <!-- Игровое поле -->
             <div class="plinko-game">
-                <!-- Игровое поле -->
+                <!-- Игровое поле с интегрированными множителями -->
                 <div class="plinko-board-container">
                     <div class="plinko-board" id="plinko-board">
-                        <!-- Штифты и шарики будут созданы через JS -->
+                        <!-- Штифты, шарики и множители будут созданы через JS -->
                     </div>
-                </div>
-                
-                <!-- Множители ПОД полем -->
-                <div class="plinko-multipliers" id="multipliers">
-                    <div class="multiplier high" data-index="0">x5.8</div>
-                    <div class="multiplier medium" data-index="1">x2.2</div>
-                    <div class="multiplier low" data-index="2">x1.1</div>
-                    <div class="multiplier low" data-index="3">x1.1</div>
-                    <div class="multiplier ultra-low" data-index="4">x0.4</div>
-                    <div class="multiplier low" data-index="5">x1.1</div>
-                    <div class="multiplier low" data-index="6">x1.1</div>
-                    <div class="multiplier medium" data-index="7">x2.2</div>
-                    <div class="multiplier high" data-index="8">x5.8</div>
+                    <!-- Множители интегрированы в поле -->
+                    <div class="integrated-multipliers" id="integrated-multipliers">
+                        <div class="imultiplier high" data-index="0">x5.8</div>
+                        <div class="imultiplier medium" data-index="1">x2.2</div>
+                        <div class="imultiplier low" data-index="2">x1.1</div>
+                        <div class="imultiplier low" data-index="3">x1.1</div>
+                        <div class="imultiplier ultra-low" data-index="4">x0.4</div>
+                        <div class="imultiplier low" data-index="5">x1.1</div>
+                        <div class="imultiplier low" data-index="6">x1.1</div>
+                        <div class="imultiplier medium" data-index="7">x2.2</div>
+                        <div class="imultiplier high" data-index="8">x5.8</div>
+                    </div>
                 </div>
             </div>
             
@@ -102,6 +101,7 @@
         let isDemoMode = false;
         let balls = [];
         let pins = [];
+        let multipliers = [];
         let animationFrameId = null;
         let lastTime = 0;
 
@@ -148,29 +148,40 @@
             document.getElementById('current-balance').textContent = balance.toFixed(2);
         }
 
-        // Создание поля плинко
+        // Создание поля плинко с интегрированными множителями
         function createPlinkoField() {
             const board = document.getElementById('plinko-board');
             board.innerHTML = '';
             pins = [];
+            multipliers = Array.from(document.querySelectorAll('.imultiplier'));
             
-            const rows = 10;
+            const rows = 12;
             const boardWidth = board.offsetWidth;
-            const boardHeight = board.offsetHeight;
+            const boardHeight = board.offsetHeight - 60; // Место для множителей
             const pinSize = 10;
             
-            // Создаем штифты в шахматном порядке
+            // Создаем штифты с наклоном в сторону 0.4x
             for (let row = 0; row < rows; row++) {
-                const pinsInRow = 8 + (row % 2); // 8 или 9 штифтов в ряду
-                const startY = 40;
-                const rowSpacing = (boardHeight - 100) / rows;
+                const pinsInRow = 8 + (row % 2);
+                const startY = 30;
+                const rowSpacing = (boardHeight - 80) / rows;
                 
                 for (let col = 0; col < pinsInRow; col++) {
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
-                    // Равномерное распределение
-                    const x = ((col + 0.5 + (row % 2) * 0.5) * boardWidth) / (pinsInRow + (row % 2));
+                    // Создаем наклон в сторону центра (где 0.4x)
+                    let x = ((col + 0.5 + (row % 2) * 0.5) * boardWidth) / (pinsInRow + (row % 2));
+                    
+                    // Наклоняем штифты к центру (к 0.4x)
+                    const centerX = boardWidth / 2;
+                    const tiltStrength = 0.1 * (row / rows); // Усиливаем наклон с каждым рядом
+                    if (x < centerX) {
+                        x += tiltStrength * (centerX - x);
+                    } else {
+                        x -= tiltStrength * (x - centerX);
+                    }
+                    
                     const y = startY + (row * rowSpacing);
                     
                     pin.style.left = x + 'px';
@@ -188,6 +199,10 @@
                     });
                 }
             }
+            
+            // Позиционируем множители в самом низу поля
+            const multiplierContainer = document.getElementById('integrated-multipliers');
+            multiplierContainer.style.width = boardWidth + 'px';
         }
 
         // Главный игровой цикл 60 FPS
@@ -208,15 +223,24 @@
         function updatePhysics(deltaTime) {
             const board = document.getElementById('plinko-board');
             const boardWidth = board.offsetWidth;
-            const boardHeight = board.offsetHeight;
+            const boardHeight = board.offsetHeight - 60; // Учитываем место для множителей
             
             for (let i = balls.length - 1; i >= 0; i--) {
                 const ball = balls[i];
                 
                 if (ball.finished) continue;
                 
-                // Гравитация - ПРОСТАЯ И ЭФФЕКТИВНАЯ
-                ball.vy += 0.5 * deltaTime;
+                // Гравитация
+                ball.vy += 0.4 * deltaTime;
+                
+                // Легкий наклон в сторону центра (0.4x)
+                const centerX = boardWidth / 2;
+                const tiltForce = 0.02 * deltaTime;
+                if (ball.x < centerX) {
+                    ball.vx += tiltForce;
+                } else {
+                    ball.vx -= tiltForce;
+                }
                 
                 // Обновление позиции
                 ball.x += ball.vx * deltaTime;
@@ -225,13 +249,13 @@
                 // Столкновение с границами
                 if (ball.x < ball.radius) {
                     ball.x = ball.radius;
-                    ball.vx = Math.abs(ball.vx) * 0.7;
+                    ball.vx = Math.abs(ball.vx) * 0.6;
                 } else if (ball.x > boardWidth - ball.radius) {
                     ball.x = boardWidth - ball.radius;
-                    ball.vx = -Math.abs(ball.vx) * 0.7;
+                    ball.vx = -Math.abs(ball.vx) * 0.6;
                 }
                 
-                // Столкновение со штифтами - УПРОЩЕННАЯ ВЕРСИЯ
+                // Столкновение со штифтами
                 for (const pin of pins) {
                     const dx = ball.x - pin.x;
                     const dy = ball.y - pin.y;
@@ -239,46 +263,62 @@
                     const minDistance = ball.radius + pin.radius;
                     
                     if (distance < minDistance && distance > 0) {
-                        // Просто отталкиваем шарик
-                        const pushForce = 0.3;
+                        // Отталкивание от штифта с наклоном к центру
+                        const pushForce = 0.4;
                         ball.x += (dx / distance) * pushForce;
                         ball.y += (dy / distance) * pushForce;
                         
-                        // Отражение скорости
+                        // Отражение скорости с усилением к центру
                         const dot = ball.vx * dx + ball.vy * dy;
                         if (dot < 0) {
-                            ball.vx -= 0.8 * dot * dx / (distance * distance);
-                            ball.vy -= 0.8 * dot * dy / (distance * distance);
+                            ball.vx -= 0.7 * dot * dx / (distance * distance);
+                            ball.vy -= 0.7 * dot * dy / (distance * distance);
                         }
                         
-                        // Случайное отклонение
-                        ball.vx += (Math.random() - 0.5) * 0.2;
+                        // Дополнительный толчок к центру для 0.4x
+                        const centerPush = 0.1;
+                        if (ball.x < boardWidth / 2) {
+                            ball.vx += centerPush;
+                        } else {
+                            ball.vx -= centerPush;
+                        }
                     }
                 }
                 
                 // Трение воздуха
-                ball.vx *= 0.998;
+                ball.vx *= 0.995;
                 
-                // Проверка достижения дна
-                if (ball.y >= boardHeight - 50) {
+                // Проверка достижения множителей
+                if (ball.y >= boardHeight - 20 && !ball.reachedBottom) {
+                    ball.reachedBottom = true;
                     ball.vy = 0;
-                    ball.vx = 0;
+                    ball.vx *= 0.3;
                     
-                    // Определяем слот на основе конечной позиции X
-                    const multipliers = document.querySelectorAll('.multiplier');
+                    // Определяем множитель на основе позиции X
                     const slotWidth = boardWidth / multipliers.length;
-                    const slotIndex = Math.floor(ball.x / slotWidth);
-                    const finalSlot = Math.max(0, Math.min(multipliers.length - 1, slotIndex));
+                    let slotIndex = Math.floor(ball.x / slotWidth);
+                    slotIndex = Math.max(0, Math.min(multipliers.length - 1, slotIndex));
                     
-                    // Плавное движение к центру слота
-                    ball.targetX = (finalSlot * slotWidth) + (slotWidth / 2);
+                    // Увеличиваем шанс попадания на 0.4x (индекс 4)
+                    if (Math.random() < 0.8) { // 80% шанс
+                        slotIndex = 4; // Принудительно на 0.4x
+                    }
+                    
+                    ball.finalSlot = slotIndex;
+                    ball.targetX = (slotIndex * slotWidth) + (slotWidth / 2);
                     ball.slotAnimation = true;
-                    ball.finished = true;
+                }
+                
+                // Анимация падения в слот
+                if (ball.slotAnimation) {
+                    const dx = ball.targetX - ball.x;
+                    ball.x += dx * 0.15;
+                    ball.y += 0.5 * deltaTime;
                     
-                    // Завершение анимации
-                    setTimeout(() => {
-                        finishBallAnimation(ball, finalSlot);
-                    }, 500);
+                    if (Math.abs(dx) < 3 && ball.y >= boardHeight) {
+                        ball.finished = true;
+                        finishBallAnimation(ball);
+                    }
                 }
             }
         }
@@ -286,7 +326,7 @@
         function renderBalls() {
             const board = document.getElementById('plinko-board');
             
-            // Удаляем только шарики которые закончили анимацию
+            // Удаляем завершенные шарики
             const ballElements = board.querySelectorAll('.ball');
             ballElements.forEach(ballElement => {
                 const ballId = ballElement.dataset.ballId;
@@ -315,24 +355,27 @@
             });
         }
 
-        function finishBallAnimation(ball, slotIndex) {
+        function finishBallAnimation(ball) {
             // Подсветка множителя
-            const multipliers = document.querySelectorAll('.multiplier');
-            if (multipliers[slotIndex]) {
-                multipliers[slotIndex].classList.add('highlight');
+            if (multipliers[ball.finalSlot]) {
+                multipliers[ball.finalSlot].classList.add('highlight');
                 setTimeout(() => {
-                    multipliers[slotIndex].classList.remove('highlight');
-                }, 1000);
+                    multipliers[ball.finalSlot].classList.remove('highlight');
+                }, 1500);
             }
             
             // Удаляем шарик из DOM
             const ballElement = document.querySelector(`.ball[data-ball-id="${ball.id}"]`);
             if (ballElement) {
-                ballElement.remove();
+                setTimeout(() => {
+                    ballElement.remove();
+                }, 1000);
             }
             
             // Удаляем шарик из массива
-            balls = balls.filter(b => b.id !== ball.id);
+            setTimeout(() => {
+                balls = balls.filter(b => b.id !== ball.id);
+            }, 1200);
             
             // Обновляем баланс
             updateBalanceDisplay(ball.newBalance);
@@ -395,20 +438,21 @@
             const ball = {
                 id: Date.now() + Math.random(),
                 x: boardWidth / 2,
-                y: 25,
-                vx: (Math.random() - 0.5) * 3, // Случайное начальное движение
-                vy: 0.5,
-                radius: 8,
+                y: 20,
+                vx: (Math.random() - 0.5) * 2,
+                vy: 0.3,
+                radius: 9,
                 finished: false,
+                reachedBottom: false,
                 slotAnimation: false,
                 targetX: 0,
+                finalSlot: 0,
                 multiplier: multiplier,
                 winAmount: winAmount,
                 newBalance: newBalance
             };
             
             balls.push(ball);
-            console.log('Новый шарик создан, всего шариков:', balls.length);
         }
 
         function openDepositModal() {
