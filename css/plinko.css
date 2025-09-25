@@ -147,6 +147,7 @@ body::before {
     transform: translate(-50%, -50%);
     box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
     z-index: 2;
+    transition: all 0.2s ease-out;
 }
 
 /* Шарик */
@@ -159,6 +160,7 @@ body::before {
     box-shadow: 0 0 15px rgba(255, 149, 0, 0.9);
     z-index: 3;
     transform: translate(-50%, -50%);
+    transition: transform 0.1s ease-out;
 }
 
 /* Множители */
@@ -178,7 +180,7 @@ body::before {
     font-size: 12px;
     text-align: center;
     border: 1px solid #333;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .multiplier.highlight {
@@ -341,4 +343,27 @@ body::before {
         font-size: 10px;
         padding: 10px 3px;
     }
+}
+
+/* Улучшенная анимация для плавности */
+@keyframes ballBounce {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.ball {
+    animation: ballBounce 0.5s ease-in-out infinite;
+}
+
+/* Улучшенные тени для глубины */
+.plinko-board::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, rgba(0, 200, 81, 0.1) 0%, transparent 70%);
+    pointer-events: none;
 }
