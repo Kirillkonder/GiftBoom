@@ -6,7 +6,7 @@
     <title>Plinko Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/plinko.css">
+    <link rel="stylesheet" href="plinko.css">
 </head>
 <body>
     <div class="game-container">
@@ -36,50 +36,49 @@
             
             <!-- Игровое поле -->
             <div class="plinko-game">
-                <!-- Игровое поле с эффектом глубины -->
                 <div class="plinko-board" id="plinko-board">
                     <div class="board-glow"></div>
                     <div class="board-overlay"></div>
                     <!-- Штифты будут созданы через JS -->
                 </div>
                 
-                <!-- Множители в стиле 1win -->
+                <!-- Множители -->
                 <div class="plinko-multipliers" id="multipliers">
                     <div class="multiplier high-mult" data-index="0">
-                        <div class="mult-value">X5.8</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X5.8</span>
                     </div>
                     <div class="multiplier medium-mult" data-index="1">
-                        <div class="mult-value">X2.2</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X2.2</span>
                     </div>
                     <div class="multiplier low-mult" data-index="2">
-                        <div class="mult-value">X1.1</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X1.1</span>
                     </div>
                     <div class="multiplier low-mult" data-index="3">
-                        <div class="mult-value">X1.1</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X1.1</span>
                     </div>
                     <div class="multiplier minimal-mult" data-index="4">
-                        <div class="mult-value">X0.4</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X0.4</span>
                     </div>
                     <div class="multiplier low-mult" data-index="5">
-                        <div class="mult-value">X1.1</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X1.1</span>
                     </div>
                     <div class="multiplier low-mult" data-index="6">
-                        <div class="mult-value">X1.1</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X1.1</span>
                     </div>
                     <div class="multiplier medium-mult" data-index="7">
-                        <div class="mult-value">X2.2</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X2.2</span>
                     </div>
                     <div class="multiplier high-mult" data-index="8">
-                        <div class="mult-value">X5.8</div>
                         <div class="mult-glow"></div>
+                        <span class="mult-value">X5.8</span>
                     </div>
                 </div>
             </div>
@@ -98,8 +97,8 @@
                         Баланс: <span id="current-balance">0.00</span> TON
                     </div>
                     <button class="drop-ball-btn" onclick="dropBall()">
-                        <span class="btn-text">🎯 Кинуть шарик</span>
                         <div class="btn-glow"></div>
+                        <span class="btn-text">🎯 Кинуть шарик</span>
                     </button>
                 </div>
             </div>
@@ -134,6 +133,7 @@
         let currentUser = null;
         let isDemoMode = false;
         let activeBalls = 0;
+        let animationId = null;
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -179,44 +179,44 @@
             document.getElementById('current-balance').textContent = balance.toFixed(2);
         }
 
-        // Создание поля плинко в стиле 1win
+        // Создание треугольного поля плинко как в 1win
         function createPlinkoField() {
             const board = document.getElementById('plinko-board');
-            board.innerHTML = '<div class="board-glow"></div><div class="board-overlay"></div>';
+            const existingPins = board.querySelectorAll('.pin');
+            existingPins.forEach(pin => pin.remove());
             
-            const rows = 14; // Больше рядов для более реалистичного эффекта
-            const pinRadius = 5;
-            const rowHeight = 28;
+            const rows = 14;
+            const pinRadius = window.innerWidth < 500 ? 4 : 5;
+            const rowHeight = window.innerWidth < 500 ? 22 : 28;
             const boardWidth = board.offsetWidth;
+            const startRow = 3;
             
             // Создаем штифты в треугольном порядке
-            for (let row = 0; row < rows; row++) {
-                const pinsInRow = row + 3; // Начинаем с 3 штифтов в первом ряду
-                const rowTop = 30 + row * rowHeight;
+            for (let row = startRow; row < rows; row++) {
+                const pinsInRow = row - startRow + 1;
+                const rowTop = 30 + (row - startRow) * rowHeight;
                 
-                const totalSpacing = boardWidth - (pinsInRow * pinRadius * 2);
-                const pinSpacing = totalSpacing / (pinsInRow + 1);
+                // Центрируем штифты для треугольной формы
+                const totalWidth = (pinsInRow - 1) * 45;
+                const startX = (boardWidth - totalWidth) / 2;
                 
                 for (let col = 0; col < pinsInRow; col++) {
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
-                    const left = pinSpacing + (col * (pinSpacing + pinRadius * 2)) + pinRadius;
+                    const left = startX + col * 45;
                     
                     pin.style.left = left + 'px';
                     pin.style.top = rowTop + 'px';
                     pin.style.width = pinRadius * 2 + 'px';
                     pin.style.height = pinRadius * 2 + 'px';
                     
-                    // Добавляем пульсацию для штифтов
-                    pin.style.animationDelay = (row * col * 0.05) + 's';
-                    
                     board.appendChild(pin);
                 }
             }
         }
 
-        // Улучшенная функция кидания шарика
+        // Плавная анимация с 60 FPS
         async function dropBall() {
             const betAmount = parseFloat(document.getElementById('bet-amount').value);
             if (betAmount < 0.1 || betAmount > 100) {
@@ -230,12 +230,6 @@
                 return;
             }
 
-            // Блокируем кнопку на время анимации
-            const button = document.querySelector('.drop-ball-btn');
-            button.disabled = true;
-            button.style.opacity = '0.6';
-
-            // Сразу списываем ставку
             updateBalanceDisplay(currentBalance - betAmount);
 
             try {
@@ -252,25 +246,20 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Запускаем улучшенную анимацию
-                    enhancedPlinkoAnimation(result.slot_index, result.multiplier, result.win_amount, betAmount, result.new_balance);
+                    smoothPlinkoAnimation(result.slot_index, result.multiplier, result.win_amount, betAmount, result.new_balance);
                 } else {
                     showNotification('Ошибка: ' + result.error, 'error');
                     updateBalanceDisplay(currentBalance);
-                    button.disabled = false;
-                    button.style.opacity = '1';
                 }
             } catch (error) {
                 console.error('Drop error:', error);
                 showNotification('Ошибка соединения', 'error');
                 updateBalanceDisplay(currentBalance);
-                button.disabled = false;
-                button.style.opacity = '1';
             }
         }
 
-        // Улучшенная анимация в стиле казино
-        function enhancedPlinkoAnimation(targetSlot, multiplier, winAmount, betAmount, newBalance) {
+        // Плавная анимация с улучшенной физикой
+        function smoothPlinkoAnimation(targetSlot, multiplier, winAmount, betAmount, newBalance) {
             activeBalls++;
             
             const board = document.getElementById('plinko-board');
@@ -278,250 +267,207 @@
             ball.className = 'ball enhanced-ball';
             board.appendChild(ball);
 
-            // Добавляем частицы для эффекта
-            const particles = [];
-            for (let i = 0; i < 8; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'ball-particle';
-                board.appendChild(particle);
-                particles.push(particle);
-            }
-
+            const boardRect = board.getBoundingClientRect();
             const multipliers = document.querySelectorAll('.multiplier');
             const targetMultiplier = multipliers[targetSlot];
 
-            // Определяем целевую позицию
-            const multiplierRects = Array.from(multipliers).map(m => m.getBoundingClientRect());
-            const boardRect = board.getBoundingClientRect();
-            const targetX = (multiplierRects[targetSlot].left + multiplierRects[targetSlot].width/2 - boardRect.left);
-
             // Начальная позиция
             let x = boardRect.width / 2;
-            let y = 10;
+            let y = 20;
+            
+            // Физические параметры для плавности
+            let velocityX = 0;
+            let velocityY = 0;
+            const gravity = 0.25;
+            const friction = 0.995;
+            const ballRadius = 12;
+            const bounceFactor = 0.75;
             
             ball.style.left = x + 'px';
             ball.style.top = y + 'px';
 
             const pins = document.querySelectorAll('.pin');
-            
-            // Позиции штифтов
             const pinPositions = Array.from(pins).map(pin => {
                 const rect = pin.getBoundingClientRect();
-                const boardRect = board.getBoundingClientRect();
                 return {
                     x: rect.left + rect.width/2 - boardRect.left,
                     y: rect.top + rect.height/2 - boardRect.top,
-                    radius: rect.width / 2
+                    radius: rect.width / 2 + 2
                 };
             });
 
-            // Улучшенные физические параметры
-            let velocityX = (Math.random() - 0.5) * 2;
-            let velocityY = 0;
-            const gravity = 0.4;
-            const friction = 0.98;
-            const ballRadius = 12;
-            const bounceFactor = 0.8;
-            const maxVelocity = 8;
+            let lastTime = performance.now();
+            let lastCollision = 0;
 
-            let lastCollisionTime = 0;
-            const collisionCooldown = 80;
-            let frame = 0;
-            
-            function animate() {
-                frame++;
-                const currentTime = Date.now();
+            function animate(currentTime) {
+                const deltaTime = (currentTime - lastTime) / 16.67; // Нормализация к 60fps
+                lastTime = currentTime;
+
+                // Применяем физику с учетом времени
+                velocityY += gravity * deltaTime;
+                velocityX *= Math.pow(friction, deltaTime);
+                velocityY *= Math.pow(friction, deltaTime);
                 
-                // Применяем гравитацию
-                velocityY += gravity;
-                
-                // Ограничиваем максимальную скорость
-                velocityX = Math.max(-maxVelocity, Math.min(maxVelocity, velocityX));
-                velocityY = Math.max(-maxVelocity, Math.min(maxVelocity, velocityY));
-                
-                // Применяем трение
-                velocityX *= friction;
-                velocityY *= friction;
-                
-                // Обновляем позицию
-                x += velocityX;
-                y += velocityY;
+                x += velocityX * deltaTime;
+                y += velocityY * deltaTime;
                 
                 // Границы поля
                 if (x < ballRadius) {
                     x = ballRadius;
-                    velocityX *= -bounceFactor;
-                    createBounceParticles(x, y);
+                    velocityX = Math.abs(velocityX) * bounceFactor;
                 }
                 if (x > boardRect.width - ballRadius) {
                     x = boardRect.width - ballRadius;
-                    velocityX *= -bounceFactor;
-                    createBounceParticles(x, y);
+                    velocityX = -Math.abs(velocityX) * bounceFactor;
                 }
-                
+
+                // Проверка столкновений
+                if (currentTime - lastCollision > 50) {
+                    pinPositions.forEach((pin, index) => {
+                        const dx = pin.x - x;
+                        const dy = pin.y - y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < pin.radius + ballRadius) {
+                            lastCollision = currentTime;
+                            
+                            // Нормализованный вектор
+                            const nx = dx / distance;
+                            const ny = dy / distance;
+                            
+                            // Скорость отскока
+                            const dot = velocityX * nx + velocityY * ny;
+                            velocityX -= 2 * dot * nx * bounceFactor;
+                            velocityY -= 2 * dot * ny * bounceFactor;
+                            
+                            // Случайное отклонение
+                            velocityX += (Math.random() - 0.5) * 1.5;
+                            
+                            // Визуальные эффекты
+                            createCollisionSpark(pin.x, pin.y);
+                            pins[index].classList.add('pin-hit');
+                            createBounceParticle(pin.x, pin.y);
+                            
+                            setTimeout(() => {
+                                pins[index].classList.remove('pin-hit');
+                            }, 150);
+                        }
+                    });
+                }
+
                 ball.style.left = x + 'px';
                 ball.style.top = y + 'px';
 
-                // Обновляем частицы
-                updateParticles(particles, x, y, frame);
-
-                // Проверяем столкновения со штифтами
-                pinPositions.forEach((pin, index) => {
-                    const dx = pin.x - x;
-                    const dy = pin.y - y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = pin.radius + ballRadius;
-                    
-                    if (distance < minDistance && (currentTime - lastCollisionTime) > collisionCooldown) {
-                        lastCollisionTime = currentTime;
-                        
-                        // Нормализуем вектор
-                        const nx = dx / distance;
-                        const ny = dy / distance;
-                        
-                        // Реалистичное отскакивание
-                        const dotProduct = velocityX * nx + velocityY * ny;
-                        velocityX -= 2 * dotProduct * nx * bounceFactor;
-                        velocityY -= 2 * dotProduct * ny * bounceFactor;
-                        
-                        // Добавляем случайность
-                        velocityX += (Math.random() - 0.5) * 3;
-                        velocityY += (Math.random() - 0.5) * 1;
-                        
-                        // Эффект на штифте
-                        const pinElement = pins[index];
-                        pinElement.classList.add('pin-hit');
-                        setTimeout(() => pinElement.classList.remove('pin-hit'), 200);
-                        
-                        // Создаем эффект взрыва
-                        createCollisionEffect(pin.x, pin.y);
-                    }
-                });
-
-                // Финальная анимация
+                // Проверка достижения низа
                 if (y >= boardRect.height - 80) {
-                    finalAnimation();
+                    finishAnimation();
                     return;
                 }
-                
-                requestAnimationFrame(animate);
+
+                animationId = requestAnimationFrame(animate);
             }
 
-            function finalAnimation() {
-                // Магнитное притяжение к множителю
-                function magneticPull() {
+            function finishAnimation() {
+                // Плавное движение к целевому слоту
+                const targetRect = targetMultiplier.getBoundingClientRect();
+                const targetX = targetRect.left + targetRect.width/2 - boardRect.left;
+                
+                function slideToTarget() {
                     const dx = targetX - x;
-                    const dy = boardRect.height - 40 - y;
+                    const dy = boardRect.height - 60 - y;
                     
-                    x += dx * 0.15;
-                    y += dy * 0.15;
+                    x += dx * 0.08;
+                    y += dy * 0.08;
                     
                     ball.style.left = x + 'px';
                     ball.style.top = y + 'px';
                     
-                    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
-                        // Анимация попадания
+                    if (Math.abs(dx) < 3 && Math.abs(dy) < 3) {
+                        // Эффект попадания
                         ball.classList.add('ball-land');
                         targetMultiplier.classList.add('multiplier-win');
                         
-                        // Создаем эффект взрыва победы
-                        createWinEffect(targetX, boardRect.height - 40);
+                        // Создаем конфетти для больших выигрышей
+                        if (multiplier >= 2) {
+                            createWinConfetti(targetX, boardRect.height - 40);
+                        }
                         
                         setTimeout(() => {
-                            // Убираем элементы
                             ball.remove();
-                            particles.forEach(p => p.remove());
                             targetMultiplier.classList.remove('multiplier-win');
                             activeBalls--;
                             
-                            // Обновляем баланс
                             updateBalanceDisplay(newBalance);
                             
-                            // Показываем результат
-                            const profit = winAmount - betAmount;
-                            if (profit > 0) {
-                                showNotification(`🎉 Выигрыш: +${profit.toFixed(2)} TON (x${multiplier})`, 'success');
+                            if (winAmount > 0) {
+                                showNotification(`Выигрыш: ${winAmount.toFixed(2)} TON! (X${multiplier})`, 'success');
                             } else {
-                                showNotification(`😔 Проигрыш: -${betAmount.toFixed(2)} TON`, 'error');
+                                showNotification('Удачи в следующий раз!', 'error');
                             }
-                            
-                            // Разблокируем кнопку
-                            const button = document.querySelector('.drop-ball-btn');
-                            button.disabled = false;
-                            button.style.opacity = '1';
-                        }, 1000);
+                        }, 500);
                         return;
                     }
                     
-                    requestAnimationFrame(magneticPull);
+                    requestAnimationFrame(slideToTarget);
                 }
-                magneticPull();
+                
+                slideToTarget();
             }
 
-            function createCollisionEffect(x, y) {
-                for (let i = 0; i < 5; i++) {
-                    const spark = document.createElement('div');
-                    spark.className = 'collision-spark';
-                    spark.style.left = x + 'px';
-                    spark.style.top = y + 'px';
-                    board.appendChild(spark);
-                    
-                    setTimeout(() => spark.remove(), 300);
-                }
-            }
-
-            function createWinEffect(x, y) {
-                for (let i = 0; i < 20; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'win-confetti';
-                    confetti.style.left = x + 'px';
-                    confetti.style.top = y + 'px';
-                    confetti.style.animationDelay = (i * 50) + 'ms';
-                    board.appendChild(confetti);
-                    
-                    setTimeout(() => confetti.remove(), 2000);
-                }
-            }
-
-            function createBounceParticles(x, y) {
-                for (let i = 0; i < 3; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'bounce-particle';
-                    particle.style.left = x + 'px';
-                    particle.style.top = y + 'px';
-                    board.appendChild(particle);
-                    
-                    setTimeout(() => particle.remove(), 500);
-                }
-            }
-
-            function updateParticles(particles, centerX, centerY, frame) {
-                particles.forEach((particle, index) => {
-                    const angle = (frame * 0.1) + (index * Math.PI * 2 / particles.length);
-                    const radius = 15 + Math.sin(frame * 0.05) * 5;
-                    const px = centerX + Math.cos(angle) * radius;
-                    const py = centerY + Math.sin(angle) * radius;
-                    
-                    particle.style.left = px + 'px';
-                    particle.style.top = py + 'px';
-                });
-            }
-
-            animate();
+            animationId = requestAnimationFrame(animate);
         }
 
-        // Остальные функции...
+        // Создание искр при столкновениях
+        function createCollisionSpark(x, y) {
+            const spark = document.createElement('div');
+            spark.className = 'collision-spark';
+            spark.style.left = x + 'px';
+            spark.style.top = y + 'px';
+            
+            document.getElementById('plinko-board').appendChild(spark);
+            
+            setTimeout(() => spark.remove(), 300);
+        }
+
+        // Создание частиц отскока
+        function createBounceParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.className = 'bounce-particle';
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            
+            document.getElementById('plinko-board').appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 500);
+        }
+
+        // Создание конфетти при выигрыше
+        function createWinConfetti(x, y) {
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'win-confetti';
+                    confetti.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+                    confetti.style.top = y + 'px';
+                    
+                    document.getElementById('plinko-board').appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 2000);
+                }, i * 50);
+            }
+        }
+
         function showNotification(message, type) {
             const notification = document.getElementById('result-notification');
-            const messageElement = document.getElementById('notification-message');
+            const messageEl = document.getElementById('notification-message');
             
-            messageElement.textContent = message;
+            messageEl.textContent = message;
             notification.className = `notification ${type}`;
             notification.style.display = 'block';
             
             setTimeout(() => {
                 notification.style.display = 'none';
-            }, 4000);
+            }, 3000);
         }
 
         function openDepositModal() {
@@ -540,7 +486,7 @@
             }
 
             try {
-                const response = await fetch('/api/deposit', {
+                const response = await fetch('/api/payment/create', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -550,14 +496,16 @@
                 });
 
                 const result = await response.json();
+                
                 if (result.success) {
-                    updateBalanceDisplay(result.new_balance);
+                    window.open(result.payment_url, '_blank');
                     closeDepositModal();
-                    showNotification(`Баланс пополнен на ${amount} TON`, 'success');
+                    showNotification('Переход к оплате...', 'success');
                 } else {
-                    showNotification('Ошибка пополнения', 'error');
+                    showNotification('Ошибка создания платежа', 'error');
                 }
             } catch (error) {
+                console.error('Deposit error:', error);
                 showNotification('Ошибка соединения', 'error');
             }
         }
