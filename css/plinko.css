@@ -153,7 +153,7 @@ body {
 /* Игровое поле */
 .plinko-board {
     position: relative;
-    height: 400px;
+    height: 500px;
     background: linear-gradient(180deg, rgba(44, 62, 80, 0.3) 0%, rgba(26, 37, 47, 0.5) 100%);
     margin-bottom: 15px;
     overflow: hidden;
@@ -161,7 +161,7 @@ body {
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Штифты - точно как на изображении */
+/* Штифты */
 .pin {
     position: absolute;
     background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
@@ -176,14 +176,6 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.pin:hover {
-    background: linear-gradient(135deg, #ffffff, #ecf0f1);
-    transform: translate(-50%, -50%) scale(1.1);
-    box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.5),
-        inset 0 1px 4px rgba(255, 255, 255, 0.6);
-}
-
 /* Шарик */
 .ball {
     position: absolute;
@@ -196,7 +188,6 @@ body {
         0 3px 12px rgba(0, 0, 0, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.4);
     z-index: 3;
-    transform: translate(-50%, -50%);
     transition: transform 0.05s ease-out;
     border: 2px solid rgba(255, 255, 255, 0.4);
     animation: ballGlow 1.5s ease-in-out infinite;
@@ -226,21 +217,6 @@ body {
     justify-content: center;
     position: relative;
     overflow: hidden;
-}
-
-.multiplier::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.multiplier:hover::before {
-    left: 100%;
 }
 
 .multiplier.high {
@@ -519,7 +495,7 @@ body {
     }
     
     .plinko-board {
-        height: 350px;
+        height: 400px;
     }
     
     .start-circle {
@@ -563,29 +539,12 @@ body {
     100% { transform: scale(1.2); }
 }
 
-/* Улучшенные эффекты глубины */
-.plinko-board::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(ellipse at center top, rgba(0, 188, 212, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 1;
-}
-
-
-.ball {
-    will-change: transform, left, top; /* Оптимизация для браузера */
-    transform: translateZ(0); /* Аппаратное ускорение */
-}
-
-.pin {
-    transition: all 0.1s ease-out; /* Более быстрый переход */
+/* Оптимизации */
+.ball, .pin {
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 .plinko-board {
-    transform: translateZ(0); /* Аппаратное ускорение */
+    transform: translateZ(0);
 }
