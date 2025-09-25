@@ -6,27 +6,15 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #000;
+    background: linear-gradient(180deg, #1a2332 0%, #0f1419 100%);
     color: #fff;
     overflow-x: hidden;
     user-select: none;
-}
-
-/* Фон с сеткой и игровым полем */
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background-image: 
-        linear-gradient(rgba(30, 92, 184, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30, 92, 184, 0.15) 1px, transparent 1px);
-    background-size: 50px 50px;
-    opacity: 0.3;
+    min-height: 100vh;
 }
 
 .game-container {
-    max-width: 500px;
+    max-width: 400px;
     margin: 0 auto;
     min-height: 100vh;
     background: transparent;
@@ -40,25 +28,34 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
-    background: rgba(0, 0, 0, 0.9);
+    padding: 12px 20px;
+    background: rgba(26, 35, 50, 0.95);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 10;
-    max-width: 500px;
+    max-width: 400px;
     margin: 0 auto;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .close-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: #fff;
-    font-size: 18px;
-    padding: 8px 12px;
-    border: 1px solid #333;
-    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .top-right {
@@ -68,134 +65,197 @@ body::before {
 }
 
 .balance {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
-    padding: 6px 12px;
-    border-radius: 10px;
-    font-weight: bold;
+    background: linear-gradient(135deg, #00a8ff, #0078d4);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
     font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0, 168, 255, 0.3);
 }
 
-#demo-badge {
-    background: #ff9500;
-    color: black;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    display: none;
+.balance:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 168, 255, 0.4);
 }
 
 /* Контент */
 .plinko-content {
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.plinko-title {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
+.plinko-logo {
     text-align: center;
-    color: #fff;
+    margin-bottom: 10px;
 }
 
-/* Игровое поле на фоне */
+.plinko-logo h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    letter-spacing: 2px;
+}
+
+/* Игровое поле */
 .plinko-game {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     margin-bottom: 20px;
 }
 
-.plinko-drop-zone {
-    height: 60px;
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    border-radius: 10px;
+/* Кнопка старта в центре */
+.start-button {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.start-circle {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
     cursor: pointer;
-    transition: all 0.3s;
-    border: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.2);
 }
 
-.plinko-drop-zone:active {
+.start-circle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(0, 212, 170, 0.6);
+}
+
+.start-circle:active {
     transform: scale(0.95);
-    background: linear-gradient(135deg, #00a842, #28a728);
 }
 
-.drop-text {
-    font-size: 18px;
-    font-weight: bold;
-    color: #000;
+.start-text {
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* Доска плинко на фоне */
+/* Игровое поле */
 .plinko-board {
     position: relative;
-    height: 350px;
+    height: 360px;
     background: transparent;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     overflow: hidden;
+    border-radius: 15px;
 }
 
-/* Штифты в треугольном порядке */
+/* Штифты */
 .pin {
     position: absolute;
-    background: #00c851;
+    background: linear-gradient(135deg, #e0e6ed, #c7d2fe);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4);
     z-index: 2;
     transition: all 0.2s ease-out;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pin:hover {
+    background: linear-gradient(135deg, #f0f6ff, #d7e4fd);
+    transform: translate(-50%, -50%) scale(1.1);
 }
 
 /* Шарик */
 .ball {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    background: radial-gradient(circle at 30% 30%, #fff, #ff9500);
+    width: 18px;
+    height: 18px;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #00d4aa);
     border-radius: 50%;
-    box-shadow: 0 0 15px rgba(255, 149, 0, 0.9);
+    box-shadow: 
+        0 0 15px rgba(0, 212, 170, 0.8),
+        0 2px 10px rgba(0, 0, 0, 0.3);
     z-index: 3;
     transform: translate(-50%, -50%);
     transition: transform 0.1s ease-out;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Множители */
 .plinko-multipliers {
     display: flex;
     justify-content: space-between;
-    gap: 3px;
+    gap: 2px;
+    padding: 0 5px;
 }
 
 .multiplier {
     flex: 1;
-    background: linear-gradient(135deg, #1a1a2a, #2a2a3a);
-    color: #fff;
-    padding: 12px 5px;
+    padding: 12px 4px;
     border-radius: 8px;
-    font-weight: bold;
-    font-size: 12px;
+    font-weight: 700;
+    font-size: 11px;
     text-align: center;
-    border: 1px solid #333;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.multiplier.high {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.multiplier.medium {
+    background: linear-gradient(135deg, #feca57, #ff9ff3);
+    color: #000;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.multiplier.low {
+    background: linear-gradient(135deg, #48dbfb, #0abde3);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.multiplier.ultra-low {
+    background: linear-gradient(135deg, #ff9f43, #ff7675);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .multiplier.highlight {
-    background: linear-gradient(135deg, #ff9500, #ffcc00);
-    color: #000;
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 149, 0, 0.8);
+    transform: scale(1.15);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+    z-index: 10;
 }
 
 /* Управление */
 .plinko-controls {
-    background: rgba(30, 30, 45, 0.9);
+    background: rgba(26, 35, 50, 0.8);
     border-radius: 15px;
     padding: 20px;
-    border: 2px solid rgba(0, 200, 81, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .bet-controls {
@@ -217,36 +277,51 @@ body::before {
 }
 
 .bet-input-group input {
-    padding: 12px;
-    border: 1px solid #333;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
-    background: #1a1a1a;
+    background: rgba(255, 255, 255, 0.05);
     color: #fff;
     font-size: 16px;
     text-align: center;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s;
+}
+
+.bet-input-group input:focus {
+    outline: none;
+    border-color: #00d4aa;
+    box-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
 }
 
 .balance-info {
-    color: #ccc;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 14px;
     font-weight: 500;
     text-align: center;
 }
 
 .drop-ball-btn {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    color: #fff;
     border: none;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drop-ball-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
 }
 
 .drop-ball-btn:active {
-    transform: scale(0.98);
+    transform: translateY(0);
 }
 
 /* Модальное окно */
@@ -258,27 +333,46 @@ body::before {
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background: #1a1a1a;
+    background: linear-gradient(180deg, #1a2332 0%, #0f1419 100%);
     margin: 15% auto;
     padding: 0;
-    border-radius: 15px;
+    border-radius: 20px;
     width: 90%;
-    max-width: 400px;
-    border: 2px solid #333;
+    max-width: 350px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #00c851, #32cd32);
+    background: linear-gradient(135deg, #00d4aa, #00b894);
     padding: 20px;
-    border-radius: 15px 15px 0 0;
-    color: #000;
+    color: #fff;
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.modal-header h3 {
+    font-weight: 700;
+    margin: 0;
+}
+
+.close {
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.close:hover {
+    transform: scale(1.1);
 }
 
 .modal-body {
@@ -293,45 +387,124 @@ body::before {
     display: block;
     margin-bottom: 8px;
     color: #fff;
+    font-weight: 500;
 }
 
 .input-group input {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #333;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.05);
     color: #fff;
+    font-size: 16px;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #00d4aa;
+    box-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
 }
 
 .modal-btn {
     width: 100%;
     padding: 15px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 700;
     cursor: pointer;
+    transition: all 0.3s;
 }
 
 .deposit-btn {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
 }
 
-/* Адаптация */
-@media (max-width: 500px) {
+.deposit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: 15px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    color: #fff;
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: #fff;
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    color: #fff;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 480px) {
     .game-container {
+        max-width: 100%;
         padding-top: 50px;
     }
     
+    .top-panel {
+        max-width: 100%;
+        padding: 10px 15px;
+    }
+    
+    .plinko-content {
+        padding: 15px;
+    }
+    
+    .plinko-logo h1 {
+        font-size: 28px;
+    }
+    
     .plinko-board {
-        height: 300px;
+        height: 320px;
+    }
+    
+    .start-circle {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .start-text {
+        font-size: 11px;
     }
     
     .pin {
-        width: 8px;
-        height: 8px;
+        width: 10px !important;
+        height: 10px !important;
     }
     
     .ball {
@@ -342,21 +515,44 @@ body::before {
     .multiplier {
         font-size: 10px;
         padding: 10px 3px;
+        min-height: 35px;
+    }
+    
+    .plinko-controls {
+        padding: 15px;
     }
 }
 
-/* Улучшенная анимация для плавности */
-@keyframes ballBounce {
-    0% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.1); }
-    100% { transform: translate(-50%, -50%) scale(1); }
+/* Анимации */
+@keyframes ballGlow {
+    0%, 100% { 
+        box-shadow: 0 0 15px rgba(0, 212, 170, 0.8), 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 25px rgba(0, 212, 170, 1), 0 2px 15px rgba(0, 0, 0, 0.4);
+    }
 }
 
 .ball {
-    animation: ballBounce 0.5s ease-in-out infinite;
+    animation: ballGlow 1s ease-in-out infinite;
 }
 
-/* Улучшенные тени для глубины */
+@keyframes pinPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes multiplierWin {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1.15); }
+}
+
+.multiplier.highlight {
+    animation: multiplierWin 0.3s ease-out;
+}
+
+/* Улучшенные градиенты для глубины */
 .plinko-board::before {
     content: '';
     position: absolute;
@@ -364,38 +560,7 @@ body::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(ellipse at center, rgba(0, 200, 81, 0.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center top, rgba(0, 212, 170, 0.08) 0%, transparent 70%);
     pointer-events: none;
-}
-
-/* Стили для уведомления */
-.notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    padding: 15px 20px;
-    border-radius: 10px;
-    font-weight: bold;
-    text-align: center;
-    max-width: 90%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-.notification.success {
-    background: linear-gradient(135deg, #00c851, #32cd32);
-    color: #000;
-}
-
-.notification.error {
-    background: linear-gradient(135deg, #ff4444, #cc0000);
-    color: #fff;
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    z-index: 1;
 }

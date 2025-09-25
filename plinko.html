@@ -7,81 +7,56 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/plinko.css">
-    <style>
-        .plinko-board {
-            position: relative;
-            height: 400px;
-            background: radial-gradient(ellipse at center, rgba(30, 92, 184, 0.1) 0%, transparent 70%);
-            margin-bottom: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(0, 200, 81, 0.3);
-            border-radius: 10px;
-        }
-        
-        .pin {
-            position: absolute;
-            background: #00c851;
-            border-radius: 50%;
-            box-shadow: 0 0 8px rgba(0, 200, 81, 0.6);
-            z-index: 2;
-            transition: all 0.2s ease-out;
-        }
-        
-        .ball {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle at 30% 30%, #fff, #ff9500);
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(255, 149, 0, 0.9);
-            z-index: 3;
-            transition: transform 0.1s ease-out;
-        }
-    </style>
 </head>
 <body>
     <div class="game-container">
         <!-- Верхняя панель -->
         <div class="top-panel">
             <div class="close-btn" onclick="goBack()">
-                <span>←</span>
+                <i class="bi bi-x"></i>
+                <span>Закрыть</span>
             </div>
             <div class="top-right">
-                <div class="balance">
-                    <i class="bi bi-currency-exchange"></i>
+                <div class="balance" onclick="openDepositModal()">
+                    <i class="bi bi-currency-bitcoin"></i>
                     <span id="balance">0.00</span>
-                    <button class="balance-plus-btn" onclick="openDepositModal()">
-                        <i class="bi bi-plus"></i>
-                    </button>
+                    <i class="bi bi-plus-circle"></i>
                 </div>
-                <div id="demo-badge">DEMO</div>
             </div>
         </div>
 
         <!-- Контент Plinko -->
         <div class="plinko-content">
-            <div class="plinko-title">Plinko</div>
+            <!-- Лого Plinko -->
+            <div class="plinko-logo">
+                <h1>Plinko</h1>
+            </div>
             
-            <!-- Игровое поле на фоне -->
+            <!-- Игровое поле -->
             <div class="plinko-game">
-                <!-- Убрана верхняя кнопка "Кинуть шарик" -->
+                <!-- Центральная кнопка старта -->
+                <div class="start-button" onclick="dropBall()">
+                    <div class="start-circle">
+                        <div class="start-text">Hit Boom</div>
+                    </div>
+                </div>
                 
-                <!-- Игровое поле на фоне -->
+                <!-- Игровое поле -->
                 <div class="plinko-board" id="plinko-board">
                     <!-- Штифты будут созданы через JS -->
                 </div>
                 
                 <!-- Множители -->
                 <div class="plinko-multipliers" id="multipliers">
-                    <div class="multiplier" data-index="0">X5.8</div>
-                    <div class="multiplier" data-index="1">X2.2</div>
-                    <div class="multiplier" data-index="2">X1.1</div>
-                    <div class="multiplier" data-index="3">X1.1</div>
-                    <div class="multiplier" data-index="4">X0.4</div>
-                    <div class="multiplier" data-index="5">X1.1</div>
-                    <div class="multiplier" data-index="6">X1.1</div>
-                    <div class="multiplier" data-index="7">X2.2</div>
-                    <div class="multiplier" data-index="8">X5.8</div>
+                    <div class="multiplier high" data-index="0">x5.8</div>
+                    <div class="multiplier medium" data-index="1">x2.2</div>
+                    <div class="multiplier low" data-index="2">x1.1</div>
+                    <div class="multiplier low" data-index="3">x1</div>
+                    <div class="multiplier ultra-low" data-index="4">x0.4</div>
+                    <div class="multiplier low" data-index="5">x1</div>
+                    <div class="multiplier low" data-index="6">x1.1</div>
+                    <div class="multiplier medium" data-index="7">x2.2</div>
+                    <div class="multiplier high" data-index="8">x5.8</div>
                 </div>
             </div>
             
@@ -164,7 +139,6 @@
                     const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
                     updateBalanceDisplay(balance);
                     isDemoMode = userData.demo_mode;
-                    document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
                 }
             } catch (error) {
                 console.error('Error loading user data:', error);
@@ -176,30 +150,32 @@
             document.getElementById('current-balance').textContent = balance.toFixed(2);
         }
 
-        // Создание треугольного поля плинко как в 1win
+        // Создание треугольного поля плинко
         function createPlinkoField() {
             const board = document.getElementById('plinko-board');
             board.innerHTML = '';
             
-            const rows = 12; // Количество рядов штифтов
-            const pinRadius = 4; // Радиус штифта
-            const rowHeight = 25; // Высота между рядами
+            const rows = 10; // Количество рядов штифтов
+            const pinRadius = 6; // Радиус штифта
+            const rowHeight = 32; // Высота между рядами
             const boardWidth = board.offsetWidth;
             
             // Создаем штифты в треугольном порядке
             for (let row = 0; row < rows; row++) {
-                const pinsInRow = row + 1;
-                const rowTop = 20 + row * rowHeight;
+                const pinsInRow = row + 3;
+                const rowTop = 40 + row * rowHeight;
                 
                 // Равномерное распределение штифтов по ширине
-                const pinSpacing = boardWidth / (pinsInRow + 1);
+                const totalWidth = boardWidth * 0.8;
+                const startX = (boardWidth - totalWidth) / 2;
+                const pinSpacing = totalWidth / (pinsInRow - 1);
                 
                 for (let col = 0; col < pinsInRow; col++) {
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
                     // Позиционирование штифтов в треугольном порядке
-                    const left = pinSpacing * (col + 1);
+                    const left = startX + col * pinSpacing;
                     
                     pin.style.left = left + 'px';
                     pin.style.top = rowTop + 'px';
@@ -257,7 +233,7 @@
             }
         }
 
-        // РЕАЛИСТИЧНАЯ АНИМАЦИЯ ПАДЕНИЯ ШАРИКА (без блокировки интерфейса)
+        // РЕАЛИСТИЧНАЯ АНИМАЦИЯ ПАДЕНИЯ ШАРИКА
         function realisticPlinkoAnimation(targetSlot, multiplier, winAmount, betAmount, newBalance) {
             activeBalls++;
             
@@ -303,7 +279,7 @@
             const bounceFactor = 0.7;
 
             let lastCollisionTime = 0;
-            const collisionCooldown = 100; // мс между столкновениями
+            const collisionCooldown = 100;
             
             function animate() {
                 const currentTime = Date.now();
@@ -319,7 +295,7 @@
                 x += velocityX;
                 y += velocityY;
                 
-                // Ограничиваем движение по горизонтали (стенки)
+                // Ограничиваем движение по горизонтали
                 if (x < ballRadius) {
                     x = ballRadius;
                     velocityX *= -bounceFactor;
@@ -339,7 +315,6 @@
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     const minDistance = pin.radius + ballRadius;
                     
-                    // Если есть столкновение и прошло достаточно времени с последнего
                     if (distance < minDistance && (currentTime - lastCollisionTime) > collisionCooldown) {
                         lastCollisionTime = currentTime;
                         
@@ -352,24 +327,20 @@
                         velocityX -= 2 * dotProduct * nx * bounceFactor;
                         velocityY -= 2 * dotProduct * ny * bounceFactor;
                         
-                        // Добавляем случайное отклонение для реалистичности
+                        // Добавляем случайное отклонение
                         velocityX += (Math.random() - 0.5) * 2;
                         
                         // Визуальный эффект столкновения
-                        pins[index].style.background = '#ff9500';
                         pins[index].style.transform = 'scale(1.2)';
                         setTimeout(() => {
-                            pins[index].style.background = '#00c851';
                             pins[index].style.transform = 'scale(1)';
                         }, 100);
                     }
                 });
 
-                // Когда шарик достигает низа (области множителей)
+                // Когда шарик достигает низа
                 if (y >= boardRect.height - 50) {
-                    // Плавное движение к целевому множителю
                     function finalAnimation() {
-                        // Плавное приближение к целевой позиции
                         const dx = targetX - x;
                         x += dx * 0.1;
                         y += 2;
@@ -377,9 +348,7 @@
                         ball.style.left = x + 'px';
                         ball.style.top = y + 'px';
                         
-                        // Когда шарик достиг целевой позиции
                         if (Math.abs(dx) < 5 && y >= boardRect.height - 20) {
-                            // Подсвечиваем множитель
                             targetMultiplier.classList.add('highlight');
                             
                             setTimeout(() => {
@@ -387,57 +356,29 @@
                                 targetMultiplier.classList.remove('highlight');
                                 activeBalls--;
                                 
-                                // Обновляем баланс с выигрышем
                                 updateBalanceDisplay(newBalance);
                                 
-                                // Показываем результат
-                                showResult(multiplier, winAmount, betAmount);
-                            }, 800);
+                                if (winAmount > 0) {
+                                    showNotification(`Выигрыш: ${winAmount.toFixed(2)} TON (x${multiplier})`, 'success');
+                                } else {
+                                    showNotification('Удачи в следующий раз!', 'info');
+                                }
+                            }, 500);
                             return;
                         }
                         
                         requestAnimationFrame(finalAnimation);
                     }
-                    
-                    requestAnimationFrame(finalAnimation);
+                    finalAnimation();
                     return;
                 }
                 
                 requestAnimationFrame(animate);
             }
             
-            // Начальный толчок для шарика
-            velocityY = 2;
-            velocityX = (Math.random() - 0.5) * 3; // Случайное начальное отклонение
-            
-            requestAnimationFrame(animate);
+            animate();
         }
 
-        // Показ результата (одно уведомление на 3 секунды)
-        function showResult(multiplier, winAmount, betAmount) {
-            const message = multiplier >= 1 ? 
-                `🎉 Выигрыш: ${winAmount.toFixed(2)} TON (x${multiplier})` : 
-                `💸 Проигрыш: -${betAmount.toFixed(2)} TON`;
-            
-            showNotification(message, multiplier >= 1 ? 'success' : 'error');
-        }
-
-        // Функция показа уведомления
-        function showNotification(message, type) {
-            const notification = document.getElementById('result-notification');
-            const messageElement = document.getElementById('notification-message');
-            
-            messageElement.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
-            
-            // Автоматическое закрытие через 3 секунды
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
-
-        // Функции пополнения баланса
         function openDepositModal() {
             document.getElementById('deposit-modal').style.display = 'block';
         }
@@ -448,65 +389,45 @@
 
         async function processDeposit() {
             const amount = parseFloat(document.getElementById('deposit-amount').value);
-            if (amount < 1) {
-                showNotification('Минимальное пополнение: 1 TON', 'error');
+            if (!amount || amount < 1) {
+                showNotification('Минимальная сумма пополнения: 1 TON', 'error');
                 return;
             }
 
             try {
-                const response = await fetch('/api/create-invoice', {
+                const response = await fetch('/api/deposit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         telegramId: currentUser.id,
-                        amount: amount,
-                        demoMode: isDemoMode
+                        amount: amount
                     })
                 });
 
                 const result = await response.json();
                 if (result.success) {
-                    window.open(result.pay_url, '_blank');
-                    checkDepositStatus(result.invoice_id);
+                    updateBalanceDisplay(result.new_balance);
                     closeDepositModal();
+                    showNotification(`Баланс пополнен на ${amount} TON`, 'success');
                 } else {
-                    showNotification('Ошибка: ' + result.error, 'error');
+                    showNotification('Ошибка пополнения: ' + result.error, 'error');
                 }
             } catch (error) {
                 showNotification('Ошибка соединения', 'error');
             }
         }
 
-        async function checkDepositStatus(invoiceId) {
-            const checkInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/api/check-invoice', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ invoiceId, demoMode: isDemoMode })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.status === 'paid') {
-                        clearInterval(checkInterval);
-                        showNotification('✅ Депозит зачислен!', 'success');
-                        loadUserData();
-                    } else if (result.status === 'expired') {
-                        clearInterval(checkInterval);
-                        showNotification('❌ Время оплаты истекло', 'error');
-                    }
-                } catch (error) {
-                    console.error('Status check error:', error);
-                }
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('result-notification');
+            const messageElement = document.getElementById('notification-message');
+            
+            messageElement.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
             }, 3000);
-        }
-
-        // Клик вне модалки
-        window.onclick = (event) => {
-            if (event.target === document.getElementById('deposit-modal')) {
-                closeDepositModal();
-            }
         }
     </script>
 </body>
