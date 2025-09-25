@@ -34,25 +34,26 @@
             
             <!-- Игровое поле -->
             <div class="plinko-game">
-                <!-- Игровое поле с множителями ВНУТРИ -->
+                <!-- Игровое поле -->
                 <div class="plinko-board-container">
                     <div class="plinko-board" id="plinko-board">
                         <!-- Штифты и шарики будут созданы через JS -->
                     </div>
-                    <!-- Множители прямо в поле -->
-                    <div class="plinko-multipliers" id="multipliers">
-                        <div class="multiplier high" data-index="0">x5.8</div>
-                        <div class="multiplier medium" data-index="1">x2.2</div>
-                        <div class="multiplier low" data-index="2">x1.1</div>
-                        <div class="multiplier low" data-index="3">x1.1</div>
-                        <div class="multiplier ultra-low" data-index="4">x0.4</div>
-                        <div class="multiplier ultra-low" data-index="5">x0.4</div>
-                        <div class="multiplier ultra-low" data-index="6">x0.4</div>
-                        <div class="multiplier low" data-index="7">x1.1</div>
-                        <div class="multiplier low" data-index="8">x1.1</div>
-                        <div class="multiplier medium" data-index="9">x2.2</div>
-                        <div class="multiplier high" data-index="10">x5.8</div>
-                    </div>
+                </div>
+                
+                <!-- Множители ВНУТРИ поля -->
+                <div class="plinko-multipliers" id="multipliers">
+                    <div class="multiplier high" data-index="0">x5.8</div>
+                    <div class="multiplier medium" data-index="1">x2.2</div>
+                    <div class="multiplier low" data-index="2">x1.1</div>
+                    <div class="multiplier low" data-index="3">x1.1</div>
+                    <div class="multiplier ultra-low" data-index="4">x0.4</div>
+                    <div class="multiplier ultra-low" data-index="5">x0.4</div>
+                    <div class="multiplier ultra-low" data-index="6">x0.4</div>
+                    <div class="multiplier low" data-index="7">x1.1</div>
+                    <div class="multiplier low" data-index="8">x1.1</div>
+                    <div class="multiplier medium" data-index="9">x2.2</div>
+                    <div class="multiplier high" data-index="10">x5.8</div>
                 </div>
             </div>
             
@@ -105,7 +106,7 @@
         let pins = [];
         let animationFrameId = null;
         let lastTime = 0;
-        let currentTargetSlot = null;
+        let multiplierProbabilities = [0.05, 0.08, 0.1, 0.1, 0.15, 0.15, 0.15, 0.1, 0.1, 0.08, 0.05]; // Вероятности для каждого слота
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -156,14 +157,14 @@
             board.innerHTML = '';
             pins = [];
             
-            const rows = 18; // Еще больше рядов для более длинного падения
+            const rows = 16; // Увеличили количество рядов
             const boardWidth = board.offsetWidth;
-            const boardHeight = board.offsetHeight - 70; // Учитываем множители
-            const pinSize = 7;
+            const boardHeight = board.offsetHeight - 60; // Учитываем место для множителей
+            const pinSize = 8; // Немного уменьшили размер штифтов
             
             // Создаем штифты в шахматном порядке
             for (let row = 0; row < rows; row++) {
-                const pinsInRow = 10 + (row % 2);
+                const pinsInRow = 10 + (row % 2); // Больше штифтов для большего поля
                 const startY = 30;
                 const rowSpacing = (boardHeight - 60) / rows;
                 
@@ -171,6 +172,7 @@
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
+                    // Равномерное распределение с учетом вероятностей
                     const x = ((col + 0.5 + (row % 2) * 0.5) * boardWidth) / (pinsInRow + (row % 2));
                     const y = startY + (row * rowSpacing);
                     
@@ -209,7 +211,7 @@
         function updatePhysics(deltaTime) {
             const board = document.getElementById('plinko-board');
             const boardWidth = board.offsetWidth;
-            const boardHeight = board.offsetHeight - 70;
+            const boardHeight = board.offsetHeight - 60; // Учитываем множители
             
             for (let i = balls.length - 1; i >= 0; i--) {
                 const ball = balls[i];
@@ -217,26 +219,18 @@
                 if (ball.finished) continue;
                 
                 // Гравитация
-                ball.vy += 0.35 * deltaTime;
+                ball.vy += 0.4 * deltaTime;
                 
                 // Обновление позиции
                 ball.x += ball.vx * deltaTime;
                 ball.y += ball.vy * deltaTime;
                 
-                // СИЛЬНОЕ притяжение к целевым слотам (0.4x)
-                if (ball.y > boardHeight * 0.4 && currentTargetSlot !== null) {
-                    const slotWidth = boardWidth / 11;
-                    const targetX = (currentTargetSlot * slotWidth) + (slotWidth / 2);
-                    const distanceToTarget = targetX - ball.x;
-                    
-                    // Сильное притяжение к целевому слоту
-                    const attractionForce = distanceToTarget * 0.0008 * deltaTime;
-                    ball.vx += attractionForce;
-                    
-                    // Дополнительное притяжение когда шарик ближе к низу
-                    if (ball.y > boardHeight * 0.7) {
-                        ball.vx += distanceToTarget * 0.001 * deltaTime;
-                    }
+                // Специальное отклонение к центральным слотам (0.4x)
+                if (ball.y > boardHeight * 0.3) {
+                    // Плавное притяжение к центральным слотам
+                    const centerX = boardWidth / 2;
+                    const targetBias = (centerX - ball.x) * 0.0005 * deltaTime;
+                    ball.vx += targetBias;
                 }
                 
                 // Столкновение с границами
@@ -256,43 +250,46 @@
                     const minDistance = ball.radius + pin.radius;
                     
                     if (distance < minDistance && distance > 0) {
-                        const pushForce = 0.2;
+                        // Отталкивание шарика
+                        const pushForce = 0.25;
                         ball.x += (dx / distance) * pushForce;
                         ball.y += (dy / distance) * pushForce;
                         
+                        // Отражение скорости
                         const dot = ball.vx * dx + ball.vy * dy;
                         if (dot < 0) {
                             ball.vx -= 0.8 * dot * dx / (distance * distance);
                             ball.vy -= 0.8 * dot * dy / (distance * distance);
                         }
                         
-                        // Меньше случайности для более предсказуемого движения к цели
-                        ball.vx += (Math.random() - 0.5) * 0.1;
+                        // Случайное отклонение (меньше для более предсказуемого движения)
+                        ball.vx += (Math.random() - 0.5) * 0.15;
                     }
                 }
                 
                 // Трение воздуха
                 ball.vx *= 0.999;
                 
-                // Проверка достижения множителей
+                // Проверка достижения дна
                 if (ball.y >= boardHeight - ball.radius) {
                     ball.vy = 0;
                     ball.vx = 0;
                     
+                    // Определяем слот на основе конечной позиции X
                     const multipliers = document.querySelectorAll('.multiplier');
                     const slotWidth = boardWidth / multipliers.length;
                     const slotIndex = Math.floor(ball.x / slotWidth);
                     const finalSlot = Math.max(0, Math.min(multipliers.length - 1, slotIndex));
                     
+                    // Плавное движение к центру слота
                     ball.targetX = (finalSlot * slotWidth) + (slotWidth / 2);
                     ball.slotAnimation = true;
                     ball.finished = true;
-                    ball.finalSlot = finalSlot;
                     
-                    // Анимация падения в слот
+                    // Завершение анимации
                     setTimeout(() => {
                         finishBallAnimation(ball, finalSlot);
-                    }, 800);
+                    }, 600);
                 }
             }
         }
@@ -300,24 +297,24 @@
         function renderBalls() {
             const board = document.getElementById('plinko-board');
             
-            // Удаляем старые шарики
+            // Удаляем только шарики которые закончили анимацию
             const ballElements = board.querySelectorAll('.ball');
             ballElements.forEach(ballElement => {
                 const ballId = ballElement.dataset.ballId;
                 const ball = balls.find(b => b.id == ballId);
-                if (!ball || (ball.finished && !ball.slotAnimation)) {
+                if (!ball || ball.finished) {
                     ballElement.remove();
                 }
             });
             
-            // Ограничиваем количество шариков для производительности
-            if (balls.length > 3) {
-                balls = balls.slice(-3);
+            // Создаем/обновляем шарики (ограничиваем количество для производительности)
+            if (balls.length > 5) {
+                // Удаляем старые шарики если их слишком много
+                balls = balls.slice(-5);
             }
             
-            // Обновляем шарики
             balls.forEach(ball => {
-                if (ball.finished && !ball.slotAnimation) return;
+                if (ball.finished) return;
                 
                 let ballElement = board.querySelector(`.ball[data-ball-id="${ball.id}"]`);
                 if (!ballElement) {
@@ -327,16 +324,11 @@
                     board.appendChild(ballElement);
                 }
                 
-                // Анимация падения в слот
+                // Плавная анимация к слоту при завершении
                 if (ball.slotAnimation && ball.finished) {
                     const dx = ball.targetX - ball.x;
-                    ball.x += dx * 0.15;
-                    ball.y += 2;
-                    
-                    // Эффект "победы" для шарика
-                    if (Math.abs(dx) < 5) {
-                        ballElement.classList.add('winning');
-                    }
+                    ball.x += dx * 0.1;
+                    ball.y += 0.5;
                 }
                 
                 ballElement.style.left = (ball.x - ball.radius) + 'px';
@@ -347,60 +339,35 @@
         }
 
         function finishBallAnimation(ball, slotIndex) {
+            // Подсветка множителя
             const multipliers = document.querySelectorAll('.multiplier');
-            const ballElement = document.querySelector(`.ball[data-ball-id="${ball.id}"]`);
-            
-            // ЯРКАЯ подсветка множителя
             if (multipliers[slotIndex]) {
-                multipliers[slotIndex].classList.add('highlight', 'active');
-                
-                // Дополнительные эффекты для выигрышных множителей
-                if (ball.multiplier > 1) {
-                    multipliers[slotIndex].style.animation = 'multiplierWin 1.5s ease-out, slotHighlight 2s ease-in-out infinite';
-                }
-                
+                multipliers[slotIndex].classList.add('highlight');
                 setTimeout(() => {
-                    multipliers[slotIndex].classList.remove('highlight', 'active');
-                    multipliers[slotIndex].style.animation = '';
-                }, 2000);
+                    multipliers[slotIndex].classList.remove('highlight');
+                }, 1500);
             }
             
-            // Удаляем шарик
+            // Удаляем шарик из DOM
+            const ballElement = document.querySelector(`.ball[data-ball-id="${ball.id}"]`);
             if (ballElement) {
                 ballElement.remove();
             }
+            
+            // Удаляем шарик из массива
             balls = balls.filter(b => b.id !== ball.id);
             
-            // Обновляем баланс и показываем результат
+            // Обновляем баланс
             updateBalanceDisplay(ball.newBalance);
             
             if (ball.winAmount > 0) {
-                showNotification(`🎉 ВЫИГРЫШ: ${ball.winAmount.toFixed(2)} TON (x${ball.multiplier})`, 'success');
+                showNotification(`Выигрыш: ${ball.winAmount.toFixed(2)} TON (x${ball.multiplier})`, 'success');
             } else {
-                showNotification('💫 Удачи в следующий раз!', 'info');
+                showNotification('Удачи в следующий раз!', 'info');
             }
-            
-            // Сбрасываем целевой слот
-            currentTargetSlot = null;
         }
 
-        // Определение целевого слота с вероятностями
-        function getTargetSlot() {
-            const rand = Math.random();
-            let cumulative = 0;
-            
-            // Вероятности: 0.4x - 80%, остальные равномерно
-            const probabilities = [0.02, 0.03, 0.03, 0.03, 0.22, 0.22, 0.22, 0.03, 0.03, 0.03, 0.02];
-            
-            for (let i = 0; i < probabilities.length; i++) {
-                cumulative += probabilities[i];
-                if (rand <= cumulative) {
-                    return i;
-                }
-            }
-            return 5; // Центральный 0.4x по умолчанию
-        }
-
+        // Запуск нового шарика
         async function dropBall() {
             const betAmount = parseFloat(document.getElementById('bet-amount').value);
             if (betAmount < 0.1 || betAmount > 100) {
@@ -414,10 +381,6 @@
                 return;
             }
 
-            // Определяем целевой слот ДО броска
-            currentTargetSlot = getTargetSlot();
-            highlightTargetSlot(currentTargetSlot);
-
             // Сразу списываем ставку
             updateBalanceDisplay(currentBalance - betAmount);
 
@@ -428,49 +391,42 @@
                     body: JSON.stringify({
                         telegramId: currentUser.id,
                         betAmount: betAmount,
-                        demoMode: isDemoMode,
-                        targetSlot: currentTargetSlot // Отправляем целевой слот на сервер
+                        demoMode: isDemoMode
                     })
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
+                    // Создаем новый шарик
                     createNewBall(result.slot_index, result.multiplier, result.win_amount, result.new_balance);
                 } else {
                     showNotification('Ошибка: ' + result.error, 'error');
                     updateBalanceDisplay(currentBalance);
-                    currentTargetSlot = null;
                 }
             } catch (error) {
                 console.error('Drop error:', error);
                 showNotification('Ошибка соединения', 'error');
                 updateBalanceDisplay(currentBalance);
-                currentTargetSlot = null;
             }
-        }
-
-        function highlightTargetSlot(slotIndex) {
-            const multipliers = document.querySelectorAll('.multiplier');
-            multipliers.forEach((multiplier, index) => {
-                multiplier.classList.remove('target-slot');
-                if (index === slotIndex) {
-                    multiplier.classList.add('target-slot');
-                }
-            });
         }
 
         function createNewBall(targetSlot, multiplier, winAmount, newBalance) {
             const board = document.getElementById('plinko-board');
             const boardWidth = board.offsetWidth;
             
+            // Начальное отклонение в зависимости от целевого слота
+            const slotWidth = boardWidth / 11;
+            const targetX = (targetSlot * slotWidth) + (slotWidth / 2);
+            const initialBias = (targetX - boardWidth / 2) * 0.001;
+            
             const ball = {
                 id: Date.now() + Math.random(),
                 x: boardWidth / 2,
-                y: 15,
-                vx: (Math.random() - 0.5) * 1.5, // Меньше начальной случайности
-                vy: 0.2,
-                radius: 8,
+                y: 20,
+                vx: (Math.random() - 0.5) * 2 + initialBias, // Случайное движение с учетом целевого слота
+                vy: 0.3,
+                radius: 7,
                 finished: false,
                 slotAnimation: false,
                 targetX: 0,
@@ -532,9 +488,10 @@
             
             setTimeout(() => {
                 notification.style.display = 'none';
-            }, 4000);
+            }, 3000);
         }
 
+        // Закрытие модального окна при клике вне его
         window.onclick = function(event) {
             const modal = document.getElementById('deposit-modal');
             if (event.target === modal) {
