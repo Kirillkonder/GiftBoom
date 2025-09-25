@@ -531,3 +531,17 @@ body {
     transform: translateZ(0);
     will-change: contents;
 }
+
+.plinko-multipliers {
+    position: relative;
+    z-index: 5;
+}
+
+.plinko-board-container {
+    z-index: 4;
+}
+
+/* Шарик поверх множителей при анимации */
+.ball {
+    z-index: 10;
+}
