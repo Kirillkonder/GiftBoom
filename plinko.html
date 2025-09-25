@@ -7,6 +7,37 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/plinko.css">
+    <style>
+        .plinko-board {
+            position: relative;
+            height: 400px;
+            background: radial-gradient(ellipse at center, rgba(30, 92, 184, 0.1) 0%, transparent 70%);
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 200, 81, 0.3);
+            border-radius: 10px;
+        }
+        
+        .pin {
+            position: absolute;
+            background: #00c851;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(0, 200, 81, 0.6);
+            z-index: 2;
+            transition: all 0.2s ease-out;
+        }
+        
+        .ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #fff, #ff9500);
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 149, 0, 0.9);
+            z-index: 3;
+            transition: transform 0.1s ease-out;
+        }
+    </style>
 </head>
 <body>
     <div class="game-container">
@@ -105,6 +136,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeGame();
             createPlinkoField();
+            
+            // Пересоздаем поле при изменении размера окна
+            window.addEventListener('resize', createPlinkoField);
         });
 
         function goBack() {
@@ -149,21 +183,25 @@
             
             const rows = 12; // Количество рядов штифтов
             const pinRadius = 4; // Радиус штифта
+            const rowHeight = 25; // Высота между рядами
+            const boardWidth = board.offsetWidth;
             
             // Создаем штифты в треугольном порядке
             for (let row = 0; row < rows; row++) {
                 const pinsInRow = row + 1;
-                const rowTop = 20 + row * 25; // Отступ сверху для каждого ряда
+                const rowTop = 20 + row * rowHeight;
+                
+                // Равномерное распределение штифтов по ширине
+                const pinSpacing = boardWidth / (pinsInRow + 1);
                 
                 for (let col = 0; col < pinsInRow; col++) {
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
-                    // Равномерное распределение штифтов по ширине
-                    const pinSpacing = 100 / (pinsInRow + 1);
+                    // Позиционирование штифтов в треугольном порядке
                     const left = pinSpacing * (col + 1);
                     
-                    pin.style.left = left + '%';
+                    pin.style.left = left + 'px';
                     pin.style.top = rowTop + 'px';
                     pin.style.width = pinRadius * 2 + 'px';
                     pin.style.height = pinRadius * 2 + 'px';
@@ -175,180 +213,205 @@
 
         // КИДАЕМ ШАРИК БЕЗ ЗАДЕРЖЕК
         async function dropBall() {
-    const betAmount = parseFloat(document.getElementById('bet-amount').value);
-    if (betAmount < 0.1 || betAmount > 100) {
-        showNotification('Ставка должна быть от 0.1 до 100 TON', 'error');
-        return;
-    }
+            const betAmount = parseFloat(document.getElementById('bet-amount').value);
+            if (betAmount < 0.1 || betAmount > 100) {
+                showNotification('Ставка должна быть от 0.1 до 100 TON', 'error');
+                return;
+            }
 
-    const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
-    if (currentBalance < betAmount) {
-        showNotification('Недостаточно средств', 'error');
-        return;
-    }
+            const currentBalance = parseFloat(document.getElementById('current-balance').textContent);
+            if (currentBalance < betAmount) {
+                showNotification('Недостаточно средств', 'error');
+                return;
+            }
 
-    // СРАЗУ списываем ставку
-    updateBalanceDisplay(currentBalance - betAmount);
+            // СРАЗУ списываем ставку
+            updateBalanceDisplay(currentBalance - betAmount);
 
-    try {
-        const response = await fetch('/api/plinko/drop', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                betAmount: betAmount,
-                demoMode: isDemoMode
-            })
-        });
+            try {
+                const response = await fetch('/api/plinko/drop', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        betAmount: betAmount,
+                        demoMode: isDemoMode
+                    })
+                });
 
-        const result = await response.json();
+                const result = await response.json();
 
-        if (result.success) {
-            // Запускаем анимацию, но НЕ обновляем баланс здесь
-            realisticPlinkoAnimation(result.slot_index, result.multiplier, result.win_amount, betAmount, result.new_balance);
-        } else {
-            showNotification('Ошибка: ' + result.error, 'error');
-            // Возвращаем ставку при ошибке
-            updateBalanceDisplay(currentBalance);
+                if (result.success) {
+                    // Запускаем анимацию, но НЕ обновляем баланс здесь
+                    realisticPlinkoAnimation(result.slot_index, result.multiplier, result.win_amount, betAmount, result.new_balance);
+                } else {
+                    showNotification('Ошибка: ' + result.error, 'error');
+                    // Возвращаем ставку при ошибке
+                    updateBalanceDisplay(currentBalance);
+                }
+            } catch (error) {
+                console.error('Drop error:', error);
+                showNotification('Ошибка соединения', 'error');
+                // Возвращаем ставку при ошибке
+                updateBalanceDisplay(currentBalance);
+            }
         }
-    } catch (error) {
-        console.error('Drop error:', error);
-        showNotification('Ошибка соединения', 'error');
-        // Возвращаем ставку при ошибке
-        updateBalanceDisplay(currentBalance);
-    }
-}
 
         // РЕАЛИСТИЧНАЯ АНИМАЦИЯ ПАДЕНИЯ ШАРИКА (без блокировки интерфейса)
         function realisticPlinkoAnimation(targetSlot, multiplier, winAmount, betAmount, newBalance) {
-    activeBalls++; // Увеличиваем счетчик активных шариков
-    
-    const board = document.getElementById('plinko-board');
-    const ball = document.createElement('div');
-    ball.className = 'ball';
-    board.appendChild(ball);
-
-    const multipliers = document.querySelectorAll('.multiplier');
-    const targetMultiplier = multipliers[targetSlot];
-
-    // Определяем целевую позицию для шарика (центр выбранного множителя)
-    const multiplierRects = Array.from(multipliers).map(m => m.getBoundingClientRect());
-    const boardRect = board.getBoundingClientRect();
-    const targetX = (multiplierRects[targetSlot].left + multiplierRects[targetSlot].width/2 - boardRect.left) / boardRect.width * 100;
-
-    // Начальная позиция (центр сверху)
-    let x = 50; // %
-    let y = 0;  // px
-    
-    ball.style.left = x + '%';
-    ball.style.top = y + 'px';
-
-    const pins = document.querySelectorAll('.pin');
-    
-    // Оптимизация: предварительно вычисляем позиции штифтов
-    const pinPositions = Array.from(pins).map(pin => {
-        const rect = pin.getBoundingClientRect();
-        const boardRect = board.getBoundingClientRect();
-        return {
-            x: (rect.left + rect.width/2 - boardRect.left) / boardRect.width * 100,
-            y: (rect.top + rect.height/2 - boardRect.top),
-            radius: rect.width / 2
-        };
-    });
-
-    let velocityX = 0;
-    const gravity = 0.15;
-    let velocityY = 0.8;
-    const ballRadius = 10;
-
-    let animationId;
+            activeBalls++;
             
-             function animate() {
-        // Применяем гравитацию
-        velocityY += gravity;
-        y += velocityY;
-        
-        // Добавляем случайное движение влево-вправо
-        velocityX += (Math.random() - 0.5) * 0.3;
-        velocityX *= 0.98; // Сопротивление воздуха
-        x += velocityX;
-        
-        // Ограничиваем движение по горизонтали
-        if (x < 5) {
-            x = 5;
-            velocityX *= -0.7;
-        }
-        if (x > 95) {
-            x = 95;
-            velocityX *= -0.7;
-        }
-        
-        ball.style.left = x + '%';
-        ball.style.top = y + 'px';
+            const board = document.getElementById('plinko-board');
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            board.appendChild(ball);
 
-        // Проверяем столкновения со штифтами
-        const ballX = (x / 100) * boardRect.width;
-        const ballY = y;
-        
-        pinPositions.forEach((pin, index) => {
-            const dx = (pin.x / 100 * boardRect.width) - ballX;
-            const dy = pin.y - ballY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const multipliers = document.querySelectorAll('.multiplier');
+            const targetMultiplier = multipliers[targetSlot];
+
+            // Определяем целевую позицию для шарика
+            const multiplierRects = Array.from(multipliers).map(m => m.getBoundingClientRect());
+            const boardRect = board.getBoundingClientRect();
+            const targetX = (multiplierRects[targetSlot].left + multiplierRects[targetSlot].width/2 - boardRect.left);
+
+            // Начальная позиция (центр сверху)
+            let x = boardRect.width / 2;
+            let y = 0;
             
-            if (distance < (pin.radius + ballRadius)) {
-                const angle = Math.atan2(dy, dx);
-                const force = 1.5;
-                
-                velocityX -= Math.cos(angle) * force;
-                velocityY -= Math.sin(angle) * force;
-                
-                pins[index].style.background = '#ff9500';
-                setTimeout(() => pins[index].style.background = '#00c851', 100);
-            }
-        });
+            ball.style.left = x + 'px';
+            ball.style.top = y + 'px';
 
-        // Когда шарик достигает низа (области множителей)
-        if (y >= boardRect.height - 50) {
-            // Плавное движение к целевому множителю
-            function finalAnimation() {
-                // Плавное приближение к целевой позиции
-                x += (targetX - x) * 0.08;
-                y += 1.5;
+            const pins = document.querySelectorAll('.pin');
+            
+            // Предварительно вычисляем позиции штифтов
+            const pinPositions = Array.from(pins).map(pin => {
+                const rect = pin.getBoundingClientRect();
+                const boardRect = board.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width/2 - boardRect.left,
+                    y: rect.top + rect.height/2 - boardRect.top,
+                    radius: rect.width / 2
+                };
+            });
+
+            // Физические параметры
+            let velocityX = 0;
+            let velocityY = 0;
+            const gravity = 0.3;
+            const friction = 0.99;
+            const ballRadius = 10;
+            const bounceFactor = 0.7;
+
+            let lastCollisionTime = 0;
+            const collisionCooldown = 100; // мс между столкновениями
+            
+            function animate() {
+                const currentTime = Date.now();
                 
-                ball.style.left = x + '%';
+                // Применяем гравитацию
+                velocityY += gravity;
+                
+                // Применяем трение
+                velocityX *= friction;
+                velocityY *= friction;
+                
+                // Обновляем позицию
+                x += velocityX;
+                y += velocityY;
+                
+                // Ограничиваем движение по горизонтали (стенки)
+                if (x < ballRadius) {
+                    x = ballRadius;
+                    velocityX *= -bounceFactor;
+                }
+                if (x > boardRect.width - ballRadius) {
+                    x = boardRect.width - ballRadius;
+                    velocityX *= -bounceFactor;
+                }
+                
+                ball.style.left = x + 'px';
                 ball.style.top = y + 'px';
-                
-                // Когда шарик достиг целевой позиции - НАЧИСЛЯЕМ БАЛАНС
-                if (Math.abs(x - targetX) < 0.5 && y >= boardRect.height - 20) {
-                    // Подсвечиваем множитель
-                    targetMultiplier.classList.add('highlight');
+
+                // Проверяем столкновения со штифтами
+                pinPositions.forEach((pin, index) => {
+                    const dx = pin.x - x;
+                    const dy = pin.y - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = pin.radius + ballRadius;
                     
-                    setTimeout(() => {
-                        ball.remove();
-                        targetMultiplier.classList.remove('highlight');
-                        activeBalls--; // Уменьшаем счетчик активных шариков
+                    // Если есть столкновение и прошло достаточно времени с последнего
+                    if (distance < minDistance && (currentTime - lastCollisionTime) > collisionCooldown) {
+                        lastCollisionTime = currentTime;
                         
-                        // ТОЛЬКО ЗДЕСЬ обновляем баланс с выигрышем
-                        updateBalanceDisplay(newBalance);
+                        // Нормализуем вектор направления
+                        const nx = dx / distance;
+                        const ny = dy / distance;
                         
-                        // Показываем результат
-                        showResult(multiplier, winAmount, betAmount);
-                    }, 800);
+                        // Отскакивание от штифта
+                        const dotProduct = velocityX * nx + velocityY * ny;
+                        velocityX -= 2 * dotProduct * nx * bounceFactor;
+                        velocityY -= 2 * dotProduct * ny * bounceFactor;
+                        
+                        // Добавляем случайное отклонение для реалистичности
+                        velocityX += (Math.random() - 0.5) * 2;
+                        
+                        // Визуальный эффект столкновения
+                        pins[index].style.background = '#ff9500';
+                        pins[index].style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            pins[index].style.background = '#00c851';
+                            pins[index].style.transform = 'scale(1)';
+                        }, 100);
+                    }
+                });
+
+                // Когда шарик достигает низа (области множителей)
+                if (y >= boardRect.height - 50) {
+                    // Плавное движение к целевому множителю
+                    function finalAnimation() {
+                        // Плавное приближение к целевой позиции
+                        const dx = targetX - x;
+                        x += dx * 0.1;
+                        y += 2;
+                        
+                        ball.style.left = x + 'px';
+                        ball.style.top = y + 'px';
+                        
+                        // Когда шарик достиг целевой позиции
+                        if (Math.abs(dx) < 5 && y >= boardRect.height - 20) {
+                            // Подсвечиваем множитель
+                            targetMultiplier.classList.add('highlight');
+                            
+                            setTimeout(() => {
+                                ball.remove();
+                                targetMultiplier.classList.remove('highlight');
+                                activeBalls--;
+                                
+                                // Обновляем баланс с выигрышем
+                                updateBalanceDisplay(newBalance);
+                                
+                                // Показываем результат
+                                showResult(multiplier, winAmount, betAmount);
+                            }, 800);
+                            return;
+                        }
+                        
+                        requestAnimationFrame(finalAnimation);
+                    }
+                    
+                    requestAnimationFrame(finalAnimation);
                     return;
                 }
                 
-                animationId = requestAnimationFrame(finalAnimation);
+                requestAnimationFrame(animate);
             }
             
-            animationId = requestAnimationFrame(finalAnimation);
-            return;
+            // Начальный толчок для шарика
+            velocityY = 2;
+            velocityX = (Math.random() - 0.5) * 3; // Случайное начальное отклонение
+            
+            requestAnimationFrame(animate);
         }
-        
-        animationId = requestAnimationFrame(animate);
-    }
-    
-    animationId = requestAnimationFrame(animate);
-}
 
         // Показ результата (одно уведомление на 3 секунды)
         function showResult(multiplier, winAmount, betAmount) {
@@ -446,7 +509,5 @@
             }
         }
     </script>
-
-    
 </body>
 </html>
