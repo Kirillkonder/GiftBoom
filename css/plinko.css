@@ -575,3 +575,17 @@ body {
     pointer-events: none;
     z-index: 1;
 }
+
+
+.ball {
+    will-change: transform, left, top; /* Оптимизация для браузера */
+    transform: translateZ(0); /* Аппаратное ускорение */
+}
+
+.pin {
+    transition: all 0.1s ease-out; /* Более быстрый переход */
+}
+
+.plinko-board {
+    transform: translateZ(0); /* Аппаратное ускорение */
+}
