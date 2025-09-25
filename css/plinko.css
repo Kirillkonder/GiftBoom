@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     color: #fff;
     overflow-x: hidden;
     user-select: none;
@@ -14,7 +14,7 @@ body {
 }
 
 .game-container {
-    max-width: 400px;
+    max-width: 450px;
     margin: 0 auto;
     min-height: 100vh;
     background: transparent;
@@ -23,19 +23,19 @@ body {
     padding-top: 60px;
 }
 
-/* Верхняя панель - темная */
+/* Верхняя панель */
 .top-panel {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background: rgba(26, 26, 26, 0.95);
+    background: rgba(26, 32, 44, 0.95);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 10;
-    max-width: 400px;
+    max-width: 450px;
     margin: 0 auto;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -65,7 +65,7 @@ body {
 }
 
 .balance {
-    background: linear-gradient(135deg, #2d3748, #4a5568);
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: #fff;
     padding: 8px 16px;
     border-radius: 20px;
@@ -76,12 +76,12 @@ body {
     gap: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 2px 10px rgba(45, 55, 72, 0.3);
+    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.3);
 }
 
 .balance:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(45, 55, 72, 0.4);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
 }
 
 /* Контент */
@@ -101,11 +101,11 @@ body {
     font-size: 32px;
     font-weight: 800;
     color: #fff;
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     letter-spacing: 2px;
 }
 
-/* Игровое поле с интегрированными множителями */
+/* Игровое поле */
 .plinko-game {
     display: flex;
     flex-direction: column;
@@ -116,79 +116,23 @@ body {
 .plinko-board-container {
     position: relative;
     height: 500px;
-    background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
-    border-radius: 15px;
+    background: linear-gradient(180deg, rgba(26, 32, 44, 0.6) 0%, rgba(16, 23, 35, 0.8) 100%);
+    border-radius: 15px 15px 0 0;
     border: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .plinko-board {
     position: relative;
     width: 100%;
-    height: calc(100% - 60px);
-}
-
-/* Интегрированные множители */
-.integrated-multipliers {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    height: 60px;
-    background: rgba(0, 0, 0, 0.6);
-    border-top: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.imultiplier {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.imultiplier:last-child {
-    border-right: none;
-}
-
-.imultiplier.high {
-    background: linear-gradient(135deg, #c53030, #9b2c2c);
-    color: #fff;
-}
-
-.imultiplier.medium {
-    background: linear-gradient(135deg, #d69e2e, #b7791f);
-    color: #fff;
-}
-
-.imultiplier.low {
-    background: linear-gradient(135deg, #3182ce, #2c5aa0);
-    color: #fff;
-}
-
-.imultiplier.ultra-low {
-    background: linear-gradient(135deg, #4a5568, #2d3748);
-    color: #fff;
-}
-
-.imultiplier.highlight {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
-    z-index: 10;
-    animation: multiplierWin 0.6s ease-out;
+    height: 100%;
 }
 
 /* Штифты */
 .pin {
     position: absolute;
-    background: radial-gradient(circle at 30% 30%, #a0aec0, #718096);
+    background: radial-gradient(circle at 30% 30%, #4a5568, #2d3748);
     border-radius: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 
@@ -204,22 +148,90 @@ body {
     background: radial-gradient(circle at 30% 30%, #ffffff, #00bcd4);
     border-radius: 50%;
     box-shadow: 
-        0 0 20px rgba(0, 188, 212, 0.9),
-        0 3px 12px rgba(0, 0, 0, 0.5),
+        0 0 15px rgba(0, 188, 212, 0.8),
+        0 2px 8px rgba(0, 0, 0, 0.5),
         inset 0 1px 2px rgba(255, 255, 255, 0.4);
     z-index: 3;
     border: 2px solid rgba(255, 255, 255, 0.3);
     animation: ballGlow 2s ease-in-out infinite;
 }
 
-/* Управление - темное */
+/* Множители ВНУТРИ поля */
+.plinko-multipliers {
+    display: flex;
+    justify-content: space-between;
+    gap: 1px;
+    height: 60px;
+    background: rgba(16, 23, 35, 0.9);
+    border-radius: 0 0 15px 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-top: none;
+    overflow: hidden;
+}
+
+.multiplier {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.multiplier::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.multiplier:hover::before {
+    opacity: 1;
+}
+
+.multiplier.high {
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    color: #fff;
+}
+
+.multiplier.medium {
+    background: linear-gradient(135deg, #ed8936, #dd6b20);
+    color: #fff;
+}
+
+.multiplier.low {
+    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    color: #fff;
+}
+
+.multiplier.ultra-low {
+    background: linear-gradient(135deg, #718096, #4a5568);
+    color: #fff;
+}
+
+.multiplier.highlight {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.9);
+    z-index: 10;
+    animation: multiplierWin 0.8s ease-out;
+}
+
+/* Управление */
 .plinko-controls {
-    background: rgba(45, 55, 72, 0.9);
+    background: rgba(26, 32, 44, 0.9);
     border-radius: 15px;
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .bet-controls {
@@ -235,7 +247,7 @@ body {
 }
 
 .bet-input-group label {
-    color: #e2e8f0;
+    color: #fff;
     font-weight: 500;
     font-size: 14px;
 }
@@ -255,11 +267,11 @@ body {
 .bet-input-group input:focus {
     outline: none;
     border-color: #00bcd4;
-    box-shadow: 0 0 15px rgba(0, 188, 212, 0.3);
+    box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
 }
 
 .balance-info {
-    color: #a0aec0;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 14px;
     font-weight: 500;
     text-align: center;
@@ -276,7 +288,6 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .drop-ball-btn:hover {
@@ -288,7 +299,7 @@ body {
     transform: translateY(0);
 }
 
-/* Модальное окно - темное */
+/* Модальное окно */
 .modal {
     display: none;
     position: fixed;
@@ -302,14 +313,14 @@ body {
 }
 
 .modal-content {
-    background: linear-gradient(180deg, #2d3748 0%, #1a202c 100%);
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     margin: 15% auto;
     padding: 0;
     border-radius: 20px;
     width: 90%;
     max-width: 350px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
     overflow: hidden;
 }
 
@@ -350,7 +361,7 @@ body {
 .input-group label {
     display: block;
     margin-bottom: 8px;
-    color: #e2e8f0;
+    color: #fff;
     font-weight: 500;
 }
 
@@ -369,7 +380,7 @@ body {
 .input-group input:focus {
     outline: none;
     border-color: #00bcd4;
-    box-shadow: 0 0 15px rgba(0, 188, 212, 0.3);
+    box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
 }
 
 .modal-btn {
@@ -406,23 +417,23 @@ body {
     font-weight: 600;
     text-align: center;
     max-width: 90%;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .notification.success {
-    background: linear-gradient(135deg, #38a169, #2f855a);
+    background: linear-gradient(135deg, #27ae60, #229954);
     color: #fff;
 }
 
 .notification.error {
-    background: linear-gradient(135deg, #e53e3e, #c53030);
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: #fff;
 }
 
 .notification.info {
-    background: linear-gradient(135deg, #3182ce, #2b6cb0);
+    background: linear-gradient(135deg, #3498db, #2980b9);
     color: #fff;
 }
 
@@ -457,8 +468,9 @@ body {
         height: 450px;
     }
     
-    .imultiplier {
+    .multiplier {
         font-size: 12px;
+        min-height: 50px;
     }
     
     .plinko-controls {
@@ -469,20 +481,20 @@ body {
 /* Анимации */
 @keyframes ballGlow {
     0%, 100% { 
-        box-shadow: 0 0 20px rgba(0, 188, 212, 0.8);
+        box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
     }
     50% { 
-        box-shadow: 0 0 30px rgba(0, 188, 212, 1);
+        box-shadow: 0 0 25px rgba(0, 188, 212, 1);
     }
 }
 
 @keyframes multiplierWin {
     0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1.05); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1.1); }
 }
 
-/* Оптимизации для 60 FPS */
+/* Оптимизации для производительности */
 .ball, .pin {
     will-change: transform;
     transform: translateZ(0);
@@ -490,4 +502,5 @@ body {
 
 .plinko-board {
     transform: translateZ(0);
+    will-change: contents;
 }
