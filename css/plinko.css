@@ -485,3 +485,30 @@ body {
 .plinko-board {
     transform: translateZ(0);
 }
+
+plinko-board {
+    transform: translateZ(0);
+    will-change: contents;
+}
+
+.ball {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Убедись что контейнер правильно размещен */
+.plinko-board-container {
+    position: relative;
+    height: 400px;
+    background: linear-gradient(180deg, rgba(44, 62, 80, 0.3) 0%, rgba(26, 37, 47, 0.5) 100%);
+    border-radius: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.plinko-multipliers {
+    display: flex;
+    justify-content: space-between;
+    gap: 1px;
+}

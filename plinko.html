@@ -148,28 +148,30 @@
             document.getElementById('current-balance').textContent = balance.toFixed(2);
         }
 
-        // Создание поля плинко с правильной физикой
+        // Создание поля плинко
         function createPlinkoField() {
             const board = document.getElementById('plinko-board');
             board.innerHTML = '';
             pins = [];
             
-            const rows = 12;
-            const cols = 8; // На 1 меньше чем множителей для шахматного порядка
+            const rows = 10;
             const boardWidth = board.offsetWidth;
             const boardHeight = board.offsetHeight;
-            const pinSize = 12;
+            const pinSize = 10;
             
             // Создаем штифты в шахматном порядке
             for (let row = 0; row < rows; row++) {
-                const rowOffset = row % 2 === 0 ? 0.5 : 0;
-                for (let col = 0; col < cols + 1; col++) {
+                const pinsInRow = 8 + (row % 2); // 8 или 9 штифтов в ряду
+                const startY = 40;
+                const rowSpacing = (boardHeight - 100) / rows;
+                
+                for (let col = 0; col < pinsInRow; col++) {
                     const pin = document.createElement('div');
                     pin.className = 'pin';
                     
                     // Равномерное распределение
-                    const x = ((col + rowOffset) * boardWidth) / (cols + 1);
-                    const y = 30 + (row * (boardHeight - 100) / rows);
+                    const x = ((col + 0.5 + (row % 2) * 0.5) * boardWidth) / (pinsInRow + (row % 2));
+                    const y = startY + (row * rowSpacing);
                     
                     pin.style.left = x + 'px';
                     pin.style.top = y + 'px';
@@ -181,7 +183,8 @@
                     pins.push({
                         x: x,
                         y: y,
-                        radius: pinSize / 2
+                        radius: pinSize / 2,
+                        element: pin
                     });
                 }
             }
@@ -191,7 +194,7 @@
         function startGameLoop() {
             function gameLoop(timestamp) {
                 if (!lastTime) lastTime = timestamp;
-                const deltaTime = Math.min(timestamp - lastTime, 1000/60) / 1000;
+                const deltaTime = Math.min(timestamp - lastTime, 1000/60) / 16.67;
                 lastTime = timestamp;
                 
                 updatePhysics(deltaTime);
@@ -212,8 +215,8 @@
                 
                 if (ball.finished) continue;
                 
-                // Гравитация
-                ball.vy += 800 * deltaTime;
+                // Гравитация - ПРОСТАЯ И ЭФФЕКТИВНАЯ
+                ball.vy += 0.5 * deltaTime;
                 
                 // Обновление позиции
                 ball.x += ball.vx * deltaTime;
@@ -222,45 +225,46 @@
                 // Столкновение с границами
                 if (ball.x < ball.radius) {
                     ball.x = ball.radius;
-                    ball.vx = Math.abs(ball.vx) * 0.8;
+                    ball.vx = Math.abs(ball.vx) * 0.7;
                 } else if (ball.x > boardWidth - ball.radius) {
                     ball.x = boardWidth - ball.radius;
-                    ball.vx = -Math.abs(ball.vx) * 0.8;
+                    ball.vx = -Math.abs(ball.vx) * 0.7;
                 }
                 
-                // Столкновение со штифтами
+                // Столкновение со штифтами - УПРОЩЕННАЯ ВЕРСИЯ
                 for (const pin of pins) {
                     const dx = ball.x - pin.x;
                     const dy = ball.y - pin.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     const minDistance = ball.radius + pin.radius;
                     
-                    if (distance < minDistance) {
-                        // Отталкивание
-                        const angle = Math.atan2(dy, dx);
-                        const targetX = pin.x + Math.cos(angle) * minDistance;
-                        const targetY = pin.y + Math.sin(angle) * minDistance;
-                        
-                        ball.x = targetX;
-                        ball.y = targetY;
+                    if (distance < minDistance && distance > 0) {
+                        // Просто отталкиваем шарик
+                        const pushForce = 0.3;
+                        ball.x += (dx / distance) * pushForce;
+                        ball.y += (dy / distance) * pushForce;
                         
                         // Отражение скорости
                         const dot = ball.vx * dx + ball.vy * dy;
-                        ball.vx = (ball.vx - 2 * dot * dx / (distance * distance)) * 0.8;
-                        ball.vy = (ball.vy - 2 * dot * dy / (distance * distance)) * 0.8;
+                        if (dot < 0) {
+                            ball.vx -= 0.8 * dot * dx / (distance * distance);
+                            ball.vy -= 0.8 * dot * dy / (distance * distance);
+                        }
                         
-                        // Случайное отклонение для реализма
-                        ball.vx += (Math.random() - 0.5) * 50;
+                        // Случайное отклонение
+                        ball.vx += (Math.random() - 0.5) * 0.2;
                     }
                 }
                 
+                // Трение воздуха
+                ball.vx *= 0.998;
+                
                 // Проверка достижения дна
-                if (ball.y >= boardHeight - 40 && !ball.reachedBottom) {
-                    ball.reachedBottom = true;
+                if (ball.y >= boardHeight - 50) {
                     ball.vy = 0;
                     ball.vx = 0;
                     
-                    // Определяем слот на основе позиции X
+                    // Определяем слот на основе конечной позиции X
                     const multipliers = document.querySelectorAll('.multiplier');
                     const slotWidth = boardWidth / multipliers.length;
                     const slotIndex = Math.floor(ball.x / slotWidth);
@@ -269,22 +273,12 @@
                     // Плавное движение к центру слота
                     ball.targetX = (finalSlot * slotWidth) + (slotWidth / 2);
                     ball.slotAnimation = true;
-                }
-                
-                // Анимация падения в слот
-                if (ball.slotAnimation) {
-                    const dx = ball.targetX - ball.x;
-                    ball.x += dx * 0.1;
-                    ball.y += 20 * deltaTime;
+                    ball.finished = true;
                     
-                    if (Math.abs(dx) < 2 && ball.y >= boardHeight - 30) {
-                        ball.finished = true;
-                        
-                        // Завершение игры
-                        setTimeout(() => {
-                            finishBallAnimation(ball);
-                        }, 300);
-                    }
+                    // Завершение анимации
+                    setTimeout(() => {
+                        finishBallAnimation(ball, finalSlot);
+                    }, 500);
                 }
             }
         }
@@ -292,27 +286,52 @@
         function renderBalls() {
             const board = document.getElementById('plinko-board');
             
-            // Удаляем старые шарики
-            const oldBalls = board.querySelectorAll('.ball');
-            oldBalls.forEach(ball => ball.remove());
+            // Удаляем только шарики которые закончили анимацию
+            const ballElements = board.querySelectorAll('.ball');
+            ballElements.forEach(ballElement => {
+                const ballId = ballElement.dataset.ballId;
+                const ball = balls.find(b => b.id == ballId);
+                if (!ball || ball.finished) {
+                    ballElement.remove();
+                }
+            });
             
-            // Создаем новые шарики
+            // Создаем/обновляем шарики
             balls.forEach(ball => {
                 if (ball.finished) return;
                 
-                const ballElement = document.createElement('div');
-                ballElement.className = 'ball';
+                let ballElement = board.querySelector(`.ball[data-ball-id="${ball.id}"]`);
+                if (!ballElement) {
+                    ballElement = document.createElement('div');
+                    ballElement.className = 'ball';
+                    ballElement.dataset.ballId = ball.id;
+                    board.appendChild(ballElement);
+                }
+                
                 ballElement.style.left = (ball.x - ball.radius) + 'px';
                 ballElement.style.top = (ball.y - ball.radius) + 'px';
                 ballElement.style.width = (ball.radius * 2) + 'px';
                 ballElement.style.height = (ball.radius * 2) + 'px';
-                
-                board.appendChild(ballElement);
             });
         }
 
-        function finishBallAnimation(ball) {
-            // Удаляем шарик
+        function finishBallAnimation(ball, slotIndex) {
+            // Подсветка множителя
+            const multipliers = document.querySelectorAll('.multiplier');
+            if (multipliers[slotIndex]) {
+                multipliers[slotIndex].classList.add('highlight');
+                setTimeout(() => {
+                    multipliers[slotIndex].classList.remove('highlight');
+                }, 1000);
+            }
+            
+            // Удаляем шарик из DOM
+            const ballElement = document.querySelector(`.ball[data-ball-id="${ball.id}"]`);
+            if (ballElement) {
+                ballElement.remove();
+            }
+            
+            // Удаляем шарик из массива
             balls = balls.filter(b => b.id !== ball.id);
             
             // Обновляем баланс
@@ -376,12 +395,11 @@
             const ball = {
                 id: Date.now() + Math.random(),
                 x: boardWidth / 2,
-                y: 20,
-                vx: (Math.random() - 0.5) * 100, // Начальная случайная скорость
-                vy: 0,
-                radius: 9,
+                y: 25,
+                vx: (Math.random() - 0.5) * 3, // Случайное начальное движение
+                vy: 0.5,
+                radius: 8,
                 finished: false,
-                reachedBottom: false,
                 slotAnimation: false,
                 targetX: 0,
                 multiplier: multiplier,
@@ -390,6 +408,7 @@
             };
             
             balls.push(ball);
+            console.log('Новый шарик создан, всего шариков:', balls.length);
         }
 
         function openDepositModal() {
