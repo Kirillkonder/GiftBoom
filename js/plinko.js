@@ -56,12 +56,12 @@ class PlinkoGame {
     }
 
     resizeCanvas() {
-    const board = document.querySelector('.game-board');
-    this.canvas.width = board.clientWidth;
-    this.canvas.height = board.clientHeight;
-    this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.018; // Увеличил для узкого поля
-    this.ballRadius = this.pegRadius * 1.2;
-}
+        const board = document.querySelector('.game-board');
+        this.canvas.width = board.clientWidth;
+        this.canvas.height = board.clientHeight;
+        this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.012;
+        this.ballRadius = this.pegRadius * 1.2; // Увеличил размер шарика на 20%
+    }
 
     setupEventListeners() {
         window.addEventListener('resize', () => {

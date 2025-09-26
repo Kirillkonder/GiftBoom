@@ -150,20 +150,20 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0;
+    gap: 0; /* Убрано расстояние между полем и слотами */
     padding: 0 16px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
-
 
 .game-board {
     position: relative;
-    width: 90%; /* Уменьшил ширину */
-    max-width: 300px; /* Сильно уменьшил максимальную ширину */
-    height: 300px; /* Высоту оставил нормальную */
-    background: transparent;
-    border-radius: 0;
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 3/4;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
     overflow: hidden;
+    /* Убрана рамка: border: 1px solid rgba(30, 92, 184, 0.3); */
 }
 
 #gameCanvas {
@@ -178,14 +178,15 @@ body {
 .slots-container {
     display: flex;
     justify-content: space-around;
-    width: 90%; /* Уменьшил ширину */
-    max-width: 300px; /* Согласовал с шириной поля */
-    padding: 5px;
-    background: transparent;
-    border-radius: 0;
-    border: none;
-    margin-top: 0;
+    width: 100%;
+    max-width: 400px;
+    padding: 5px; /* Уменьшено расстояние */
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    border: 1px solid rgba(30, 92, 184, 0.3);
+    margin-top: 0; /* Убрано расстояние сверху */
 }
+
 .slot {
     flex: 1;
     margin: 0 2px;
