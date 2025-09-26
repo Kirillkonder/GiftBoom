@@ -1,3 +1,4 @@
+
 :root {
     --primary-color: #1e5cb8;
     --secondary-color: #2668b3;
@@ -25,6 +26,7 @@ body {
     user-select: none;
     -webkit-user-select: none;
     position: relative;
+    height: 100vh;
 }
 
 /* Фон с сеткой */
@@ -68,7 +70,10 @@ body {
     background: transparent;
     position: relative;
     z-index: 1;
-    padding-top: 15px; /* Уменьшено с 60px до 15px */
+    padding-top: 15px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 /* Верхняя панель */
@@ -150,20 +155,23 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0; /* Убрано расстояние между полем и слотами */
+    gap: 0;
     padding: 0 16px;
     margin-bottom: 15px;
+    flex: 1;
+    justify-content: center;
+    min-height: 0;
 }
 
 .game-board {
     position: relative;
     width: 100%;
-    max-width: 400px;
-    aspect-ratio: 3/4;
-    background: transparent; /* Убрана черная подложка */
+    height: 100%;
+    max-height: 60vh;
+    background: transparent;
     border-radius: 15px;
     overflow: hidden;
-    /* Убрана рамка: border: 1px solid rgba(30, 92, 184, 0.3); */
+    flex: 1;
 }
 
 #gameCanvas {
@@ -180,11 +188,11 @@ body {
     justify-content: space-around;
     width: 100%;
     max-width: 400px;
-    padding: 5px; /* Уменьшено расстояние */
-    background: transparent; /* Убрана черная подложка */
+    padding: 5px;
+    background: transparent;
     border-radius: 10px;
-    border: none; /* Убрана рамка */
-    margin-top: 0; /* Убрано расстояние сверху */
+    border: none;
+    margin-top: 0;
 }
 
 .slot {
@@ -215,8 +223,9 @@ body {
 /* Панель управления */
 .control-panel {
     width: 100%;
-    padding: 0 16px;
-    background: transparent; /* Убрана черная подложка */
+    padding: 0 16px 20px;
+    background: transparent;
+    flex-shrink: 0;
 }
 
 .bet-controls {
@@ -230,10 +239,10 @@ body {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.1); /* Полупрозрачный фон */
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 8px;
-    border: none; /* Убрана рамка */
+    border: none;
 }
 
 .bet-amount-btn {
@@ -322,11 +331,12 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 8px 16px;
-    background: transparent; /* Убрана черная подложка */
+    background: transparent;
     backdrop-filter: blur(5px);
     margin: 8px 16px;
     border-radius: 8px;
-    border: none; /* Убрана рамка */
+    border: none;
+    flex-shrink: 0;
 }
 
 .bet-info-item {
@@ -467,8 +477,7 @@ body {
 /* Адаптация для мобильных */
 @media (max-width: 480px) {
     .game-board {
-        max-width: 100%;
-        aspect-ratio: 2/3;
+        max-height: 55vh;
     }
     
     .slots-container {
@@ -482,5 +491,21 @@ body {
     
     .action-buttons {
         flex-direction: column;
+    }
+    
+    .control-panel {
+        padding-bottom: 15px;
+    }
+}
+
+@media (max-height: 700px) {
+    .game-board {
+        max-height: 50vh;
+    }
+}
+
+@media (max-height: 600px) {
+    .game-board {
+        max-height: 45vh;
     }
 }

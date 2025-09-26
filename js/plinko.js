@@ -60,7 +60,7 @@ class PlinkoGame {
         this.canvas.width = board.clientWidth;
         this.canvas.height = board.clientHeight;
         this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.012;
-        this.ballRadius = this.pegRadius * 1.2; // Увеличил размер шарика на 20%
+        this.ballRadius = this.pegRadius * 1.2;
     }
 
     setupEventListeners() {
@@ -83,7 +83,7 @@ class PlinkoGame {
     }
 
     createPegs() {
-        const rows = 8;
+        const rows = 10; // Увеличил количество рядов
         const spacing = this.canvas.height / (rows + 2);
         const horizontalSpacing = this.canvas.width / (rows + 1);
 
@@ -134,7 +134,7 @@ class PlinkoGame {
                 body: JSON.stringify({
                     telegramId: this.currentUser.id,
                     betAmount: this.currentBet,
-                    rows: 8,
+                    rows: 10, // Увеличил количество рядов
                     demoMode: this.isDemoMode
                 })
             });
@@ -290,8 +290,6 @@ class PlinkoGame {
         document.getElementById('balance').textContent = this.balance.toFixed(2);
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
         
-        // Убрал расчет потенциального выигрыша
-
         // Update bet amount input
         document.getElementById('betAmount').value = this.currentBet.toFixed(1);
 
