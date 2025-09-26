@@ -1817,25 +1817,42 @@ function binomialCoefficient(n, k) {
 
 // Функция симуляции падения шарика
 function simulatePlinkoBall(rows) {
-    // Простая логика - шарик падает случайным образом
-    const positions = Array.from({length: rows + 1}, (_, i) => i);
+    // Вероятности падения в каждую позицию (чаще в центр)
+    let probabilities = [];
+    let multipliers = [];
     
-    // Случайная конечная позиция (равномерное распределение)
-    const finalPosition = Math.floor(Math.random() * (rows + 1));
+    if (rows === 8) {
+        multipliers = [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8];
+        probabilities = [0.05, 0.1, 0.2, 0.3, 0.2, 0.1, 0.05]; // 30% на центральный 0.4x
+    } else if (rows === 12) {
+        multipliers = [26.0, 9.0, 4.0, 2.0, 0.5, 2.0, 4.0, 9.0, 26.0];
+        probabilities = [0.03, 0.05, 0.08, 0.12, 0.15, 0.2, 0.15, 0.12, 0.08, 0.05, 0.03];
+    } else if (rows === 16) {
+        multipliers = [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0];
+        probabilities = [0.02, 0.03, 0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.13, 0.11, 0.09, 0.07, 0.05, 0.03, 0.02];
+    }
+
+    // Нормализуем вероятности
+    const sum = probabilities.reduce((a, b) => a + b, 0);
+    probabilities = probabilities.map(p => p / sum);
+
+    // Выбираем позицию на основе вероятностей
+    const random = Math.random();
+    let cumulative = 0;
+    let finalPosition = 0;
     
-    // Множители для разных рядов (как в 1win)
-    const multipliers = {
-        8: [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8],
-        12: [26.0, 9.0, 4.0, 2.0, 0.5, 2.0, 4.0, 9.0, 26.0],
-        16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0]
-    };
-    
-    const multiplierIndex = Math.floor((finalPosition / rows) * (multipliers[rows].length - 1));
-    
+    for (let i = 0; i < probabilities.length; i++) {
+        cumulative += probabilities[i];
+        if (random <= cumulative) {
+            finalPosition = i;
+            break;
+        }
+    }
+
     return {
         finalPosition: finalPosition,
-        multiplier: multipliers[rows][multiplierIndex],
-        probabilities: [] // Упрощаем, не нужны сложные расчеты
+        multiplier: multipliers[finalPosition],
+        probabilities: probabilities
     };
 }
 
@@ -1920,7 +1937,7 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(400).json({ error: 'Game not active' });
         }
 
-        // Упрощенная симуляция
+        // Улучшенная симуляция с вероятностями
         const result = simulatePlinkoBall(game.rows);
         const winAmount = game.bet_amount * result.multiplier;
 

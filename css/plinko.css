@@ -331,7 +331,28 @@ body::after {
     transform: translate(-50%, -50%);
     box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
     z-index: 10;
-    transition: all 0.05s linear; /* Упрощаем анимацию */
+    transition: none; /* Убираем transition для ручной анимации */
+}
+
+/* Анимация отскока */
+@keyframes bounce {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.ball.bounce {
+    animation: bounce 0.3s ease;
+}
+
+/* Анимация исчезновения */
+@keyframes fadeOut {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    to { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+}
+
+.ball.fade-out {
+    animation: fadeOut 0.5s ease forwards;
 }
 
 .multipliers {
