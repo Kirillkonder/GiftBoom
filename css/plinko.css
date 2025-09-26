@@ -313,8 +313,8 @@ body::after {
 
 .peg {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: #00c851;
     border-radius: 50%;
     transform: translate(-50%, -50%);
@@ -330,7 +330,7 @@ body::after {
     transform: translate(-50%, -50%);
     box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
     z-index: 10;
-    transition: all 0.1s ease;
+    transition: all 0.05s linear; /* Упрощаем анимацию */
 }
 
 .multipliers {

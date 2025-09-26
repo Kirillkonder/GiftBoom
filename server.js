@@ -1817,31 +1817,28 @@ function binomialCoefficient(n, k) {
 
 // Функция симуляции падения шарика
 function simulatePlinkoBall(rows) {
-    const probabilities = calculatePlinkoProbabilities(rows);
-    let position = Math.floor(rows / 2); // Начинаем с середины
+    // Простая логика - шарик падает случайным образом
+    const positions = Array.from({length: rows + 1}, (_, i) => i);
     
-    // Симуляция падения через каждый ряд
-    for (let i = 0; i < rows; i++) {
-        // 50/50 шанс пойти влево или вправо, но с небольшим смещением к центру
-        const random = Math.random();
-        
-        if (random < 0.48) { // 48% влево
-            position = Math.max(0, position - 1);
-        } else if (random < 0.52) { // 4% остаться на месте (редко)
-            // Остается на той же позиции
-        } else { // 48% вправо
-            position = Math.min(rows, position + 1);
-        }
-    }
+    // Случайная конечная позиция (равномерное распределение)
+    const finalPosition = Math.floor(Math.random() * (rows + 1));
     
-    // Находим соответствующий множитель
-    const multiplierIndex = Math.floor((position / rows) * (plinkoMultipliers[rows].length - 1));
+    // Множители для разных рядов (как в 1win)
+    const multipliers = {
+        8: [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8],
+        12: [26.0, 9.0, 4.0, 2.0, 0.5, 2.0, 4.0, 9.0, 26.0],
+        16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0]
+    };
+    
+    const multiplierIndex = Math.floor((finalPosition / rows) * (multipliers[rows].length - 1));
+    
     return {
-        finalPosition: position,
-        multiplier: plinkoMultipliers[rows][multiplierIndex],
-        probabilities: probabilities
+        finalPosition: finalPosition,
+        multiplier: multipliers[rows][multiplierIndex],
+        probabilities: [] // Упрощаем, не нужны сложные расчеты
     };
 }
+
 
 // API: Начать игру Plinko
 app.post('/api/plinko/start', async (req, res) => {
@@ -1908,7 +1905,7 @@ app.post('/api/plinko/start', async (req, res) => {
 });
 
 // API: Запустить шарик в Plinko
-app.post('/api/plinko/drop', async (req, res) => {
+pp.post('/api/plinko/drop', async (req, res) => {
     const { gameId, telegramId } = req.body;
 
     try {
@@ -1923,7 +1920,7 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(400).json({ error: 'Game not active' });
         }
 
-        // Симулируем падение шарика
+        // Упрощенная симуляция
         const result = simulatePlinkoBall(game.rows);
         const winAmount = game.bet_amount * result.multiplier;
 
