@@ -42,6 +42,8 @@ let rocketGame = {
   history: []
 };
 
+let plinkoGames, plinkoBets;
+
 // RTP система - отслеживание доходности за день
 let rtpSystem = {
   realBank: {
@@ -262,6 +264,18 @@ function initDatabase() {
                 if (!rocketGames) {
                     rocketGames = db.addCollection('rocket_games', {
                         indices: ['created_at', 'crashed_at']
+                    });
+                }
+
+                if (!plinkoGames) {
+                    plinkoGames = db.addCollection('plinko_games', {
+                        indices: ['user_id', 'created_at', 'demo_mode']
+                    });
+                }
+
+                if (!plinkoBets) {
+                    plinkoBets = db.addCollection('plinko_bets', {
+                        indices: ['game_id', 'user_id', 'created_at']
                     });
                 }
 
@@ -1755,23 +1769,6 @@ app.post('/api/coin/series-win', async (req, res) => {
     }
 });
 
-// Добавьте после других игровых коллекций
-let plinkoGames, plinkoBets;
-
-// В функции initDatabase добавьте:
-if (!plinkoGames) {
-    plinkoGames = db.addCollection('plinko_games', {
-        indices: ['user_id', 'created_at', 'demo_mode']
-    });
-}
-
-if (!plinkoBets) {
-    plinkoBets = db.addCollection('plinko_bets', {
-        indices: ['game_id', 'user_id', 'created_at']
-    });
-}
-
-// Plinko Game Functions
 const plinkoMultipliers = {
     8: [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8], // 8 рядов
     12: [26.0, 9.0, 4.0, 2.0, 0.5, 2.0, 4.0, 9.0, 26.0], // 12 рядов
