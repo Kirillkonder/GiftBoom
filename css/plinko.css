@@ -229,41 +229,7 @@ body::after {
     text-align: center;
 }
 
-.rows-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.rows-selector label {
-    font-size: 14px;
-    color: #ccc;
-    font-weight: 500;
-}
-
-.row-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.row-btn {
-    flex: 1;
-    padding: 8px;
-    border: 2px solid #333;
-    border-radius: 8px;
-    background: #1a1a1a;
-    color: #ccc;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.row-btn.active {
-    border-color: #00c851;
-    background: rgba(0, 200, 81, 0.2);
-    color: #00c851;
-}
+/* Row selector styles removed */
 
 .play-btn {
     padding: 12px;
@@ -302,7 +268,8 @@ body::after {
 
 .plinko-board {
     width: 100%;
-    height: 400px;
+    height: 70vh; /* Half screen height */
+    min-height: 600px;
     background: rgba(20, 20, 40, 0.8);
     border: 3px solid rgba(30, 92, 184, 0.7);
     border-radius: 15px;
@@ -313,12 +280,13 @@ body::after {
 
 .peg {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     background: #00c851;
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 5px rgba(0, 200, 81, 0.5);
+    box-shadow: 0 0 8px rgba(0, 200, 81, 0.5);
+    transition: box-shadow 0.1s ease;
 }
 
 .ball {
@@ -328,9 +296,9 @@ body::after {
     background: radial-gradient(circle at 30% 30%, #fff, #00c851);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
+    box-shadow: 0 0 15px rgba(0, 200, 81, 0.8), 0 0 30px rgba(0, 200, 81, 0.4);
     z-index: 10;
-    transition: all 0.1s ease;
+    will-change: transform;
 }
 
 .multipliers {
@@ -493,7 +461,8 @@ body::after {
     }
     
     .plinko-board {
-        height: 300px;
+        height: 60vh;
+        min-height: 500px;
     }
     
     .multiplier {
