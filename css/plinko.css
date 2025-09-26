@@ -68,7 +68,7 @@ body {
     background: transparent;
     position: relative;
     z-index: 1;
-    padding-top: 15px;
+    padding-top: 15px; /* Уменьшено с 60px до 15px */
 }
 
 /* Верхняя панель */
@@ -155,13 +155,14 @@ body {
     margin-bottom: 10px;
 }
 
+
 .game-board {
     position: relative;
-    width: 100%;
-    max-width: 350px; /* Уменьшил максимальную ширину */
-    height: 300px; /* Фиксированная высота */
-    background: transparent; /* Убрал черный фон */
-    border-radius: 0; /* Убрал скругления */
+    width: 90%; /* Уменьшил ширину */
+    max-width: 300px; /* Сильно уменьшил максимальную ширину */
+    height: 300px; /* Высоту оставил нормальную */
+    background: transparent;
+    border-radius: 0;
     overflow: hidden;
 }
 
@@ -177,23 +178,22 @@ body {
 .slots-container {
     display: flex;
     justify-content: space-around;
-    width: 100%;
-    max-width: 350px; /* Согласовал с шириной поля */
+    width: 90%; /* Уменьшил ширину */
+    max-width: 300px; /* Согласовал с шириной поля */
     padding: 5px;
-    background: transparent; /* Убрал черный фон */
-    border-radius: 0; /* Убрал скругления */
-    border: none; /* Убрал границу */
+    background: transparent;
+    border-radius: 0;
+    border: none;
     margin-top: 0;
 }
-
 .slot {
     flex: 1;
-    margin: 0 1px; /* Уменьшил отступы */
-    padding: 6px 2px; /* Уменьшил паддинг */
+    margin: 0 2px;
+    padding: 8px 4px;
     text-align: center;
-    font-size: 11px; /* Уменьшил шрифт */
+    font-size: 12px;
     font-weight: bold;
-    border-radius: 4px; /* Уменьшил скругления */
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -220,27 +220,27 @@ body {
 .bet-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Уменьшил расстояние */
+    gap: 12px;
 }
 
 .bet-amount-selector {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px; /* Уменьшил расстояние */
-    background: transparent; /* Убрал серый фон */
-    border-radius: 0; /* Убрал скругления */
-    padding: 5px; /* Уменьшил паддинг */
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 8px;
 }
 
 .bet-amount-btn {
     background: linear-gradient(135deg, #1e5cb8, #2668b3);
     border: none;
-    width: 32px; /* Уменьшил размер */
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     color: #fff;
-    font-size: 16px; /* Уменьшил шрифт */
+    font-size: 18px;
     font-weight: bold;
     cursor: pointer;
     display: flex;
@@ -256,14 +256,14 @@ body {
 
 #betAmount {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Уменьшил толщину границы */
-    border-radius: 6px; /* Уменьшил скругления */
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
     color: #fff;
-    font-size: 14px; /* Уменьшил шрифт */
+    font-size: 16px;
     font-weight: bold;
     text-align: center;
-    width: 70px; /* Уменьшил ширину */
-    padding: 4px; /* Уменьшил паддинг */
+    width: 80px;
+    padding: 6px;
     -moz-appearance: textfield;
 }
 
@@ -276,20 +276,20 @@ body {
 .ton-label {
     color: #fff;
     font-weight: bold;
-    font-size: 12px; /* Уменьшил шрифт */
+    font-size: 14px;
 }
 
 .action-buttons {
     display: flex;
-    gap: 8px; /* Уменьшил расстояние */
+    gap: 10px;
 }
 
 .btn {
     flex: 1;
-    padding: 10px; /* Уменьшил паддинг */
+    padding: 12px;
     border: none;
-    border-radius: 8px; /* Уменьшил скругления */
-    font-size: 13px; /* Уменьшил шрифт */
+    border-radius: 10px;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -298,6 +298,12 @@ body {
 .btn.primary {
     background: linear-gradient(135deg, #1e5cb8, #2668b3);
     color: #fff;
+}
+
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn:hover {
@@ -312,24 +318,23 @@ body {
 .bet-info {
     display: flex;
     justify-content: space-between;
-    padding: 6px 16px; /* Уменьшил паддинг */
-    background: transparent; /* Убрал черный фон */
-    backdrop-filter: none; /* Убрал размытие */
-    margin: 5px 16px; /* Уменьшил отступы */
-    border-radius: 0; /* Убрал скругления */
-    border: none; /* Убрал границу */
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    margin: 8px 16px;
+    border-radius: 8px;
 }
 
 .bet-info-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 11px; /* Уменьшил шрифт */
+    font-size: 12px;
 }
 
 .bet-info-item span:first-child {
     color: #999;
-    margin-bottom: 2px; /* Уменьшил отступ */
+    margin-bottom: 4px;
 }
 
 .bet-info-item span:last-child {
@@ -459,7 +464,7 @@ body {
 @media (max-width: 480px) {
     .game-board {
         max-width: 100%;
-        height: 250px; /* Уменьшил высоту на мобильных */
+        aspect-ratio: 2/3;
     }
     
     .slots-container {
@@ -468,6 +473,10 @@ body {
     
     .slot {
         font-size: 10px;
-        padding: 4px 1px;
+        padding: 6px 2px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
     }
 }
