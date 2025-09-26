@@ -1464,59 +1464,55 @@ function getUserCoinStats(telegramId) {
 }
 
 // Функция обновления статистики после игры
-// Функция обновления статистики после игры
 function updateUserCoinStats(telegramId, isWin) {
     const stats = getUserCoinStats(telegramId);
     
     if (isWin) {
         stats.winStreak++;
         stats.loseStreak = 0;
-        
-        // 🔥 ИСПРАВЛЕНИЕ: Сбрасываем счетчик проигрышей при выигрыше
-        stats.drainLoseCounter = 0;
+        stats.drainLoseCounter = 0; // Сбрасываем счетчик проигрышей при выигрыше
     } else {
         stats.loseStreak++;
         stats.winStreak = 0;
         
-        // 🔥 ИСПРАВЛЕНИЕ: Увеличиваем счетчик проигрышей в режиме слива
+        // Увеличиваем счетчик проигрышей в режиме слива
         if (stats.drainMode) {
             stats.drainLoseCounter = (stats.drainLoseCounter || 0) + 1;
         }
     }
     
-    // Добавляем игру в историю (максимум 20 игр)
+    // Добавляем игру в историю
     stats.lastGames.unshift(isWin ? 'win' : 'lose');
     if (stats.lastGames.length > 20) {
         stats.lastGames.pop();
     }
     
-    // 🔥 ИСПРАВЛЕНИЕ: Активируем режим слива при серии выигрышей (3-5)
+    // Активируем режим слива при серии выигрышей (3-5)
     if (stats.winStreak >= coinPsychology.minWinStreak && 
         stats.winStreak <= coinPsychology.maxWinStreak && 
         !stats.drainMode) {
         stats.drainMode = true;
         stats.drainModeActivatedAt = stats.winStreak;
-        stats.drainLoseCounter = 0; // Сбрасываем счетчик проигрышей
+        stats.drainLoseCounter = 0;
         console.log(`💧 Активирован режим слива для пользователя ${telegramId} (серия выигрышей: ${stats.winStreak})`);
     }
     
-    // 🔥 ИСПРАВЛЕНИЕ: Деактивируем режим слива только после 6-8 проигрышей подряд в этом режиме
-    if (stats.drainMode && stats.drainLoseCounter) {
-        if (stats.drainLoseCounter >= coinPsychology.minLoseStreak && 
-            stats.drainLoseCounter <= coinPsychology.maxLoseStreak) {
-            stats.drainMode = false;
-            stats.drainModeActivatedAt = 0;
-            stats.drainLoseCounter = 0;
-            console.log(`🔄 Сброс режима слива для пользователя ${telegramId} (проигрышей в режиме: ${stats.drainLoseCounter})`);
-        }
+    // Деактивируем режим слива после 6-8 проигрышей подряд в этом режиме
+    if (stats.drainMode && stats.drainLoseCounter >= coinPsychology.minLoseStreak && 
+        stats.drainLoseCounter <= coinPsychology.maxLoseStreak) {
+        stats.drainMode = false;
+        stats.drainModeActivatedAt = 0;
+        stats.drainLoseCounter = 0;
+        console.log(`🔄 Сброс режима слива для пользователя ${telegramId} (проигрышей в режиме: ${stats.drainLoseCounter})`);
     }
 }
+
 
 // Функция определения результата с учетом режима слива
 function getCoinFlipResult(telegramId, userChoice) {
     const stats = getUserCoinStats(telegramId);
     
-    // Если активен режим слива - шанс выигрыша всего 5%
+    // 🔥 ИСПРАВЛЕНИЕ: Режим слива работает ТОЛЬКО когда активирован
     if (stats.drainMode) {
         const willWin = Math.random() * 100 < coinPsychology.drainModeWinChance;
         const result = willWin ? userChoice : (userChoice === 'heads' ? 'tails' : 'heads');
@@ -1529,10 +1525,11 @@ function getCoinFlipResult(telegramId, userChoice) {
         };
     }
     
-    // Нормальный режим - 50/50
+    // 🔥 НОРМАЛЬНЫЙ РЕЖИМ: Всегда 50/50 пока режим слива не активирован
     const result = Math.random() < 0.5 ? 'heads' : 'tails';
     const win = result === userChoice;
     
+    console.log(`🎯 Нормальный режим для ${telegramId}: выбор ${userChoice}, результат ${result}, выигрыш: ${win}`);
     return {
         result: result,
         win: win,
