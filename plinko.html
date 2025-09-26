@@ -222,190 +222,183 @@
         }
 
         // Физические константы для реалистичного Plinko
-        const PHYSICS = {
-            gravity: 0.35,      // Уменьшена гравитация для более плавного падения
-            bounce: 0.75,       // Увеличена упругость для более реалистичных отскоков
-            friction: 0.995,    // Уменьшено трение для более плавного движения
-            centerBias: 0.08,   // Уменьшено смещение к центру для естественности
-            pegRadius: 6,       // Радиус колышков
-            ballRadius: 10,     // Радиус шарика
-            minVelocity: 0.05,  // Уменьшена минимальная скорость
-            timeStep: 1/120     // Добавлен фиксированный временной шаг для стабильности
+       const PHYSICS = {
+            gravity: 0.25,      // Уменьшена гравитация для более плавного падения
+            bounce: 0.7,        // Уменьшена упругость для более мягких отскоков
+            friction: 0.995,    // Увеличено трение для быстрого затухания
+            centerBias: 0.05,   // Уменьшено смещение к центру
+            pegRadius: 6,
+            ballRadius: 10,
+            minVelocity: 0.02   // Уменьшена минимальная скорость
         };
 
         // Реалистичная физическая анимация падения шарика с улучшенной физикой
         function animateBall(finalPosition, callback) {
-            const board = document.getElementById('plinko-board');
-            const ball = document.createElement('div');
-            ball.className = 'ball';
+    const board = document.getElementById('plinko-board');
+    const ball = document.createElement('div');
+    ball.className = 'ball';
+    
+    // Получаем все колышки для столкновений
+    const pegs = Array.from(board.querySelectorAll('.peg'));
+    const pegPositions = pegs.map(peg => ({
+        x: parseFloat(peg.style.left) + PHYSICS.pegRadius,
+        y: parseFloat(peg.style.top) + PHYSICS.pegRadius,
+        element: peg
+    }));
+    
+    // Начальная позиция шарика с небольшим случайным отклонением
+    let ballState = {
+        x: board.offsetWidth / 2 + (Math.random() - 0.5) * 10,
+        y: 30,
+        vx: (Math.random() - 0.5) * 0.8, // Уменьшена начальная скорость для плавности
+        vy: 0.2, // Небольшая начальная скорость вниз
+        lastCollisionTime: 0
+    };
+    
+    ball.style.left = (ballState.x - PHYSICS.ballRadius) + 'px';
+    ball.style.top = (ballState.y - PHYSICS.ballRadius) + 'px';
+    board.appendChild(ball);
+
+    let lastTime = performance.now();
+    let isAnimating = true;
+
+    function simulate(currentTime) {
+        if (!isAnimating) return;
+        
+        const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.033); // Ограничиваем deltaTime
+        lastTime = currentTime;
+
+        // Применяем гравитацию (плавно увеличиваем скорость падения)
+        ballState.vy += PHYSICS.gravity * deltaTime * 40;
+        
+        // Применяем трение (более плавное)
+        ballState.vx *= Math.pow(0.998, deltaTime * 60);
+        ballState.vy *= Math.pow(0.998, deltaTime * 60);
+
+        // Слегка смещаем к центру для естественного движения
+        const centerX = board.offsetWidth / 2;
+        const distanceFromCenter = ballState.x - centerX;
+        ballState.vx -= distanceFromCenter * PHYSICS.centerBias * deltaTime * 0.5;
+
+        // Обновляем позицию
+        ballState.x += ballState.vx * deltaTime * 80;
+        ballState.y += ballState.vy * deltaTime * 80;
+
+        // Проверяем столкновения с колышками
+        pegPositions.forEach(peg => {
+            const dx = ballState.x - peg.x;
+            const dy = ballState.y - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Получаем все колышки для столкновений
-            const pegs = Array.from(board.querySelectorAll('.peg'));
-            const pegPositions = pegs.map(peg => ({
-                x: parseFloat(peg.style.left) + PHYSICS.pegRadius,
-                y: parseFloat(peg.style.top) + PHYSICS.pegRadius,
-                element: peg
-            }));
-            
-            // Начальная позиция шарика с небольшим случайным отклонением
-            let ballState = {
-                x: board.offsetWidth / 2 + (Math.random() - 0.5) * 15,
-                y: 40,
-                vx: (Math.random() - 0.5) * 1.5, // Уменьшена начальная скорость
-                vy: 0,
-                lastCollisionTime: 0
-            };
-            
-            ball.style.left = (ballState.x - PHYSICS.ballRadius) + 'px';
-            ball.style.top = (ballState.y - PHYSICS.ballRadius) + 'px';
-            board.appendChild(ball);
-
-            let accumulator = 0;
-            let lastTime = performance.now();
-            let bounceCount = 0;
-
-            function simulate(currentTime) {
-                const frameTime = Math.min((currentTime - lastTime) / 1000, 0.016); // Ограничиваем макс время кадра
-                lastTime = currentTime;
-                accumulator += frameTime;
-
-                // Фиксированный временной шаг для стабильной физики
-                while (accumulator >= PHYSICS.timeStep) {
-                    // Применяем гравитацию
-                    ballState.vy += PHYSICS.gravity * PHYSICS.timeStep;
-
-                    // Применяем трение
-                    ballState.vx *= Math.pow(PHYSICS.friction, PHYSICS.timeStep);
-                    ballState.vy *= Math.pow(PHYSICS.friction, PHYSICS.timeStep);
-
-                    // Смещение к центру (более мягкое)
-                    const centerX = board.offsetWidth / 2;
-                    const distanceFromCenter = ballState.x - centerX;
-                    ballState.vx -= distanceFromCenter * PHYSICS.centerBias * PHYSICS.timeStep;
-
-                    // Обновляем позицию
-                    ballState.x += ballState.vx * PHYSICS.timeStep * 60; // Нормализуем к 60 FPS
-                    ballState.y += ballState.vy * PHYSICS.timeStep * 60;
-
-                    // Проверяем столкновения с колышками (с защитой от повторных столкновений)
-                    pegPositions.forEach(peg => {
-                        const dx = ballState.x - peg.x;
-                        const dy = ballState.y - peg.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < PHYSICS.pegRadius + PHYSICS.ballRadius && 
-                            currentTime - ballState.lastCollisionTime > 50) { // Минимум 50мс между столкновениями
-                            
-                            bounceCount++;
-                            ballState.lastCollisionTime = currentTime;
-                            
-                            // Нормализуем вектор столкновения
-                            const normalX = dx / distance;
-                            const normalY = dy / distance;
-                            
-                            // Вычисляем скорость столкновения
-                            const velocityDotNormal = ballState.vx * normalX + ballState.vy * normalY;
-                            
-                            // Отражаем только если движемся к колышку
-                            if (velocityDotNormal < 0) {
-                                ballState.vx -= 2 * velocityDotNormal * normalX * PHYSICS.bounce;
-                                ballState.vy -= 2 * velocityDotNormal * normalY * PHYSICS.bounce;
-                                
-                                // Отодвигаем шарик от колышка
-                                const overlap = (PHYSICS.pegRadius + PHYSICS.ballRadius) - distance + 2;
-                                ballState.x += normalX * overlap;
-                                ballState.y += normalY * overlap;
-
-                                // Эффект анимации колышка
-                                peg.element.classList.add('hit');
-                                peg.element.style.boxShadow = '0 0 20px rgba(0, 255, 100, 1)';
-                                setTimeout(() => {
-                                    peg.element.classList.remove('hit');
-                                    peg.element.style.boxShadow = '0 0 8px rgba(0, 200, 81, 0.7)';
-                                }, 200);
-
-                                // Добавляем небольшую случайность для реализма
-                                ballState.vx += (Math.random() - 0.5) * 0.3;
-                                ballState.vy += (Math.random() - 0.5) * 0.2;
-                            }
-                        }
-                    });
-
-                    // Проверяем границы поля с отскоком
-                    if (ballState.x <= PHYSICS.ballRadius) {
-                        ballState.x = PHYSICS.ballRadius;
-                        ballState.vx = Math.abs(ballState.vx) * PHYSICS.bounce;
-                    }
-                    if (ballState.x >= board.offsetWidth - PHYSICS.ballRadius) {
-                        ballState.x = board.offsetWidth - PHYSICS.ballRadius;
-                        ballState.vx = -Math.abs(ballState.vx) * PHYSICS.bounce;
-                    }
-
-                    accumulator -= PHYSICS.timeStep;
-                }
-
-                // Плавная интерполяция для визуала
-                ball.style.left = (ballState.x - PHYSICS.ballRadius) + 'px';
-                ball.style.top = (ballState.y - PHYSICS.ballRadius) + 'px';
-
-                // Проверяем завершение
-                const atBottom = ballState.y >= board.offsetHeight - 60;
-                const movingSlowly = Math.abs(ballState.vx) < PHYSICS.minVelocity && Math.abs(ballState.vy) < PHYSICS.minVelocity;
-                const timeLimit = (currentTime - performance.now()) > 12000; // Максимум 12 секунд
+            // Минимальное время между столкновениями увеличено для плавности
+            if (distance < PHYSICS.pegRadius + PHYSICS.ballRadius && 
+                currentTime - ballState.lastCollisionTime > 80) {
                 
-                if (atBottom || movingSlowly || timeLimit) {
-                    // Определяем финальную позицию на основе X координаты
-                    const multipliers = document.querySelectorAll('.multiplier');
-                    const slotWidth = board.offsetWidth / multipliers.length;
-                    let calculatedPosition = Math.floor(ballState.x / slotWidth);
-                    calculatedPosition = Math.max(0, Math.min(calculatedPosition, multipliers.length - 1));
+                ballState.lastCollisionTime = currentTime;
+                
+                // Нормализуем вектор столкновения
+                const normalX = dx / distance;
+                const normalY = dy / distance;
+                
+                // Вычисляем скорость относительно нормали
+                const velocityDotNormal = ballState.vx * normalX + ballState.vy * normalY;
+                
+                // Отражаем только если движемся к колышку
+                if (velocityDotNormal < 0) {
+                    // Более плавное отражение
+                    ballState.vx -= 1.8 * velocityDotNormal * normalX * PHYSICS.bounce;
+                    ballState.vy -= 1.8 * velocityDotNormal * normalY * PHYSICS.bounce;
                     
-                    // Плавная анимация к финальной позиции
-                    const targetX = (calculatedPosition + 0.5) * slotWidth;
-                    const targetY = board.offsetHeight - 50;
-                    
-                    let animationProgress = 0;
-                    const animationDuration = 1000; // 1 секунда
-                    const startX = ballState.x;
-                    const startY = ballState.y;
-                    const startTime = performance.now();
-                    
-                    function finalSlide(time) {
-                        const elapsed = time - startTime;
-                        animationProgress = Math.min(elapsed / animationDuration, 1);
-                        
-                        // Easing функция для плавности
-                        const easeOut = 1 - Math.pow(1 - animationProgress, 3);
-                        
-                        const currentX = startX + (targetX - startX) * easeOut;
-                        const currentY = startY + (targetY - startY) * easeOut;
-                        
-                        ball.style.left = (currentX - PHYSICS.ballRadius) + 'px';
-                        ball.style.top = (currentY - PHYSICS.ballRadius) + 'px';
-                        
-                        if (animationProgress < 1) {
-                            requestAnimationFrame(finalSlide);
-                        } else {
-                            // Завершение анимации
-                            if (callback) callback();
-                            setTimeout(() => {
-                                ball.remove();
-                            }, 2000);
-                        }
-                    }
-                    
-                    requestAnimationFrame(finalSlide);
-                    return;
+                    // Отодвигаем шарик от колышка
+                    const overlap = (PHYSICS.pegRadius + PHYSICS.ballRadius) - distance + 1;
+                    ballState.x += normalX * overlap * 0.7;
+                    ballState.y += normalY * overlap * 0.7;
+
+                    // Уменьшаем эффект анимации колышка для плавности
+                    peg.element.classList.add('hit');
+                    setTimeout(() => {
+                        peg.element.classList.remove('hit');
+                    }, 150);
+
+                    // Минимальная случайность для естественности
+                    ballState.vx += (Math.random() - 0.5) * 0.15;
+                    ballState.vy += (Math.random() - 0.5) * 0.1;
                 }
-
-                // Продолжаем симуляцию
-                requestAnimationFrame(simulate);
             }
+        });
 
-            // Запускаем симуляцию
-            requestAnimationFrame(simulate);
+        // Проверяем границы поля с мягким отскоком
+        if (ballState.x <= PHYSICS.ballRadius) {
+            ballState.x = PHYSICS.ballRadius;
+            ballState.vx = Math.abs(ballState.vx) * 0.8;
+        }
+        if (ballState.x >= board.offsetWidth - PHYSICS.ballRadius) {
+            ballState.x = board.offsetWidth - PHYSICS.ballRadius;
+            ballState.vx = -Math.abs(ballState.vx) * 0.8;
         }
 
+        // Обновляем позицию шарика
+        ball.style.left = (ballState.x - PHYSICS.ballRadius) + 'px';
+        ball.style.top = (ballState.y - PHYSICS.ballRadius) + 'px';
+
+        // Проверяем завершение (когда шарик достиг нижней части)
+        const atBottom = ballState.y >= board.offsetHeight - 50;
+        const movingSlowly = Math.abs(ballState.vy) < 0.3 && ballState.y > board.offsetHeight * 0.7;
+        
+        if (atBottom || movingSlowly) {
+            isAnimating = false;
+            
+            // Плавное завершение анимации
+            const multipliers = document.querySelectorAll('.multiplier');
+            const slotWidth = board.offsetWidth / multipliers.length;
+            let calculatedPosition = Math.floor(ballState.x / slotWidth);
+            calculatedPosition = Math.max(0, Math.min(calculatedPosition, multipliers.length - 1));
+            
+            // Мягкая финальная анимация к слоту
+            const targetX = (calculatedPosition + 0.5) * slotWidth;
+            const targetY = board.offsetHeight - 30;
+            
+            let animationProgress = 0;
+            const animationDuration = 600; // Укорочена анимация
+            const startX = ballState.x;
+            const startY = ballState.y;
+            const startTime = performance.now();
+            
+            function finalSlide(time) {
+                const elapsed = time - startTime;
+                animationProgress = Math.min(elapsed / animationDuration, 1);
+                
+                // Плавное easing
+                const easeOut = 1 - Math.pow(1 - animationProgress, 2);
+                
+                const currentX = startX + (targetX - startX) * easeOut;
+                const currentY = startY + (targetY - startY) * easeOut;
+                
+                ball.style.left = (currentX - PHYSICS.ballRadius) + 'px';
+                ball.style.top = (currentY - PHYSICS.ballRadius) + 'px';
+                
+                if (animationProgress < 1) {
+                    requestAnimationFrame(finalSlide);
+                } else {
+                    // Завершение анимации
+                    if (callback) callback(calculatedPosition);
+                    setTimeout(() => {
+                        ball.remove();
+                    }, 1500);
+                }
+            }
+            
+            requestAnimationFrame(finalSlide);
+            return;
+        }
+
+        // Продолжаем симуляцию
+        requestAnimationFrame(simulate);
+    }
+
+    // Запускаем симуляцию
+    requestAnimationFrame(simulate);
+}
         // Показать результат с улучшенными анимациями
         function showResult(position) {
             const multipliers = {
