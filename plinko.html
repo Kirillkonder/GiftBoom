@@ -1,688 +1,79 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plinko Game</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Plinko Casino</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap">
     <link rel="stylesheet" href="css/plinko.css">
 </head>
 <body>
-    <!-- Верхняя панель -->
-    <div class="top-panel">
-        <div class="close-btn" onclick="goBack()">
-            <span>← Назад</span>
-        </div>
-        <div class="top-right">
-            <div class="balance">
-                <i class="bi bi-currency-exchange"></i>
-                <span id="balance">0.00</span>
-                <button class="balance-plus-btn" onclick="openDepositModal()">
-                    <i class="bi bi-plus"></i>
-                </button>
-            </div>
-            <div id="demo-badge">DEMO</div>
-        </div>
-    </div>
-
-    <!-- Основной контент -->
     <div class="game-container">
-        <!-- Панель управления -->
-        <div class="control-panel">
-            <div class="bet-controls">
-                <div class="input-group">
-                    <label for="bet-amount">Ставка (TON):</label>
-                    <input type="number" id="bet-amount" value="1.00" min="0.1" max="100" step="0.1">
+        <header class="game-header">
+            <div class="stats-container">
+                <div class="money-display">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value">$<span id="money">3000</span></div>
                 </div>
-                
-                <div class="rows-selector">
-                    <label>Ряды:</label>
-                    <div class="row-buttons">
-                        <button class="row-btn active" data-rows="8">8</button>
-                        <button class="row-btn" data-rows="12">12</button>
-                        <button class="row-btn" data-rows="16">16</button>
+                <div class="bet-display">
+                    <div class="stat-label">Current Bet</div>
+                    <div class="stat-value">$<span id="currentBet">0</span></div>
+                </div>
+                <div class="win-display">
+                    <div class="stat-label">Last Win</div>
+                    <div class="stat-value">$<span id="lastWin">0</span></div>
+                </div>
+            </div>
+            <div class="betting-controls">
+                <div class="bet-input-group">
+                    <button class="btn bet-btn" data-bet="1">$1</button>
+                    <button class="btn bet-btn" data-bet="5">$5</button>
+                    <button class="btn bet-btn" data-bet="10">$10</button>
+                    <button class="btn bet-btn" data-bet="25">$25</button>
+                    <button class="btn bet-btn" data-bet="50">$50</button>
+                    <button class="btn bet-btn" data-bet="100">$100</button>
+                    <button class="btn bet-btn" data-percent="25">25% SALDA</button>
+                    <button class="btn bet-btn" data-percent="50">50% SALDA</button>
+                    <button class="btn bet-btn" data-percent="100">ALL IN</button>
+                    <div class="custom-bet-wrapper">
+                        <input type="number" id="customBet" class="custom-bet-input" placeholder="Custom bet" min="0" step="1">
+                        <button class="btn bet-btn custom-bet-btn">SET</button>
                     </div>
                 </div>
-                
-                <button class="play-btn" onclick="startPlinkoGame()">
-                    <i class="bi bi-play-fill"></i>
-                    Играть
-                </button>
+                <div class="action-buttons">
+                    <button id="dropBall" class="btn primary glow-effect">DROP BALL</button>
+                    <button id="resetGame" class="btn secondary">NEW GAME</button>
+                    <button id="toggleSound" class="btn sound-btn" aria-label="Toggle Sound">🔊</button>
+                </div>
             </div>
-        </div>
+        </header>
 
-        <!-- Поле Plinko -->
-        <div class="plinko-container">
-            <div class="plinko-board" id="plinko-board">
-                <!-- Колышки будут созданы через JavaScript -->
+        <div class="game-board-container">
+            <div class="game-board">
+                <div id="dropZone" class="drop-zone">
+                </div>
+                <canvas id="gameCanvas"></canvas>
             </div>
             
-            <!-- Множители -->
-            <div class="multipliers" id="multipliers">
-                <!-- Множители будут загружены динамически -->
+            <div id="slots" class="slots-container">
+                <div class="slot" data-value="0.2">0.2x</div>
+                <div class="slot" data-value="0.5">0.5x</div>
+                <div class="slot" data-value="1">1x</div>
+                <div class="slot" data-value="3">3x</div>
+                <div class="slot" data-value="1">1x</div>
+                <div class="slot" data-value="0.5">0.5x</div>
+                <div class="slot" data-value="0.2">0.2x</div>
             </div>
         </div>
 
-        <!-- Результат -->
-        <div class="result-panel" id="result-panel">
-            <div class="result-content">
-                <span id="result-text">Результат появится здесь</span>
-                <span id="result-multiplier" class="multiplier-badge">1.00x</span>
+        <div id="messageOverlay" class="message-overlay hidden">
+            <div class="message-content">
+                <h2 id="messageText"></h2>
+                <button id="messageClose" class="btn primary">Kontynnuj</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно пополнения баланса -->
-    <div id="deposit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>💰 Пополнить баланс</h3>
-                <span class="close" onclick="closeDepositModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="deposit-info">
-                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
-                </div>
-                <div class="input-group">
-                    <label for="deposit-amount">Сумма (TON):</label>
-                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
-                </div>
-                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let currentUser = null;
-        let isDemoMode = false;
-        let currentGameId = null;
-        let currentRows = 8;
-        let ballAnimation = null;
-        let isGameActive = false;
-
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeGame();
-            createPegs();
-            loadMultipliers();
-            setupEventListeners();
-        });
-
-        function goBack() {
-            window.location.href = 'index.html';
-        }
-
-        function setupEventListeners() {
-            // Выбор количества рядов
-            document.querySelectorAll('.row-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.row-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentRows = parseInt(this.dataset.rows);
-                    loadMultipliers();
-                    createPegs();
-                });
-            });
-
-            // Валидация ставки
-            document.getElementById('bet-amount').addEventListener('change', function() {
-                let value = parseFloat(this.value);
-                if (value < 0.1) value = 0.1;
-                if (value > 100) value = 100;
-                this.value = value.toFixed(2);
-            });
-        }
-
-        // Загрузка множителей (обновленные для соответствия серверу)
-        function loadMultipliers() {
-            const multipliersContainer = document.getElementById('multipliers');
-            multipliersContainer.innerHTML = '';
-            
-            const multipliers = {
-                8: [5.8, 2.2, 1.1, 0.4, 0.4, 1.1, 2.2, 5.8], // 8 позиций
-                12: [26.0, 9.0, 4.0, 2.0, 0.5, 0.5, 2.0, 4.0, 9.0, 26.0], // 10 позиций
-                16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0] // 12 позиций
-            }[currentRows];
-
-            multipliers.forEach((multiplier, index) => {
-                const multiplierEl = document.createElement('div');
-                multiplierEl.className = 'multiplier';
-                
-                // Добавляем специальные стили для центральных множителей
-                const isCenter = multiplier <= 1.0;
-                if (isCenter) {
-                    multiplierEl.classList.add('center-multiplier');
-                }
-                
-                multiplierEl.textContent = multiplier + 'x';
-                multiplierEl.dataset.position = index;
-                multipliersContainer.appendChild(multiplierEl);
-            });
-        }
-
-        // Создание колышков с улучшенным расположением для реалистичной физики
-        function createPegs() {
-            const board = document.getElementById('plinko-board');
-            board.innerHTML = '';
-            
-            const rows = currentRows;
-            const boardWidth = board.offsetWidth;
-            const boardHeight = board.offsetHeight;
-            
-            // Улучшенные расчеты для увеличенного поля
-            const pegSpacing = Math.min(45, boardWidth / (rows + 1.5)); // Увеличено расстояние
-            const rowSpacing = Math.min(50, (boardHeight - 120) / rows); // Увеличено вертикальное расстояние
-            const startY = 100; // Больше отступ сверху
-            
-            for (let row = 1; row <= rows; row++) {
-                const pegsInRow = row + 1;
-                const rowWidth = (pegsInRow - 1) * pegSpacing;
-                const startX = (boardWidth - rowWidth) / 2;
-                
-                for (let col = 0; col < pegsInRow; col++) {
-                    const peg = document.createElement('div');
-                    peg.className = 'peg';
-                    
-                    // Точные координаты с небольшими случайными отклонениями для реализма
-                    const x = startX + col * pegSpacing + (Math.random() - 0.5) * 3;
-                    const y = startY + (row - 1) * rowSpacing + (Math.random() - 0.5) * 2;
-                    
-                    peg.style.left = x + 'px';
-                    peg.style.top = y + 'px';
-                    
-                    // Добавляем data-атрибуты для отладки
-                    peg.dataset.row = row;
-                    peg.dataset.col = col;
-                    
-                    board.appendChild(peg);
-                }
-            }
-            
-            // Добавляем направляющие стенки по бокам (невидимые для физики)
-            const leftWall = document.createElement('div');
-            leftWall.className = 'wall';
-            leftWall.style.left = '0px';
-            leftWall.style.top = '0px';
-            leftWall.style.width = '2px';
-            leftWall.style.height = '100%';
-            leftWall.style.position = 'absolute';
-            leftWall.style.background = 'transparent';
-            board.appendChild(leftWall);
-            
-            const rightWall = document.createElement('div');
-            rightWall.className = 'wall';
-            rightWall.style.right = '0px';
-            rightWall.style.top = '0px';
-            rightWall.style.width = '2px';
-            rightWall.style.height = '100%';
-            rightWall.style.position = 'absolute';
-            rightWall.style.background = 'transparent';
-            board.appendChild(rightWall);
-        }
-
-        // Физические константы для реалистичного Plinko
-       const PHYSICS = {
-            gravity: 0.25,
-            bounce: 0.7,
-            friction: 0.995,
-            centerBias: 0.05,
-            pegRadius: 6,
-            ballRadius: 10,
-            minVelocity: 0.02
-        };
-
-        // Реалистичная физическая анимация падения шарика с улучшенной физикой
-   function animateBall(finalPosition, callback) {
-    const board = document.getElementById('plinko-board');
-    const ball = document.createElement('div');
-    ball.className = 'ball';
-    
-    // Получаем все колышки для столкновений
-    const pegs = Array.from(board.querySelectorAll('.peg'));
-    const pegPositions = pegs.map(peg => ({
-        x: parseFloat(peg.style.left) + PHYSICS.pegRadius,
-        y: parseFloat(peg.style.top) + PHYSICS.pegRadius,
-        element: peg
-    }));
-    
-    // Начальная позиция шарика с небольшим случайным отклонением
-    let ballState = {
-        x: board.offsetWidth / 2 + (Math.random() - 0.5) * 10,
-        y: 30,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: 0.2,
-        lastCollisionTime: 0
-    };
-    
-    ball.style.left = (ballState.x - PHYSICS.ballRadius) + 'px';
-    ball.style.top = (ballState.y - PHYSICS.ballRadius) + 'px';
-    board.appendChild(ball);
-
-    let lastTime = performance.now();
-    let isAnimating = true;
-
-     function simulate(currentTime) {
-        if (!isAnimating) return;
-        
-        const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.033);
-        lastTime = currentTime;
-
-        // Применяем гравитацию
-        ballState.vy += PHYSICS.gravity * deltaTime * 40;
-        
-        // Применяем трение
-        ballState.vx *= Math.pow(0.998, deltaTime * 60);
-        ballState.vy *= Math.pow(0.998, deltaTime * 60);
-
-        // Слегка смещаем к центру
-        const centerX = board.offsetWidth / 2;
-        const distanceFromCenter = ballState.x - centerX;
-        ballState.vx -= distanceFromCenter * PHYSICS.centerBias * deltaTime * 0.5;
-
-        // Обновляем позицию
-        ballState.x += ballState.vx * deltaTime * 80;
-        ballState.y += ballState.vy * deltaTime * 80;
-
-        // Проверяем столкновения с колышками
-        pegPositions.forEach(peg => {
-            const dx = ballState.x - peg.x;
-            const dy = ballState.y - peg.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < PHYSICS.pegRadius + PHYSICS.ballRadius && 
-                currentTime - ballState.lastCollisionTime > 80) {
-                
-                ballState.lastCollisionTime = currentTime;
-                
-                const normalX = dx / distance;
-                const normalY = dy / distance;
-                const velocityDotNormal = ballState.vx * normalX + ballState.vy * normalY;
-                
-                if (velocityDotNormal < 0) {
-                    ballState.vx -= 1.8 * velocityDotNormal * normalX * PHYSICS.bounce;
-                    ballState.vy -= 1.8 * velocityDotNormal * normalY * PHYSICS.bounce;
-                    
-                    const overlap = (PHYSICS.pegRadius + PHYSICS.ballRadius) - distance + 1;
-                    ballState.x += normalX * overlap * 0.7;
-                    ballState.y += normalY * overlap * 0.7;
-
-                    peg.element.classList.add('hit');
-                    setTimeout(() => {
-                        peg.element.classList.remove('hit');
-                    }, 150);
-
-                    ballState.vx += (Math.random() - 0.5) * 0.15;
-                    ballState.vy += (Math.random() - 0.5) * 0.1;
-                }
-            }
-        });
-
-        // Проверяем границы поля
-        if (ballState.x <= PHYSICS.ballRadius) {
-            ballState.x = PHYSICS.ballRadius;
-            ballState.vx = Math.abs(ballState.vx) * 0.8;
-        }
-        if (ballState.x >= board.offsetWidth - PHYSICS.ballRadius) {
-            ballState.x = board.offsetWidth - PHYSICS.ballRadius;
-            ballState.vx = -Math.abs(ballState.vx) * 0.8;
-        }
-
-        ball.style.left = (ballState.x - PHYSICS.ballRadius) + 'px';
-        ball.style.top = (ballState.y - PHYSICS.ballRadius) + 'px';
-
-        // Проверяем завершение (когда шарик достиг нижней части)
-        const atBottom = ballState.y >= board.offsetHeight - 50;
-        const movingSlowly = Math.abs(ballState.vy) < 0.3 && ballState.y > board.offsetHeight * 0.7;
-        
-        if (atBottom || movingSlowly) {
-            isAnimating = false;
-            
-            // Определяем реальную позицию падения на основе X координаты
-            const multipliers = document.querySelectorAll('.multiplier');
-            const slotWidth = board.offsetWidth / multipliers.length;
-            let calculatedPosition = Math.floor(ballState.x / slotWidth);
-            calculatedPosition = Math.max(0, Math.min(calculatedPosition, multipliers.length - 1));
-            
-            console.log('Шарик упал на позицию:', calculatedPosition, 'X координата:', ballState.x);
-            
-            // Мягкая финальная анимация к реальному слоту
-            const targetX = (calculatedPosition + 0.5) * slotWidth;
-            const targetY = board.offsetHeight - 30;
-            
-            let animationProgress = 0;
-            const animationDuration = 600;
-            const startX = ballState.x;
-            const startY = ballState.y;
-            const startTime = performance.now();
-            
-             function finalSlide(time) {
-                const elapsed = time - startTime;
-                animationProgress = Math.min(elapsed / animationDuration, 1);
-                
-                const easeOut = 1 - Math.pow(1 - animationProgress, 2);
-                const currentX = startX + (targetX - startX) * easeOut;
-                const currentY = startY + (targetY - startY) * easeOut;
-                
-                ball.style.left = (currentX - PHYSICS.ballRadius) + 'px';
-                ball.style.top = (currentY - PHYSICS.ballRadius) + 'px';
-                
-                if (animationProgress < 1) {
-                    requestAnimationFrame(finalSlide);
-                } else {
-                    // Показываем результат на РЕАЛЬНОЙ позиции шарика
-                    if (callback) callback(calculatedPosition);
-                    
-                    // Анимация подсветки множителя и исчезновения шарика
-                    setTimeout(() => {
-                        // Шарик плавно исчезает
-                        ball.style.transition = 'all 0.5s ease';
-                        ball.style.opacity = '0';
-                        ball.style.transform = 'scale(0.5)';
-                        
-                        setTimeout(() => {
-                            ball.remove();
-                        }, 500);
-                    }, 1000);
-                }
-            }
-            
-            requestAnimationFrame(finalSlide);
-            return;
-        }
-
-        requestAnimationFrame(simulate);
-    }
-
-    requestAnimationFrame(simulate);
-}
-
-        // Показать результат с улучшенными анимациями
-        function showResult(position) {
-    const multipliers = {
-        8: [5.8, 2.2, 1.1, 0.4, 0.4, 1.1, 2.2, 5.8],
-        12: [26.0, 9.0, 4.0, 2.0, 0.5, 0.5, 2.0, 4.0, 9.0, 26.0],
-        16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0]
-    }[currentRows];
-
-    const multiplier = multipliers[position];
-    const resultPanel = document.getElementById('result-panel');
-    const resultText = document.getElementById('result-text');
-    const resultMultiplier = document.getElementById('result-multiplier');
-
-    // Подсвечиваем РЕАЛЬНЫЙ слот, куда упал шарик
-    const multiplierElements = document.querySelectorAll('.multiplier');
-    multiplierElements.forEach((el, index) => {
-        el.classList.remove('winner', 'active');
-        if (index === position) {
-            el.classList.add('winner');
-            
-            // Яркая анимация подсветки
-            setTimeout(() => {
-                el.classList.add('active');
-                el.style.animation = 'winner-pulse 1s ease-in-out infinite';
-            }, 100);
-        }
-    });
-
-    const isWin = multiplier >= 1;
-    resultText.textContent = isWin ? 
-        `🎉 Поздравляем! Выигрыш ${multiplier.toFixed(1)}x!` : 
-        `💸 Множитель ${multiplier.toFixed(1)}x. Попробуйте снова!`;
-    
-    resultMultiplier.textContent = multiplier.toFixed(1) + 'x';
-    resultMultiplier.className = isWin ? 'multiplier-badge win' : 'multiplier-badge lose';
-
-    // Анимируем появление результата
-    resultPanel.style.display = 'block';
-    resultPanel.style.opacity = '0';
-    resultPanel.style.transform = 'translateY(-20px)';
-    
-    setTimeout(() => {
-        resultPanel.style.transition = 'all 0.5s ease';
-        resultPanel.style.opacity = '1';
-        resultPanel.style.transform = 'translateY(0)';
-    }, 100);
-
-    // Автоматически скрываем через 5 секунд
-    setTimeout(() => {
-        resultPanel.style.opacity = '0';
-        setTimeout(() => {
-            resultPanel.style.display = 'none';
-            multiplierElements.forEach(el => {
-                el.classList.remove('winner', 'active');
-                el.style.animation = '';
-            });
-        }, 500);
-    }, 5000);
-}
-
-        // Начать игру (упрощенная версия)
-       async function startPlinkoGame() {
-    if (!currentUser) {
-        alert('Пользователь не найден');
-        return;
-    }
-
-    const betAmount = parseFloat(document.getElementById('bet-amount').value);
-
-    try {
-        // Начинаем игру
-        const response = await fetch('/api/plinko/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                telegramId: currentUser.id,
-                betAmount: betAmount,
-                rows: currentRows,
-                demoMode: isDemoMode
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            currentGameId = result.game_id;
-            document.getElementById('balance').textContent = result.new_balance.toFixed(2);
-
-            // Запускаем шарик - НЕ ЖДЕМ ответа от сервера для множителя
-            // Вместо этого используем реальную позицию падения шарика
-            animateBall(null, async (realPosition) => {
-                console.log('Шарик упал на позицию:', realPosition);
-                
-                // Теперь отправляем запрос с РЕАЛЬНОЙ позицией
-                const dropResponse = await fetch('/api/plinko/drop', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        gameId: currentGameId,
-                        telegramId: currentUser.id,
-                        finalPosition: realPosition // Отправляем реальную позицию
-                    })
-                });
-
-                const dropResult = await dropResponse.json();
-
-                if (dropResult.success) {
-                    // Показываем результат на основе РЕАЛЬНОЙ позиции
-                    showResult(realPosition);
-                    document.getElementById('balance').textContent = dropResult.new_balance.toFixed(2);
-                } else {
-                    alert('Ошибка: ' + dropResult.error);
-                }
-            });
-            
-        } else {
-            alert('Ошибка: ' + result.error);
-        }
-    } catch (error) {
-        console.error('Game error:', error);
-        alert('Ошибка при запуске игры');
-    }
-}
-
-        // Остальные функции без изменений
-        function initializeGame() {
-            const tg = window.Telegram.WebApp;
-            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                currentUser = {
-                    id: tg.initDataUnsafe.user.id,
-                    username: tg.initDataUnsafe.user.username || `User_${tg.initDataUnsafe.user.id}`,
-                    firstName: tg.initDataUnsafe.user.first_name,
-                    lastName: tg.initDataUnsafe.user.last_name
-                };
-                loadUserData();
-            } else {
-                currentUser = {
-                    id: 123456,
-                    username: 'TestUser',
-                    firstName: 'Test',
-                    lastName: 'User'
-                };
-                loadUserData();
-            }
-        }
-
-        async function loadUserData() {
-            try {
-                const response = await fetch(`/api/user/balance/${currentUser.id}`);
-                if (response.ok) {
-                    const userData = await response.json();
-                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
-                    document.getElementById('balance').textContent = balance.toFixed(2);
-                    isDemoMode = userData.demo_mode;
-                    document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
-                    
-                    const depositInfo = document.getElementById('deposit-mode-info');
-                    depositInfo.textContent = isDemoMode ? 
-                        'Демо-пополнение (тестовый режим)' : 
-                        'Пополнение через Crypto Pay';
-                }
-            } catch (error) {
-                console.error('Error loading user data:', error);
-            }
-        }
-
-        function openDepositModal() {
-            document.getElementById('deposit-modal').style.display = 'block';
-        }
-
-        function closeDepositModal() {
-            document.getElementById('deposit-modal').style.display = 'none';
-            document.getElementById('deposit-amount').value = '';
-        }
-
-        async function processDeposit() {
-            const amount = parseFloat(document.getElementById('deposit-amount').value);
-            
-            if (!amount || amount < 1) {
-                alert('Минимальный депозит: 1 TON');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegramId: currentUser.id,
-                        amount: amount,
-                        demoMode: isDemoMode
-                    })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    if (isDemoMode) {
-                        await loadUserData();
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "✅ Демо-пополнение",
-                                message: `Демо-депозит ${amount} TON успешно зачислен!`,
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert(`Демо-депозит ${amount} TON успешно зачислен!`);
-                        }
-                    } else {
-                        window.open(result.invoice_url, '_blank');
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "Оплата TON",
-                                message: `Откройте Crypto Bot для оплаты ${amount} TON`,
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert(`Откройте Crypto Bot для оплаты ${amount} TON`);
-                        }
-                        checkDepositStatus(result.invoice_id);
-                    }
-                    
-                    closeDepositModal();
-                } else {
-                    alert('Ошибка при создании депозита: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Deposit error:', error);
-                alert('Ошибка при создании депозита');
-            }
-        }
-
-        async function checkDepositStatus(invoiceId) {
-            const checkInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/api/check-invoice', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            invoiceId: invoiceId,
-                            demoMode: isDemoMode
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.status === 'paid') {
-                        clearInterval(checkInterval);
-                        await loadUserData();
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "✅ Успешно",
-                                message: 'Депозит успешно зачислен!',
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert('Депозит успешно зачислен!');
-                        }
-                    } else if (result.status === 'expired' || result.status === 'cancelled') {
-                        clearInterval(checkInterval);
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.showPopup({
-                                title: "❌ Ошибка",
-                                message: 'Платеж отменен или просрочен',
-                                buttons: [{ type: "ok" }]
-                            });
-                        } else {
-                            alert('Платеж отменен или просрочен');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Status check error:', error);
-                }
-            }, 5000);
-        }
-
-        window.onclick = function(event) {
-            const depositModal = document.getElementById('deposit-modal');
-            if (event.target === depositModal) {
-                closeDepositModal();
-            }
-        }
-
-        window.addEventListener('resize', function() {
-            createPegs();
-        });
-    </script>
+    <script src="js/plinko.js"></script>
 </body>
-</html>
+</html> 
