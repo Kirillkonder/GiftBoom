@@ -16,7 +16,7 @@ body {
     min-height: 100vh;
 }
 
-/* Глобальный фон-сетка и пульсация через псевдоэлементы */
+/* Глобальный фон-сетка и пульсация */
 body::before {
     content: '';
     position: fixed;
@@ -83,7 +83,6 @@ body::after {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    gap: 20px;
 }
 
 /* Верхняя панель */
@@ -192,162 +191,87 @@ body::after {
     font-size: 10px;
 }
 
-/* Панель ставок */
-.bet-panel {
-    background: rgba(30, 30, 60, 0.8);
+/* Панель управления */
+.control-panel {
+    width: 100%;
+    padding: 15px;
+    background: rgba(30, 30, 60, 0.7);
     border-radius: 15px;
-    padding: 20px;
-    width: 90%;
-    max-width: 500px;
+    margin-bottom: 15px;
     border: 2px solid rgba(30, 92, 184, 0.5);
-    box-shadow: 0 0 20px rgba(30, 92, 184, 0.3);
 }
 
 .bet-controls {
-    margin-bottom: 15px;
-}
-
-.bet-input-group {
-    margin-bottom: 10px;
-}
-
-.bet-input-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #fff;
-    font-size: 14px;
-}
-
-.input-with-buttons {
     display: flex;
-    gap: 10px;
-    align-items: center;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.bet-step-btn {
-    background: rgba(30, 92, 184, 0.8);
-    border: none;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 12px;
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
-.bet-step-btn:hover {
-    background: rgba(30, 92, 184, 1);
-    transform: scale(1.05);
+.input-group label {
+    font-size: 14px;
+    color: #ccc;
+    font-weight: 500;
 }
 
-.bet-step-btn:active {
-    transform: scale(0.95);
-}
-
-#bet-amount {
-    flex: 1;
+.input-group input {
     padding: 10px;
     border: 1px solid #333;
     border-radius: 8px;
     background: #1a1a1a;
-    color: white;
-    text-align: center;
+    color: #fff;
     font-size: 16px;
+    text-align: center;
 }
 
-.quick-bets {
+.rows-selector {
     display: flex;
+    flex-direction: column;
     gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
 }
 
-.quick-bet-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 12px;
-}
-
-.quick-bet-btn:hover {
-    background: rgba(30, 92, 184, 0.5);
-    transform: scale(1.05);
-}
-
-.quick-bet-btn:active {
-    transform: scale(0.95);
-}
-
-.mode-switcher {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    justify-content: center;
-}
-
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 24px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #00c851;
-}
-
-input:checked + .slider:before {
-    transform: translateX(26px);
-}
-
-.mode-label {
-    color: white;
+.rows-selector label {
     font-size: 14px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.row-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.row-btn {
+    flex: 1;
+    padding: 8px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.row-btn.active {
+    border-color: #00c851;
+    background: rgba(0, 200, 81, 0.2);
+    color: #00c851;
 }
 
 .play-btn {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #00c851, #32cd32);
+    padding: 12px;
     border: none;
     border-radius: 10px;
+    background: linear-gradient(135deg, #00c851, #32cd32);
     color: #000;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -362,146 +286,111 @@ input:checked + .slider:before {
     box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
 }
 
-.play-btn:active:not(:disabled) {
-    transform: translateY(0);
-}
-
 .play-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
-/* Контейнер Plinko */
+/* Поле Plinko */
 .plinko-container {
-    width: 90%;
+    width: 100%;
     max-width: 500px;
-    margin: 0 auto;
+    position: relative;
+    margin-bottom: 15px;
 }
 
 .plinko-board {
-    position: relative;
     width: 100%;
     height: 400px;
     background: rgba(20, 20, 40, 0.8);
-    border: 2px solid rgba(30, 92, 184, 0.5);
+    border: 3px solid rgba(30, 92, 184, 0.7);
     border-radius: 15px;
+    position: relative;
     overflow: hidden;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
-/* Колышки */
 .peg {
     position: absolute;
     width: 8px;
     height: 8px;
-    background: rgba(30, 92, 184, 0.8);
+    background: #00c851;
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 5px rgba(30, 92, 184, 0.5);
+    box-shadow: 0 0 5px rgba(0, 200, 81, 0.5);
 }
 
-/* Шарик */
 .ball {
     position: absolute;
     width: 20px;
     height: 20px;
-    background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000);
+    background: radial-gradient(circle at 30% 30%, #fff, #00c851);
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
     z-index: 10;
-    transition: transform 0.1s ease;
+    transition: all 0.1s ease;
 }
 
-/* Множители */
 .multipliers {
     display: flex;
     justify-content: space-between;
     width: 100%;
+    padding: 0 10px;
 }
 
 .multiplier {
     flex: 1;
     text-align: center;
-    padding: 10px 5px;
+    padding: 8px 5px;
     background: rgba(30, 30, 60, 0.8);
-    border: 1px solid rgba(30, 92, 184, 0.3);
-    border-radius: 8px;
-    margin: 0 2px;
+    border: 1px solid rgba(30, 92, 184, 0.5);
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-.multiplier.active {
-    background: rgba(0, 200, 81, 0.3);
-    border-color: #00c851;
-    box-shadow: 0 0 10px rgba(0, 200, 81, 0.5);
-    transform: scale(1.05);
+    color: #00c851;
+    margin: 0 2px;
 }
 
 /* Панель результата */
 .result-panel {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(30, 30, 60, 0.95);
+    width: 100%;
+    padding: 15px;
+    background: rgba(30, 30, 60, 0.8);
     border-radius: 15px;
-    padding: 20px;
-    border: 2px solid;
-    z-index: 100;
-    min-width: 250px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-}
-
-.result-panel.win {
-    border-color: #00c851;
-    box-shadow: 0 0 20px rgba(0, 200, 81, 0.3);
-}
-
-.result-panel.loss {
-    border-color: #ff4444;
-    box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
-}
-
-.result-panel.error {
-    border-color: #ff9500;
-    box-shadow: 0 0 20px rgba(255, 149, 0, 0.3);
+    border: 2px solid rgba(30, 92, 184, 0.5);
+    display: none;
 }
 
 .result-content {
-    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #result-text {
-    display: block;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-#result-multiplier {
-    display: block;
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-#result-amount {
-    display: block;
     font-size: 16px;
+    font-weight: 500;
 }
 
-.close-result {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
+.multiplier-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.multiplier-badge.win {
+    background: rgba(0, 200, 81, 0.2);
+    color: #00c851;
+    border: 1px solid #00c851;
+}
+
+.multiplier-badge.lose {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+    border: 1px solid #ff4444;
 }
 
 /* Модальное окно */
@@ -513,44 +402,48 @@ input:checked + .slider:before {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.8);
+    background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background: rgba(30, 30, 60, 0.95);
-    margin: 5% auto;
+    background: linear-gradient(135deg, #1a1a2a, #16213e);
+    margin: 15% auto;
     padding: 0;
     border-radius: 15px;
     width: 90%;
     max-width: 400px;
-    border: 2px solid rgba(30, 92, 184, 0.5);
-    box-shadow: 0 0 30px rgba(30, 92, 184, 0.3);
+    border: 2px solid rgba(30, 92, 184, 0.7);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     position: relative;
+    overflow: hidden;
 }
 
 .modal-header {
+    padding: 20px;
+    background: rgba(30, 92, 184, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .modal-header h3 {
     margin: 0;
-    color: white;
+    color: #fff;
+    font-size: 18px;
 }
 
 .close {
     color: #aaa;
+    float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
 }
 
 .close:hover {
-    color: white;
+    color: #fff;
 }
 
 .modal-body {
@@ -558,34 +451,21 @@ input:checked + .slider:before {
 }
 
 .deposit-info {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     text-align: center;
 }
 
-.input-group {
-    margin-bottom: 15px;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: white;
-}
-
-.input-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #333;
-    border-radius: 8px;
-    background: #1a1a1a;
-    color: white;
+.deposit-info p {
+    color: #ccc;
+    font-size: 14px;
+    margin: 0;
 }
 
 .modal-btn {
     width: 100%;
     padding: 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
@@ -594,7 +474,7 @@ input:checked + .slider:before {
 
 .deposit-btn {
     background: linear-gradient(135deg, #00c851, #32cd32);
-    color: black;
+    color: #000;
 }
 
 .deposit-btn:hover {
@@ -605,46 +485,11 @@ input:checked + .slider:before {
 /* Адаптивность */
 @media (max-width: 768px) {
     .game-container {
-        padding-top: 50px;
+        padding: 60px 10px 20px;
     }
     
     .top-panel {
-        padding: 10px;
-    }
-    
-    .bet-panel {
-        width: 95%;
-        padding: 15px;
-    }
-    
-    .plinko-container {
-        width: 95%;
-    }
-    
-    .plinko-board {
-        height: 350px;
-    }
-    
-    .quick-bets {
-        gap: 5px;
-    }
-    
-    .quick-bet-btn {
-        padding: 4px 8px;
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 480px) {
-    .top-panel {
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    
-    .top-right {
-        margin-left: 0;
-        width: 100%;
-        justify-content: space-between;
+        padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
     }
     
     .plinko-board {
@@ -652,7 +497,26 @@ input:checked + .slider:before {
     }
     
     .multiplier {
-        font-size: 12px;
-        padding: 8px 2px;
+        font-size: 10px;
+        padding: 6px 3px;
+    }
+    
+    .control-panel {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .row-buttons {
+        flex-direction: column;
+    }
+    
+    .plinko-board {
+        height: 250px;
+    }
+    
+    .multiplier {
+        font-size: 9px;
+        padding: 4px 2px;
     }
 }

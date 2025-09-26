@@ -1755,46 +1755,100 @@ app.post('/api/coin/series-win', async (req, res) => {
     }
 });
 
+// Добавьте после других игровых коллекций
+let plinkoGames, plinkoBets;
 
-// Добавляем в server.js после других игр (после монетки)
+// В функции initDatabase добавьте:
+if (!plinkoGames) {
+    plinkoGames = db.addCollection('plinko_games', {
+        indices: ['user_id', 'created_at', 'demo_mode']
+    });
+}
+
+if (!plinkoBets) {
+    plinkoBets = db.addCollection('plinko_bets', {
+        indices: ['game_id', 'user_id', 'created_at']
+    });
+}
 
 // Plinko Game Functions
-const plinkoMultipliers = [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8]; // Множители для 7 слотов
+const plinkoMultipliers = {
+    8: [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8], // 8 рядов
+    12: [26.0, 9.0, 4.0, 2.0, 0.5, 2.0, 4.0, 9.0, 26.0], // 12 рядов
+    16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0] // 16 рядов
+};
 
 // Функция расчета вероятностей для Plinko
-function calculatePlinkoProbabilities() {
-    // Вероятности попадания в каждый слот (сумма = 100%)
-    return [0.05, 0.15, 0.25, 0.30, 0.15, 0.08, 0.02]; // 0.4x имеет наибольшую вероятность
+function calculatePlinkoProbabilities(rows) {
+    const probabilities = [];
+    const multipliers = plinkoMultipliers[rows];
+    
+    // Биномиальное распределение для расчета вероятностей
+    for (let k = 0; k <= rows; k++) {
+        // Количество путей до данной позиции
+        const paths = binomialCoefficient(rows, k);
+        // Общее количество путей
+        const totalPaths = Math.pow(2, rows);
+        // Вероятность
+        const probability = paths / totalPaths;
+        
+        // Сопоставляем с множителем (крайние позиции имеют высокие множители)
+        const multiplierIndex = Math.floor((k / rows) * (multipliers.length - 1));
+        const multiplier = multipliers[multiplierIndex];
+        
+        probabilities.push({
+            position: k,
+            multiplier: multiplier,
+            probability: probability
+        });
+    }
+    
+    return probabilities;
+}
+
+// Биномиальный коэффициент
+function binomialCoefficient(n, k) {
+    if (k < 0 || k > n) return 0;
+    if (k === 0 || k === n) return 1;
+    
+    let result = 1;
+    for (let i = 1; i <= k; i++) {
+        result = result * (n - k + i) / i;
+    }
+    return Math.round(result);
 }
 
 // Функция симуляции падения шарика
-function simulatePlinkoBallDrop() {
-    const probabilities = calculatePlinkoProbabilities();
-    const random = Math.random() * 100;
+function simulatePlinkoBall(rows) {
+    const probabilities = calculatePlinkoProbabilities(rows);
+    let position = Math.floor(rows / 2); // Начинаем с середины
     
-    let cumulativeProbability = 0;
-    for (let i = 0; i < probabilities.length; i++) {
-        cumulativeProbability += probabilities[i] * 100;
-        if (random <= cumulativeProbability) {
-            return {
-                slotIndex: i,
-                multiplier: plinkoMultipliers[i],
-                probability: probabilities[i]
-            };
+    // Симуляция падения через каждый ряд
+    for (let i = 0; i < rows; i++) {
+        // 50/50 шанс пойти влево или вправо, но с небольшим смещением к центру
+        const random = Math.random();
+        
+        if (random < 0.48) { // 48% влево
+            position = Math.max(0, position - 1);
+        } else if (random < 0.52) { // 4% остаться на месте (редко)
+            // Остается на той же позиции
+        } else { // 48% вправо
+            position = Math.min(rows, position + 1);
         }
     }
     
-    // fallback - возвращаем самый вероятный слот
+    // Находим соответствующий множитель
+    const multiplierIndex = Math.floor((position / rows) * (plinkoMultipliers[rows].length - 1));
     return {
-        slotIndex: 3, // 0.4x
-        multiplier: 0.4,
-        probability: 0.30
+        finalPosition: position,
+        multiplier: plinkoMultipliers[rows][multiplierIndex],
+        probabilities: probabilities
     };
 }
 
-// API: Сделать ставку в Plinko
-app.post('/api/plinko/drop', async (req, res) => {
-    const { telegramId, betAmount, demoMode } = req.body;
+// API: Начать игру Plinko
+app.post('/api/plinko/start', async (req, res) => {
+    const { telegramId, betAmount, rows, demoMode } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -1803,23 +1857,30 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // ОГРАНИЧЕНИЯ СТАВОК: 0.1 - 100 TON
-        const minBet = 0.1;
-        const maxBet = 100;
-        
-        if (betAmount < minBet) {
-            return res.status(400).json({ error: `Минимальная ставка: ${minBet} TON` });
-        }
-        
-        if (betAmount > maxBet) {
-            return res.status(400).json({ error: `Максимальная ставка: ${maxBet} TON` });
+        // Валидация параметров
+        if (![8, 12, 16].includes(rows)) {
+            return res.status(400).json({ error: 'Invalid number of rows' });
         }
 
-        const currentBalance = demoMode ? user.demo_balance : user.main_balance;
+        if (betAmount < 0.1 || betAmount > 100) {
+            return res.status(400).json({ error: 'Bet amount must be between 0.1 and 100 TON' });
+        }
+
+        const balance = demoMode ? user.demo_balance : user.main_balance;
         
-        if (currentBalance < betAmount) {
+        if (balance < betAmount) {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
+
+        // Создаем игру
+        const game = plinkoGames.insert({
+            user_id: user.$loki,
+            bet_amount: betAmount,
+            rows: rows,
+            demo_mode: demoMode,
+            status: 'playing',
+            created_at: new Date()
+        });
 
         // Списываем ставку
         if (demoMode) {
@@ -1837,54 +1898,86 @@ app.post('/api/plinko/drop', async (req, res) => {
             updateRTPStats('realBank', betAmount, 0);
         }
 
-        // Симулируем падение шарика
-        const dropResult = simulatePlinkoBallDrop();
-        const winAmount = parseFloat((betAmount * dropResult.multiplier).toFixed(2));
+        res.json({
+            success: true,
+            game_id: game.$loki,
+            new_balance: demoMode ? user.demo_balance - betAmount : user.main_balance - betAmount,
+            multipliers: plinkoMultipliers[rows]
+        });
+    } catch (error) {
+        console.error('Plinko start error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
-        // Начисляем выигрыш
-        if (demoMode) {
-            users.update({
-                ...user,
-                demo_balance: user.demo_balance - betAmount + winAmount
-            });
-            updateCasinoDemoBank(-winAmount);
-        } else {
-            users.update({
-                ...user,
-                main_balance: user.main_balance - betAmount + winAmount
-            });
-            updateCasinoBank(-winAmount);
-            updateRTPStats('realBank', 0, winAmount);
+// API: Запустить шарик в Plinko
+app.post('/api/plinko/drop', async (req, res) => {
+    const { gameId, telegramId } = req.body;
+
+    try {
+        const game = plinkoGames.get(gameId);
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!game || !user) {
+            return res.status(404).json({ error: 'Game or user not found' });
         }
 
-        const newBalance = demoMode ? user.demo_balance - betAmount + winAmount : user.main_balance - betAmount + winAmount;
+        if (game.status !== 'playing') {
+            return res.status(400).json({ error: 'Game not active' });
+        }
 
-        // Сохраняем транзакцию
-        transactions.insert({
-            user_id: user.$loki,
-            amount: winAmount - betAmount,
-            type: dropResult.multiplier >= 1 ? 'plinko_win' : 'plinko_loss',
+        // Симулируем падение шарика
+        const result = simulatePlinkoBall(game.rows);
+        const winAmount = game.bet_amount * result.multiplier;
+
+        // Обновляем статус игры
+        plinkoGames.update({
+            ...game,
             status: 'completed',
-            demo_mode: demoMode,
-            details: {
-                bet_amount: betAmount,
-                multiplier: dropResult.multiplier,
-                win_amount: winAmount,
-                slot_index: dropResult.slotIndex,
-                probability: dropResult.probability
-            },
+            win_amount: winAmount,
+            multiplier: result.multiplier,
+            final_position: result.finalPosition
+        });
+
+        // Начисляем выигрыш если множитель > 0
+        if (winAmount > 0) {
+            if (game.demo_mode) {
+                users.update({
+                    ...user,
+                    demo_balance: user.demo_balance + winAmount
+                });
+                updateCasinoDemoBank(-winAmount);
+            } else {
+                users.update({
+                    ...user,
+                    main_balance: user.main_balance + winAmount
+                });
+                updateCasinoBank(-winAmount);
+                updateRTPStats('realBank', 0, winAmount);
+            }
+        }
+
+        // Сохраняем ставку
+        plinkoBets.insert({
+            game_id: game.$loki,
+            user_id: user.$loki,
+            bet_amount: game.bet_amount,
+            multiplier: result.multiplier,
+            win_amount: winAmount,
+            rows: game.rows,
+            demo_mode: game.demo_mode,
             created_at: new Date()
         });
 
         res.json({
             success: true,
-            multiplier: dropResult.multiplier,
+            multiplier: result.multiplier,
             win_amount: winAmount,
-            slot_index: dropResult.slotIndex,
-            probability: dropResult.probability,
-            new_balance: newBalance
+            final_position: result.finalPosition,
+            new_balance: game.demo_mode ? 
+                (user.demo_balance + (winAmount > 0 ? winAmount : 0)) : 
+                (user.main_balance + (winAmount > 0 ? winAmount : 0))
         });
-
     } catch (error) {
         console.error('Plinko drop error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -1901,21 +1994,12 @@ app.get('/api/plinko/history/:telegramId', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const userTransactions = transactions.find({
-            user_id: user.$loki,
-            type: { $in: ['plinko_win', 'plinko_loss'] }
-        });
-
-        const history = userTransactions
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 20)
-            .map(tx => ({
-                multiplier: tx.details.multiplier,
-                win_amount: tx.details.win_amount,
-                bet_amount: tx.details.bet_amount,
-                timestamp: tx.created_at,
-                type: tx.type
-            }));
+        const history = plinkoBets
+            .chain()
+            .find({ user_id: user.$loki })
+            .simplesort('created_at', true)
+            .limit(20)
+            .data();
 
         res.json({
             success: true,
@@ -1926,6 +2010,7 @@ app.get('/api/plinko/history/:telegramId', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 
 // Запуск сервера
 async function startServer() {
