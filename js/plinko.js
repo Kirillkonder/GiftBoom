@@ -60,7 +60,7 @@ class PlinkoGame {
         this.canvas.width = board.clientWidth;
         this.canvas.height = board.clientHeight;
         this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.012;
-        this.ballRadius = this.pegRadius * 0.8;
+        this.ballRadius = this.pegRadius * 1.2; // Увеличил размер шарика на 20%
     }
 
     setupEventListeners() {
@@ -71,7 +71,6 @@ class PlinkoGame {
         });
 
         document.getElementById('dropBall').addEventListener('click', () => this.dropBall());
-        document.getElementById('toggleDemo').addEventListener('click', () => this.toggleDemoMode());
 
         // Drop ball on canvas click
         this.canvas.addEventListener('click', (e) => {
@@ -291,9 +290,7 @@ class PlinkoGame {
         document.getElementById('balance').textContent = this.balance.toFixed(2);
         document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
         
-        // Calculate potential win (average multiplier ~1.5x)
-        const potentialWin = this.currentBet * 1.5;
-        document.getElementById('potentialWin').textContent = potentialWin.toFixed(2) + ' TON';
+        // Убрал расчет потенциального выигрыша
 
         // Update bet amount input
         document.getElementById('betAmount').value = this.currentBet.toFixed(1);
@@ -329,24 +326,6 @@ class PlinkoGame {
         value = Math.max(0.1, Math.min(100, value));
         this.currentBet = value;
         this.updateUI();
-    }
-
-    async toggleDemoMode() {
-        try {
-            const response = await fetch(`/api/user/toggle-demo/${this.currentUser.id}`, {
-                method: 'POST'
-            });
-
-            if (response.ok) {
-                await this.loadUserData();
-                this.updateUI();
-                const modeText = this.isDemoMode ? 'DEMO' : 'REAL';
-                this.showToast('info', 'Режим изменен', `Переключено на ${modeText} режим`);
-            }
-        } catch (error) {
-            console.error('Toggle demo error:', error);
-            this.showError('Ошибка переключения режима');
-        }
     }
 
     // Notification system

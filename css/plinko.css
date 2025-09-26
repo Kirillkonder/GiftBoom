@@ -68,7 +68,7 @@ body {
     background: transparent;
     position: relative;
     z-index: 1;
-    padding-top: 60px;
+    padding-top: 15px; /* Уменьшено с 60px до 15px */
 }
 
 /* Верхняя панель */
@@ -150,7 +150,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 0; /* Убрано расстояние между полем и слотами */
     padding: 0 16px;
     margin-bottom: 15px;
 }
@@ -163,7 +163,7 @@ body {
     background: rgba(0, 0, 0, 0.5);
     border-radius: 15px;
     overflow: hidden;
-    border: 1px solid rgba(30, 92, 184, 0.3);
+    /* Убрана рамка: border: 1px solid rgba(30, 92, 184, 0.3); */
 }
 
 #gameCanvas {
@@ -180,10 +180,11 @@ body {
     justify-content: space-around;
     width: 100%;
     max-width: 400px;
-    padding: 10px;
+    padding: 5px; /* Уменьшено расстояние */
     background: rgba(0, 0, 0, 0.7);
     border-radius: 10px;
     border: 1px solid rgba(30, 92, 184, 0.3);
+    margin-top: 0; /* Убрано расстояние сверху */
 }
 
 .slot {
