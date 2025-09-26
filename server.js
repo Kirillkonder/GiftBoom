@@ -1964,7 +1964,7 @@ app.post('/api/plinko/start', async (req, res) => {
 
 // API: Запустить шарик в Plinko
 app.post('/api/plinko/drop', async (req, res) => {
-    const { gameId, telegramId } = req.body;
+    const { gameId, telegramId, finalSlot, realMultiplier } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -1974,10 +1974,18 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(404).json({ error: 'Game not found' });
         }
 
-        // Множители для 8 рядов
-        const multipliers = [0.2, 0.5, 1, 3, 1, 0.5, 0.2];
-        const slotIndex = Math.floor(Math.random() * multipliers.length);
-        const multiplier = multipliers[slotIndex];
+        // 🔥 ИСПОЛЬЗУЕМ РЕАЛЬНЫЙ МНОЖИТЕЛЬ ИЗ ФРОНТЕНДА
+        let multiplier;
+        if (realMultiplier !== undefined && finalSlot !== undefined) {
+            // Используем переданные данные с фронтенда
+            multiplier = realMultiplier;
+            console.log(`🎯 Используем реальный множитель: ${multiplier}x из слота ${finalSlot}`);
+        } else {
+            // Fallback: генерируем с правильными вероятностями
+            multiplier = generatePlinkoMultiplier();
+            console.log(`🎲 Генерируем множитель: ${multiplier}x`);
+        }
+
         const winAmount = game.bet_amount * multiplier;
 
         // Обновляем игру
@@ -1986,6 +1994,7 @@ app.post('/api/plinko/drop', async (req, res) => {
             status: 'completed',
             multiplier: multiplier,
             win_amount: winAmount,
+            final_slot: finalSlot,
             completed_at: new Date()
         });
 
@@ -2008,6 +2017,7 @@ app.post('/api/plinko/drop', async (req, res) => {
             success: true,
             multiplier: multiplier,
             win_amount: winAmount,
+            final_slot: finalSlot,
             new_balance: game.demo_mode ? user.demo_balance + winAmount : user.main_balance + winAmount
         });
 
@@ -2015,7 +2025,17 @@ app.post('/api/plinko/drop', async (req, res) => {
         console.error('Plinko drop error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-});
+})
+
+function generatePlinkoMultiplier() {
+    const random = Math.random();
+    
+    // 🔥 ВЕРОЯТНОСТИ: 3x - 10%, остальные по 30%
+    if (random < 0.3) return 0.2;      // 30% шанс
+    else if (random < 0.6) return 0.5; // 30% шанс  
+    else if (random < 0.9) return 1;   // 30% шанс
+    else return 3;                     // 10% шанс
+}
 
 // API: Получить историю Plinko
 app.get('/api/plinko/history/:telegramId', async (req, res) => {
