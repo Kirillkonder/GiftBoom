@@ -202,7 +202,7 @@ body::after {
 
 .plinko-board {
     width: 100%;
-    height: 500px;
+    height: 600px;
     background: rgba(30, 30, 60, 0.7);
     border-radius: 15px;
     position: relative;
@@ -242,70 +242,6 @@ body::after {
     font-size: 14px;
     color: #000;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-/* Контент страницы */
-.content {
-    text-align: center;
-    padding: 20px;
-    max-width: 500px;
-    width: 100%;
-}
-
-.icon {
-    font-size: 80px;
-    margin-bottom: 20px;
-    color: #1e5cb8;
-    animation: icon-pulse 2s ease-in-out infinite;
-}
-
-@keyframes icon-pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
-}
-
-h1 {
-    font-size: 32px;
-    margin-bottom: 15px;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(30, 92, 184, 0.5);
-}
-
-p {
-    font-size: 18px;
-    line-height: 1.5;
-    color: #ccc;
-    margin-bottom: 30px;
-}
-
-.progress-container {
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    margin: 20px 0;
-    overflow: hidden;
-}
-
-.progress-bar {
-    width: 65%;
-    height: 10px;
-    background: linear-gradient(90deg, #1e5cb8, #00c851);
-    border-radius: 10px;
-    transition: width 0.5s ease;
-}
-
-.status {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #999;
-    margin-top: 5px;
 }
 
 /* Модальное окно */
@@ -448,7 +384,7 @@ p {
 /* Адаптация для мобильных устройств */
 @media (max-width: 768px) {
     .plinko-board {
-        height: 400px;
+        height: 500px;
     }
     
     .multiplier {
@@ -482,25 +418,13 @@ p {
     }
     
     .plinko-board {
-        height: 350px;
+        height: 450px;
     }
     
     .multiplier {
         width: 40px;
         height: 30px;
         font-size: 11px;
-    }
-    
-    .icon {
-        font-size: 60px;
-    }
-    
-    h1 {
-        font-size: 24px;
-    }
-    
-    p {
-        font-size: 16px;
     }
 }
 
@@ -528,25 +452,13 @@ p {
     }
     
     .plinko-board {
-        height: 300px;
+        height: 400px;
     }
     
     .multiplier {
         width: 35px;
         height: 25px;
         font-size: 10px;
-    }
-    
-    .icon {
-        font-size: 50px;
-    }
-    
-    h1 {
-        font-size: 22px;
-    }
-    
-    p {
-        font-size: 15px;
     }
 }
 
@@ -575,7 +487,7 @@ p {
     }
     
     .plinko-board {
-        height: 250px;
+        height: 350px;
     }
     
     .multiplier {
