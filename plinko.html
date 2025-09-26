@@ -6,13 +6,505 @@
     <title>Plinko Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/plinko.css">
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Глобальный фон-сетка и пульсация через псевдоэлементы */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-color: transparent;
+            background-image:
+                linear-gradient(rgba(30, 92, 184, 0.22) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 92, 184, 0.22) 1px, transparent 1px);
+            background-size:
+                80px 80px,
+                80px 80px;
+            background-position: 0 0, 0 0;
+            opacity: 0.55;
+            animation: grid-pulse 4s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, rgba(30, 92, 184, 0.18) 100%);
+            opacity: 0.5;
+            animation: glow-pulse 5s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% {
+                opacity: 0.25;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.85;
+                transform: scale(1.08);
+            }
+        }
+
+        @keyframes grid-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.45;
+            }
+            50% {
+                transform: scale(1.035);
+                opacity: 0.95;
+            }
+        }
+
+        .game-container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            min-height: 100vh;
+            background: transparent;
+            position: relative;
+            z-index: 1;
+            padding-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Верхняя панель */
+        .top-panel {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: nowrap;
+            box-sizing: border-box;
+            padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+            background: transparent;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .close-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #fff;
+            font-weight: 500;
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: transparent;
+            transition: all 0.3s ease;
+            margin-right: auto;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .close-btn i {
+            font-size: 16px;
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .close-btn:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .balance {
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+        }
+
+        .balance-plus-btn {
+            background: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: #000;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+        }
+
+        .balance-plus-btn:hover {
+            background: rgba(0, 0, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .balance-plus-btn:active {
+            transform: scale(0.95);
+        }
+
+        .balance i {
+            font-size: 12px;
+        }
+
+        #demo-badge {
+            display: none;
+            background: #ff9500;
+            color: black;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+        }
+
+        /* Контент страницы */
+        .content {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #1e5cb8;
+            animation: icon-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes icon-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(30, 92, 184, 0.5);
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.5;
+            color: #ccc;
+            margin-bottom: 30px;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 65%;
+            height: 10px;
+            background: linear-gradient(90deg, #1e5cb8, #00c851);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            margin: 15% auto;
+            padding: 0;
+            border: 1px solid #333;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            border-radius: 15px 15px 0 0;
+            color: #000;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .close {
+            color: #000;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .deposit-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00c851;
+            box-shadow: 0 0 0 2px rgba(0, 200, 81, 0.2);
+        }
+
+        .input-group input::placeholder {
+            color: #666;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+        }
+
+        .deposit-btn {
+            background: linear-gradient(135deg, #00c851, #32cd32);
+            color: #000;
+        }
+
+        .deposit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 81, 0.3);
+        }
+
+        .deposit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 480px) {
+            .top-panel {
+                padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+            }
+            
+            .close-btn {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            
+            .close-btn i {
+                font-size: 14px;
+            }
+            
+            .top-right {
+                gap: 8px;
+            }
+            
+            .balance {
+                padding: 4px 6px;
+                font-size: 12px;
+            }
+            
+            .icon {
+                font-size: 60px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            p {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 390px) {
+            .top-panel {
+                padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+            }
+            
+            .close-btn {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            
+            .close-btn i {
+                font-size: 13px;
+            }
+            
+            .top-right {
+                gap: 6px;
+            }
+            
+            .balance {
+                padding: 3px 6px;
+                font-size: 11px;
+            }
+            
+            .icon {
+                font-size: 50px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            p {
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .top-panel {
+                padding: 8px max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left));
+            }
+            
+            .close-btn {
+                padding: 5px 6px;
+                font-size: 11px;
+                gap: 4px;
+            }
+            
+            .close-btn i {
+                font-size: 12px;
+            }
+            
+            .top-right {
+                gap: 4px;
+            }
+            
+            .balance {
+                padding: 2px 4px;
+                font-size: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Верхняя панель -->
     <div class="top-panel">
         <div class="close-btn" onclick="goBack()">
-            <span>←</span>
+            <span>← Назад</span>
         </div>
         <div class="top-right">
             <div class="balance">
@@ -69,7 +561,7 @@
 
     <script>
         let currentUser = null;
-        let isDemoMode = true;
+        let isDemoMode = false;
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -104,11 +596,20 @@
 
         async function loadUserData() {
             try {
-                // В реальном приложении здесь был бы запрос к API
-                // Для демонстрации используем фиктивные данные
-                const balance = isDemoMode ? 100.00 : 50.00;
-                document.getElementById('balance').textContent = balance.toFixed(2);
-                document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                const response = await fetch(`/api/user/balance/${currentUser.id}`);
+                if (response.ok) {
+                    const userData = await response.json();
+                    const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+                    document.getElementById('balance').textContent = balance.toFixed(2);
+                    isDemoMode = userData.demo_mode;
+                    document.getElementById('demo-badge').style.display = isDemoMode ? 'block' : 'none';
+                    
+                    // Обновляем текст в модальном окне
+                    const depositInfo = document.getElementById('deposit-mode-info');
+                    depositInfo.textContent = isDemoMode ? 
+                        'Демо-пополнение (тестовый режим)' : 
+                        'Пополнение через Crypto Pay';
+                }
             } catch (error) {
                 console.error('Error loading user data:', error);
             }
@@ -133,27 +634,98 @@
             }
 
             try {
-                // В реальном приложении здесь был бы запрос к API
-                // Для демонстрации просто обновляем баланс
-                const currentBalance = parseFloat(document.getElementById('balance').textContent);
-                const newBalance = currentBalance + amount;
-                document.getElementById('balance').textContent = newBalance.toFixed(2);
+                const response = await fetch('/api/create-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegramId: currentUser.id,
+                        amount: amount,
+                        demoMode: isDemoMode
+                    })
+                });
+
+                const result = await response.json();
                 
-                if (window.Telegram && window.Telegram.WebApp) {
-                    window.Telegram.WebApp.showPopup({
-                        title: "✅ Успешно",
-                        message: `Баланс пополнен на ${amount} TON!`,
-                        buttons: [{ type: "ok" }]
-                    });
+                if (result.success) {
+                    if (isDemoMode) {
+                        // Для демо-режима сразу обновляем баланс
+                        await loadUserData();
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "✅ Демо-пополнение",
+                                message: `Демо-депозит ${amount} TON успешно зачислен!`,
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert(`Демо-депозит ${amount} TON успешно зачислен!`);
+                        }
+                    } else {
+                        // Для реального режима открываем инвойс
+                        window.open(result.invoice_url, '_blank');
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "Оплата TON",
+                                message: `Откройте Crypto Bot для оплаты ${amount} TON`,
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert(`Откройте Crypto Bot для оплаты ${amount} TON`);
+                        }
+                        checkDepositStatus(result.invoice_id);
+                    }
+                    
+                    closeDepositModal();
                 } else {
-                    alert(`Баланс пополнен на ${amount} TON!`);
+                    alert('Ошибка при создании депозита: ' + result.error);
                 }
-                
-                closeDepositModal();
             } catch (error) {
                 console.error('Deposit error:', error);
-                alert('Ошибка при пополнении баланса');
+                alert('Ошибка при создании депозита');
             }
+        }
+
+        async function checkDepositStatus(invoiceId) {
+            const checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/check-invoice', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            invoiceId: invoiceId,
+                            demoMode: isDemoMode
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'paid') {
+                        clearInterval(checkInterval);
+                        await loadUserData(); // Синхронизируем баланс
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "✅ Успешно",
+                                message: 'Депозит успешно зачислен!',
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert('Депозит успешно зачислен!');
+                        }
+                    } else if (result.status === 'expired' || result.status === 'cancelled') {
+                        clearInterval(checkInterval);
+                        if (window.Telegram && window.Telegram.WebApp) {
+                            window.Telegram.WebApp.showPopup({
+                                title: "❌ Ошибка",
+                                message: 'Платеж отменен или просрочен',
+                                buttons: [{ type: "ok" }]
+                            });
+                        } else {
+                            alert('Платеж отменен или просрочен');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Status check error:', error);
+                }
+            }, 5000);
         }
 
         // Обработчик клика вне модального окна
