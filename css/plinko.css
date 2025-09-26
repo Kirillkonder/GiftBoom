@@ -314,45 +314,71 @@ body::after {
 
 .peg {
     position: absolute;
-    width: 6px;
-    height: 6px;
-    background: #00c851;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #00c851, #006633);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 5px rgba(0, 200, 81, 0.5);
+    box-shadow: 
+        0 0 8px rgba(0, 200, 81, 0.7),
+        0 0 15px rgba(0, 200, 81, 0.3),
+        inset -1px -1px 2px rgba(0, 0, 0, 0.3),
+        inset 1px 1px 2px rgba(255, 255, 255, 0.4);
+    transition: all 0.15s ease;
+    border: 1px solid rgba(0, 255, 100, 0.4);
+}
+
+.peg:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 
+        0 0 12px rgba(0, 255, 100, 1),
+        0 0 25px rgba(0, 255, 100, 0.6);
+}
+
+/* Анимация для колышков при столкновении */
+@keyframes peg-bounce {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.3); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.peg.hit {
+    animation: peg-bounce 0.3s ease-out;
 }
 
 .ball {
     position: absolute;
     width: 20px;
     height: 20px;
-    background: radial-gradient(circle at 30% 30%, #fff, #00c851);
+    background: radial-gradient(circle at 30% 30%, #ffffff, #00c851, #008a3d);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    box-shadow: 0 0 10px rgba(0, 200, 81, 0.8);
-    z-index: 10;
-    transition: none; /* Убираем transition для ручной анимации */
+    box-shadow: 
+        0 0 20px rgba(0, 200, 81, 0.9),
+        0 0 40px rgba(0, 200, 81, 0.6),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.3);
+    z-index: 15;
+    animation: ball-glow 0.8s ease-in-out infinite alternate;
 }
 
-/* Анимация отскока */
-@keyframes bounce {
-    0% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.1); }
-    100% { transform: translate(-50%, -50%) scale(1); }
-}
-
-.ball.bounce {
-    animation: bounce 0.3s ease;
-}
-
-/* Анимация исчезновения */
-@keyframes fadeOut {
-    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    to { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-}
-
-.ball.fade-out {
-    animation: fadeOut 0.5s ease forwards;
+@keyframes ball-glow {
+    0% {
+        box-shadow: 
+            0 0 20px rgba(0, 200, 81, 0.9),
+            0 0 40px rgba(0, 200, 81, 0.6),
+            inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+            inset 2px 2px 4px rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        box-shadow: 
+            0 0 25px rgba(0, 255, 100, 1),
+            0 0 50px rgba(0, 255, 100, 0.8),
+            inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+            inset 2px 2px 4px rgba(255, 255, 255, 0.4);
+        transform: translate(-50%, -50%) scale(1.05);
+    }
 }
 
 .multipliers {
@@ -373,6 +399,38 @@ body::after {
     font-weight: bold;
     color: #00c851;
     margin: 0 2px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.center-multiplier {
+    background: rgba(60, 30, 30, 0.8);
+    border: 1px solid rgba(184, 92, 30, 0.5);
+    color: #ff9500;
+}
+
+.multiplier.winner {
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    color: #000;
+    border: 2px solid #00ff64;
+    box-shadow: 0 0 20px rgba(0, 255, 100, 0.8);
+    transform: scale(1.1);
+    z-index: 10;
+}
+
+.multiplier.active {
+    animation: winner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes winner-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(0, 255, 100, 0.8);
+        transform: scale(1.1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 255, 100, 1);
+        transform: scale(1.15);
+    }
 }
 
 /* Панель результата */
