@@ -292,24 +292,27 @@ body::after {
     transform: none;
 }
 
-/* Поле Plinko - УВЕЛИЧЕНО */
+/* Поле Plinko - УВЕЛИЧЕНО ЕЩЕ БОЛЬШЕ */
 .plinko-container {
     width: 100%;
-    max-width: 500px;
+    max-width: 600px; /* Увеличено с 500px до 600px */
     position: relative;
     margin-bottom: 15px;
-    height: 60vh; /* Занимает 60% высоты экрана */
+    height: 70vh; /* Увеличено с 60vh до 70vh */
 }
 
 .plinko-board {
     width: 100%;
     height: 100%; /* Заполняет всю доступную высоту */
-    background: rgba(20, 20, 40, 0.8);
-    border: 3px solid rgba(30, 92, 184, 0.7);
-    border-radius: 15px;
+    background: rgba(20, 20, 40, 0.85); /* Немного темнее для лучшей видимости */
+    border: 3px solid rgba(30, 92, 184, 0.8);
+    border-radius: 20px; /* Увеличен радиус скругления */
     position: relative;
     overflow: hidden;
     margin-bottom: 10px;
+    box-shadow: 
+        0 0 30px rgba(30, 92, 184, 0.3),
+        inset 0 0 50px rgba(0, 200, 81, 0.1);
 }
 
 .peg {
@@ -335,15 +338,35 @@ body::after {
         0 0 25px rgba(0, 255, 100, 0.6);
 }
 
-/* Анимация для колышков при столкновении */
+/* Анимация для колышков при столкновении - УЛУЧШЕНО */
 @keyframes peg-bounce {
-    0% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.3); }
-    100% { transform: translate(-50%, -50%) scale(1); }
+    0% { 
+        transform: translate(-50%, -50%) scale(1); 
+        box-shadow: 0 0 8px rgba(0, 200, 81, 0.7);
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(1.4); 
+        box-shadow: 0 0 25px rgba(0, 255, 100, 1);
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(1); 
+        box-shadow: 0 0 8px rgba(0, 200, 81, 0.7);
+    }
 }
 
 .peg.hit {
-    animation: peg-bounce 0.3s ease-out;
+    animation: peg-bounce 0.4s ease-out;
+}
+
+/* Улучшенная анимация для мячика */
+@keyframes ball-bounce {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.ball.bouncing {
+    animation: ball-bounce 0.2s ease-out;
 }
 
 .ball {
@@ -572,8 +595,13 @@ body::after {
         padding: 10px max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
     }
     
+    .plinko-container {
+        max-width: 480px; /* Меньше на планшетах */
+        height: 60vh; /* Меньше на планшетах */
+    }
+    
     .plinko-board {
-        height: 50vh; /* На мобильных тоже большая высота */
+        height: 100%;
     }
     
     .multiplier {
@@ -591,8 +619,13 @@ body::after {
         flex-direction: column;
     }
     
+    .plinko-container {
+        max-width: 380px; /* Еще меньше на телефонах */
+        height: 55vh; /* Меньше на телефонах */
+    }
+    
     .plinko-board {
-        height: 45vh; /* На маленьких экранах чуть меньше */
+        height: 100%;
     }
     
     .multiplier {
