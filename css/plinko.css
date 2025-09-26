@@ -292,17 +292,18 @@ body::after {
     transform: none;
 }
 
-/* Поле Plinko */
+/* Поле Plinko - УВЕЛИЧЕНО */
 .plinko-container {
     width: 100%;
     max-width: 500px;
     position: relative;
     margin-bottom: 15px;
+    height: 60vh; /* Занимает 60% высоты экрана */
 }
 
 .plinko-board {
     width: 100%;
-    height: 400px;
+    height: 100%; /* Заполняет всю доступную высоту */
     background: rgba(20, 20, 40, 0.8);
     border: 3px solid rgba(30, 92, 184, 0.7);
     border-radius: 15px;
@@ -493,7 +494,7 @@ body::after {
     }
     
     .plinko-board {
-        height: 300px;
+        height: 50vh; /* На мобильных тоже большая высота */
     }
     
     .multiplier {
@@ -512,7 +513,7 @@ body::after {
     }
     
     .plinko-board {
-        height: 250px;
+        height: 45vh; /* На маленьких экранах чуть меньше */
     }
     
     .multiplier {

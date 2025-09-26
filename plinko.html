@@ -99,6 +99,7 @@
         let currentGameId = null;
         let currentRows = 8;
         let ballAnimation = null;
+        let isGameActive = false;
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
@@ -177,7 +178,7 @@
         }
 
         // Упрощенная анимация падения шарика (как в 1win)
-        function animateBall(finalPosition) {
+        function animateBall(finalPosition, callback) {
             const board = document.getElementById('plinko-board');
             const ball = document.createElement('div');
             ball.className = 'ball';
@@ -215,10 +216,10 @@
                     requestAnimationFrame(animate);
                 } else {
                     // Завершение анимации
-                    showResult(finalPosition);
+                    if (callback) callback();
                     setTimeout(() => {
                         ball.remove();
-                    }, 2000);
+                    }, 1000);
                 }
             }
             
@@ -253,11 +254,6 @@
             }
 
             const betAmount = parseFloat(document.getElementById('bet-amount').value);
-            const playBtn = document.querySelector('.play-btn');
-
-            // Блокируем кнопку на время игры
-            playBtn.disabled = true;
-            playBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Играем...';
 
             try {
                 // Начинаем игру
@@ -292,7 +288,9 @@
 
                     if (dropResult.success) {
                         // Анимируем падение шарика
-                        animateBall(dropResult.final_position);
+                        animateBall(dropResult.final_position, () => {
+                            showResult(dropResult.final_position);
+                        });
                         document.getElementById('balance').textContent = dropResult.new_balance.toFixed(2);
                     } else {
                         alert('Ошибка: ' + dropResult.error);
@@ -303,12 +301,6 @@
             } catch (error) {
                 console.error('Game error:', error);
                 alert('Ошибка при запуске игры');
-            } finally {
-                // Разблокируем кнопку через 3 секунды
-                setTimeout(() => {
-                    playBtn.disabled = false;
-                    playBtn.innerHTML = '<i class="bi bi-play-fill"></i> Играть';
-                }, 3000);
             }
         }
 
