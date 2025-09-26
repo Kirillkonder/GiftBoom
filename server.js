@@ -1905,7 +1905,7 @@ app.post('/api/plinko/start', async (req, res) => {
 });
 
 // API: Запустить шарик в Plinko
-pp.post('/api/plinko/drop', async (req, res) => {
+app.post('/api/plinko/drop', async (req, res) => {
     const { gameId, telegramId } = req.body;
 
     try {
