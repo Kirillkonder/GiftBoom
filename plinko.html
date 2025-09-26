@@ -36,7 +36,14 @@
                     <input type="number" id="bet-amount" value="1.00" min="0.1" max="100" step="0.1">
                 </div>
                 
-                <!-- Rows selector removed as requested -->
+                <div class="rows-selector">
+                    <label>Ряды:</label>
+                    <div class="row-buttons">
+                        <button class="row-btn active" data-rows="8">8</button>
+                        <button class="row-btn" data-rows="12">12</button>
+                        <button class="row-btn" data-rows="16">16</button>
+                    </div>
+                </div>
                 
                 <button class="play-btn" onclick="startPlinkoGame()">
                     <i class="bi bi-play-fill"></i>
@@ -90,7 +97,7 @@
         let currentUser = null;
         let isDemoMode = false;
         let currentGameId = null;
-        let currentRows = 12; // Fixed rows count
+        let currentRows = 8;
         let ballAnimation = null;
 
         // Инициализация
@@ -106,6 +113,17 @@
         }
 
         function setupEventListeners() {
+            // Выбор количества рядов
+            document.querySelectorAll('.row-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.row-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentRows = parseInt(this.dataset.rows);
+                    loadMultipliers();
+                    createPegs();
+                });
+            });
+
             // Валидация ставки
             document.getElementById('bet-amount').addEventListener('change', function() {
                 let value = parseFloat(this.value);
@@ -134,32 +152,26 @@
             });
         }
 
-        // Создание колышков с улучшенным расположением
+        // Создание колышков
         function createPegs() {
             const board = document.getElementById('plinko-board');
             board.innerHTML = '';
             
             const rows = currentRows;
+            const cols = rows + 1;
             const boardWidth = board.offsetWidth;
             const boardHeight = board.offsetHeight;
             
-            // Отступы от краев
-            const marginHorizontal = 60;
-            const marginTop = 80;
-            const marginBottom = 120;
+            const horizontalSpacing = boardWidth / (cols + 1);
+            const verticalSpacing = (boardHeight - 100) / (rows + 1);
             
-            const usableWidth = boardWidth - (marginHorizontal * 2);
-            const usableHeight = boardHeight - marginTop - marginBottom;
-            
-            const verticalSpacing = usableHeight / rows;
-            
-            for (let row = 0; row < rows; row++) {
-                const pegsInRow = row + 3; // Начинаем с 3 колышков в первом ряду
-                const horizontalSpacing = usableWidth / (pegsInRow + 1);
-                
-                for (let col = 0; col < pegsInRow; col++) {
-                    const x = marginHorizontal + (col + 1) * horizontalSpacing;
-                    const y = marginTop + row * verticalSpacing;
+            for (let row = 1; row <= rows; row++) {
+                for (let col = 1; col <= cols; col++) {
+                    const offset = row % 2 === 0 ? horizontalSpacing / 2 : 0;
+                    const x = col * horizontalSpacing + offset;
+                    const y = row * verticalSpacing + 50;
+                    
+                    if (x < 15 || x > boardWidth - 15) continue;
                     
                     const peg = document.createElement('div');
                     peg.className = 'peg';
@@ -171,46 +183,29 @@
             }
         }
 
-        // Реалистичная анимация падения шарика с физикой
+        // Анимация падения шарика
         function animateBall(finalPosition) {
             const board = document.getElementById('plinko-board');
             const ball = document.createElement('div');
             ball.className = 'ball';
-            
-            // Физические параметры
-            const ballSize = 20;
-            const pegRadius = 4;
-            const gravity = 0.5;
-            const bounce = 0.7;
-            const friction = 0.98;
-            
-            let ballX = board.offsetWidth / 2 - ballSize / 2;
-            let ballY = 30;
-            let velocityX = (Math.random() - 0.5) * 2;
-            let velocityY = 0;
-            
-            ball.style.left = ballX + 'px';
-            ball.style.top = ballY + 'px';
+            ball.style.left = '50%';
+            ball.style.top = '30px';
             board.appendChild(ball);
 
-            // Получаем все колышки
-            const pegs = Array.from(document.querySelectorAll('.peg')).map(peg => ({
-                x: parseFloat(peg.style.left) || 0,
-                y: parseFloat(peg.style.top) || 0,
-                element: peg
-            }));
-
-            const animationDuration = 3000;
+            const rows = currentRows;
+            const multipliers = document.querySelectorAll('.multiplier');
+            const targetX = multipliers[finalPosition].offsetLeft + multipliers[finalPosition].offsetWidth / 2;
+            
+            let currentRow = 0;
+            const totalRows = rows;
+            const animationDuration = 2000;
             const frameRate = 60;
-            const frameTime = 1000 / frameRate;
-            let startTime = Date.now();
-            let lastTime = startTime;
+            const totalFrames = (animationDuration / 1000) * frameRate;
+            let currentFrame = 0;
 
-            function animate() {
-                const currentTime = Date.now();
-                const elapsed = currentTime - startTime;
-                
-                if (elapsed > animationDuration) {
+            ballAnimation = setInterval(() => {
+                if (currentFrame >= totalFrames) {
+                    clearInterval(ballAnimation);
                     showResult(finalPosition);
                     setTimeout(() => {
                         ball.remove();
@@ -218,80 +213,19 @@
                     return;
                 }
 
-                const deltaTime = currentTime - lastTime;
-                lastTime = currentTime;
-
-                // Применяем гравитацию
-                velocityY += gravity;
+                const progress = currentFrame / totalFrames;
                 
-                // Проверяем столкновения с колышками
-                for (let peg of pegs) {
-                    const dx = ballX - peg.x;
-                    const dy = ballY - peg.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < ballSize/2 + pegRadius) {
-                        // Столкновение с колышком
-                        const angle = Math.atan2(dy, dx);
-                        const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
-                        
-                        // Отскакиваем в направлении от колышка
-                        velocityX = Math.cos(angle) * speed * bounce + (Math.random() - 0.5) * 2;
-                        velocityY = Math.sin(angle) * speed * bounce;
-                        
-                        // Визуальный эффект при столкновении
-                        peg.element.style.boxShadow = '0 0 15px rgba(0, 200, 81, 1)';
-                        setTimeout(() => {
-                            if (peg.element.style) {
-                                peg.element.style.boxShadow = '0 0 5px rgba(0, 200, 81, 0.5)';
-                            }
-                        }, 100);
-                        
-                        // Предотвращаем застревание
-                        const pushDistance = ballSize/2 + pegRadius - distance + 2;
-                        ballX += Math.cos(angle) * pushDistance;
-                        ballY += Math.sin(angle) * pushDistance;
-                        break;
-                    }
-                }
+                // Параболическое движение с случайными отклонениями
+                const baseX = 50; // Старт из центра
+                const randomOffset = Math.sin(progress * Math.PI * 8) * 10 * progress;
+                const x = baseX + (targetX - baseX) * progress + randomOffset;
+                const y = 30 + (board.offsetHeight - 100) * progress;
 
-                // Применяем трение
-                velocityX *= friction;
-                velocityY *= friction;
+                ball.style.left = `calc(${x}% - 10px)`;
+                ball.style.top = y + 'px';
 
-                // Обновляем позицию
-                ballX += velocityX;
-                ballY += velocityY;
-
-                // Ограничения по границам
-                if (ballX < ballSize/2) {
-                    ballX = ballSize/2;
-                    velocityX = -velocityX * bounce;
-                }
-                if (ballX > board.offsetWidth - ballSize/2) {
-                    ballX = board.offsetWidth - ballSize/2;
-                    velocityX = -velocityX * bounce;
-                }
-                
-                // Проверяем, достиг ли шарик низа
-                if (ballY > board.offsetHeight - 50) {
-                    ball.style.left = ballX + 'px';
-                    ball.style.top = (board.offsetHeight - 50) + 'px';
-                    showResult(finalPosition);
-                    setTimeout(() => {
-                        ball.remove();
-                    }, 1000);
-                    return;
-                }
-
-                // Обновляем позицию в DOM
-                ball.style.left = ballX + 'px';
-                ball.style.top = ballY + 'px';
-
-                ballAnimation = requestAnimationFrame(animate);
-            }
-
-            ballAnimation = requestAnimationFrame(animate);
+                currentFrame++;
+            }, 1000 / frameRate);
         }
 
         // Показать результат
