@@ -83,7 +83,7 @@ class PlinkoGame {
     }
 
     createPegs() {
-        const rows = 10; // Увеличил количество рядов
+        const rows = 10;
         const spacing = this.canvas.height / (rows + 2);
         const horizontalSpacing = this.canvas.width / (rows + 1);
 
@@ -110,7 +110,8 @@ class PlinkoGame {
             this.slots.push({
                 x: i * slotWidth,
                 width: slotWidth,
-                multiplier: multipliers[i]
+                multiplier: multipliers[i],
+                index: i
             });
         }
     }
@@ -134,7 +135,7 @@ class PlinkoGame {
                 body: JSON.stringify({
                     telegramId: this.currentUser.id,
                     betAmount: this.currentBet,
-                    rows: 10, // Увеличил количество рядов
+                    rows: 10,
                     demoMode: this.isDemoMode
                 })
             });
@@ -175,6 +176,16 @@ class PlinkoGame {
 
     async handleBallInSlot(ball, slotIndex) {
         try {
+            // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ
+            const slotWidth = this.canvas.width / this.slots.length;
+            const ballCenterX = ball.x;
+            const calculatedSlotIndex = Math.floor(ballCenterX / slotWidth);
+            const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, calculatedSlotIndex));
+            
+            const realMultiplier = this.slots[finalSlotIndex].multiplier;
+            
+            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${realMultiplier}x`);
+
             const response = await fetch('/api/plinko/drop', {
                 method: 'POST',
                 headers: {
@@ -182,7 +193,9 @@ class PlinkoGame {
                 },
                 body: JSON.stringify({
                     gameId: ball.gameId,
-                    telegramId: this.currentUser.id
+                    telegramId: this.currentUser.id,
+                    finalSlot: finalSlotIndex,
+                    realMultiplier: realMultiplier
                 })
             });
 
@@ -199,6 +212,9 @@ class PlinkoGame {
                 if (winAmount > 0) {
                     this.showToast('win', 'Выигрыш!', 
                         `+${winAmount.toFixed(2)} TON (${result.multiplier.toFixed(1)}x)`);
+                } else {
+                    this.showToast('info', 'Результат', 
+                        `Множитель: ${result.multiplier.toFixed(1)}x`);
                 }
 
                 this.updateUI();
@@ -225,16 +241,23 @@ class PlinkoGame {
                 ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
             }
 
-            // Peg collisions
+            // Peg collisions with enhanced central bias
             this.pegs.forEach(peg => {
                 const dx = ball.x - peg.x;
                 const dy = ball.y - peg.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance < ball.radius + peg.radius) {
+                    // 🔥 УСИЛЕННЫЙ ЦЕНТРАЛЬНЫЙ УКЛОН К МАЛЕНЬКИМ МНОЖИТЕЛЯМ
+                    const centerX = this.canvas.width / 2;
+                    const distanceFromCenter = Math.abs(ball.x - centerX);
+                    const centerPull = (centerX - ball.x) * 0.001; // Сильное притяжение к центру
+                    
                     const angle = Math.atan2(dy, dx);
                     const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                    const randomAngle = angle + (Math.random() - 0.5) * 0.2;
+                    
+                    // Добавляем случайность с уклоном к центру
+                    const randomAngle = angle + (Math.random() - 0.5) * 0.3 + centerPull;
                     
                     ball.vx = Math.cos(randomAngle) * speed * this.bounce;
                     ball.vy = Math.sin(randomAngle) * speed * this.bounce;
@@ -246,9 +269,15 @@ class PlinkoGame {
             });
 
             // Check if ball reached bottom
-            if (ball.y + ball.radius > this.canvas.height) {
-                const slotIndex = Math.floor((ball.x / this.canvas.width) * this.slots.length);
-                this.handleBallInSlot(ball, slotIndex);
+            if (ball.y + ball.radius > this.canvas.height - 10) {
+                // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА
+                const slotWidth = this.canvas.width / this.slots.length;
+                const ballCenterX = ball.x;
+                const slotIndex = Math.floor(ballCenterX / slotWidth);
+                const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
+                
+                console.log(`🎯 Шарик упал в позицию X: ${ballCenterX.toFixed(1)}, слот: ${finalSlotIndex}`);
+                this.handleBallInSlot(ball, finalSlotIndex);
                 this.activeBalls.splice(i, 1);
             }
         }
