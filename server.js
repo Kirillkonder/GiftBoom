@@ -1914,11 +1914,7 @@ app.post('/api/plinko/start', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Валидация параметров
-        if (![8, 12, 16].includes(rows)) {
-            return res.status(400).json({ error: 'Invalid number of rows' });
-        }
-
+        // Валидация
         if (betAmount < 0.1 || betAmount > 100) {
             return res.status(400).json({ error: 'Bet amount must be between 0.1 and 100 TON' });
         }
@@ -1933,7 +1929,7 @@ app.post('/api/plinko/start', async (req, res) => {
         const game = plinkoGames.insert({
             user_id: user.$loki,
             bet_amount: betAmount,
-            rows: rows,
+            rows: rows || 8,
             demo_mode: demoMode,
             status: 'playing',
             created_at: new Date()
@@ -1952,18 +1948,17 @@ app.post('/api/plinko/start', async (req, res) => {
                 main_balance: user.main_balance - betAmount
             });
             updateCasinoBank(betAmount);
-            updateRTPStats('realBank', betAmount, 0);
         }
 
         res.json({
             success: true,
             game_id: game.$loki,
-            new_balance: demoMode ? user.demo_balance - betAmount : user.main_balance - betAmount,
-            multipliers: plinkoMultipliers[rows]
+            new_balance: demoMode ? user.demo_balance - betAmount : user.main_balance - betAmount
         });
+
     } catch (error) {
         console.error('Plinko start error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -1972,72 +1967,53 @@ app.post('/api/plinko/drop', async (req, res) => {
     const { gameId, telegramId } = req.body;
 
     try {
-        const game = plinkoGames.get(gameId);
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
-        
-        if (!game || !user) {
-            return res.status(404).json({ error: 'Game or user not found' });
+        const game = plinkoGames.get(parseInt(gameId));
+
+        if (!user || !game || game.status !== 'playing') {
+            return res.status(404).json({ error: 'Game not found' });
         }
 
-        if (game.status !== 'playing') {
-            return res.status(400).json({ error: 'Game not active' });
-        }
+        // Множители для 8 рядов
+        const multipliers = [0.2, 0.5, 1, 3, 1, 0.5, 0.2];
+        const slotIndex = Math.floor(Math.random() * multipliers.length);
+        const multiplier = multipliers[slotIndex];
+        const winAmount = game.bet_amount * multiplier;
 
-        // Упрощенная симуляция
-        const result = simulatePlinkoBall(game.rows);
-        const winAmount = game.bet_amount * result.multiplier;
-
-        // Обновляем статус игры
+        // Обновляем игру
         plinkoGames.update({
             ...game,
             status: 'completed',
+            multiplier: multiplier,
             win_amount: winAmount,
-            multiplier: result.multiplier,
-            final_position: result.finalPosition
+            completed_at: new Date()
         });
 
-        // Начисляем выигрыш если множитель > 0
-        if (winAmount > 0) {
-            if (game.demo_mode) {
-                users.update({
-                    ...user,
-                    demo_balance: user.demo_balance + winAmount
-                });
-                updateCasinoDemoBank(-winAmount);
-            } else {
-                users.update({
-                    ...user,
-                    main_balance: user.main_balance + winAmount
-                });
-                updateCasinoBank(-winAmount);
-                updateRTPStats('realBank', 0, winAmount);
-            }
+        // Зачисляем выигрыш
+        if (game.demo_mode) {
+            users.update({
+                ...user,
+                demo_balance: user.demo_balance + winAmount
+            });
+            updateCasinoDemoBank(-winAmount);
+        } else {
+            users.update({
+                ...user,
+                main_balance: user.main_balance + winAmount
+            });
+            updateCasinoBank(-winAmount);
         }
-
-        // Сохраняем ставку
-        plinkoBets.insert({
-            game_id: game.$loki,
-            user_id: user.$loki,
-            bet_amount: game.bet_amount,
-            multiplier: result.multiplier,
-            win_amount: winAmount,
-            rows: game.rows,
-            demo_mode: game.demo_mode,
-            created_at: new Date()
-        });
 
         res.json({
             success: true,
-            multiplier: result.multiplier,
+            multiplier: multiplier,
             win_amount: winAmount,
-            final_position: result.finalPosition,
-            new_balance: game.demo_mode ? 
-                (user.demo_balance + (winAmount > 0 ? winAmount : 0)) : 
-                (user.main_balance + (winAmount > 0 ? winAmount : 0))
+            new_balance: game.demo_mode ? user.demo_balance + winAmount : user.main_balance + winAmount
         });
+
     } catch (error) {
         console.error('Plinko drop error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

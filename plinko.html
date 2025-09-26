@@ -1,57 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plinko Casino</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap">
+    <title>Plinko Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/plinko.css">
 </head>
 <body>
+    <!-- Фон с сеткой на всю страницу -->
+    <div class="grid-background"></div>
+    
     <div class="game-container">
-        <header class="game-header">
-            <div class="stats-container">
-                <div class="money-display">
-                    <div class="stat-label">Balance</div>
-                    <div class="stat-value">$<span id="money">3000</span></div>
+        <!-- Верхняя панель -->
+        <div class="top-panel">
+            <div class="close-btn" onclick="goBack()">
+                <span>←</span>
+            </div>
+            <div class="top-right">
+                <div class="balance">
+                    <i class="bi bi-currency-exchange"></i>
+                    <span id="balance">0.00</span>
+                    <button class="balance-plus-btn" onclick="openDepositModal()">
+                        <i class="bi bi-plus"></i>
+                    </button>
                 </div>
-                <div class="bet-display">
-                    <div class="stat-label">Current Bet</div>
-                    <div class="stat-value">$<span id="currentBet">0</span></div>
-                </div>
-                <div class="win-display">
-                    <div class="stat-label">Last Win</div>
-                    <div class="stat-value">$<span id="lastWin">0</span></div>
+                <div id="demo-badge" style="display: none; background: #ff9500; color: black; padding: 2px 6px; border-radius: 8px; font-size: 10px;">
+                    DEMO
                 </div>
             </div>
-            <div class="betting-controls">
-                <div class="bet-input-group">
-                    <button class="btn bet-btn" data-bet="1">$1</button>
-                    <button class="btn bet-btn" data-bet="5">$5</button>
-                    <button class="btn bet-btn" data-bet="10">$10</button>
-                    <button class="btn bet-btn" data-bet="25">$25</button>
-                    <button class="btn bet-btn" data-bet="50">$50</button>
-                    <button class="btn bet-btn" data-bet="100">$100</button>
-                    <button class="btn bet-btn" data-percent="25">25% SALDA</button>
-                    <button class="btn bet-btn" data-percent="50">50% SALDA</button>
-                    <button class="btn bet-btn" data-percent="100">ALL IN</button>
-                    <div class="custom-bet-wrapper">
-                        <input type="number" id="customBet" class="custom-bet-input" placeholder="Custom bet" min="0" step="1">
-                        <button class="btn bet-btn custom-bet-btn">SET</button>
-                    </div>
-                </div>
-                <div class="action-buttons">
-                    <button id="dropBall" class="btn primary glow-effect">DROP BALL</button>
-                    <button id="resetGame" class="btn secondary">NEW GAME</button>
-                    <button id="toggleSound" class="btn sound-btn" aria-label="Toggle Sound">🔊</button>
-                </div>
-            </div>
-        </header>
+        </div>
 
+        <!-- Игровое поле -->
         <div class="game-board-container">
             <div class="game-board">
-                <div id="dropZone" class="drop-zone">
-                </div>
                 <canvas id="gameCanvas"></canvas>
             </div>
             
@@ -66,14 +49,57 @@
             </div>
         </div>
 
-        <div id="messageOverlay" class="message-overlay hidden">
-            <div class="message-content">
-                <h2 id="messageText"></h2>
-                <button id="messageClose" class="btn primary">Kontynnuj</button>
+        <!-- Панель управления -->
+        <div class="control-panel">
+            <div class="bet-controls">
+                <div class="bet-amount-selector">
+                    <button class="bet-amount-btn" onclick="decreaseBet()">-</button>
+                    <input type="number" id="betAmount" value="0.1" min="0.1" max="100" step="0.1" onchange="validateBetAmount()">
+                    <span class="ton-label">TON</span>
+                    <button class="bet-amount-btn" onclick="increaseBet()">+</button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="dropBall" class="btn primary">Бросить шар</button>
+                    <button id="toggleDemo" class="btn secondary">Режим DEMO</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация о ставке -->
+        <div class="bet-info">
+            <div class="bet-info-item">
+                <span>Ставка</span>
+                <span id="currentBet">0.00 TON</span>
+            </div>
+            <div class="bet-info-item">
+                <span>Потенциальный выигрыш</span>
+                <span id="potentialWin">0.00 TON</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно пополнения баланса -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Пополнить баланс</h3>
+                <span class="close" onclick="closeDepositModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="deposit-info">
+                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
+                </div>
+                <div class="input-group">
+                    <label for="deposit-amount">Сумма (TON):</label>
+                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
+                </div>
+                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
             </div>
         </div>
     </div>
 
     <script src="js/plinko.js"></script>
+    <div id="toast-container" class="toast-container"></div>
 </body>
-</html> 
+</html>
