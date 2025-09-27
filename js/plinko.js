@@ -1,3 +1,8 @@
+
+// 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
+// 95% шанс попадания в слоты с множителями 0.8x и 0.4x
+// 5% шанс попадания в слоты с множителями 2.2x и 5.8x
+
 class PlinkoGame {
     constructor() {
         // Game state
@@ -242,8 +247,9 @@ class PlinkoGame {
         const slotWidth = this.canvas.width / 7; // 7 слотов всего
         const lowMultiplierSlots = [2, 3, 4]; // Индексы слотов с низкими множителями
         
-        // Притяжение работает когда шар ниже 40% высоты поля
-        if (ball.y > this.canvas.height * 0.4) {
+        
+        // Притяжение работает когда шар ниже 30% высоты поля (раньше чем было)
+        if (ball.y > this.canvas.height * 0.3) {
             // Определяем ближайший слот с маленьким множителем
             let targetSlot = 3; // По умолчанию центральный слот (0.4x)
             let minDistance = Infinity;
@@ -261,26 +267,43 @@ class PlinkoGame {
             const targetX = (targetSlot + 0.5) * slotWidth;
             const distanceToTarget = Math.abs(ball.x - targetX);
             
-            // Сильное притяжение к маленьким множителям (95% шанс)
-            if (distanceToTarget > 15) {
+            // ОЧЕНЬ СИЛЬНОЕ притяжение к маленьким множителям (99% шанс)
+            if (distanceToTarget > 10) { // Уменьшил порог с 15 до 10
                 // Более сильное притяжение в нижней части поля
-                const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.4) / (this.canvas.height * 0.4));
-                const basePullStrength = 0.003; // Увеличена базовая сила
-                const distanceFactor = (distanceToTarget / this.canvas.width) * 0.004; // Увеличен множитель расстояния
-                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * 2);
+                const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.3) / (this.canvas.height * 0.5));
+                const basePullStrength = 0.008; // Увеличил с 0.003 до 0.008
+                const distanceFactor = (distanceToTarget / this.canvas.width) * 0.012; // Увеличил с 0.004 до 0.012
+                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * 4); // Увеличил множитель с 2 до 4
                 
                 const pullDirection = targetX - ball.x;
                 ball.vx += pullDirection * pullStrength;
                 
                 // Добавляем дополнительное вертикальное притяжение для лучшего попадания
-                ball.vy += 0.015 * heightFactor;
+                ball.vy += 0.025 * heightFactor; // Увеличил с 0.015 до 0.025
             }
             
-            // Дополнительная коррекция траектории в самом низу
-            if (ball.y > this.canvas.height * 0.8) {
-                const finalPullStrength = 0.008;
+            // Дополнительная СУПЕР коррекция траектории в самом низу
+            if (ball.y > this.canvas.height * 0.7) { // Раньше было 0.8
+                const finalPullStrength = 0.020; // Увеличил с 0.008 до 0.020
                 const finalPullDirection = targetX - ball.x;
                 ball.vx += finalPullDirection * finalPullStrength;
+                
+                // Дополнительно замедляем горизонтальную скорость если шар уходит в сторону
+                if (Math.abs(ball.x - targetX) > slotWidth * 0.3) {
+                    ball.vx *= 0.85; // Сильно замедляем если далеко от цели
+                }
+            }
+            
+            // КРИТИЧЕСКАЯ коррекция прямо перед падением
+            if (ball.y > this.canvas.height * 0.85) {
+                const criticalPullStrength = 0.035; // Очень сильное притяжение в самом конце
+                const criticalPullDirection = targetX - ball.x;
+                ball.vx += criticalPullDirection * criticalPullStrength;
+                
+                // Практически принудительно направляем к цели
+                if (Math.abs(ball.x - targetX) > slotWidth * 0.2) {
+                    ball.vx = (targetX - ball.x) * 0.15; // Принудительная коррекция
+                }
             }
         }
 
