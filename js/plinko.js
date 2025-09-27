@@ -227,33 +227,40 @@ class PlinkoGame {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
-        // Apply physics
+        // Apply physics (оставляем как было)
         ball.vy += this.gravity;
         ball.x += ball.vx;
         ball.y += ball.vy;
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 ИСПРАВЛЕННОЕ ПРИТЯЖЕНИЕ К ЦЕНТРУ (маленькие множители)
-        if (ball.y < this.canvas.height * 0.8) { // Притяжение работает на большей высоте
-            const centerX = this.canvas.width / 2;
+        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ В ЦЕНТРЕ
+        // Определяем центр (маленькие множители - слоты 3 и 4 с множителями 0.4x и 0.8x)
+        const centerSlots = [3, 4]; // Индексы слотов с маленькими множителями
+        const centerX = this.canvas.width / 2;
+        
+        // Притяжение работает когда шар ниже середины поля
+        if (ball.y > this.canvas.height * 0.4) {
             const distanceFromCenter = Math.abs(ball.x - centerX);
             
-            // Сильное притяжение к центру для попадания на маленькие множители
-            if (distanceFromCenter > 10) {
-                const pullStrength = 0.002 + (distanceFromCenter / this.canvas.width) * 0.003;
+            // Сила притяжения зависит от расстояния до центра
+            if (distanceFromCenter > 20) {
+                const pullStrength = 0.0015 + (distanceFromCenter / this.canvas.width) * 0.002;
                 const centerPull = (centerX - ball.x) * pullStrength;
                 ball.vx += centerPull;
+                
+                // Добавляем небольшую вертикальную составляющую для реалистичности
+                ball.vy += 0.01;
             }
         }
 
-        // Wall collisions
+        // Wall collisions (оставляем как было)
         if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
             ball.vx *= -this.bounce;
             ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
         }
 
-        // Peg collisions - уменьшаем случайность для предсказуемости
+        // Peg collisions (оставляем как было)
         this.pegs.forEach(peg => {
             const dx = ball.x - peg.x;
             const dy = ball.y - peg.y;
@@ -263,8 +270,7 @@ class PlinkoGame {
                 const angle = Math.atan2(dy, dx);
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                 
-                // Меньше случайности для более предсказуемого падения
-                const randomAngle = angle + (Math.random() - 0.5) * 0.08;
+                const randomAngle = angle + (Math.random() - 0.5) * 0.1;
                 
                 ball.vx = Math.cos(randomAngle) * speed * this.bounce;
                 ball.vy = Math.sin(randomAngle) * speed * this.bounce;
@@ -275,7 +281,7 @@ class PlinkoGame {
             }
         });
 
-        // Check if ball reached bottom
+        // Check if ball reached bottom (оставляем как было)
         if (ball.y + ball.radius > this.canvas.height - 10) {
             const slotWidth = this.canvas.width / this.slots.length;
             const ballCenterX = ball.x;
