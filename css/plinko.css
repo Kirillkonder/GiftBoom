@@ -207,15 +207,24 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.slot[data-value="0.2"] { background: linear-gradient(135deg, #ff4757, #ff6b81); }
-.slot[data-value="0.5"] { background: linear-gradient(135deg, #ffa502, #ffb142); }
-.slot[data-value="1"] { background: linear-gradient(135deg, #2ed573, #26de81); }
-.slot[data-value="3"] { 
+/* Новые цвета для множителей (большие по бокам, маленькие в центре) */
+.slot[data-value="5.8"] { 
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    animation: glow-high 2s infinite alternate;
+}
+.slot[data-value="2.2"] { background: linear-gradient(135deg, #ffa502, #ffb142); }
+.slot[data-value="0.8"] { background: linear-gradient(135deg, #2ed573, #26de81); }
+.slot[data-value="0.4"] { 
     background: linear-gradient(135deg, #1e5cb8, #2668b3);
-    animation: glow 2s infinite alternate;
+    animation: glow-center 2s infinite alternate;
 }
 
-@keyframes glow {
+@keyframes glow-high {
+    from { box-shadow: 0 0 5px rgba(255, 71, 87, 0.5); }
+    to { box-shadow: 0 0 15px rgba(255, 71, 87, 0.8); }
+}
+
+@keyframes glow-center {
     from { box-shadow: 0 0 5px rgba(30, 92, 184, 0.5); }
     to { box-shadow: 0 0 15px rgba(30, 92, 184, 0.8); }
 }
@@ -443,7 +452,7 @@ body {
     color: #000;
 }
 
-/* Уведомления */
+/* Уведомления (оставил только для ошибок) */
 .toast-container {
     position: fixed;
     top: 20px;
@@ -493,19 +502,16 @@ body {
         flex-direction: column;
     }
     
-    .control-panel {
-        padding-bottom: 15px;
+    .bet-info {
+        flex-direction: column;
+        gap: 8px;
     }
 }
 
-@media (max-height: 700px) {
-    .game-board {
-        max-height: 50vh;
-    }
-}
-
-@media (max-height: 600px) {
-    .game-board {
-        max-height: 45vh;
+/* Безопасные зоны */
+@supports(padding: max(0px)) {
+    .game-container {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
     }
 }

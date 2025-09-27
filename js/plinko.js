@@ -1,3 +1,4 @@
+
 class PlinkoGame {
     constructor() {
         // Game state
@@ -104,7 +105,8 @@ class PlinkoGame {
     createSlots() {
         const slotCount = 7;
         const slotWidth = this.canvas.width / slotCount;
-        const multipliers = [0.2, 0.5, 1, 3, 1, 0.5, 0.2];
+        // Новое расположение множителей: большие по бокам, маленькие в центре
+        const multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
         
         for (let i = 0; i < slotCount; i++) {
             this.slots.push({
@@ -163,7 +165,6 @@ class PlinkoGame {
 
                 this.activeBalls.push(ball);
                 this.updateUI();
-                this.showToast('success', 'Ставка принята', `Ставка ${this.currentBet} TON размещена`);
 
             } else {
                 throw new Error(result.error);
@@ -209,14 +210,8 @@ class PlinkoGame {
                 this.balance = result.new_balance;
                 const winAmount = result.win_amount;
                 
-                if (winAmount > 0) {
-                    this.showToast('win', 'Выигрыш!', 
-                        `+${winAmount.toFixed(2)} TON (${result.multiplier.toFixed(1)}x)`);
-                } else {
-                    this.showToast('info', 'Результат', 
-                        `Множитель: ${result.multiplier.toFixed(1)}x`);
-                }
-
+                // 🔥 УБРАЛ ВСЕ УВЕДОМЛЕНИЯ КРОМЕ "НЕДОСТАТОЧНО СРЕДСТВ"
+                // Просто обновляем баланс без уведомлений
                 this.updateUI();
             }
         } catch (error) {
@@ -248,16 +243,16 @@ class PlinkoGame {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance < ball.radius + peg.radius) {
-                    // 🔥 УСИЛЕННЫЙ ЦЕНТРАЛЬНЫЙ УКЛОН К МАЛЕНЬКИМ МНОЖИТЕЛЯМ
+                    // 🔥 УСИЛЕННЫЙ ЦЕНТРАЛЬНЫЙ УКЛОН К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x и 0.8x)
                     const centerX = this.canvas.width / 2;
                     const distanceFromCenter = Math.abs(ball.x - centerX);
-                    const centerPull = (centerX - ball.x) * 0.001; // Сильное притяжение к центру
+                    const centerPull = (centerX - ball.x) * 0.003; // Усиленное притяжение к центру
                     
                     const angle = Math.atan2(dy, dx);
                     const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                     
-                    // Добавляем случайность с уклоном к центру
-                    const randomAngle = angle + (Math.random() - 0.5) * 0.3 + centerPull;
+                    // Добавляем случайность с сильным уклоном к центру
+                    const randomAngle = angle + (Math.random() - 0.5) * 0.2 + centerPull;
                     
                     ball.vx = Math.cos(randomAngle) * speed * this.bounce;
                     ball.vy = Math.sin(randomAngle) * speed * this.bounce;
@@ -355,22 +350,21 @@ class PlinkoGame {
         this.updateUI();
     }
 
-    // Notification system
+    // Notification system - оставил только ошибку "Недостаточно средств"
     showToast(type, title, message, duration = 3000) {
+        // 🔥 УБРАЛ ВСЕ УВЕДОМЛЕНИЯ КРОМЕ ОШИБОК
+        if (type !== 'error') return;
+        
         const toastContainer = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         
         const icons = {
-            success: 'bi bi-check-circle-fill',
-            error: 'bi bi-x-circle-fill',
-            warning: 'bi bi-exclamation-triangle-fill',
-            info: 'bi bi-info-circle-fill',
-            win: 'bi bi-trophy-fill'
+            error: 'bi bi-x-circle-fill'
         };
         
         toast.innerHTML = `
-            <i class="toast-icon ${icons[type] || icons.info}"></i>
+            <i class="toast-icon ${icons[type]}"></i>
             <div class="toast-content">
                 <div class="toast-title">${title}</div>
                 <div class="toast-message">${message}</div>
