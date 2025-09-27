@@ -1,6 +1,6 @@
 // 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
-// 95% шанс попадания в слоты с множителями 0.8x и 0.4x
-// 5% шанс попадания в слоты с множителями 2.2x и 5.8x
+// 97% шанс попадания в слоты с множителями 0.8x и 0.4x
+// 3% шанс попадания в слоты с множителями 2.2x и 5.8x
 
 class PlinkoGame {
     constructor() {
@@ -257,7 +257,7 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (95% ШАНС) 
+        // 🔥 НОВАЯ ФИЗИКА: 97% шанс на маленькие множители, 3% на большие
         // Слоты: [5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x]
         // Индексы: [0,   1,   2,   3,   4,   5,   6]
         // Маленькие множители: слоты 2, 3, 4 (0.8x, 0.4x, 0.8x)
@@ -265,63 +265,75 @@ class PlinkoGame {
         
         const slotWidth = this.canvas.width / 7; // 7 слотов всего
         const lowMultiplierSlots = [2, 3, 4]; // Индексы слотов с низкими множителями
+        const highMultiplierSlots = [0, 1, 5, 6]; // Индексы слотов с высокими множителями
         
-        
-        // Притяжение работает когда шар ниже 30% высоты поля (раньше чем было)
+        // Притяжение работает когда шар ниже 30% высоты поля
         if (ball.y > this.canvas.height * 0.3) {
-            // Определяем ближайший слот с маленьким множителем
-            let targetSlot = 3; // По умолчанию центральный слот (0.4x)
-            let minDistance = Infinity;
+            // 🔥 НОВАЯ ЛОГИКА: 3% шанс на большие множители
+            const isHighMultiplierBall = !ball.hasOwnProperty('isHighMultiplier') ? 
+                (ball.isHighMultiplier = Math.random() < 0.03) : ball.isHighMultiplier;
             
-            // Находим ближайший слот с маленьким множителем
-            lowMultiplierSlots.forEach(slotIndex => {
-                const slotCenterX = (slotIndex + 0.5) * slotWidth;
-                const distance = Math.abs(ball.x - slotCenterX);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    targetSlot = slotIndex;
-                }
-            });
+            let targetSlot, targetSlots;
+            
+            if (isHighMultiplierBall) {
+                // 3% шанс - направляем к большим множителям
+                targetSlots = highMultiplierSlots;
+                targetSlot = targetSlots[Math.floor(Math.random() * targetSlots.length)];
+            } else {
+                // 97% шанс - направляем к маленьким множителям
+                targetSlots = lowMultiplierSlots;
+                let minDistance = Infinity;
+                targetSlot = 3; // По умолчанию центральный слот (0.4x)
+                
+                // Находим ближайший слот с маленьким множителем
+                lowMultiplierSlots.forEach(slotIndex => {
+                    const slotCenterX = (slotIndex + 0.5) * slotWidth;
+                    const distance = Math.abs(ball.x - slotCenterX);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        targetSlot = slotIndex;
+                    }
+                });
+            }
             
             const targetX = (targetSlot + 0.5) * slotWidth;
             const distanceToTarget = Math.abs(ball.x - targetX);
             
-            // ОЧЕНЬ СИЛЬНОЕ притяжение к маленьким множителям (99% шанс)
-            if (distanceToTarget > 10) { // Уменьшил порог с 15 до 10
-                // Более сильное притяжение в нижней части поля
+            // Притяжение к целевому слоту (сила зависит от типа множителя)
+            if (distanceToTarget > 10) {
                 const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.3) / (this.canvas.height * 0.5));
-                const basePullStrength = 0.008; // Увеличил с 0.003 до 0.008
-                const distanceFactor = (distanceToTarget / this.canvas.width) * 0.012; // Увеличил с 0.004 до 0.012
-                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * 4); // Увеличил множитель с 2 до 4
+                
+                // Для больших множителей - умеренное притяжение, для маленьких - сильное
+                const basePullStrength = isHighMultiplierBall ? 0.004 : 0.007;
+                const distanceFactor = (distanceToTarget / this.canvas.width) * (isHighMultiplierBall ? 0.008 : 0.011);
+                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * (isHighMultiplierBall ? 2 : 3.5));
                 
                 const pullDirection = targetX - ball.x;
                 ball.vx += pullDirection * pullStrength;
                 
-                // Добавляем дополнительное вертикальное притяжение для лучшего попадания
-                ball.vy += 0.025 * heightFactor; // Увеличил с 0.015 до 0.025
+                // Вертикальное притяжение
+                ball.vy += (isHighMultiplierBall ? 0.015 : 0.022) * heightFactor;
             }
             
-            // Дополнительная СУПЕР коррекция траектории в самом низу
-            if (ball.y > this.canvas.height * 0.7) { // Раньше было 0.8
-                const finalPullStrength = 0.020; // Увеличил с 0.008 до 0.020
+            // Дополнительная коррекция в нижней части
+            if (ball.y > this.canvas.height * 0.7) {
+                const finalPullStrength = isHighMultiplierBall ? 0.012 : 0.018;
                 const finalPullDirection = targetX - ball.x;
                 ball.vx += finalPullDirection * finalPullStrength;
                 
-                // Дополнительно замедляем горизонтальную скорость если шар уходит в сторону
                 if (Math.abs(ball.x - targetX) > slotWidth * 0.3) {
-                    ball.vx *= 0.85; // Сильно замедляем если далеко от цели
+                    ball.vx *= isHighMultiplierBall ? 0.90 : 0.83;
                 }
             }
             
-            // КРИТИЧЕСКАЯ коррекция прямо перед падением
+            // Финальная коррекция перед падением
             if (ball.y > this.canvas.height * 0.85) {
-                const criticalPullStrength = 0.035; // Очень сильное притяжение в самом конце
+                const criticalPullStrength = isHighMultiplierBall ? 0.020 : 0.030;
                 const criticalPullDirection = targetX - ball.x;
                 ball.vx += criticalPullDirection * criticalPullStrength;
                 
-                // Практически принудительно направляем к цели
                 if (Math.abs(ball.x - targetX) > slotWidth * 0.2) {
-                    ball.vx = (targetX - ball.x) * 0.15; // Принудительная коррекция
+                    ball.vx = (targetX - ball.x) * (isHighMultiplierBall ? 0.10 : 0.14);
                 }
             }
         }
