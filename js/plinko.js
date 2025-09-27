@@ -219,7 +219,7 @@ class PlinkoGame {
         }
     }
 
-    updateBall() {
+   updateBall() {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
@@ -230,14 +230,22 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 НЕЗАМЕТНОЕ ПРИТЯГИВАНИЕ К ЦЕНТРАЛЬНЫМ СЛОТАМ (0.4x и 0.8x)
-        const centerX = this.canvas.width / 2;
-        const distanceFromCenter = Math.abs(ball.x - centerX);
-        
-        // Сила притяжения к центру (очень слабая, но эффективная)
-        if (distanceFromCenter > 50) { // Только если шар далеко от центра
-            const centerPull = (centerX - ball.x) * 0.0008; // Очень слабое притяжение
-            ball.vx += centerPull;
+        // 🔥 УЛУЧШЕННЫЙ АЛГОРИТМ ПРИТЯГИВАНИЯ: работает только для шаров в верхней половине
+        // и применяется индивидуально к каждому шару
+        if (ball.y < this.canvas.height * 0.5) { // Только в верхней половине
+            const centerX = this.canvas.width / 2;
+            const distanceFromCenter = Math.abs(ball.x - centerX);
+            
+            // Сила притяжения к центру зависит от положения шара
+            if (distanceFromCenter > 30) {
+                // Плавное притяжение: сильнее для дальних шаров, слабее для близких
+                const pullStrength = 0.0005 + (distanceFromCenter / this.canvas.width) * 0.001;
+                const centerPull = (centerX - ball.x) * pullStrength;
+                ball.vx += centerPull;
+                
+                // Добавляем небольшую случайность для естественности
+                ball.vx += (Math.random() - 0.5) * 0.02;
+            }
         }
 
         // Wall collisions
@@ -256,8 +264,8 @@ class PlinkoGame {
                 const angle = Math.atan2(dy, dx);
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                 
-                // Стандартная физика отскока
-                const randomAngle = angle + (Math.random() - 0.5) * 0.3;
+                // Реалистичная физика отскока с небольшой случайностью
+                const randomAngle = angle + (Math.random() - 0.5) * 0.2;
                 
                 ball.vx = Math.cos(randomAngle) * speed * this.bounce;
                 ball.vy = Math.sin(randomAngle) * speed * this.bounce;
