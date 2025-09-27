@@ -1,6 +1,5 @@
 // 🔥 УЛУЧШЕННАЯ ФИЗИКА PLINKO: 
-// 90% шанс попадания в слоты с множителями 0.8x и 0.4x
-// 10% шанс попадания в слоты с множителями 2.2x и 5.8x
+// Сильное притяжение к множителям 0.8x и 0.4x
 
 class PlinkoGame {
     constructor() {
@@ -25,10 +24,9 @@ class PlinkoGame {
         this.bounce = 0.7;
         this.friction = 0.99;
 
-        // 🔥 ПРОСТАЯ СИСТЕМА: 90% маленькие, 10% большие
+        // 🔥 ПРОСТАЯ СИСТЕМА: только притяжение к маленьким множителям
         this.physicsState = {
-            totalBallsDropped: 0,
-            cyclePhase: 'small_attraction' // Начинаем с маленьких
+            totalBallsDropped: 0
         };
 
         // Initialize
@@ -245,34 +243,10 @@ class PlinkoGame {
         }
     }
 
-    // 🔥 ПРОСТАЯ СИСТЕМА: 90% на маленькие множители, 10% на большие
+    // 🔥 ПРОСТАЯ СИСТЕМА: только счетчик шариков
     updatePhysicsCycle() {
         this.physicsState.totalBallsDropped++;
-        
-        // Простая случайность: 90% маленькие, 10% большие
-        const random = Math.random() * 100;
-        
-        if (random < 90) {
-            // 90% шанс - притяжение к маленьким множителям
-            this.physicsState.cyclePhase = 'small_attraction';
-            console.log(`🔻 Шарик ${this.physicsState.totalBallsDropped} - притяжение к маленьким множителям (90%)`);
-        } else {
-            // 10% шанс - притяжение к большим множителям
-            this.physicsState.cyclePhase = 'big_opportunity';
-            console.log(`🔺 Шарик ${this.physicsState.totalBallsDropped} - шанс на большие множители (10%)`);
-        }
-    }
-
-    // 🔥 УПРОЩЕННАЯ СИСТЕМА ПРИТЯЖЕНИЯ
-    assignBallType(ball) {
-        // Просто используем текущую фазу цикла
-        ball.multiplierType = this.physicsState.cyclePhase;
-        
-        if (this.physicsState.cyclePhase === 'small_attraction') {
-            console.log(`🎯 Шарик с притяжением к маленьким множителям`);
-        } else {
-            console.log(`🎯 Шарик с шансом на большие множители`);
-        }
+        console.log(`🎯 Запущен шарик ${this.physicsState.totalBallsDropped}`);
     }
 
     updateBall() {
@@ -324,69 +298,38 @@ class PlinkoGame {
             ball.vx += (Math.random() - 0.5) * 0.3; // Добавляем случайное горизонтальное движение
         }
 
-        // 🔥 ПРОСТАЯ СИСТЕМА ПРИТЯЖЕНИЯ: 90% маленькие, 10% большие
+        // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ ТОЛЬКО К 0.8x и 0.4x МНОЖИТЕЛЯМ
         const slotWidth = this.canvas.width / 7;
-        const lowMultiplierSlots = [2, 3, 4]; // 0.8x, 0.4x, 0.8x
-        const highMultiplierSlots = [0, 1, 5, 6]; // 5.8x, 2.2x, 2.2x, 5.8x
+        const targetMultiplierSlots = [2, 3, 4]; // 0.8x, 0.4x, 0.8x
         
-        // Определяем тип шарика ОДИН раз при первом расчете
-        if (!ball.hasOwnProperty('multiplierType')) {
-            this.assignBallType(ball);
-        }
-        
-        // 🔥 ПРИМЕНЯЕМ ПРИТЯЖЕНИЕ В ЗАВИСИМОСТИ ОТ ТИПА
+        // 🔥 ВСЕГДА притягиваем к маленьким множителям
         if (ball.y > this.canvas.height * 0.6) {
-            let targetSlot;
+            if (!ball.targetSlot) {
+                let minDistance = Infinity;
+                let closestSlot = 3; // Средний слот с 0.4x
+                
+                targetMultiplierSlots.forEach(slotIndex => {
+                    const slotCenterX = (slotIndex + 0.5) * slotWidth;
+                    const distance = Math.abs(ball.x - slotCenterX);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestSlot = slotIndex;
+                    }
+                });
+                ball.targetSlot = closestSlot;
+            }
             
-            if (ball.multiplierType === 'small_attraction') {
-                // СИЛЬНОЕ притяжение к маленьким множителям (90%)
-                if (!ball.targetSlot) {
-                    let minDistance = Infinity;
-                    let closestSlot = 3; // Средний слот с 0.4x
-                    
-                    lowMultiplierSlots.forEach(slotIndex => {
-                        const slotCenterX = (slotIndex + 0.5) * slotWidth;
-                        const distance = Math.abs(ball.x - slotCenterX);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            closestSlot = slotIndex;
-                        }
-                    });
-                    ball.targetSlot = closestSlot;
-                }
-                targetSlot = ball.targetSlot;
+            const targetX = (ball.targetSlot + 0.5) * slotWidth;
+            const distanceToTarget = Math.abs(ball.x - targetX);
+            
+            // СИЛЬНОЕ притяжение к маленьким множителям
+            if (distanceToTarget > slotWidth * 0.2) {
+                const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
+                const pullStrength = 0.004; // Увеличено притяжение
+                const adjustedPull = pullStrength * heightProgress;
                 
-                const targetX = (targetSlot + 0.5) * slotWidth;
-                const distanceToTarget = Math.abs(ball.x - targetX);
-                
-                // СИЛЬНОЕ притяжение к маленьким множителям
-                if (distanceToTarget > slotWidth * 0.2) {
-                    const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
-                    const pullStrength = 0.004; // Увеличено притяжение
-                    const adjustedPull = pullStrength * heightProgress;
-                    
-                    const pullDirection = (targetX - ball.x) / this.canvas.width;
-                    ball.vx += pullDirection * adjustedPull;
-                }
-            } else {
-                // СЛАБОЕ притяжение к большим множителям (10%)
-                if (!ball.targetSlot) {
-                    ball.targetSlot = highMultiplierSlots[Math.floor(Math.random() * highMultiplierSlots.length)];
-                }
-                targetSlot = ball.targetSlot;
-                
-                const targetX = (targetSlot + 0.5) * slotWidth;
-                const distanceToTarget = Math.abs(ball.x - targetX);
-                
-                // Очень слабое притяжение к большим множителям
-                if (distanceToTarget > slotWidth * 0.4) {
-                    const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.7) / (this.canvas.height * 0.2));
-                    const pullStrength = 0.001; // Очень слабое притяжение
-                    const adjustedPull = pullStrength * heightProgress;
-                    
-                    const pullDirection = (targetX - ball.x) / this.canvas.width;
-                    ball.vx += pullDirection * adjustedPull;
-                }
+                const pullDirection = (targetX - ball.x) / this.canvas.width;
+                ball.vx += pullDirection * adjustedPull;
             }
         }
 
@@ -497,8 +440,14 @@ class PlinkoGame {
             betAmountElement.textContent = this.currentBet.toFixed(1);
         }
 
-        // 🔥 NEW: Update cycle information display
-        this.updateCycleDisplay();
+        // 🔥 УБРАЛ ИНФОРМАЦИЮ О ЦИКЛАХ
+        const cyclePhaseElement = document.getElementById('cycle-phase');
+        const cycleStatsElement = document.getElementById('cycle-stats');
+        
+        if (cyclePhaseElement && cycleStatsElement) {
+            cyclePhaseElement.textContent = 'Режим: Притяжение к 0.8x и 0.4x';
+            cycleStatsElement.textContent = `Все шарики притягиваются к маленьким множителям`;
+        }
 
         // Enable/disable drop button
         const dropButton = document.getElementById('dropBall');
@@ -511,22 +460,6 @@ class PlinkoGame {
         } else {
             dropButton.style.background = 'linear-gradient(135deg, #1e5cb8, #2668b3)';
             dropButton.textContent = 'Бросить шар';
-        }
-    }
-
-    // 🔥 NEW METHOD: Update cycle display
-    updateCycleDisplay() {
-        const cyclePhaseElement = document.getElementById('cycle-phase');
-        const cycleStatsElement = document.getElementById('cycle-stats');
-        
-        if (cyclePhaseElement && cycleStatsElement) {
-            if (this.physicsState.cyclePhase === 'small_attraction') {
-                cyclePhaseElement.textContent = 'Фаза: Притяжение к маленьким множителям';
-                cycleStatsElement.textContent = `Вероятность: 90% маленькие | 10% большие`;
-            } else {
-                cyclePhaseElement.textContent = 'Фаза: Шанс на большие множители';
-                cycleStatsElement.textContent = `Вероятность: 10% большие | 90% маленькие`;
-            }
         }
     }
 
