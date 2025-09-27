@@ -220,63 +220,67 @@ class PlinkoGame {
     }
 
     updateBall() {
-        for (let i = this.activeBalls.length - 1; i >= 0; i--) {
-            const ball = this.activeBalls[i];
+    for (let i = this.activeBalls.length - 1; i >= 0; i--) {
+        const ball = this.activeBalls[i];
 
-            // Apply physics
-            ball.vy += this.gravity;
-            ball.x += ball.vx;
-            ball.y += ball.vy;
-            ball.vx *= this.friction;
-            ball.vy *= this.friction;
+        // Apply physics
+        ball.vy += this.gravity;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= this.friction;
+        ball.vy *= this.friction;
 
-            // Wall collisions
-            if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
-                ball.vx *= -this.bounce;
-                ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
-            }
+        // 🔥 НЕЗАМЕТНОЕ ПРИТЯГИВАНИЕ К ЦЕНТРАЛЬНЫМ СЛОТАМ (0.4x и 0.8x)
+        const centerX = this.canvas.width / 2;
+        const distanceFromCenter = Math.abs(ball.x - centerX);
+        
+        // Сила притяжения к центру (очень слабая, но эффективная)
+        if (distanceFromCenter > 50) { // Только если шар далеко от центра
+            const centerPull = (centerX - ball.x) * 0.0008; // Очень слабое притяжение
+            ball.vx += centerPull;
+        }
 
-            // Peg collisions with enhanced central bias
-            this.pegs.forEach(peg => {
-                const dx = ball.x - peg.x;
-                const dy = ball.y - peg.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+        // Wall collisions
+        if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
+            ball.vx *= -this.bounce;
+            ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
+        }
+
+        // Peg collisions
+        this.pegs.forEach(peg => {
+            const dx = ball.x - peg.x;
+            const dy = ball.y - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < ball.radius + peg.radius) {
+                const angle = Math.atan2(dy, dx);
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                 
-                if (distance < ball.radius + peg.radius) {
-                    // 🔥 УСИЛЕННЫЙ ЦЕНТРАЛЬНЫЙ УКЛОН К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x и 0.8x)
-                    const centerX = this.canvas.width / 2;
-                    const distanceFromCenter = Math.abs(ball.x - centerX);
-                    const centerPull = (centerX - ball.x) * 0.003; // Усиленное притяжение к центру
-                    
-                    const angle = Math.atan2(dy, dx);
-                    const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                    
-                    // Добавляем случайность с сильным уклоном к центру
-                    const randomAngle = angle + (Math.random() - 0.5) * 0.2 + centerPull;
-                    
-                    ball.vx = Math.cos(randomAngle) * speed * this.bounce;
-                    ball.vy = Math.sin(randomAngle) * speed * this.bounce;
-                    
-                    const minDistance = ball.radius + peg.radius;
-                    ball.x = peg.x + Math.cos(angle) * minDistance;
-                    ball.y = peg.y + Math.sin(angle) * minDistance;
-                }
-            });
-
-            // Check if ball reached bottom
-            if (ball.y + ball.radius > this.canvas.height - 10) {
-                // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА
-                const slotWidth = this.canvas.width / this.slots.length;
-                const ballCenterX = ball.x;
-                const slotIndex = Math.floor(ballCenterX / slotWidth);
-                const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
+                // Стандартная физика отскока
+                const randomAngle = angle + (Math.random() - 0.5) * 0.3;
                 
-                console.log(`🎯 Шарик упал в позицию X: ${ballCenterX.toFixed(1)}, слот: ${finalSlotIndex}`);
-                this.handleBallInSlot(ball, finalSlotIndex);
-                this.activeBalls.splice(i, 1);
+                ball.vx = Math.cos(randomAngle) * speed * this.bounce;
+                ball.vy = Math.sin(randomAngle) * speed * this.bounce;
+                
+                const minDistance = ball.radius + peg.radius;
+                ball.x = peg.x + Math.cos(angle) * minDistance;
+                ball.y = peg.y + Math.sin(angle) * minDistance;
             }
+        });
+
+        // Check if ball reached bottom
+        if (ball.y + ball.radius > this.canvas.height - 10) {
+            const slotWidth = this.canvas.width / this.slots.length;
+            const ballCenterX = ball.x;
+            const slotIndex = Math.floor(ballCenterX / slotWidth);
+            const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
+            
+            console.log(`🎯 Шарик упал в позицию X: ${ballCenterX.toFixed(1)}, слот: ${finalSlotIndex}`);
+            this.handleBallInSlot(ball, finalSlotIndex);
+            this.activeBalls.splice(i, 1);
         }
     }
+}
 
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);

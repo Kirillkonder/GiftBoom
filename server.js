@@ -2024,15 +2024,6 @@ app.post('/api/plinko/drop', async (req, res) => {
     }
 });
 
-function generatePlinkoMultiplier() {
-    const random = Math.random();
-    
-    // 🔥 ВЕРОЯТНОСТИ: 3x - 10%, остальные по 30%
-    if (random < 0.3) return 0.2;      // 30% шанс
-    else if (random < 0.6) return 0.5; // 30% шанс  
-    else if (random < 0.9) return 1;   // 30% шанс
-    else return 3;                     // 10% шанс
-}
 
 // API: Получить историю Plinko
 app.get('/api/plinko/history/:telegramId', async (req, res) => {
