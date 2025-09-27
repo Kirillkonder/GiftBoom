@@ -178,7 +178,8 @@ class PlinkoGame {
                     radius: this.ballRadius,
                     bet: this.currentBet,
                     gameId: result.game_id,
-                    isFinished: false // 🔥 ДОБАВЛЕНО: Флаг завершения шарика
+                    isFinished: false,
+                    finishedAt: 0 // 🔥 ДОБАВЛЕНО: Время завершения шарика
                 };
 
                 this.activeBalls.push(ball);
@@ -238,7 +239,13 @@ class PlinkoGame {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
-        // 🔥 ПРОВЕРКА: Если шарик уже завершен, пропускаем обработку
+        // 🔥 ИСПРАВЛЕНИЕ: Если шарик завершен более 1 секунды назад - удаляем его
+        if (ball.isFinished && Date.now() - ball.finishedAt > 1000) {
+            this.activeBalls.splice(i, 1);
+            continue;
+        }
+
+        // 🔥 ПРОВЕРКА: Если шарик уже завершен, пропускаем физику
         if (ball.isFinished) {
             continue;
         }
@@ -347,13 +354,13 @@ class PlinkoGame {
         });
 
         // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА: Check if ball reached bottom
-        // Увеличиваем зону обнаружения и добавляем защиту от повторной обработки
-        const bottomThreshold = this.canvas.height - 15; // Увеличил зону обнаружения
+        const bottomThreshold = this.canvas.height - 15;
         const isAtBottom = ball.y + ball.radius > bottomThreshold;
         
         if (isAtBottom && !ball.isFinished) {
             // Помечаем шарик как завершенный ДО обработки
             ball.isFinished = true;
+            ball.finishedAt = Date.now(); // 🔥 ЗАПОМИНАЕМ ВРЕМЯ ЗАВЕРШЕНИЯ
             
             const slotWidth = this.canvas.width / this.slots.length;
             const ballCenterX = ball.x;
@@ -365,14 +372,6 @@ class PlinkoGame {
             // Обрабатываем результат с задержкой для анимации
             setTimeout(() => {
                 this.handleBallInSlot(ball, finalSlotIndex);
-                
-                // Удаляем шарик из массива после небольшой задержки
-                setTimeout(() => {
-                    const index = this.activeBalls.indexOf(ball);
-                    if (index > -1) {
-                        this.activeBalls.splice(index, 1);
-                    }
-                }, 500); // Задержка для визуального эффекта
             }, 100);
         }
     }
