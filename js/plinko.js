@@ -240,7 +240,7 @@ class PlinkoGame {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
-        // Удаление завершенных шариков (оставляем как было)
+        // Удаление завершенных шариков
         const currentTime = Date.now();
         const ballLifetime = currentTime - (ball.createdAt || currentTime);
         const isStuckBall = ballLifetime > 10000;
@@ -255,78 +255,72 @@ class PlinkoGame {
             continue;
         }
 
-        // Базовая физика (оставляем как было)
+        // Базовая физика
         ball.vy += this.gravity;
         ball.x += ball.vx;
         ball.y += ball.vy;
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 РЕАЛИСТИЧНОЕ ПРИТЯЖЕНИЕ К ЦЕНТРУ (низким множителям)
-        // Притяжение начинается когда шар ниже 60% высоты
-        if (ball.y > this.canvas.height * 0.6) {
-            const slotWidth = this.canvas.width / 7;
-            const lowMultiplierSlots = [2, 3, 4]; // Слоты с низкими множителями (0.8x, 0.4x, 0.8x)
-            
-            // Всегда притягиваем к низким множителям (центру)
-            let targetSlot = 3; // Центральный слот (0.4x) по умолчанию
-            
-            // Ищем ближайший низкий слот для более плавного движения
-            let minDistance = Infinity;
-            lowMultiplierSlots.forEach(slotIndex => {
-                const slotCenterX = (slotIndex + 0.5) * slotWidth;
-                const distance = Math.abs(ball.x - slotCenterX);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    targetSlot = slotIndex;
-                }
-            });
-            
-            const targetX = (targetSlot + 0.5) * slotWidth;
-            const distanceToTarget = Math.abs(ball.x - targetX);
-            
-            // 🔥 РЕАЛИСТИЧНОЕ ПРИТЯЖЕНИЕ: сила зависит от расстояния и высоты
-            if (distanceToTarget > 2) {
-                // Сила притяжения увеличивается по мере падения шарика
-                const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
-                
-                // Естественная сила притяжения (как гравитация к центру)
-                const naturalPull = 0.005 * heightFactor; // Плавное увеличение
-                
-                // Дополнительная коррекция на основе расстояния
-                const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.01;
-                
-                const totalPullStrength = naturalPull + distanceCorrection;
-                
-                // Плавное притяжение к центру
-                const pullDirection = targetX - ball.x;
-                ball.vx += pullDirection * totalPullStrength;
-                
-                // Слегка увеличиваем вертикальную скорость для реалистичности
-                ball.vy += 0.01 * heightFactor;
+        // 🔥 ПРИТЯЖЕНИЕ РАБОТАЕТ СРАЗУ ПОСЛЕ СПАВНА ШАРИКА
+        // Определяем куда притягивать (к низким множителям - центру)
+        const slotWidth = this.canvas.width / 7;
+        const lowMultiplierSlots = [2, 3, 4]; // Слоты с низкими множителями (0.8x, 0.4x, 0.8x)
+        
+        // Всегда притягиваем к низким множителям (центру)
+        let targetSlot = 3; // Центральный слот (0.4x) по умолчанию
+        
+        // Ищем ближайший низкий слот
+        let minDistance = Infinity;
+        lowMultiplierSlots.forEach(slotIndex => {
+            const slotCenterX = (slotIndex + 0.5) * slotWidth;
+            const distance = Math.abs(ball.x - slotCenterX);
+            if (distance < minDistance) {
+                minDistance = distance;
+                targetSlot = slotIndex;
             }
+        });
+        
+        const targetX = (targetSlot + 0.5) * slotWidth;
+        const distanceToTarget = Math.abs(ball.x - targetX);
+        
+        // 🔥 ПРИТЯЖЕНИЕ РАБОТАЕТ ВСЕГДА, С САМОГО НАЧАЛА
+        if (distanceToTarget > 2) {
+            // Сила притяжения - постоянная, не зависит от высоты
+            const basePullStrength = 0.008; // Базовая сила притяжения
             
-            // 🔥 ЕСТЕСТВЕННАЯ коррекция в нижней части
-            if (ball.y > this.canvas.height * 0.85) {
-                // Легкое подталкивание к целевому слоту
-                const gentlePush = 0.008;
-                const pushDirection = targetX - ball.x;
-                ball.vx += pushDirection * gentlePush;
-                
-                // Естественное замедление при приближении к цели
-                if (distanceToTarget < slotWidth * 0.5) {
-                    ball.vx *= 0.97;
-                }
+            // Коррекция на основе расстояния
+            const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.015;
+            
+            const totalPullStrength = basePullStrength + distanceCorrection;
+            
+            // Притяжение к центру
+            const pullDirection = targetX - ball.x;
+            ball.vx += pullDirection * totalPullStrength;
+            
+            // Слегка увеличиваем вертикальную скорость
+            ball.vy += 0.005;
+        }
+        
+        // 🔥 ДОПОЛНИТЕЛЬНОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
+        if (ball.y > this.canvas.height * 0.7) {
+            const extraPull = 0.012;
+            const pullDirection = targetX - ball.x;
+            ball.vx += pullDirection * extraPull;
+            
+            // Замедление при приближении к цели
+            if (distanceToTarget < slotWidth * 0.3) {
+                ball.vx *= 0.95;
             }
         }
 
-        // Столкновения со стенами (оставляем как было)
+        // Столкновения со стенами
         if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
             ball.vx *= -this.bounce;
             ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
         }
 
-        // Столкновения с колышками (оставляем как было)
+        // Столкновения с колышками
         this.pegs.forEach(peg => {
             const dx = ball.x - peg.x;
             const dy = ball.y - peg.y;
@@ -347,7 +341,7 @@ class PlinkoGame {
             }
         });
 
-        // Проверка достижения низа (оставляем как было)
+        // Проверка достижения низа
         const bottomThreshold = this.canvas.height - 15;
         const isAtBottom = ball.y + ball.radius > bottomThreshold;
         
