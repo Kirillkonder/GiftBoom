@@ -103,20 +103,21 @@ class PlinkoGame {
     }
 
     createSlots() {
-        const slotCount = 7;
-        const slotWidth = this.canvas.width / slotCount;
-        // Новое расположение множителей: большие по бокам, маленькие в центре
-        const multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
-        
-        for (let i = 0; i < slotCount; i++) {
-            this.slots.push({
-                x: i * slotWidth,
-                width: slotWidth,
-                multiplier: multipliers[i],
-                index: i
-            });
-        }
+    const slotCount = 7;
+    const slotWidth = this.canvas.width / slotCount;
+    // Множители остаются прежними
+    const multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
+    
+    for (let i = 0; i < slotCount; i++) {
+        this.slots.push({
+            x: i * slotWidth,
+            width: slotWidth,
+            multiplier: multipliers[i],
+            index: i
+        });
     }
+}
+
 
     async dropBall() {
         if (this.currentBet > 0 && this.balance >= this.currentBet) {
@@ -230,21 +231,16 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 УЛУЧШЕННЫЙ АЛГОРИТМ ПРИТЯГИВАНИЯ: работает только для шаров в верхней половине
-        // и применяется индивидуально к каждому шару
-        if (ball.y < this.canvas.height * 0.5) { // Только в верхней половине
+        // 🔥 УСИЛИВАЕМ ПРИТЯГЕНИЕ К ЦЕНТРУ для 95% попадания на маленькие множители
+        if (ball.y < this.canvas.height * 0.7) { // Притяжение на большей высоте
             const centerX = this.canvas.width / 2;
             const distanceFromCenter = Math.abs(ball.x - centerX);
             
-            // Сила притяжения к центру зависит от положения шара
-            if (distanceFromCenter > 30) {
-                // Плавное притяжение: сильнее для дальних шаров, слабее для близких
-                const pullStrength = 0.0005 + (distanceFromCenter / this.canvas.width) * 0.001;
+            // Сильное притяжение к центру
+            if (distanceFromCenter > 20) {
+                const pullStrength = 0.001 + (distanceFromCenter / this.canvas.width) * 0.002;
                 const centerPull = (centerX - ball.x) * pullStrength;
                 ball.vx += centerPull;
-                
-                // Добавляем небольшую случайность для естественности
-                ball.vx += (Math.random() - 0.5) * 0.02;
             }
         }
 
@@ -254,7 +250,7 @@ class PlinkoGame {
             ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
         }
 
-        // Peg collisions
+        // Peg collisions - уменьшаем случайность для предсказуемости
         this.pegs.forEach(peg => {
             const dx = ball.x - peg.x;
             const dy = ball.y - peg.y;
@@ -264,8 +260,8 @@ class PlinkoGame {
                 const angle = Math.atan2(dy, dx);
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                 
-                // Реалистичная физика отскока с небольшой случайностью
-                const randomAngle = angle + (Math.random() - 0.5) * 0.2;
+                // Меньше случайности для более предсказуемого падения
+                const randomAngle = angle + (Math.random() - 0.5) * 0.1;
                 
                 ball.vx = Math.cos(randomAngle) * speed * this.bounce;
                 ball.vy = Math.sin(randomAngle) * speed * this.bounce;
@@ -289,7 +285,6 @@ class PlinkoGame {
         }
     }
 }
-
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
