@@ -294,12 +294,10 @@ class PlinkoGame {
         // Определяем тип шарика ОДИН раз при первом расчете
         if (!ball.hasOwnProperty('multiplierType')) {
             const rand = Math.random();
-            if (rand < 0.20) {
-                // 20% шариков потенциально на большие множители
-                // Но притяжение срабатывает только у 60% из них
-                const pullChance = Math.random();
-                ball.multiplierType = pullChance < 0.60 ? 'high_pull' : 'high_natural';
-                console.log(`🎯 Большой множитель: ${ball.multiplierType === 'high_pull' ? 'с притяжением' : 'естественно'} (${rand.toFixed(3)})`);
+            if (rand < 0.10) {
+                // 10% шариков притягиваются к большим множителям
+                ball.multiplierType = 'high_pull';
+                console.log(`🎯 Большой множитель с притяжением (${rand.toFixed(3)})`);
             } else {
                 ball.multiplierType = 'low';
                 console.log(`🎯 Маленький множитель (${rand.toFixed(3)})`);
@@ -360,7 +358,7 @@ class PlinkoGame {
                     ball.vx += pullDirection * adjustedPull;
                 }
             }
-            // ball.multiplierType === 'high_natural' - никакого притяжения, естественное падение
+            // ball.multiplierType === 'low' - естественное падение без притяжения
         }
 
         // Wall collisions (оставляем как было)
