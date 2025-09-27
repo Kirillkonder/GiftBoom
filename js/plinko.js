@@ -1,6 +1,6 @@
-// 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
-// 85% шанс попадания в слоты с множителями 0.8x и 0.4x
-// 15% шанс попадания в слоты с множителями 2.2x и 5.8x
+// 🔥 УЛУЧШЕННАЯ ФИЗИКА PLINKO: 
+// 80% шанс попадания в слоты с множителями 0.8x и 0.4x
+// 20% шанс попадания в слоты с множителями 2.2x и 5.8x
 
 class PlinkoGame {
     constructor() {
@@ -240,18 +240,22 @@ class PlinkoGame {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
-        // 🔥 УЛУЧШЕННОЕ ИСПРАВЛЕНИЕ: Если шарик завершен более 300мс назад ИЛИ висит слишком долго - удаляем
+        // 🔥 УЛУЧШЕННАЯ ЗАЩИТА ОТ ЗАВИСАНИЯ: более агрессивная проверка
         const currentTime = Date.now();
         const ballLifetime = currentTime - (ball.createdAt || currentTime);
-        const isStuckBall = ballLifetime > 10000; // Шарик висит более 10 секунд
-        const isSlowBall = ball.y > this.canvas.height * 0.9 && Math.abs(ball.vy) < 0.1 && ballLifetime > 3000; // Медленный шарик внизу
+        const isStuckBall = ballLifetime > 8000; // Сократил с 10 до 8 секунд
+        const isSlowBall = ball.y > this.canvas.height * 0.85 && Math.abs(ball.vy) < 0.15 && ballLifetime > 2000; // Более чувствительные параметры
+        const isFloatingBall = ballLifetime > 5000 && ball.y < this.canvas.height * 0.1; // Новая проверка - шарик застрял вверху
         
-        if ((ball.isFinished && currentTime - ball.finishedAt > 300) || isStuckBall || isSlowBall) {
+        if ((ball.isFinished && currentTime - ball.finishedAt > 200) || isStuckBall || isSlowBall || isFloatingBall) {
             if (isStuckBall) {
                 console.log(`🔄 Удаляем зависший шарик (${ballLifetime}ms)`);
             }
             if (isSlowBall) {
                 console.log(`🔄 Удаляем медленный шарик (${ballLifetime}ms, y:${ball.y.toFixed(1)}, vy:${ball.vy.toFixed(3)})`);
+            }
+            if (isFloatingBall) {
+                console.log(`🔄 Удаляем зависший вверху шарик (${ballLifetime}ms, y:${ball.y.toFixed(1)})`);
             }
             this.activeBalls.splice(i, 1);
             continue;
@@ -269,12 +273,19 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
         
-        // 🔥 ПРЕДОТВРАЩЕНИЕ ЗАВИСАНИЯ: Минимальная скорость вниз
-        if (ball.y > this.canvas.height * 0.5 && Math.abs(ball.vy) < 0.3) {
-            ball.vy = Math.max(ball.vy, 0.3);
+        // 🔥 УЛУЧШЕННОЕ ПРЕДОТВРАЩЕНИЕ ЗАВИСАНИЯ: более активная помощь шарикам
+        if (ball.y > this.canvas.height * 0.4 && Math.abs(ball.vy) < 0.2) {
+            ball.vy = Math.max(ball.vy, 0.4); // Увеличил минимальную скорость
+        }
+        
+        // 🔥 ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: если шарик медленно движется в средней части
+        if (ball.y > this.canvas.height * 0.6 && ball.y < this.canvas.height * 0.9 && 
+            Math.abs(ball.vx) < 0.1 && Math.abs(ball.vy) < 0.3) {
+            ball.vy += 0.5; // Принудительно ускоряем вниз
+            ball.vx += (Math.random() - 0.5) * 0.3; // Добавляем случайное горизонтальное движение
         }
 
-        // 🔥 НОВАЯ ФИЗИКА: 85% шанс на маленькие множители, 15% на большие
+        // 🔥 УЛУЧШЕННАЯ ФИЗИКА: 80% шанс на маленькие множители, 20% на большие
         // Слоты: [5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x]
         // Индексы: [0,   1,   2,   3,   4,   5,   6]
         // Маленькие множители: слоты 2, 3, 4 (0.8x, 0.4x, 0.8x)
@@ -286,18 +297,18 @@ class PlinkoGame {
         
         // Притяжение работает когда шар ниже 30% высоты поля
         if (ball.y > this.canvas.height * 0.3) {
-            // 🔥 НОВАЯ ЛОГИКА: 15% шанс на большие множители
+            // 🔥 УЛУЧШЕННАЯ ЛОГИКА: 20% шанс на большие множители
             const isHighMultiplierBall = !ball.hasOwnProperty('isHighMultiplier') ? 
-                (ball.isHighMultiplier = Math.random() < 0.15) : ball.isHighMultiplier;
+                (ball.isHighMultiplier = Math.random() < 0.20) : ball.isHighMultiplier;
             
             let targetSlot, targetSlots;
             
             if (isHighMultiplierBall) {
-                // 15% шанс - направляем к большим множителям
+                // 20% шанс - направляем к большим множителям
                 targetSlots = highMultiplierSlots;
                 targetSlot = targetSlots[Math.floor(Math.random() * targetSlots.length)];
             } else {
-                // 85% шанс - направляем к маленьким множителям
+                // 80% шанс - направляем к маленьким множителям
                 targetSlots = lowMultiplierSlots;
                 let minDistance = Infinity;
                 targetSlot = 3; // По умолчанию центральный слот (0.4x)
@@ -382,14 +393,14 @@ class PlinkoGame {
             }
         });
 
-        // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА: Check if ball reached bottom
-        const bottomThreshold = this.canvas.height - 15;
+        // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА: проверка достижения дна с улучшенным порогом
+        const bottomThreshold = this.canvas.height - 10; // Сделал порог меньше
         const isAtBottom = ball.y + ball.radius > bottomThreshold;
         
         if (isAtBottom && !ball.isFinished) {
             // Помечаем шарик как завершенный ДО обработки
             ball.isFinished = true;
-            ball.finishedAt = Date.now(); // 🔥 ЗАПОМИНАЕМ ВРЕМЯ ЗАВЕРШЕНИЯ
+            ball.finishedAt = Date.now();
             
             const slotWidth = this.canvas.width / this.slots.length;
             const ballCenterX = ball.x;
@@ -398,10 +409,16 @@ class PlinkoGame {
             
             console.log(`🎯 Шарик упал в позицию X: ${ballCenterX.toFixed(1)}, слот: ${finalSlotIndex}`);
             
-            // Обрабатываем результат с задержкой для анимации
+            // Принудительно перемещаем шарик в центр слота для визуального завершения
+            ball.x = (finalSlotIndex + 0.5) * slotWidth;
+            ball.y = this.canvas.height - 5;
+            ball.vx = 0;
+            ball.vy = 0;
+            
+            // Обрабатываем результат с минимальной задержкой
             setTimeout(() => {
                 this.handleBallInSlot(ball, finalSlotIndex);
-            }, 100);
+            }, 50); // Сократил с 100 до 50мс
         }
     }
 }
