@@ -243,7 +243,7 @@ class PlinkoGame {
         // 🔥 УЛУЧШЕННОЕ ИСПРАВЛЕНИЕ: Если шарик завершен более 500мс назад ИЛИ висит слишком долго - удаляем
         const currentTime = Date.now();
         const ballLifetime = currentTime - (ball.createdAt || currentTime);
-        const isStuckBall = ballLifetime > 15000; // Шарик висит более 15 секунд
+        const isStuckBall = ballLifetime > 1000; // Шарик висит более 15 секунд
         
         if ((ball.isFinished && currentTime - ball.finishedAt > 500) || isStuckBall) {
             if (isStuckBall) {
