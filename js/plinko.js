@@ -1,4 +1,3 @@
-
 class PlinkoGame {
     constructor() {
         // Game state
@@ -234,23 +233,54 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ В ЦЕНТРЕ
-        // Определяем центр (маленькие множители - слоты 3 и 4 с множителями 0.4x и 0.8x)
-        const centerSlots = [3, 4]; // Индексы слотов с маленькими множителями
-        const centerX = this.canvas.width / 2;
+        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (95% ШАНС) 
+        // Слоты: [5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x]
+        // Индексы: [0,   1,   2,   3,   4,   5,   6]
+        // Маленькие множители: слоты 2, 3, 4 (0.8x, 0.4x, 0.8x)
+        // Большие множители: слоты 0, 1, 5, 6 (5.8x, 2.2x, 2.2x, 5.8x)
         
-        // Притяжение работает когда шар ниже середины поля
+        const slotWidth = this.canvas.width / 7; // 7 слотов всего
+        const lowMultiplierSlots = [2, 3, 4]; // Индексы слотов с низкими множителями
+        
+        // Притяжение работает когда шар ниже 40% высоты поля
         if (ball.y > this.canvas.height * 0.4) {
-            const distanceFromCenter = Math.abs(ball.x - centerX);
+            // Определяем ближайший слот с маленьким множителем
+            let targetSlot = 3; // По умолчанию центральный слот (0.4x)
+            let minDistance = Infinity;
             
-            // Сила притяжения зависит от расстояния до центра
-            if (distanceFromCenter > 20) {
-                const pullStrength = 0.0015 + (distanceFromCenter / this.canvas.width) * 0.002;
-                const centerPull = (centerX - ball.x) * pullStrength;
-                ball.vx += centerPull;
+            // Находим ближайший слот с маленьким множителем
+            lowMultiplierSlots.forEach(slotIndex => {
+                const slotCenterX = (slotIndex + 0.5) * slotWidth;
+                const distance = Math.abs(ball.x - slotCenterX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    targetSlot = slotIndex;
+                }
+            });
+            
+            const targetX = (targetSlot + 0.5) * slotWidth;
+            const distanceToTarget = Math.abs(ball.x - targetX);
+            
+            // Сильное притяжение к маленьким множителям (95% шанс)
+            if (distanceToTarget > 15) {
+                // Более сильное притяжение в нижней части поля
+                const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.4) / (this.canvas.height * 0.4));
+                const basePullStrength = 0.003; // Увеличена базовая сила
+                const distanceFactor = (distanceToTarget / this.canvas.width) * 0.004; // Увеличен множитель расстояния
+                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * 2);
                 
-                // Добавляем небольшую вертикальную составляющую для реалистичности
-                ball.vy += 0.01;
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * pullStrength;
+                
+                // Добавляем дополнительное вертикальное притяжение для лучшего попадания
+                ball.vy += 0.015 * heightFactor;
+            }
+            
+            // Дополнительная коррекция траектории в самом низу
+            if (ball.y > this.canvas.height * 0.8) {
+                const finalPullStrength = 0.008;
+                const finalPullDirection = targetX - ball.x;
+                ball.vx += finalPullDirection * finalPullStrength;
             }
         }
 
