@@ -20,10 +20,10 @@ class PlinkoGame {
         this.pegs = [];
         this.slots = [];
 
-        // Physics - Более реалистичная физика
-        this.gravity = 0.25;  // Уменьшено с 0.6 для более реалистичного падения
-        this.bounce = 0.65;   // Слегка уменьшен отскок для более плавного движения
-        this.friction = 0.985; // Чуть больше трения для естественного замедления
+        // Physics
+        this.gravity = 0.6;
+        this.bounce = 0.7;
+        this.friction = 0.99;
 
         // Initialize
         this.setupEventListeners();
@@ -269,40 +269,33 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
         
-        // 🔥 ПРЕДОТВРАЩЕНИЕ ЗАВИСАНИЯ: Минимальная скорость вниз (адаптировано под новую физику)
-        if (ball.y > this.canvas.height * 0.5 && Math.abs(ball.vy) < 0.15) {
-            ball.vy = Math.max(ball.vy, 0.15); // Уменьшено с 0.3 под новую гравитацию
+        // 🔥 ПРЕДОТВРАЩЕНИЕ ЗАВИСАНИЯ: Минимальная скорость вниз
+        if (ball.y > this.canvas.height * 0.5 && Math.abs(ball.vy) < 0.3) {
+            ball.vy = Math.max(ball.vy, 0.3);
         }
 
-        // 🔥 НОВАЯ ФИЗИКА: 85% шанс на маленькие множители, 15% на большие
-        // Слоты: [5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x]
-        // Индексы: [0,   1,   2,   3,   4,   5,   6]
-        // Маленькие множители: слоты 2, 3, 4 (0.8x, 0.4x, 0.8x)
-        // Большие множители: слоты 0, 1, 5, 6 (5.8x, 2.2x, 2.2x, 5.8x)
-        
-        const slotWidth = this.canvas.width / 7; // 7 слотов всего
-        const lowMultiplierSlots = [2, 3, 4]; // Индексы слотов с низкими множителями
-        const highMultiplierSlots = [0, 1, 5, 6]; // Индексы слотов с высокими множителями
-        
-        // Притяжение работает когда шар ниже 30% высоты поля
-        if (ball.y > this.canvas.height * 0.3) {
-            // 🔥 НОВАЯ ЛОГИКА: 15% шанс на большие множители
-            const isHighMultiplierBall = !ball.hasOwnProperty('isHighMultiplier') ? 
-                (ball.isHighMultiplier = Math.random() < 0.15) : ball.isHighMultiplier;
+        // 🔥 УЛУЧШЕННАЯ ФИЗИКА: Более естественное притяжение
+        // Притяжение работает когда шар ниже 50% высоты поля (было 30%)
+        if (ball.y > this.canvas.height * 0.5) {
+            const slotWidth = this.canvas.width / 7;
+            const lowMultiplierSlots = [2, 3, 4]; // Слоты с низкими множителями
+            const highMultiplierSlots = [0, 1, 5, 6]; // Слоты с высокими множителями
             
-            let targetSlot, targetSlots;
+            // Определяем тип шарика (только один раз)
+            if (!ball.hasOwnProperty('isHighMultiplier')) {
+                ball.isHighMultiplier = Math.random() < 0.15; // 15% шанс на высокий множитель
+                console.log(`🎯 Шарик создан: ${ball.isHighMultiplier ? 'высокий' : 'низкий'} множитель`);
+            }
             
-            if (isHighMultiplierBall) {
-                // 15% шанс - направляем к большим множителям
-                targetSlots = highMultiplierSlots;
-                targetSlot = targetSlots[Math.floor(Math.random() * targetSlots.length)];
+            let targetSlot;
+            if (ball.isHighMultiplier) {
+                // Для высоких множителей - случайный выбор из доступных слотов
+                targetSlot = highMultiplierSlots[Math.floor(Math.random() * highMultiplierSlots.length)];
             } else {
-                // 85% шанс - направляем к маленьким множителям
-                targetSlots = lowMultiplierSlots;
+                // Для низких множителей - находим ближайший низкий слот
                 let minDistance = Infinity;
-                targetSlot = 3; // По умолчанию центральный слот (0.4x)
+                targetSlot = 3; // По умолчанию центральный слот
                 
-                // Находим ближайший слот с маленьким множителем
                 lowMultiplierSlots.forEach(slotIndex => {
                     const slotCenterX = (slotIndex + 0.5) * slotWidth;
                     const distance = Math.abs(ball.x - slotCenterX);
@@ -316,52 +309,55 @@ class PlinkoGame {
             const targetX = (targetSlot + 0.5) * slotWidth;
             const distanceToTarget = Math.abs(ball.x - targetX);
             
-            // Притяжение к целевому слоту (сила зависит от типа множителя)
-            if (distanceToTarget > 10) {
-                const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.3) / (this.canvas.height * 0.5));
+            // 🔥 УМЕНЬШЕННАЯ СИЛА ПРИТЯЖЕНИЯ для более естественного движения
+            if (distanceToTarget > 5) {
+                // Высота влияет на силу притяжения (чем ниже, тем сильнее)
+                const heightFactor = Math.min(1.0, (ball.y - this.canvas.height * 0.5) / (this.canvas.height * 0.4));
                 
-                // Для больших множителей - умеренное притяжение, для маленьких - сильное
-                const basePullStrength = isHighMultiplierBall ? 0.004 : 0.007;
-                const distanceFactor = (distanceToTarget / this.canvas.width) * (isHighMultiplierBall ? 0.008 : 0.011);
-                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * (isHighMultiplierBall ? 2 : 3.5));
+                // СИЛА ПРИТЯЖЕНИЯ УМЕНЬШЕНА В 2-3 РАЗА
+                const basePullStrength = ball.isHighMultiplier ? 0.002 : 0.003; // Было 0.004 и 0.007
+                const distanceFactor = (distanceToTarget / this.canvas.width) * (ball.isHighMultiplier ? 0.004 : 0.006); // Уменьшено
+                const pullStrength = (basePullStrength + distanceFactor) * (1 + heightFactor * (ball.isHighMultiplier ? 1 : 2)); // Уменьшено
                 
                 const pullDirection = targetX - ball.x;
                 ball.vx += pullDirection * pullStrength;
                 
-                // Вертикальное притяжение
-                ball.vy += (isHighMultiplierBall ? 0.015 : 0.022) * heightFactor;
+                // СЛАБОЕ вертикальное притяжение
+                ball.vy += (ball.isHighMultiplier ? 0.008 : 0.012) * heightFactor; // Уменьшено
             }
             
-            // Дополнительная коррекция в нижней части
-            if (ball.y > this.canvas.height * 0.7) {
-                const finalPullStrength = isHighMultiplierBall ? 0.012 : 0.018;
+            // 🔥 УМЕНЬШЕННАЯ коррекция в нижней части
+            if (ball.y > this.canvas.height * 0.8) { // Было 0.7
+                const finalPullStrength = ball.isHighMultiplier ? 0.006 : 0.009; // Уменьшено
                 const finalPullDirection = targetX - ball.x;
                 ball.vx += finalPullDirection * finalPullStrength;
                 
-                if (Math.abs(ball.x - targetX) > slotWidth * 0.3) {
-                    ball.vx *= isHighMultiplierBall ? 0.90 : 0.83;
+                // Меньшее замедление
+                if (Math.abs(ball.x - targetX) > slotWidth * 0.4) { // Увеличена граница
+                    ball.vx *= ball.isHighMultiplier ? 0.95 : 0.92; // Меньшее замедление
                 }
             }
             
-            // Финальная коррекция перед падением
-            if (ball.y > this.canvas.height * 0.85) {
-                const criticalPullStrength = isHighMultiplierBall ? 0.020 : 0.030;
+            // 🔥 УМЕНЬШЕННАЯ Финальная коррекция
+            if (ball.y > this.canvas.height * 0.9) { // Было 0.85
+                const criticalPullStrength = ball.isHighMultiplier ? 0.010 : 0.015; // Уменьшено
                 const criticalPullDirection = targetX - ball.x;
                 ball.vx += criticalPullDirection * criticalPullStrength;
                 
-                if (Math.abs(ball.x - targetX) > slotWidth * 0.2) {
-                    ball.vx = (targetX - ball.x) * (isHighMultiplierBall ? 0.10 : 0.14);
+                // Менее агрессивная коррекция
+                if (Math.abs(ball.x - targetX) > slotWidth * 0.3) { // Увеличена граница
+                    ball.vx = (targetX - ball.x) * (ball.isHighMultiplier ? 0.05 : 0.07); // Уменьшено
                 }
             }
         }
 
-        // Wall collisions (оставляем как было)
+        // Wall collisions
         if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
             ball.vx *= -this.bounce;
             ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
         }
 
-        // Peg collisions (оставляем как было)
+        // Peg collisions
         this.pegs.forEach(peg => {
             const dx = ball.x - peg.x;
             const dy = ball.y - peg.y;
@@ -389,7 +385,7 @@ class PlinkoGame {
         if (isAtBottom && !ball.isFinished) {
             // Помечаем шарик как завершенный ДО обработки
             ball.isFinished = true;
-            ball.finishedAt = Date.now(); // 🔥 ЗАПОМИНАЕМ ВРЕМЯ ЗАВЕРШЕНИЯ
+            ball.finishedAt = Date.now();
             
             const slotWidth = this.canvas.width / this.slots.length;
             const ballCenterX = ball.x;
