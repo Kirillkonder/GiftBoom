@@ -102,10 +102,11 @@ class PlinkoGame {
         }
     }
 
-    createSlots() {
+   createSlots() {
     const slotCount = 7;
     const slotWidth = this.canvas.width / slotCount;
-    // Множители остаются прежними
+    
+    // Множители: БОЛЬШИЕ по краям (5.8x), МАЛЕНЬКИЕ в центре (0.4x)
     const multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
     
     for (let i = 0; i < slotCount; i++) {
@@ -116,6 +117,8 @@ class PlinkoGame {
             index: i
         });
     }
+    
+    console.log('🎯 Слоты созданы:', this.slots.map(s => `${s.multiplier}x`).join(' | '));
 }
 
 
@@ -231,14 +234,14 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 УСИЛИВАЕМ ПРИТЯГЕНИЕ К ЦЕНТРУ для 95% попадания на маленькие множители
-        if (ball.y < this.canvas.height * 0.7) { // Притяжение на большей высоте
+        // 🔥 ИСПРАВЛЕННОЕ ПРИТЯЖЕНИЕ К ЦЕНТРУ (маленькие множители)
+        if (ball.y < this.canvas.height * 0.8) { // Притяжение работает на большей высоте
             const centerX = this.canvas.width / 2;
             const distanceFromCenter = Math.abs(ball.x - centerX);
             
-            // Сильное притяжение к центру
-            if (distanceFromCenter > 20) {
-                const pullStrength = 0.001 + (distanceFromCenter / this.canvas.width) * 0.002;
+            // Сильное притяжение к центру для попадания на маленькие множители
+            if (distanceFromCenter > 10) {
+                const pullStrength = 0.002 + (distanceFromCenter / this.canvas.width) * 0.003;
                 const centerPull = (centerX - ball.x) * pullStrength;
                 ball.vx += centerPull;
             }
@@ -261,7 +264,7 @@ class PlinkoGame {
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                 
                 // Меньше случайности для более предсказуемого падения
-                const randomAngle = angle + (Math.random() - 0.5) * 0.1;
+                const randomAngle = angle + (Math.random() - 0.5) * 0.08;
                 
                 ball.vx = Math.cos(randomAngle) * speed * this.bounce;
                 ball.vy = Math.sin(randomAngle) * speed * this.bounce;
@@ -285,6 +288,7 @@ class PlinkoGame {
         }
     }
 }
+
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
