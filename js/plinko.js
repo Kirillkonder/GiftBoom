@@ -1,5 +1,5 @@
 // 🔥 УЛУЧШЕННАЯ ФИЗИКА PLINKO: 
-// Сильное притяжение к множителям 0.8x и 0.4x
+// Сильное притяжение к множителям 0.8x и 0.4x с самого верха
 
 class PlinkoGame {
     constructor() {
@@ -298,12 +298,12 @@ class PlinkoGame {
             ball.vx += (Math.random() - 0.5) * 0.3; // Добавляем случайное горизонтальное движение
         }
 
-        // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ ТОЛЬКО К 0.8x и 0.4x МНОЖИТЕЛЯМ
+        // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ ТОЛЬКО К 0.8x и 0.4x МНОЖИТЕЛЯМ С САМОГО ВЕРХА
         const slotWidth = this.canvas.width / 7;
         const targetMultiplierSlots = [2, 3, 4]; // 0.8x, 0.4x, 0.8x
         
-        // 🔥 ВСЕГДА притягиваем к маленьким множителям
-        if (ball.y > this.canvas.height * 0.6) {
+        // 🔥 ПРИТЯЖЕНИЕ НАЧИНАЕТСЯ СРАЗУ ПОСЛЕ ЗАПУСКА ШАРИКА
+        if (ball.y > this.canvas.height * 0.1) { // Начинаем с 10% высоты (с самого верха)
             if (!ball.targetSlot) {
                 let minDistance = Infinity;
                 let closestSlot = 3; // Средний слот с 0.4x
@@ -323,13 +323,17 @@ class PlinkoGame {
             const distanceToTarget = Math.abs(ball.x - targetX);
             
             // СИЛЬНОЕ притяжение к маленьким множителям
-            if (distanceToTarget > slotWidth * 0.2) {
-                const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
-                const pullStrength = 0.004; // Увеличено притяжение
-                const adjustedPull = pullStrength * heightProgress;
-                
-                const pullDirection = (targetX - ball.x) / this.canvas.width;
-                ball.vx += pullDirection * adjustedPull;
+            // Усиливаем притяжение по мере падения шарика
+            const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.1) / (this.canvas.height * 0.8));
+            const pullStrength = 0.006; // Увеличил силу притяжения
+            const adjustedPull = pullStrength * heightProgress;
+            
+            const pullDirection = (targetX - ball.x) / this.canvas.width;
+            ball.vx += pullDirection * adjustedPull;
+            
+            // 🔥 ДОБАВЛЯЕМ ЛОГИРОВАНИЕ ДЛЯ ОТЛАДКИ (можно убрать после тестирования)
+            if (Math.random() < 0.01) { // Логируем только 1% обновлений
+                console.log(`🎯 Притяжение: шар Y=${ball.y.toFixed(1)}, цель X=${targetX.toFixed(1)}, сила=${adjustedPull.toFixed(4)}`);
             }
         }
 
@@ -440,13 +444,13 @@ class PlinkoGame {
             betAmountElement.textContent = this.currentBet.toFixed(1);
         }
 
-        // 🔥 УБРАЛ ИНФОРМАЦИЮ О ЦИКЛАХ
+        // 🔥 ОБНОВЛЕННАЯ ИНФОРМАЦИЯ О ЦИКЛАХ
         const cyclePhaseElement = document.getElementById('cycle-phase');
         const cycleStatsElement = document.getElementById('cycle-stats');
         
         if (cyclePhaseElement && cycleStatsElement) {
-            cyclePhaseElement.textContent = 'Режим: Притяжение к 0.8x и 0.4x';
-            cycleStatsElement.textContent = `Все шарики притягиваются к маленьким множителям`;
+            cyclePhaseElement.textContent = 'Режим: Сильное притяжение к 0.8x и 0.4x';
+            cycleStatsElement.textContent = 'Притяжение начинается с самого верха';
         }
 
         // Enable/disable drop button
