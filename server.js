@@ -1770,34 +1770,62 @@ app.post('/api/coin/series-win', async (req, res) => {
 });
 
 const plinkoMultipliers = {
-    8: [5.8, 2.2, 1.1, 0.4, 1.1, 2.2, 5.8], // 8 рядов
-    12: [26.0, 9.0, 4.0, 2.0, 0.5, 2.0, 4.0, 9.0, 26.0], // 12 рядов
-    16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0] // 16 рядов
+    8: [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8], // 8 рядов - БОЛЬШИЕ ПО БОКАМ, МАЛЕНЬКИЕ В ЦЕНТРЕ
+    12: [26.0, 9.0, 4.0, 2.0, 0.5, 0.5, 2.0, 4.0, 9.0, 26.0], // 12 рядов
+    16: [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0] // 16 рядов
 };
 
-// Функция расчета вероятностей для Plinko
+// Функция расчета вероятностей для Plinko с новым распределением
 function calculatePlinkoProbabilities(rows) {
     const probabilities = [];
     const multipliers = plinkoMultipliers[rows];
     
-    // Биномиальное распределение для расчета вероятностей
-    for (let k = 0; k <= rows; k++) {
-        // Количество путей до данной позиции
-        const paths = binomialCoefficient(rows, k);
-        // Общее количество путей
-        const totalPaths = Math.pow(2, rows);
-        // Вероятность
-        const probability = paths / totalPaths;
-        
-        // Сопоставляем с множителем (крайние позиции имеют высокие множители)
-        const multiplierIndex = Math.floor((k / rows) * (multipliers.length - 1));
-        const multiplier = multipliers[multiplierIndex];
-        
-        probabilities.push({
-            position: k,
-            multiplier: multiplier,
-            probability: probability
-        });
+    if (!multipliers) return [];
+    
+    // НОВОЕ РАСПРЕДЕЛЕНИЕ ВЕРОЯТНОСТЕЙ
+    if (rows === 8) {
+        // 7 позиций: 5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x
+        probabilities.push(
+            { position: 0, multiplier: 5.8, probability: 0.10 }, // 10%
+            { position: 1, multiplier: 2.2, probability: 0.10 }, // 10%
+            { position: 2, multiplier: 0.8, probability: 0.40 }, // 40%
+            { position: 3, multiplier: 0.4, probability: 0.40 }, // 40%
+            { position: 4, multiplier: 0.8, probability: 0.40 }, // 40%
+            { position: 5, multiplier: 2.2, probability: 0.10 }, // 10%
+            { position: 6, multiplier: 5.8, probability: 0.10 }  // 10%
+        );
+    } else if (rows === 12) {
+        // Адаптация для 12 рядов
+        const totalPositions = multipliers.length;
+        probabilities.push(
+            { position: 0, multiplier: multipliers[0], probability: 0.05 },
+            { position: 1, multiplier: multipliers[1], probability: 0.05 },
+            { position: 2, multiplier: multipliers[2], probability: 0.10 },
+            { position: 3, multiplier: multipliers[3], probability: 0.15 },
+            { position: 4, multiplier: multipliers[4], probability: 0.30 },
+            { position: 5, multiplier: multipliers[5], probability: 0.30 },
+            { position: 6, multiplier: multipliers[6], probability: 0.15 },
+            { position: 7, multiplier: multipliers[7], probability: 0.10 },
+            { position: 8, multiplier: multipliers[8], probability: 0.05 },
+            { position: 9, multiplier: multipliers[9], probability: 0.05 }
+        );
+    } else if (rows === 16) {
+        // Адаптация для 16 рядов
+        const totalPositions = multipliers.length;
+        probabilities.push(
+            { position: 0, multiplier: multipliers[0], probability: 0.03 },
+            { position: 1, multiplier: multipliers[1], probability: 0.03 },
+            { position: 2, multiplier: multipliers[2], probability: 0.07 },
+            { position: 3, multiplier: multipliers[3], probability: 0.10 },
+            { position: 4, multiplier: multipliers[4], probability: 0.15 },
+            { position: 5, multiplier: multipliers[5], probability: 0.31 },
+            { position: 6, multiplier: multipliers[6], probability: 0.31 },
+            { position: 7, multiplier: multipliers[7], probability: 0.15 },
+            { position: 8, multiplier: multipliers[8], probability: 0.10 },
+            { position: 9, multiplier: multipliers[9], probability: 0.07 },
+            { position: 10, multiplier: multipliers[10], probability: 0.03 },
+            { position: 11, multiplier: multipliers[11], probability: 0.03 }
+        );
     }
     
     return probabilities;
@@ -1815,90 +1843,58 @@ function binomialCoefficient(n, k) {
     return Math.round(result);
 }
 
-// Улучшенная функция симуляции падения шарика с реалистичным центральным распределением
+
+// Улучшенная функция симуляции падения шарика с новыми вероятностями
 function simulatePlinkoBall(rows) {
-    // Вероятности падения в каждую позицию с сильным центральным уклоном
+    // НОВЫЕ ВЕРОЯТНОСТИ согласно требованиям:
+    // Боковые 5.8x - 10%, ближние 2.2x - 10%, центральные 0.8x и 0.4x - по 40%
     let probabilities = [];
     let multipliers = [];
     
     if (rows === 8) {
-        // 8 рядов = 8 позиций (индексы 0-7)
-        multipliers = [5.8, 2.2, 1.1, 0.4, 0.4, 1.1, 2.2, 5.8];
-        // Усиленный центральный уклон - центральные 0.4x слоты имеют 55% шанс!
-        probabilities = [0.03, 0.07, 0.10, 0.275, 0.275, 0.10, 0.07, 0.03];
+        // 8 рядов = 7 позиций (индексы 0-6)
+        multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
+        // Новые вероятности: 10%-10%-40%-40%
+        probabilities = [0.10, 0.10, 0.40, 0.40, 0.40, 0.10, 0.10];
     } else if (rows === 12) {
         // 12 рядов = 9 позиций
         multipliers = [26.0, 9.0, 4.0, 2.0, 0.5, 0.5, 2.0, 4.0, 9.0, 26.0];
-        // Центральные 0.5x слоты имеют 50% шанс
-        probabilities = [0.015, 0.03, 0.05, 0.08, 0.12, 0.25, 0.25, 0.12, 0.08, 0.05, 0.03, 0.015];
+        // Аналогичное распределение для 12 рядов
+        probabilities = [0.05, 0.05, 0.10, 0.15, 0.30, 0.30, 0.15, 0.10, 0.05, 0.05];
     } else if (rows === 16) {
         // 16 рядов = 11 позиций  
         multipliers = [100.0, 20.0, 8.0, 3.0, 1.5, 0.8, 0.8, 1.5, 3.0, 8.0, 20.0, 100.0];
-        // Центральные 0.8x слоты имеют 45% шанс
-        probabilities = [0.01, 0.02, 0.03, 0.05, 0.08, 0.11, 0.225, 0.225, 0.11, 0.08, 0.05, 0.03, 0.02, 0.01];
-    }
-
-    // Дополнительная центральная коррекция для еще большего уклона
-    const centerIndex = Math.floor(multipliers.length / 2);
-    const centerBoost = 0.15; // Дополнительные 15% к центральным позициям
-    
-    // Перераспределяем вероятности в пользу центра
-    for (let i = 0; i < probabilities.length; i++) {
-        const distanceFromCenter = Math.abs(i - centerIndex);
-        if (distanceFromCenter <= 1) { // Центральные и ближайшие позиции
-            probabilities[i] += centerBoost / 3; // Делим на 3 центральные позиции
-        } else {
-            probabilities[i] *= (1 - centerBoost / (probabilities.length - 3)); // Уменьшаем остальные
-        }
+        // Аналогичное распределение для 16 рядов
+        probabilities = [0.03, 0.03, 0.07, 0.10, 0.15, 0.31, 0.31, 0.15, 0.10, 0.07, 0.03, 0.03];
     }
 
     // Нормализуем вероятности чтобы сумма = 1
     const sum = probabilities.reduce((a, b) => a + b, 0);
     probabilities = probabilities.map(p => p / sum);
 
-    // Добавляем реалистичную физическую симуляцию
-    // Каждый шарик проходит через колышки, создавая естественное распределение
-    let position = multipliers.length / 2; // Начинаем с центра
-    
-    for (let row = 0; row < rows; row++) {
-        // На каждом ряду шарик может отклониться влево или вправо
-        // С небольшим уклоном к центру (физическая симуляция)
-        const deviation = (Math.random() - 0.5) * 0.8; // Уклон к центру
-        const centerPull = (multipliers.length / 2 - position) * 0.03; // Притяжение к центру
-        
-        position += deviation + centerPull;
-        
-        // Ограничиваем позицию границами
-        position = Math.max(0, Math.min(multipliers.length - 1, position));
-    }
+    // Генерируем случайное число для выбора слота
+    const random = Math.random();
+    let cumulativeProbability = 0;
+    let selectedSlot = 0;
 
-    // Окончательная позиция с небольшой случайностью
-    let finalPosition = Math.round(position);
-    
-    // Дополнительная проверка на центральный уклон
-    const centerBiasRoll = Math.random();
-    if (centerBiasRoll < 0.4) { // 40% шанс принудительно выбрать центральную позицию
-        const centerPositions = [];
-        for (let i = 0; i < multipliers.length; i++) {
-            if (multipliers[i] <= 1.0) { // Позиции с низкими множителями (центральные)
-                centerPositions.push(i);
-            }
-        }
-        if (centerPositions.length > 0) {
-            finalPosition = centerPositions[Math.floor(Math.random() * centerPositions.length)];
+    for (let i = 0; i < probabilities.length; i++) {
+        cumulativeProbability += probabilities[i];
+        if (random <= cumulativeProbability) {
+            selectedSlot = i;
+            break;
         }
     }
 
-    // Убеждаемся что позиция в правильных границах
-    finalPosition = Math.max(0, Math.min(finalPosition, multipliers.length - 1));
+    // Обеспечиваем что выбранный слот существует
+    selectedSlot = Math.max(0, Math.min(selectedSlot, multipliers.length - 1));
 
-    console.log(`🎯 Plinko result: position ${finalPosition}, multiplier ${multipliers[finalPosition]}x, rows ${rows}`);
+    console.log(`🎯 Plinko result: slot ${selectedSlot}, multiplier ${multipliers[selectedSlot]}x, probability ${(probabilities[selectedSlot] * 100).toFixed(1)}%`);
 
     return {
-        finalPosition: finalPosition,
-        multiplier: multipliers[finalPosition],
+        finalPosition: selectedSlot,
+        multiplier: multipliers[selectedSlot],
         probabilities: probabilities,
-        path: `Физическая симуляция через ${rows} рядов колышков`
+        path: `Вероятностное распределение: боковые 10%, центральные 80%`
     };
 }
 
@@ -1974,16 +1970,17 @@ app.post('/api/plinko/drop', async (req, res) => {
             return res.status(404).json({ error: 'Game not found' });
         }
 
-        // 🔥 ИСПОЛЬЗУЕМ РЕАЛЬНЫЙ МНОЖИТЕЛЬ ИЗ ФРОНТЕНДА
+        // 🔥 ИСПОЛЬЗУЕМ РЕАЛЬНЫЙ МНОЖИТЕЛЬ ИЗ ФРОНТЕНДА ИЛИ ГЕНЕРИРУЕМ ПО НОВОМУ РАСПРЕДЕЛЕНИЮ
         let multiplier;
         if (realMultiplier !== undefined && finalSlot !== undefined) {
             // Используем переданные данные с фронтенда
             multiplier = realMultiplier;
             console.log(`🎯 Используем реальный множитель: ${multiplier}x из слота ${finalSlot}`);
         } else {
-            // Fallback: генерируем с правильными вероятностями
-            multiplier = generatePlinkoMultiplier();
-            console.log(`🎲 Генерируем множитель: ${multiplier}x`);
+            // Fallback: генерируем с новыми вероятностями
+            const plinkoResult = simulatePlinkoBall(game.rows || 8);
+            multiplier = plinkoResult.multiplier;
+            console.log(`🎲 Генерируем множитель по новому распределению: ${multiplier}x`);
         }
 
         const winAmount = game.bet_amount * multiplier;
@@ -2025,7 +2022,7 @@ app.post('/api/plinko/drop', async (req, res) => {
         console.error('Plinko drop error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
-})
+});
 
 function generatePlinkoMultiplier() {
     const random = Math.random();
