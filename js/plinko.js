@@ -27,12 +27,11 @@ class PlinkoGame {
 
         // 🔥 NEW PHYSICS CYCLE SYSTEM
         this.physicsState = {
-            totalBallsDropped: 0,           // Всего шариков запущено
-            ballsInCurrentCycle: 0,         // Шариков в текущем цикле
-            bigMultiplierHits: 0,           // Попаданий в большие множители в текущем цикле
-            cyclePhase: 'small_attraction', // 'small_attraction' или 'big_window'
-            ballsInBigWindow: 0,            // Шариков в окне больших множителей
-            bigWindowTarget: 0              // Цель шариков в окне больших множителей (1-5)
+            totalBallsDropped: 0,
+            ballsInCurrentCycle: 0,
+            bigMultiplierHits: 0,
+            cyclePhase: 'small_attraction', // Начинаем с притяжения к маленьким
+            bigWindowSize: 3 // По умолчанию 3 шарика в окне больших
         };
 
         // Initialize
@@ -196,9 +195,6 @@ class PlinkoGame {
                 // 🔥 UPDATE PHYSICS CYCLE BEFORE ADDING BALL
                 this.updatePhysicsCycle();
                 
-                // Зафиксировать тип шарика сразу, чтобы окно применялось к текущему шару
-                this.assignBallType(ball);
-                
                 this.activeBalls.push(ball);
                 this.updateUI();
 
@@ -254,47 +250,45 @@ class PlinkoGame {
 
     // 🔥 NEW METHOD: Assign ball type based on physics cycle
     assignBallType(ball) {
-        console.log(`🎮 Cycle Status: Phase=${this.physicsState.cyclePhase}, Balls=${this.physicsState.ballsInCurrentCycle}, BigHits=${this.physicsState.bigMultiplierHits}`);
-        
-        if (this.physicsState.cyclePhase === 'small_attraction') {
-            // В фазе притяжения к маленьким множителям
-            ball.multiplierType = 'small_attraction';
-            console.log(`🔻 Шарик с притяжением к маленьким множителям`);
-        } else if (this.physicsState.cyclePhase === 'big_window') {
-            // В окне возможности больших множителей
-            ball.multiplierType = 'big_opportunity';
-            console.log(`🔺 Шарик в окне больших множителей`);
-        }
+    console.log(`🎮 Cycle Status: Phase=${this.physicsState.cyclePhase}, Balls=${this.physicsState.ballsInCurrentCycle}, BigHits=${this.physicsState.bigMultiplierHits}`);
+    
+    if (this.physicsState.cyclePhase === 'small_attraction') {
+        // В фазе притяжения к маленьким множителям (30 шариков)
+        ball.multiplierType = 'small_attraction';
+        console.log(`🔻 Шарик ${this.physicsState.ballsInCurrentCycle}/30 - притяжение к маленьким множителям`);
+    } else if (this.physicsState.cyclePhase === 'big_window') {
+        // В окне больших множителей (1-5 шариков)
+        ball.multiplierType = 'big_opportunity';
+        console.log(`🔺 Шарик ${this.physicsState.ballsInCurrentCycle}/${this.physicsState.bigWindowSize} - окно больших множителей`);
     }
+}
 
     // 🔥 NEW METHOD: Update physics cycle state
     updatePhysicsCycle() {
-        this.physicsState.totalBallsDropped++;
+    this.physicsState.totalBallsDropped++;
+    
+    if (this.physicsState.cyclePhase === 'small_attraction') {
         this.physicsState.ballsInCurrentCycle++;
         
-        if (this.physicsState.cyclePhase === 'small_attraction') {
-            // Каждые 30 шариков переходим в окно больших множителей
-            if (this.physicsState.ballsInCurrentCycle >= 30) {
-                this.physicsState.cyclePhase = 'big_window';
-                this.physicsState.ballsInBigWindow = 0;
-                this.physicsState.bigMultiplierHits = 0;
-                // Случайная цель 1-5 шариков в окне больших множителей
-                this.physicsState.bigWindowTarget = Math.floor(Math.random() * 5) + 1;
-                console.log(`🔄 ПЕРЕХОД: Окно больших множителей началось. Цель: ${this.physicsState.bigWindowTarget} шар(ов)`);
-            }
-        } else if (this.physicsState.cyclePhase === 'big_window') {
-            // Считаем ТЕКУЩИЙ шарик как часть окна больших множителей
-            this.physicsState.ballsInBigWindow++;
-            
-            // Закрываем окно ПОСЛЕ того, как выпущено нужное количество шариков (1-5)
-            // Важно: используем '>' чтобы следующий шарик уже был с притяжением к маленьким множителям
-            if (this.physicsState.ballsInBigWindow > this.physicsState.bigWindowTarget) {
-                this.physicsState.cyclePhase = 'small_attraction';
-                this.physicsState.ballsInCurrentCycle = 0;
-                console.log(`🔄 ВОЗВРАТ: К притяжению маленьких множителей (окно было ${this.physicsState.bigWindowTarget} шар(ов))`);
-            }
+        // После 30 шариков переходим к большим множителям
+        if (this.physicsState.ballsInCurrentCycle >= 30) {
+            this.physicsState.cyclePhase = 'big_window';
+            this.physicsState.ballsInCurrentCycle = 0;
+            this.physicsState.bigMultiplierHits = 0;
+            this.physicsState.bigWindowSize = Math.floor(Math.random() * 5) + 1; // 1-5 шариков
+            console.log(`🔄 ПЕРЕХОД: Окно больших множителей (${this.physicsState.bigWindowSize} шариков)`);
+        }
+    } else if (this.physicsState.cyclePhase === 'big_window') {
+        this.physicsState.ballsInCurrentCycle++;
+        
+        // После 1-5 шариков возвращаемся к маленьким множителям
+        if (this.physicsState.ballsInCurrentCycle >= this.physicsState.bigWindowSize) {
+            this.physicsState.cyclePhase = 'small_attraction';
+            this.physicsState.ballsInCurrentCycle = 0;
+            console.log(`🔄 ВОЗВРАТ: Притяжение к маленьким множителям (30 шариков)`);
         }
     }
+}
 
     // 🔥 NEW METHOD: Track big multiplier hits
     trackBigMultiplierHit(slotIndex) {
@@ -306,72 +300,106 @@ class PlinkoGame {
         }
     }
 
-   updateBall() {
+   // 🔥 NEW METHOD: Update physics cycle state
+updatePhysicsCycle() {
+    this.physicsState.totalBallsDropped++;
+    
+    if (this.physicsState.cyclePhase === 'small_attraction') {
+        this.physicsState.ballsInCurrentCycle++;
+        
+        // После 30 шариков переходим к большим множителям
+        if (this.physicsState.ballsInCurrentCycle >= 30) {
+            this.physicsState.cyclePhase = 'big_window';
+            this.physicsState.ballsInCurrentCycle = 0;
+            this.physicsState.bigMultiplierHits = 0;
+            this.physicsState.bigWindowSize = Math.floor(Math.random() * 5) + 1; // 1-5 шариков
+            console.log(`🔄 ПЕРЕХОД: Окно больших множителей (${this.physicsState.bigWindowSize} шариков)`);
+        }
+    } else if (this.physicsState.cyclePhase === 'big_window') {
+        this.physicsState.ballsInCurrentCycle++;
+        
+        // После 1-5 шариков возвращаемся к маленьким множителям
+        if (this.physicsState.ballsInCurrentCycle >= this.physicsState.bigWindowSize) {
+            this.physicsState.cyclePhase = 'small_attraction';
+            this.physicsState.ballsInCurrentCycle = 0;
+            console.log(`🔄 ВОЗВРАТ: Притяжение к маленьким множителям (30 шариков)`);
+        }
+    }
+}
+
+// 🔥 NEW METHOD: Assign ball type based on physics cycle
+assignBallType(ball) {
+    console.log(`🎮 Cycle Status: Phase=${this.physicsState.cyclePhase}, Balls=${this.physicsState.ballsInCurrentCycle}, BigHits=${this.physicsState.bigMultiplierHits}`);
+    
+    if (this.physicsState.cyclePhase === 'small_attraction') {
+        // В фазе притяжения к маленьким множителям (30 шариков)
+        ball.multiplierType = 'small_attraction';
+        console.log(`🔻 Шарик ${this.physicsState.ballsInCurrentCycle}/30 - притяжение к маленьким множителям`);
+    } else if (this.physicsState.cyclePhase === 'big_window') {
+        // В окне больших множителей (1-5 шариков)
+        ball.multiplierType = 'big_opportunity';
+        console.log(`🔺 Шарик ${this.physicsState.ballsInCurrentCycle}/${this.physicsState.bigWindowSize} - окно больших множителей`);
+    }
+}
+
+// 🔥 NEW METHOD: Update cycle display
+updateCycleDisplay() {
+    const cyclePhaseElement = document.getElementById('cycle-phase');
+    const cycleStatsElement = document.getElementById('cycle-stats');
+    
+    if (cyclePhaseElement && cycleStatsElement) {
+        if (this.physicsState.cyclePhase === 'small_attraction') {
+            cyclePhaseElement.textContent = 'Фаза: Притяжение к маленьким множителям';
+            cycleStatsElement.textContent = `Шариков в цикле: ${this.physicsState.ballsInCurrentCycle}/30 | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
+        } else if (this.physicsState.cyclePhase === 'big_window') {
+            cyclePhaseElement.textContent = 'Фаза: Окно больших множителей';
+            cycleStatsElement.textContent = `Шариков в окне: ${this.physicsState.ballsInCurrentCycle}/${this.physicsState.bigWindowSize} | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
+        }
+    }
+}
+
+// 🔥 UPDATED: Physics with cycle-based attraction
+updateBall() {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
-        // 🔥 УЛУЧШЕННАЯ ЗАЩИТА ОТ ЗАВИСАНИЯ: более агрессивная проверка
+        // 🔥 УЛУЧШЕННАЯ ЗАЩИТА ОТ ЗАВИСАНИЯ
         const currentTime = Date.now();
         const ballLifetime = currentTime - (ball.createdAt || currentTime);
-        const isStuckBall = ballLifetime > 8000; // Сократил с 10 до 8 секунд
-        const isSlowBall = ball.y > this.canvas.height * 0.85 && Math.abs(ball.vy) < 0.15 && ballLifetime > 2000; // Более чувствительные параметры
-        const isFloatingBall = ballLifetime > 5000 && ball.y < this.canvas.height * 0.1; // Новая проверка - шарик застрял вверху
+        const isStuckBall = ballLifetime > 8000;
+        const isSlowBall = ball.y > this.canvas.height * 0.85 && Math.abs(ball.vy) < 0.15 && ballLifetime > 2000;
+        const isFloatingBall = ballLifetime > 5000 && ball.y < this.canvas.height * 0.1;
         
         if ((ball.isFinished && currentTime - ball.finishedAt > 200) || isStuckBall || isSlowBall || isFloatingBall) {
-            if (isStuckBall) {
-                console.log(`🔄 Удаляем зависший шарик (${ballLifetime}ms)`);
-            }
-            if (isSlowBall) {
-                console.log(`🔄 Удаляем медленный шарик (${ballLifetime}ms, y:${ball.y.toFixed(1)}, vy:${ball.vy.toFixed(3)})`);
-            }
-            if (isFloatingBall) {
-                console.log(`🔄 Удаляем зависший вверху шарик (${ballLifetime}ms, y:${ball.y.toFixed(1)})`);
-            }
             this.activeBalls.splice(i, 1);
             continue;
         }
 
-        // 🔥 ПРОВЕРКА: Если шарик уже завершен, пропускаем физику
-        if (ball.isFinished) {
-            continue;
-        }
+        if (ball.isFinished) continue;
 
-        // Apply physics с улучшениями
+        // Apply physics
         ball.vy += this.gravity;
         ball.x += ball.vx;
         ball.y += ball.vy;
         ball.vx *= this.friction;
         ball.vy *= this.friction;
         
-        // 🔥 УЛУЧШЕННОЕ ПРЕДОТВРАЩЕНИЕ ЗАВИСАНИЯ: более активная помощь шарикам
-        if (ball.y > this.canvas.height * 0.4 && Math.abs(ball.vy) < 0.2) {
-            ball.vy = Math.max(ball.vy, 0.4); // Увеличил минимальную скорость
-        }
-        
-        // 🔥 ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: если шарик медленно движется в средней части
-        if (ball.y > this.canvas.height * 0.6 && ball.y < this.canvas.height * 0.9 && 
-            Math.abs(ball.vx) < 0.1 && Math.abs(ball.vy) < 0.3) {
-            ball.vy += 0.5; // Принудительно ускоряем вниз
-            ball.vx += (Math.random() - 0.5) * 0.3; // Добавляем случайное горизонтальное движение
-        }
-
-        // 🔥 NEW CYCLE-BASED PHYSICS SYSTEM
-        // Слоты: [5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x]
+        // 🔥 CYCLE-BASED ATTRACTION SYSTEM
         const slotWidth = this.canvas.width / 7;
         const lowMultiplierSlots = [2, 3, 4]; // 0.8x, 0.4x, 0.8x
         const highMultiplierSlots = [0, 1, 5, 6]; // 5.8x, 2.2x, 2.2x, 5.8x
         
-        // Определяем тип шарика ОДИН раз при первом расчете
+        // Определяем тип шарика ОДИН раз
         if (!ball.hasOwnProperty('multiplierType')) {
             this.assignBallType(ball);
         }
         
-        // 🔥 NEW CYCLE-BASED ATTRACTION SYSTEM
+        // 🔥 ПРИМЕНЯЕМ ФИЗИКУ ПРИТЯЖЕНИЯ В ЗАВИСИМОСТИ ОТ ФАЗЫ ЦИКЛА
         if (ball.y > this.canvas.height * 0.6) {
             let targetSlot;
             
             if (ball.multiplierType === 'small_attraction') {
-                // Сильное притяжение к маленьким множителям
+                // СИЛЬНОЕ притяжение к маленьким множителям (30 шариков)
                 if (!ball.targetSlot) {
                     let minDistance = Infinity;
                     let closestSlot = 3; // Средний слот с 0.4x
@@ -401,8 +429,7 @@ class PlinkoGame {
                     ball.vx += pullDirection * adjustedPull;
                 }
             } else if (ball.multiplierType === 'big_opportunity') {
-                // В окне больших множителей - естественное падение без сильного притяжения
-                // Только очень слабая коррекция для попадания в большие множители
+                // СЛАБОЕ притяжение к большим множителям (1-5 шариков)
                 if (!ball.targetSlot) {
                     ball.targetSlot = highMultiplierSlots[Math.floor(Math.random() * highMultiplierSlots.length)];
                 }
@@ -411,7 +438,7 @@ class PlinkoGame {
                 const targetX = (targetSlot + 0.5) * slotWidth;
                 const distanceToTarget = Math.abs(ball.x - targetX);
                 
-                // Очень слабое притяжение к большим множителям
+                // Слабое притяжение к большим множителям
                 if (distanceToTarget > slotWidth * 0.4) {
                     const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.7) / (this.canvas.height * 0.2));
                     const pullStrength = 0.001; // Очень слабое притяжение
@@ -423,13 +450,12 @@ class PlinkoGame {
             }
         }
 
-        // Wall collisions (оставляем как было)
+        // Остальная физика без изменений
         if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
             ball.vx *= -this.bounce;
             ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
         }
 
-        // Peg collisions (оставляем как было)
         this.pegs.forEach(peg => {
             const dx = ball.x - peg.x;
             const dy = ball.y - peg.y;
@@ -450,12 +476,11 @@ class PlinkoGame {
             }
         });
 
-        // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА: проверка достижения дна с улучшенным порогом
-        const bottomThreshold = this.canvas.height - 10; // Сделал порог меньше
+        // 🔥 ЛОГИКА ЗАВЕРШЕНИЯ ШАРИКА
+        const bottomThreshold = this.canvas.height - 10;
         const isAtBottom = ball.y + ball.radius > bottomThreshold;
         
         if (isAtBottom && !ball.isFinished) {
-            // Помечаем шарик как завершенный ДО обработки
             ball.isFinished = true;
             ball.finishedAt = Date.now();
             
@@ -469,20 +494,17 @@ class PlinkoGame {
             // 🔥 TRACK BIG MULTIPLIER HITS FOR CYCLE SYSTEM
             this.trackBigMultiplierHit(finalSlotIndex);
             
-            // Принудительно перемещаем шарик в центр слота для визуального завершения
             ball.x = (finalSlotIndex + 0.5) * slotWidth;
             ball.y = this.canvas.height - 5;
             ball.vx = 0;
             ball.vy = 0;
             
-            // Обрабатываем результат с минимальной задержкой
             setTimeout(() => {
                 this.handleBallInSlot(ball, finalSlotIndex);
-            }, 50); // Сократил с 100 до 50мс
+            }, 50);
         }
     }
 }
-
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -552,19 +574,19 @@ class PlinkoGame {
 
     // 🔥 NEW METHOD: Update cycle display
     updateCycleDisplay() {
-        const cyclePhaseElement = document.getElementById('cycle-phase');
-        const cycleStatsElement = document.getElementById('cycle-stats');
-        
-        if (cyclePhaseElement && cycleStatsElement) {
-            if (this.physicsState.cyclePhase === 'small_attraction') {
-                cyclePhaseElement.textContent = 'Фаза: Притяжение к маленьким множителям';
-                cycleStatsElement.textContent = `Шариков в цикле: ${this.physicsState.ballsInCurrentCycle}/30 | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
-            } else if (this.physicsState.cyclePhase === 'big_window') {
-                cyclePhaseElement.textContent = 'Фаза: Окно больших множителей';
-                cycleStatsElement.textContent = `Шариков в окне: ${this.physicsState.ballsInBigWindow}/${this.physicsState.bigWindowTarget} | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
-            }
+    const cyclePhaseElement = document.getElementById('cycle-phase');
+    const cycleStatsElement = document.getElementById('cycle-stats');
+    
+    if (cyclePhaseElement && cycleStatsElement) {
+        if (this.physicsState.cyclePhase === 'small_attraction') {
+            cyclePhaseElement.textContent = 'Фаза: Притяжение к маленьким множителям';
+            cycleStatsElement.textContent = `Шариков в цикле: ${this.physicsState.ballsInCurrentCycle}/30 | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
+        } else if (this.physicsState.cyclePhase === 'big_window') {
+            cyclePhaseElement.textContent = 'Фаза: Окно больших множителей';
+            cycleStatsElement.textContent = `Шариков в окне: ${this.physicsState.ballsInCurrentCycle}/${this.physicsState.bigWindowSize} | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
         }
     }
+}
 
     // Bet controls
     decreaseBet() {
