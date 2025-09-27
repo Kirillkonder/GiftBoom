@@ -177,7 +177,8 @@ class PlinkoGame {
                     vy: 0,
                     radius: this.ballRadius,
                     bet: this.currentBet,
-                    gameId: result.game_id
+                    gameId: result.game_id,
+                    isFinished: false // 🔥 ДОБАВЛЕНО: Флаг завершения шарика
                 };
 
                 this.activeBalls.push(ball);
@@ -236,6 +237,11 @@ class PlinkoGame {
    updateBall() {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
+
+        // 🔥 ПРОВЕРКА: Если шарик уже завершен, пропускаем обработку
+        if (ball.isFinished) {
+            continue;
+        }
 
         // Apply physics (оставляем как было)
         ball.vy += this.gravity;
@@ -340,16 +346,34 @@ class PlinkoGame {
             }
         });
 
-        // Check if ball reached bottom (оставляем как было)
-        if (ball.y + ball.radius > this.canvas.height - 10) {
+        // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА: Check if ball reached bottom
+        // Увеличиваем зону обнаружения и добавляем защиту от повторной обработки
+        const bottomThreshold = this.canvas.height - 15; // Увеличил зону обнаружения
+        const isAtBottom = ball.y + ball.radius > bottomThreshold;
+        
+        if (isAtBottom && !ball.isFinished) {
+            // Помечаем шарик как завершенный ДО обработки
+            ball.isFinished = true;
+            
             const slotWidth = this.canvas.width / this.slots.length;
             const ballCenterX = ball.x;
             const slotIndex = Math.floor(ballCenterX / slotWidth);
             const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
             
             console.log(`🎯 Шарик упал в позицию X: ${ballCenterX.toFixed(1)}, слот: ${finalSlotIndex}`);
-            this.handleBallInSlot(ball, finalSlotIndex);
-            this.activeBalls.splice(i, 1);
+            
+            // Обрабатываем результат с задержкой для анимации
+            setTimeout(() => {
+                this.handleBallInSlot(ball, finalSlotIndex);
+                
+                // Удаляем шарик из массива после небольшой задержки
+                setTimeout(() => {
+                    const index = this.activeBalls.indexOf(ball);
+                    if (index > -1) {
+                        this.activeBalls.splice(index, 1);
+                    }
+                }, 500); // Задержка для визуального эффекта
+            }, 100);
         }
     }
 }
@@ -367,6 +391,9 @@ class PlinkoGame {
 
         // Draw balls
         this.activeBalls.forEach(ball => {
+            // 🔥 НЕ РИСУЕМ ЗАВЕРШЕННЫЕ ШАРИКИ
+            if (ball.isFinished) return;
+            
             this.ctx.beginPath();
             this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
             this.ctx.fillStyle = '#1e5cb8';
