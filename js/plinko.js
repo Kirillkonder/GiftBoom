@@ -1,4 +1,3 @@
-
 // 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
 // 95% шанс попадания в слоты с множителями 0.8x и 0.4x
 // 5% шанс попадания в слоты с множителями 2.2x и 5.8x
@@ -54,6 +53,7 @@ class PlinkoGame {
                 this.balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
                 this.isDemoMode = userData.demo_mode;
                 document.getElementById('demo-badge').style.display = this.isDemoMode ? 'block' : 'none';
+                this.updateUI();
             }
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -83,6 +83,8 @@ class PlinkoGame {
                 const rect = this.canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 this.dropBallAt(x);
+            } else {
+                this.showError('Недостаточно средств');
             }
         });
     }
@@ -125,7 +127,6 @@ class PlinkoGame {
     console.log('🎯 Слоты созданы:', this.slots.map(s => `${s.multiplier}x`).join(' | '));
 }
 
-
     async dropBall() {
         if (this.currentBet > 0 && this.balance >= this.currentBet) {
             const x = this.canvas.width / 2;
@@ -137,6 +138,12 @@ class PlinkoGame {
 
     async dropBallAt(x) {
         try {
+            // 🔥 ПРОВЕРКА БАЛАНСА ПЕРЕД СТАВКОЙ
+            if (this.balance < this.currentBet) {
+                this.showError('Недостаточно средств');
+                return;
+            }
+
             const response = await fetch('/api/plinko/start', {
                 method: 'POST',
                 headers: {
@@ -151,14 +158,16 @@ class PlinkoGame {
             });
 
             if (!response.ok) {
-                throw new Error('Ошибка при размещении ставки');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Ошибка при размещении ставки');
             }
 
             const result = await response.json();
             
             if (result.success) {
-                // Deduct bet from balance
+                // Обновляем баланс сразу после ставки
                 this.balance = result.new_balance;
+                this.updateUI();
                 
                 // Create ball
                 const ball = {
@@ -179,7 +188,7 @@ class PlinkoGame {
             }
         } catch (error) {
             console.error('Drop ball error:', error);
-            this.showError('Ошибка при размещении ставки');
+            this.showError(error.message || 'Ошибка при размещении ставки');
         }
     }
 
@@ -215,11 +224,8 @@ class PlinkoGame {
             const result = await response.json();
             
             if (result.success) {
+                // 🔥 ОБНОВЛЯЕМ БАЛАНС ПОСЛЕ ВЫИГРЫША
                 this.balance = result.new_balance;
-                const winAmount = result.win_amount;
-                
-                // 🔥 УБРАЛ ВСЕ УВЕДОМЛЕНИЯ КРОМЕ "НЕДОСТАТОЧНО СРЕДСТВ"
-                // Просто обновляем баланс без уведомлений
                 this.updateUI();
             }
         } catch (error) {
@@ -390,6 +396,15 @@ class PlinkoGame {
         // Enable/disable drop button
         const dropButton = document.getElementById('dropBall');
         dropButton.disabled = this.currentBet === 0 || this.currentBet > this.balance;
+        
+        // Обновляем стиль кнопки в зависимости от состояния
+        if (this.currentBet > this.balance) {
+            dropButton.style.background = 'linear-gradient(135deg, #ff4757, #ff6b81)';
+            dropButton.textContent = 'Недостаточно средств';
+        } else {
+            dropButton.style.background = 'linear-gradient(135deg, #1e5cb8, #2668b3)';
+            dropButton.textContent = 'Бросить шар';
+        }
     }
 
     // Bet controls
@@ -416,6 +431,7 @@ class PlinkoGame {
         }
         
         value = Math.max(0.1, Math.min(100, value));
+        betInput.value = value.toFixed(1);
         this.currentBet = value;
         this.updateUI();
     }
@@ -460,7 +476,8 @@ class PlinkoGame {
 
 // Global functions
 function goBack() {
-    window.history.back();
+    // 🔥 ИСПРАВЛЕНО: Перенаправляем на главную страницу как в ракетке
+    window.location.href = 'index.html';
 }
 
 function decreaseBet() {
@@ -508,6 +525,7 @@ async function processDeposit() {
         
         if (result.success) {
             if (window.plinkoGame.isDemoMode) {
+                // Обновляем баланс после демо-депозита
                 await window.plinkoGame.loadUserData();
                 alert(`Демо-депозит ${amount} TON успешно зачислен!`);
             } else {
