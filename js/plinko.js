@@ -31,7 +31,8 @@ class PlinkoGame {
             ballsInCurrentCycle: 0,         // Шариков в текущем цикле
             bigMultiplierHits: 0,           // Попаданий в большие множители в текущем цикле
             cyclePhase: 'small_attraction', // 'small_attraction' или 'big_window'
-            ballsInBigWindow: 0            // Шариков в окне больших множителей
+            ballsInBigWindow: 0,            // Шариков в окне больших множителей
+            bigWindowTarget: 0              // Цель шариков в окне больших множителей (1-5)
         };
 
         // Initialize
@@ -195,6 +196,9 @@ class PlinkoGame {
                 // 🔥 UPDATE PHYSICS CYCLE BEFORE ADDING BALL
                 this.updatePhysicsCycle();
                 
+                // Зафиксировать тип шарика сразу, чтобы окно применялось к текущему шару
+                this.assignBallType(ball);
+                
                 this.activeBalls.push(ball);
                 this.updateUI();
 
@@ -274,16 +278,20 @@ class PlinkoGame {
                 this.physicsState.cyclePhase = 'big_window';
                 this.physicsState.ballsInBigWindow = 0;
                 this.physicsState.bigMultiplierHits = 0;
-                console.log(`🔄 ПЕРЕХОД: Начало окна больших множителей после ${this.physicsState.ballsInCurrentCycle} шариков`);
+                // Случайная цель 1-5 шариков в окне больших множителей
+                this.physicsState.bigWindowTarget = Math.floor(Math.random() * 5) + 1;
+                console.log(`🔄 ПЕРЕХОД: Окно больших множителей началось. Цель: ${this.physicsState.bigWindowTarget} шар(ов)`);
             }
         } else if (this.physicsState.cyclePhase === 'big_window') {
+            // Считаем ТЕКУЩИЙ шарик как часть окна больших множителей
             this.physicsState.ballsInBigWindow++;
             
-            // Возвращаемся к притяжению маленьких множителей после 1-5 попаданий в большие
-            if (this.physicsState.bigMultiplierHits >= 1 && this.physicsState.bigMultiplierHits <= 5) {
+            // Закрываем окно ПОСЛЕ того, как выпущено нужное количество шариков (1-5)
+            // Важно: используем '>' чтобы следующий шарик уже был с притяжением к маленьким множителям
+            if (this.physicsState.ballsInBigWindow > this.physicsState.bigWindowTarget) {
                 this.physicsState.cyclePhase = 'small_attraction';
                 this.physicsState.ballsInCurrentCycle = 0;
-                console.log(`🔄 ВОЗВРАТ: К притяжению маленьких множителей после ${this.physicsState.bigMultiplierHits} попаданий`);
+                console.log(`🔄 ВОЗВРАТ: К притяжению маленьких множителей (окно было ${this.physicsState.bigWindowTarget} шар(ов))`);
             }
         }
     }
@@ -553,7 +561,7 @@ class PlinkoGame {
                 cycleStatsElement.textContent = `Шариков в цикле: ${this.physicsState.ballsInCurrentCycle}/30 | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
             } else if (this.physicsState.cyclePhase === 'big_window') {
                 cyclePhaseElement.textContent = 'Фаза: Окно больших множителей';
-                cycleStatsElement.textContent = `Шариков в окне: ${this.physicsState.ballsInBigWindow} | Больших попаданий: ${this.physicsState.bigMultiplierHits}/5`;
+                cycleStatsElement.textContent = `Шариков в окне: ${this.physicsState.ballsInBigWindow}/${this.physicsState.bigWindowTarget} | Больших попаданий: ${this.physicsState.bigMultiplierHits}`;
             }
         }
     }
