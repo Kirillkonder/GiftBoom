@@ -1,7 +1,3 @@
-// 🔥 УЛУЧШЕННАЯ ФИЗИКА PLINKO: 
-// 80% шанс попадания в слоты с множителями 0.8x и 0.4x
-// 20% шанс попадания в слоты с множителями 2.2x и 5.8x
-
 class PlinkoGame {
     constructor() {
         // Game state
@@ -294,25 +290,46 @@ class PlinkoGame {
         // Определяем тип шарика ОДИН раз при первом расчете
         if (!ball.hasOwnProperty('multiplierType')) {
             const rand = Math.random();
-            ball.multiplierType = rand < 0.20 ? 'high' : 'low';
-            console.log(`🎯 Новый шарик: ${ball.multiplierType === 'high' ? 'БОЛЬШОЙ' : 'маленький'} множитель (${rand.toFixed(3)})`);
+            if (rand < 0.20) {
+                // 20% шариков потенциально на большие множители
+                // Но притяжение срабатывает только у 60% из них
+                const pullChance = Math.random();
+                ball.multiplierType = pullChance < 0.60 ? 'high_pull' : 'high_natural';
+                console.log(`🎯 Большой множитель: ${ball.multiplierType === 'high_pull' ? 'с притяжением' : 'естественно'} (${rand.toFixed(3)})`);
+            } else {
+                ball.multiplierType = 'low';
+                console.log(`🎯 Маленький множитель (${rand.toFixed(3)})`);
+            }
         }
         
         // Очень тонкое притяжение только в нижней половине
         if (ball.y > this.canvas.height * 0.6) {
             let targetSlot;
             
-            if (ball.multiplierType === 'high') {
-                // 20% - случайный большой множитель
+            if (ball.multiplierType === 'high_pull') {
+                // Только шарики с активированным притяжением к большим множителям
                 if (!ball.targetSlot) {
                     ball.targetSlot = highMultiplierSlots[Math.floor(Math.random() * highMultiplierSlots.length)];
                 }
                 targetSlot = ball.targetSlot;
-            } else {
-                // 80% - ближайший маленький множитель (естественнее)
+                
+                const targetX = (targetSlot + 0.5) * slotWidth;
+                const distanceToTarget = Math.abs(ball.x - targetX);
+                
+                // ОЧЕНЬ тонкое притяжение для больших множителей
+                if (distanceToTarget > slotWidth * 0.3) {
+                    const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
+                    const pullStrength = 0.0008; // Очень слабое притяжение
+                    const adjustedPull = pullStrength * heightProgress;
+                    
+                    const pullDirection = (targetX - ball.x) / this.canvas.width;
+                    ball.vx += pullDirection * adjustedPull;
+                }
+            } else if (ball.multiplierType === 'low') {
+                // 80% - притяжение к маленьким множителям (сильнее)
                 if (!ball.targetSlot) {
                     let minDistance = Infinity;
-                    let closestSlot = 3; // центральный по умолчанию
+                    let closestSlot = 3;
                     
                     lowMultiplierSlots.forEach(slotIndex => {
                         const slotCenterX = (slotIndex + 0.5) * slotWidth;
@@ -325,28 +342,21 @@ class PlinkoGame {
                     ball.targetSlot = closestSlot;
                 }
                 targetSlot = ball.targetSlot;
-            }
-            
-            const targetX = (targetSlot + 0.5) * slotWidth;
-            const distanceToTarget = Math.abs(ball.x - targetX);
-            
-            // ОЧЕНЬ тонкое притяжение, почти незаметное
-            if (distanceToTarget > slotWidth * 0.3) {
-                const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
                 
-                // Минимальные силы притяжения
-                const pullStrength = ball.multiplierType === 'high' ? 0.001 : 0.002;
-                const adjustedPull = pullStrength * heightProgress;
+                const targetX = (targetSlot + 0.5) * slotWidth;
+                const distanceToTarget = Math.abs(ball.x - targetX);
                 
-                const pullDirection = (targetX - ball.x) / this.canvas.width; // нормализуем
-                ball.vx += pullDirection * adjustedPull;
-                
-                // Ограничиваем силу притяжения чтобы физика выглядела естественно
-                const maxPull = ball.multiplierType === 'high' ? 0.002 : 0.003;
-                if (Math.abs(ball.vx) > maxPull) {
-                    ball.vx = Math.sign(ball.vx) * maxPull;
+                // Более сильное притяжение к маленьким множителям
+                if (distanceToTarget > slotWidth * 0.3) {
+                    const heightProgress = Math.min(1.0, (ball.y - this.canvas.height * 0.6) / (this.canvas.height * 0.3));
+                    const pullStrength = 0.002;
+                    const adjustedPull = pullStrength * heightProgress;
+                    
+                    const pullDirection = (targetX - ball.x) / this.canvas.width;
+                    ball.vx += pullDirection * adjustedPull;
                 }
             }
+            // ball.multiplierType === 'high_natural' - никакого притяжения, естественное падение
         }
 
         // Wall collisions (оставляем как было)
