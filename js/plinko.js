@@ -1,6 +1,6 @@
 // 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
-// 97% шанс попадания в слоты с множителями 0.8x и 0.4x
-// 3% шанс попадания в слоты с множителями 2.2x и 5.8x
+// 94% шанс попадания в слоты с множителями 0.8x и 0.4x
+// 6% шанс попадания в слоты с множителями 2.2x и 5.8x
 
 class PlinkoGame {
     constructor() {
@@ -179,7 +179,8 @@ class PlinkoGame {
                     bet: this.currentBet,
                     gameId: result.game_id,
                     isFinished: false,
-                    finishedAt: 0 // 🔥 ДОБАВЛЕНО: Время завершения шарика
+                    finishedAt: 0,
+                    createdAt: Date.now() // 🔥 ДОБАВЛЕНО: Время создания шарика
                 };
 
                 this.activeBalls.push(ball);
@@ -239,8 +240,15 @@ class PlinkoGame {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
-        // 🔥 ИСПРАВЛЕНИЕ: Если шарик завершен более 1 секунды назад - удаляем его
-        if (ball.isFinished && Date.now() - ball.finishedAt > 1000) {
+        // 🔥 УЛУЧШЕННОЕ ИСПРАВЛЕНИЕ: Если шарик завершен более 500мс назад ИЛИ висит слишком долго - удаляем
+        const currentTime = Date.now();
+        const ballLifetime = currentTime - (ball.createdAt || currentTime);
+        const isStuckBall = ballLifetime > 15000; // Шарик висит более 15 секунд
+        
+        if ((ball.isFinished && currentTime - ball.finishedAt > 500) || isStuckBall) {
+            if (isStuckBall) {
+                console.log(`🔄 Удаляем зависший шарик (${ballLifetime}ms)`);
+            }
             this.activeBalls.splice(i, 1);
             continue;
         }
@@ -257,7 +265,7 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 НОВАЯ ФИЗИКА: 97% шанс на маленькие множители, 3% на большие
+        // 🔥 НОВАЯ ФИЗИКА: 94% шанс на маленькие множители, 6% на большие
         // Слоты: [5.8x, 2.2x, 0.8x, 0.4x, 0.8x, 2.2x, 5.8x]
         // Индексы: [0,   1,   2,   3,   4,   5,   6]
         // Маленькие множители: слоты 2, 3, 4 (0.8x, 0.4x, 0.8x)
@@ -269,18 +277,18 @@ class PlinkoGame {
         
         // Притяжение работает когда шар ниже 30% высоты поля
         if (ball.y > this.canvas.height * 0.3) {
-            // 🔥 НОВАЯ ЛОГИКА: 3% шанс на большие множители
+            // 🔥 НОВАЯ ЛОГИКА: 6% шанс на большие множители
             const isHighMultiplierBall = !ball.hasOwnProperty('isHighMultiplier') ? 
-                (ball.isHighMultiplier = Math.random() < 0.03) : ball.isHighMultiplier;
+                (ball.isHighMultiplier = Math.random() < 0.06) : ball.isHighMultiplier;
             
             let targetSlot, targetSlots;
             
             if (isHighMultiplierBall) {
-                // 3% шанс - направляем к большим множителям
+                // 6% шанс - направляем к большим множителям
                 targetSlots = highMultiplierSlots;
                 targetSlot = targetSlots[Math.floor(Math.random() * targetSlots.length)];
             } else {
-                // 97% шанс - направляем к маленьким множителям
+                // 94% шанс - направляем к маленьким множителям
                 targetSlots = lowMultiplierSlots;
                 let minDistance = Infinity;
                 targetSlot = 3; // По умолчанию центральный слот (0.4x)
