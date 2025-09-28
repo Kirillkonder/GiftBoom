@@ -151,11 +151,25 @@ updateSlotsDisplay() {
             if (slotElements[index]) {
                 slotElements[index].textContent = `${slot.multiplier}x`;
                 slotElements[index].setAttribute('data-value', slot.multiplier.toString());
+                
+                // 🔥 ОБНОВЛЯЕМ ЦВЕТА В РЕАЛЬНОМ ВРЕМЕНИ
+                // Удаляем все цветовые классы
+                slotElements[index].className = 'slot';
+                
+                // Добавляем соответствующий цвет в зависимости от множителя
+                if (slot.multiplier >= 5) {
+                    slotElements[index].classList.add('high-multiplier');
+                } else if (slot.multiplier >= 2) {
+                    slotElements[index].classList.add('medium-multiplier');
+                } else if (slot.multiplier >= 0.8) {
+                    slotElements[index].classList.add('low-multiplier');
+                } else {
+                    slotElements[index].classList.add('lowest-multiplier');
+                }
             }
         });
     }
 }
-
     async dropBall() {
         if (this.currentBet > 0 && this.balance >= this.currentBet) {
             const x = this.canvas.width / 2;

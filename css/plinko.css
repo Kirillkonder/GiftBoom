@@ -219,6 +219,39 @@ body {
     animation: glow-center 2s infinite alternate;
 }
 
+/* Цвета для множителей в среднем режиме */
+.slot[data-value="8.4"] { 
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    animation: glow-high 2s infinite alternate;
+}
+.slot[data-value="4.7"] { 
+    background: linear-gradient(135deg, #ffa502, #ffb142);
+}
+.slot[data-value="0.5"] { 
+    background: linear-gradient(135deg, #2ed573, #26de81);
+}
+.slot[data-value="0.2"] { 
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    animation: glow-center 2s infinite alternate;
+}
+
+/* Цвета для множителей в сложном режиме */
+.slot[data-value="15.6"] { 
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    animation: glow-high 2s infinite alternate;
+}
+.slot[data-value="8.7"] { 
+    background: linear-gradient(135deg, #ffa502, #ffb142);
+}
+.slot[data-value="0.2"] { 
+    background: linear-gradient(135deg, #2ed573, #26de81);
+}
+.slot[data-value="0.1"] { 
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    animation: glow-center 2s infinite alternate;
+}
+
+/* Анимации для подсветки */
 @keyframes glow-high {
     from { box-shadow: 0 0 5px rgba(255, 71, 87, 0.5); }
     to { box-shadow: 0 0 15px rgba(255, 71, 87, 0.8); }
@@ -227,6 +260,33 @@ body {
 @keyframes glow-center {
     from { box-shadow: 0 0 5px rgba(30, 92, 184, 0.5); }
     to { box-shadow: 0 0 15px rgba(30, 92, 184, 0.8); }
+}
+
+@keyframes glow-high {
+    from { box-shadow: 0 0 5px rgba(255, 71, 87, 0.5); }
+    to { box-shadow: 0 0 15px rgba(255, 71, 87, 0.8); }
+}
+
+@keyframes glow-center {
+    from { box-shadow: 0 0 5px rgba(30, 92, 184, 0.5); }
+    to { box-shadow: 0 0 15px rgba(30, 92, 184, 0.8); }
+}
+
+
+/* Универсальные классы для цветов множителей */
+.slot.high-multiplier { 
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    animation: glow-high 2s infinite alternate;
+}
+.slot.medium-multiplier { 
+    background: linear-gradient(135deg, #ffa502, #ffb142);
+}
+.slot.low-multiplier { 
+    background: linear-gradient(135deg, #2ed573, #26de81);
+}
+.slot.lowest-multiplier { 
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    animation: glow-center 2s infinite alternate;
 }
 
 /* Панель режимов сложности */
