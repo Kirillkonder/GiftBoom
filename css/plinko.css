@@ -1,35 +1,15 @@
-/* CYBERPUNK PLINKO GAME STYLES */
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
-    /* Киберпанк палитра */
-    --cyber-primary: #00ffff;
-    --cyber-secondary: #ff0080;
-    --cyber-accent: #ffff00;
-    --cyber-purple: #8a2be2;
-    --cyber-green: #39ff14;
-    --cyber-red: #ff073a;
-    --cyber-orange: #ff8c00;
-    
-    /* Фон и текст */
-    --cyber-bg-primary: #0a0a0a;
-    --cyber-bg-secondary: #1a1a2e;
-    --cyber-text-primary: #ffffff;
-    --cyber-text-secondary: #00ffff;
-    --cyber-text-glow: #39ff14;
-    
-    /* Градиенты */
-    --cyber-gradient-primary: linear-gradient(135deg, #00ffff, #8a2be2);
-    --cyber-gradient-secondary: linear-gradient(135deg, #ff0080, #ff8c00);
-    --cyber-gradient-success: linear-gradient(135deg, #39ff14, #00ff7f);
-    --cyber-gradient-danger: linear-gradient(135deg, #ff073a, #ff6b35);
-    --cyber-gradient-warning: linear-gradient(135deg, #ffff00, #ffa500);
-    
-    /* Эффекты */
-    --cyber-glow: 0 0 20px currentColor;
-    --cyber-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-    --cyber-border: 2px solid;
+    --primary-color: #1e5cb8;
+    --secondary-color: #2668b3;
+    --background-dark: #000000;
+    --background-light: #0a0a0a;
+    --text-color: #ffffff;
+    --slot-low: #ff4757;
+    --slot-medium: #ffa502;
+    --slot-high: #2ed573;
+    --peg-color: rgba(255, 255, 255, 0.3);
+    --ball-color: #1e5cb8;
 }
 
 * {
@@ -39,19 +19,18 @@
 }
 
 body {
-    font-family: 'Orbitron', 'Space Mono', monospace;
-    background: var(--cyber-bg-primary);
-    color: var(--cyber-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #000;
+    color: #fff;
     overflow-x: hidden;
     user-select: none;
     -webkit-user-select: none;
     position: relative;
     height: 100vh;
-    letter-spacing: 0.5px;
 }
 
-/* КИБЕРПАНК ФОН */
-.cyberpunk-background {
+/* Фон с сеткой */
+.grid-background {
     position: fixed;
     top: 0;
     left: 0;
@@ -59,88 +38,30 @@ body {
     bottom: 0;
     z-index: 0;
     pointer-events: none;
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
-        linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-}
-
-.grid-lines {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    background-color: transparent;
     background-image:
-        linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 60px 60px;
-    animation: grid-pulse 4s ease-in-out infinite;
+        linear-gradient(rgba(30, 92, 184, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30, 92, 184, 0.18) 1px, transparent 1px);
+    background-size: 80px 80px;
+    background-position: 0 0;
 }
 
-@keyframes grid-pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.8; }
-}
-
-.neon-particles {
+.grid-background::before {
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-        radial-gradient(2px 2px at 20px 30px, #00ffff, transparent),
-        radial-gradient(2px 2px at 40px 70px, #ff0080, transparent),
-        radial-gradient(1px 1px at 90px 40px, #39ff14, transparent);
-    background-repeat: repeat;
-    background-size: 150px 150px;
-    animation: particles-float 10s linear infinite;
+    background: radial-gradient(circle at center, transparent 0%, rgba(30, 92, 184, 0.1) 100%);
+    animation: glow-pulse 6s ease-in-out infinite;
 }
 
-@keyframes particles-float {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(-150px, -150px); }
+@keyframes glow-pulse {
+    0%, 100% { opacity: 0.25; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.08); }
 }
 
-.glitch-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        90deg,
-        transparent 98%,
-        rgba(0, 255, 255, 0.03) 100%
-    );
-    animation: glitch-scan 3s linear infinite;
-}
-
-@keyframes glitch-scan {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100vw); }
-}
-
-/* ГЛITCH ТЕКСТ ЭФФЕКТ */
-.glitch-text {
-    position: relative;
-    color: var(--cyber-text-secondary);
-    text-shadow: 
-        2px 0 #ff0080,
-        -2px 0 #00ffff;
-    animation: glitch-text 2s infinite;
-}
-
-@keyframes glitch-text {
-    0%, 100% { text-shadow: 2px 0 #ff0080, -2px 0 #00ffff; }
-    25% { text-shadow: -2px 0 #ff0080, 2px 0 #00ffff; }
-    50% { text-shadow: 2px 0 #00ffff, -2px 0 #ff0080; }
-    75% { text-shadow: -2px 0 #00ffff, 2px 0 #ff0080; }
-}
-
-/* КОНТЕЙНЕР ИГРЫ */
 .game-container {
     max-width: 100%;
     width: 100%;
@@ -155,62 +76,39 @@ body {
     height: 100vh;
 }
 
-/* ВЕРХНЯЯ ПАНЕЛЬ */
+/* Верхняя панель */
 .top-panel {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
-    background: rgba(26, 26, 46, 0.8);
-    backdrop-filter: blur(15px);
+    background: transparent;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 10;
     width: 100%;
-    border-bottom: 2px solid var(--cyber-primary);
-    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.3);
 }
 
 .close-btn {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 16px;
-    color: var(--cyber-text-secondary);
-    font-weight: 700;
-    padding: 8px 16px;
-    border: var(--cyber-border) var(--cyber-primary);
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+    padding: 8px 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
-    background: rgba(0, 255, 255, 0.1);
+    background: transparent;
     transition: all 0.3s ease;
     cursor: pointer;
-    text-shadow: var(--cyber-glow);
-    position: relative;
-    overflow: hidden;
-}
-
-.close-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
-    transition: left 0.5s;
-}
-
-.close-btn:hover::before {
-    left: 100%;
 }
 
 .close-btn:hover {
-    border-color: var(--cyber-accent);
-    color: var(--cyber-accent);
-    box-shadow: var(--cyber-shadow);
-    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .top-right {
@@ -220,77 +118,39 @@ body {
 }
 
 .balance {
-    background: var(--cyber-gradient-success);
+    background: linear-gradient(135deg, #00c851, #32cd32);
     color: #000;
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-weight: 900;
-    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 13px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    border: 2px solid var(--cyber-green);
-    box-shadow: 0 0 15px rgba(57, 255, 20, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.balance::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    animation: balance-scan 2s infinite;
-}
-
-@keyframes balance-scan {
-    0% { left: -100%; }
-    100% { left: 100%; }
+    gap: 4px;
 }
 
 .balance-plus-btn {
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid var(--cyber-green);
-    color: var(--cyber-green);
-    width: 24px;
-    height: 24px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #000;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-left: 6px;
+    transition: all 0.2s ease;
+    margin-left: 4px;
 }
 
 .balance-plus-btn:hover {
-    background: var(--cyber-green);
-    color: #000;
-    box-shadow: 0 0 15px var(--cyber-green);
-    transform: scale(1.2);
+    background: rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
 }
 
-.demo-badge {
-    background: var(--cyber-gradient-warning) !important;
-    color: #000 !important;
-    padding: 4px 8px !important;
-    border-radius: 8px !important;
-    font-size: 10px !important;
-    font-weight: 900;
-    border: 2px solid var(--cyber-accent);
-    animation: demo-pulse 1.5s infinite;
-}
-
-@keyframes demo-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-/* ИГРОВОЕ ПОЛЕ */
+/* Игровое поле */
 .game-board-container {
     display: flex;
     flex-direction: column;
@@ -308,36 +168,10 @@ body {
     width: 100%;
     height: 100%;
     max-height: 60vh;
-    background: rgba(26, 26, 46, 0.3);
-    border: 3px solid var(--cyber-primary);
-    border-radius: 20px;
+    background: transparent;
+    border-radius: 15px;
     overflow: hidden;
     flex: 1;
-    box-shadow: 
-        inset 0 0 30px rgba(0, 255, 255, 0.2),
-        0 0 40px rgba(0, 255, 255, 0.3);
-}
-
-.board-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        45deg,
-        transparent 49%,
-        rgba(0, 255, 255, 0.1) 50%,
-        transparent 51%
-    );
-    background-size: 4px 4px;
-    pointer-events: none;
-    animation: overlay-move 5s linear infinite;
-}
-
-@keyframes overlay-move {
-    0% { background-position: 0 0; }
-    100% { background-position: 4px 4px; }
 }
 
 #gameCanvas {
@@ -348,174 +182,103 @@ body {
     height: 100%;
 }
 
-/* СЛОТЫ */
+/* Слоты */
 .slots-container {
     display: flex;
     justify-content: space-around;
     width: 100%;
     max-width: 400px;
-    padding: 10px;
-    background: rgba(26, 26, 46, 0.5);
-    border: 2px solid var(--cyber-primary);
-    border-radius: 15px;
-    margin-top: 10px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 25px rgba(0, 255, 255, 0.2);
+    padding: 5px;
+    background: transparent;
+    border-radius: 10px;
+    border: none;
+    margin-top: 0;
 }
 
-.cyber-slot {
-    position: relative;
+.slot {
     flex: 1;
-    margin: 0 3px;
-    padding: 12px 6px;
+    margin: 0 2px;
+    padding: 8px 4px;
     text-align: center;
     font-size: 12px;
-    font-weight: 900;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    font-weight: bold;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.slot-value {
-    position: relative;
-    z-index: 2;
-    text-shadow: 0 0 10px currentColor;
+/* Новые цвета для множителей (большие по бокам, маленькие в центре) */
+.slot[data-value="5.8"] { 
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    animation: glow-high 2s infinite alternate;
+}
+.slot[data-value="2.2"] { background: linear-gradient(135deg, #ffa502, #ffb142); }
+.slot[data-value="0.8"] { background: linear-gradient(135deg, #2ed573, #26de81); }
+.slot[data-value="0.4"] { 
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    animation: glow-center 2s infinite alternate;
 }
 
-.slot-glow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s ease;
+@keyframes glow-high {
+    from { box-shadow: 0 0 5px rgba(255, 71, 87, 0.5); }
+    to { box-shadow: 0 0 15px rgba(255, 71, 87, 0.8); }
 }
 
-.cyber-slot:hover .slot-glow {
-    transform: translateX(100%);
+@keyframes glow-center {
+    from { box-shadow: 0 0 5px rgba(30, 92, 184, 0.5); }
+    to { box-shadow: 0 0 15px rgba(30, 92, 184, 0.8); }
 }
 
-/* Цвета слотов по множителям */
-.cyber-slot[data-value="5.8"] {
-    border-color: var(--cyber-red);
-    color: var(--cyber-red);
-    background: radial-gradient(circle, rgba(255, 7, 58, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%);
-    animation: slot-pulse-high 2s infinite alternate;
-}
-
-.cyber-slot[data-value="2.2"] {
-    border-color: var(--cyber-orange);
-    color: var(--cyber-orange);
-    background: radial-gradient(circle, rgba(255, 140, 0, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%);
-}
-
-.cyber-slot[data-value="0.8"] {
-    border-color: var(--cyber-green);
-    color: var(--cyber-green);
-    background: radial-gradient(circle, rgba(57, 255, 20, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%);
-}
-
-.cyber-slot[data-value="0.4"] {
-    border-color: var(--cyber-primary);
-    color: var(--cyber-primary);
-    background: radial-gradient(circle, rgba(0, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%);
-    animation: slot-pulse-center 2s infinite alternate;
-}
-
-@keyframes slot-pulse-high {
-    from { box-shadow: 0 0 10px var(--cyber-red); }
-    to { box-shadow: 0 0 25px var(--cyber-red), inset 0 0 15px rgba(255, 7, 58, 0.3); }
-}
-
-@keyframes slot-pulse-center {
-    from { box-shadow: 0 0 10px var(--cyber-primary); }
-    to { box-shadow: 0 0 25px var(--cyber-primary), inset 0 0 15px rgba(0, 255, 255, 0.3); }
-}
-
-/* ПАНЕЛЬ СЛОЖНОСТИ */
+/* Панель режимов сложности */
 .difficulty-panel {
     padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
     margin-bottom: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .difficulty-title {
-    color: var(--cyber-text-secondary);
+    color: #fff;
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 2px;
+    font-weight: 500;
 }
 
 .difficulty-buttons {
     display: flex;
     gap: 8px;
-    padding: 6px;
-    background: rgba(26, 26, 46, 0.6);
-    border: 2px solid var(--cyber-primary);
-    border-radius: 15px;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.2);
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
 }
 
 .difficulty-btn {
-    position: relative;
-    padding: 10px 18px;
+    padding: 8px 16px;
     background: transparent;
-    border: 2px solid rgba(0, 255, 255, 0.3);
-    color: rgba(0, 255, 255, 0.7);
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 10px;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
     transition: all 0.3s ease;
     cursor: pointer;
-    min-width: 80px;
-    overflow: hidden;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn-text {
-    position: relative;
-    z-index: 2;
-}
-
-.btn-glow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-    transform: scale(0);
-    transition: transform 0.3s ease;
+    min-width: 70px;
 }
 
 .difficulty-btn:hover {
-    border-color: var(--cyber-primary);
-    color: var(--cyber-primary);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
-}
-
-.difficulty-btn:hover .btn-glow {
-    transform: scale(1);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }
 
 .difficulty-btn.active {
-    background: var(--cyber-gradient-primary);
-    border-color: var(--cyber-accent);
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
     color: #fff;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(30, 92, 184, 0.3);
 }
 
-/* ПАНЕЛЬ УПРАВЛЕНИЯ */
+/* Панель управления */
 .control-panel {
     width: 100%;
     padding: 0 16px 20px;
@@ -526,79 +289,52 @@ body {
 .bet-controls {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
 }
 
 .bet-amount-selector {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
-    background: rgba(26, 26, 46, 0.6);
-    border: 2px solid var(--cyber-primary);
-    border-radius: 15px;
-    padding: 12px;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.2);
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 8px;
+    border: none;
 }
 
-.cyber-btn {
-    position: relative;
-    background: var(--cyber-gradient-primary);
-    border: 2px solid var(--cyber-primary);
-    width: 42px;
-    height: 42px;
+.bet-amount-btn {
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    border: none;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     color: #fff;
-    font-size: 20px;
-    font-weight: 900;
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-    overflow: hidden;
+    transition: all 0.2s ease;
 }
 
-.btn-scanner {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.3s ease;
-}
-
-.cyber-btn:hover .btn-scanner {
-    left: 100%;
-}
-
-.cyber-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px var(--cyber-primary);
-}
-
-.bet-input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.bet-amount-btn:hover {
+    background: linear-gradient(135deg, #2668b3, #1e5cb8);
+    transform: scale(1.05);
 }
 
 #betAmount {
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid var(--cyber-primary);
-    border-radius: 10px;
-    color: var(--cyber-text-secondary);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: bold;
     text-align: center;
-    width: 90px;
-    padding: 8px;
+    width: 80px;
+    padding: 6px;
     -moz-appearance: textfield;
-    font-family: 'Orbitron', monospace;
-    text-shadow: 0 0 10px currentColor;
 }
 
 #betAmount::-webkit-outer-spin-button,
@@ -607,35 +343,10 @@ body {
     margin: 0;
 }
 
-#betAmount:focus {
-    outline: none;
-    border-color: var(--cyber-accent);
-    box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
-}
-
-.input-glow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-    border-radius: 10px;
-    pointer-events: none;
-    animation: input-glow 3s infinite;
-}
-
-@keyframes input-glow {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-}
-
 .ton-label {
-    color: var(--cyber-text-secondary);
-    font-weight: 900;
+    color: #fff;
+    font-weight: bold;
     font-size: 14px;
-    text-shadow: 0 0 10px currentColor;
-    font-family: 'Orbitron', monospace;
 }
 
 .action-buttons {
@@ -643,98 +354,67 @@ body {
     gap: 10px;
 }
 
-.cyber-primary-btn {
-    position: relative;
+.btn {
     flex: 1;
-    padding: 15px;
-    border: 3px solid var(--cyber-accent);
-    border-radius: 15px;
-    font-size: 16px;
-    font-weight: 900;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: var(--cyber-gradient-secondary);
+}
+
+.btn.primary {
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
     color: #fff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-    overflow: hidden;
-    text-transform: uppercase;
-    letter-spacing: 2px;
 }
 
-.btn-waves {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: all 0.6s ease;
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.cyber-primary-btn:hover .btn-waves {
-    width: 200px;
-    height: 200px;
+.btn:hover {
+    transform: translateY(-1px);
 }
 
-.cyber-primary-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(255, 255, 0, 0.4);
-    border-color: var(--cyber-green);
+.btn:active {
+    transform: translateY(0);
 }
 
-/* ИНФОРМАЦИЯ О СТАВКЕ */
+/* Информация о ставке */
 .bet-info {
     display: flex;
-    justify-content: center;
-    padding: 12px 16px;
-    background: rgba(26, 26, 46, 0.4);
-    backdrop-filter: blur(10px);
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: transparent;
+    backdrop-filter: blur(5px);
     margin: 8px 16px;
-    border: 2px solid var(--cyber-primary);
-    border-radius: 12px;
+    border-radius: 8px;
+    border: none;
     flex-shrink: 0;
-    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.1);
 }
 
 .bet-info-item {
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 13px;
+    font-size: 12px;
 }
 
-.info-label {
-    color: var(--cyber-text-secondary);
+.bet-info-item span:first-child {
+    color: #999;
     margin-bottom: 4px;
-    font-weight: 700;
-    letter-spacing: 1px;
 }
 
-.info-value {
-    color: var(--cyber-accent);
-    font-weight: 900;
-    font-size: 15px;
+.bet-info-item span:last-child {
+    color: #fff;
+    font-weight: bold;
 }
 
-.info-line {
-    position: absolute;
-    bottom: -4px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--cyber-gradient-primary);
-    animation: info-scan 2s infinite;
-}
-
-@keyframes info-scan {
-    0%, 100% { transform: scaleX(0); }
-    50% { transform: scaleX(1); }
-}
-
-/* МОДАЛЬНОЕ ОКНО */
+/* Модальное окно */
 .modal {
     display: none;
     position: fixed;
@@ -743,27 +423,18 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
 }
 
-.cyber-modal {
-    background: 
-        linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(10, 10, 10, 0.95)),
-        radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+.modal-content {
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
     margin: 15% auto;
     padding: 0;
-    border: 3px solid var(--cyber-primary);
-    border-radius: 20px;
+    border: 1px solid #333;
+    border-radius: 15px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 0 50px rgba(0, 255, 255, 0.5);
-    animation: modal-appear 0.3s ease;
-}
-
-@keyframes modal-appear {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 .modal-header {
@@ -771,157 +442,89 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 2px solid var(--cyber-primary);
-    background: var(--cyber-gradient-success);
-    border-radius: 17px 17px 0 0;
+    border-bottom: 1px solid #333;
+    background: linear-gradient(135deg, #00c851, #32cd32);
+    border-radius: 15px 15px 0 0;
     color: #000;
 }
 
 .modal-header h3 {
     margin: 0;
     font-size: 18px;
-    font-weight: 900;
+    font-weight: bold;
 }
 
-.cyber-close {
+.close {
     color: #000;
-    font-size: 28px;
-    font-weight: 900;
+    font-size: 24px;
+    font-weight: bold;
     cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.cyber-close:hover {
-    color: var(--cyber-red);
-    text-shadow: 0 0 10px var(--cyber-red);
-    transform: scale(1.2);
 }
 
 .modal-body {
-    padding: 25px;
+    padding: 20px;
 }
 
-.cyber-text {
-    color: var(--cyber-text-secondary);
-    font-weight: 700;
+.input-group {
+    margin-bottom: 20px;
 }
 
-.cyber-input-group {
-    margin-bottom: 25px;
-}
-
-.cyber-label {
+.input-group label {
     display: block;
-    margin-bottom: 10px;
-    color: var(--cyber-text-secondary);
-    font-weight: 700;
-    letter-spacing: 1px;
+    margin-bottom: 8px;
+    color: #fff;
+    font-weight: 500;
 }
 
-.cyber-input-container {
-    position: relative;
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 16px;
 }
 
-.cyber-input-container input {
+.modal-btn {
     width: 100%;
     padding: 15px;
-    border: 2px solid var(--cyber-primary);
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.7);
-    color: var(--cyber-text-secondary);
+    border: none;
+    border-radius: 10px;
     font-size: 16px;
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-}
-
-.cyber-input-container input:focus {
-    outline: none;
-    border-color: var(--cyber-accent);
-    box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
-}
-
-.input-scanner {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-    border-radius: 12px;
-    pointer-events: none;
-    animation: scanner-move 2s infinite;
-}
-
-@keyframes scanner-move {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.cyber-deposit-btn {
-    position: relative;
-    width: 100%;
-    padding: 18px;
-    border: 3px solid var(--cyber-green);
-    border-radius: 15px;
-    font-size: 16px;
-    font-weight: 900;
+    font-weight: bold;
     cursor: pointer;
-    background: var(--cyber-gradient-success);
+}
+
+.deposit-btn {
+    background: linear-gradient(135deg, #00c851, #32cd32);
     color: #000;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    overflow: hidden;
-    transition: all 0.3s ease;
 }
 
-.btn-pulse {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: btn-pulse-anim 2s infinite;
-}
-
-@keyframes btn-pulse-anim {
-    0% { width: 0; height: 0; opacity: 1; }
-    100% { width: 200px; height: 200px; opacity: 0; }
-}
-
-.cyber-deposit-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(57, 255, 20, 0.4);
-}
-
-/* УВЕДОМЛЕНИЯ */
+/* Уведомления (оставил только для ошибок) */
 .toast-container {
     position: fixed;
-    top: 80px;
+    top: 20px;
     right: 20px;
     z-index: 9999;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-width: 320px;
+    max-width: 300px;
 }
 
 .toast {
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(10, 10, 10, 0.95));
-    border: 2px solid var(--cyber-primary);
-    border-radius: 15px;
-    padding: 18px;
-    box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+    background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     gap: 12px;
     transform: translateX(100%);
     opacity: 0;
-    transition: all 0.4s ease;
-    color: var(--cyber-text-secondary);
-    font-weight: 700;
+    transition: all 0.3s ease;
 }
 
 .toast.show {
@@ -929,7 +532,7 @@ body {
     opacity: 1;
 }
 
-/* АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ */
+/* Адаптация для мобильных */
 @media (max-width: 480px) {
     .game-board {
         max-height: 55vh;
@@ -937,12 +540,11 @@ body {
     
     .slots-container {
         max-width: 100%;
-        padding: 8px;
     }
     
-    .cyber-slot {
-        font-size: 11px;
-        padding: 10px 4px;
+    .slot {
+        font-size: 10px;
+        padding: 6px 2px;
     }
     
     .action-buttons {
@@ -953,67 +555,12 @@ body {
         flex-direction: column;
         gap: 8px;
     }
-    
-    .difficulty-btn {
-        padding: 8px 12px;
-        font-size: 11px;
-        min-width: 70px;
-    }
-    
-    .cyber-btn {
-        width: 38px;
-        height: 38px;
-        font-size: 18px;
-    }
-    
-    #betAmount {
-        width: 80px;
-        padding: 6px;
-    }
 }
 
-/* БЕЗОПАСНЫЕ ЗОНЫ */
+/* Безопасные зоны */
 @supports(padding: max(0px)) {
     .game-container {
         padding-left: max(16px, env(safe-area-inset-left));
         padding-right: max(16px, env(safe-area-inset-right));
     }
-}
-
-/* ДОПОЛНИТЕЛЬНЫЕ КИБЕРПАНК ЭФФЕКТЫ */
-@keyframes cyber-flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-    51% { opacity: 1; }
-    52% { opacity: 0.9; }
-    53% { opacity: 1; }
-}
-
-.cyber-flicker {
-    animation: cyber-flicker 3s infinite;
-}
-
-/* СТАТИЧЕСКИЕ ЛИНИИ НА КРАЯХ */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 2px;
-    height: 100vh;
-    background: linear-gradient(to bottom, transparent, var(--cyber-primary), transparent);
-    z-index: 1000;
-    pointer-events: none;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 2px;
-    height: 100vh;
-    background: linear-gradient(to bottom, transparent, var(--cyber-secondary), transparent);
-    z-index: 1000;
-    pointer-events: none;
 }
