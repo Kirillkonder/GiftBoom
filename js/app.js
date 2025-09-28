@@ -437,57 +437,58 @@ class TonCasinoApp {
         }
     }
 
-    async processDeposit() {
-        const amount = parseFloat(document.getElementById('deposit-amount').value);
-        
-        // НОВАЯ ПРОВЕРКА: Минимальный депозит 3 TON
-        if (!amount || amount < 3) {
-            this.showError('Минимальный депозит: 3 TON');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/create-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    telegramId: this.tg.initDataUnsafe.user.id,
-                    amount: amount,
-                    demoMode: this.demoMode
-                })
-            });
-
-            const result = await response.json();
-            
-            if (result.success) {
-                if (this.demoMode) {
-                    // Для демо-режима сразу обновляем баланс
-                    await this.loadUserData();
-                    this.tg.showPopup({
-                        title: "✅ Демо-пополнение",
-                        message: `Демо-депозит ${amount} TON успешно зачислен!`,
-                        buttons: [{ type: "ok" }]
-                    });
-                } else {
-                    // Для реального режима открываем инвойс
-                    window.open(result.invoice_url, '_blank');
-                    this.tg.showPopup({
-                        title: "Оплата TON",
-                        message: `Откройте Crypto Bot для оплаты ${amount} TON`,
-                        buttons: [{ type: "ok" }]
-                    });
-                    this.checkDepositStatus(result.invoice_id);
-                }
-                
-                closeDepositModal();
-            } else {
-                this.showError('Ошибка при создании депозита: ' + result.error);
-            }
-        } catch (error) {
-            console.error('Deposit error:', error);
-            this.showError('Ошибка при создании депозита');
-        }
+    // app.js - исправленная функция processDeposit
+async processDeposit() {
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    
+    // ИЗМЕНЕНО: Минимальный депозит 0.3 TON вместо 3 TON
+    if (!amount || amount < 0.3) {
+        this.showError('Минимальный депозит: 0.3 TON');
+        return;
     }
+
+    try {
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: this.tg.initDataUnsafe.user.id,
+                amount: amount,
+                demoMode: this.demoMode
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            if (this.demoMode) {
+                // Для демо-режима сразу обновляем баланс
+                await this.loadUserData();
+                this.tg.showPopup({
+                    title: "✅ Демо-пополнение",
+                    message: `Демо-депозит ${amount} TON успешно зачислен!`,
+                    buttons: [{ type: "ok" }]
+                });
+            } else {
+                // Для реального режима открываем инвойс
+                window.open(result.invoice_url, '_blank');
+                this.tg.showPopup({
+                    title: "Оплата TON",
+                    message: `Откройте Crypto Bot для оплаты ${amount} TON`,
+                    buttons: [{ type: "ok" }]
+                });
+                this.checkDepositStatus(result.invoice_id);
+            }
+            
+            closeDepositModal();
+        } else {
+            this.showError('Ошибка при создании депозита: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Deposit error:', error);
+        this.showError('Ошибка при создании депозита');
+    }
+}
 
     async checkDepositStatus(invoiceId) {
         const checkInterval = setInterval(async () => {
