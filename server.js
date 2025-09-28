@@ -1892,7 +1892,7 @@ function simulatePlinkoBall(rows) {
 
 // API: Начать игру Plinko
 app.post('/api/plinko/start', async (req, res) => {
-    const { telegramId, betAmount, rows, demoMode } = req.body;
+    const { telegramId, betAmount, rows, demoMode, difficultyMode } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -1918,6 +1918,7 @@ app.post('/api/plinko/start', async (req, res) => {
             bet_amount: betAmount,
             rows: rows || 8,
             demo_mode: demoMode,
+            difficulty_mode: difficultyMode || 'easy',
             status: 'playing',
             created_at: new Date()
         });

@@ -8,6 +8,7 @@ class PlinkoGame {
         this.isDemoMode = false;
         this.currentBet = 0.1;
         this.balance = 0;
+        this.difficultyMode = 'easy'; // легкий, средний, сложный
         
         // Canvas setup
         this.canvas = document.getElementById('gameCanvas');
@@ -117,9 +118,16 @@ class PlinkoGame {
     const slotCount = 7;
     const slotWidth = this.canvas.width / slotCount;
     
-    // Множители: БОЛЬШИЕ по краям (5.8x), МАЛЕНЬКИЕ в центре (0.4x, 0.8x)
-    const multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
+    // Множители по режимам сложности
+    const multipliersByDifficulty = {
+        easy: [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8],    // Легкий (текущий)
+        medium: [8.4, 4.7, 0.5, 0.2, 0.5, 4.7, 8.4],  // Средний
+        hard: [15.6, 8.7, 0.2, 0.1, 0.2, 8.7, 15.6]   // Сложный
+    };
     
+    const multipliers = multipliersByDifficulty[this.difficultyMode];
+    
+    this.slots = [];
     for (let i = 0; i < slotCount; i++) {
         this.slots.push({
             x: i * slotWidth,
@@ -129,7 +137,23 @@ class PlinkoGame {
         });
     }
     
-    console.log('🎯 Слоты созданы:', this.slots.map(s => `${s.multiplier}x`).join(' | '));
+    // Обновляем слоты в HTML
+    this.updateSlotsDisplay();
+    
+    console.log(`🎯 Слоты созданы для режима ${this.difficultyMode}:`, this.slots.map(s => `${s.multiplier}x`).join(' | '));
+}
+
+updateSlotsDisplay() {
+    const slotsContainer = document.getElementById('slots');
+    if (slotsContainer) {
+        const slotElements = slotsContainer.querySelectorAll('.slot');
+        this.slots.forEach((slot, index) => {
+            if (slotElements[index]) {
+                slotElements[index].textContent = `${slot.multiplier}x`;
+                slotElements[index].setAttribute('data-value', slot.multiplier.toString());
+            }
+        });
+    }
 }
 
     async dropBall() {
@@ -158,7 +182,8 @@ class PlinkoGame {
                     telegramId: this.currentUser.id,
                     betAmount: this.currentBet,
                     rows: 10,
-                    demoMode: this.isDemoMode
+                    demoMode: this.isDemoMode,
+                    difficultyMode: this.difficultyMode
                 })
             });
 
@@ -438,7 +463,7 @@ class PlinkoGame {
             this.ctx.fill();
             
             this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = ball.isRandomMode ? '#ff6b35' : '#1e5cb8';
+            this.ctx.shadowColor = ball.isRandomMode ? '#1e5cb8' : '#1e5cb8';
             this.ctx.fill();
             this.ctx.shadowBlur = 0;
         });
@@ -601,6 +626,26 @@ async function processDeposit() {
 window.addEventListener('load', () => {
     window.plinkoGame = new PlinkoGame();
 });
+
+// Функция смены режима сложности
+function changeDifficulty(difficulty) {
+    if (window.plinkoGame) {
+        window.plinkoGame.difficultyMode = difficulty;
+        
+        // Обновляем активную кнопку
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-difficulty') === difficulty) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Пересоздаем слоты с новыми множителями
+        window.plinkoGame.createSlots();
+        
+        console.log(`🎯 Режим изменен на: ${difficulty}`);
+    }
+}
 
 window.onclick = function(event) {
     const modal = document.getElementById('deposit-modal');

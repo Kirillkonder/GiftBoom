@@ -229,6 +229,55 @@ body {
     to { box-shadow: 0 0 15px rgba(30, 92, 184, 0.8); }
 }
 
+/* Панель режимов сложности */
+.difficulty-panel {
+    padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.difficulty-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.difficulty-buttons {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.difficulty-btn {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-width: 70px;
+}
+
+.difficulty-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.difficulty-btn.active {
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(30, 92, 184, 0.3);
+}
+
 /* Панель управления */
 .control-panel {
     width: 100%;
