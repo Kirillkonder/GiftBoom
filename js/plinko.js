@@ -199,7 +199,7 @@ updateSlotsDisplay() {
         }
     }
 
-    async dropBallAt(x) {
+   async dropBallAt(x) {
     try {
         // 🔥 ПРОВЕРКА БАЛАНСА ПЕРЕД СТАВКОЙ
         if (this.balance < this.currentBet) {
@@ -254,7 +254,7 @@ updateSlotsDisplay() {
                 console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
             }
 
-            // Create ball - ВОЗВРАЩАЕМ СТАРЫЙ КОД БЕЗ GiftBoom
+            // Create ball - ВОЗВРАЩАЕМ ОРИГИНАЛЬНЫЙ КОД
             const ball = {
                 x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
                 y: this.ballRadius,
