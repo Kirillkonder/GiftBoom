@@ -1,3 +1,5 @@
+[file name]: plinko.css
+[file content begin]
 :root {
     --primary-color: #1e5cb8;
     --secondary-color: #2668b3;
@@ -147,6 +149,49 @@ body {
 .balance-plus-btn:hover {
     background: rgba(0, 0, 0, 0.3);
     transform: scale(1.1);
+}
+
+/* GiftBoom шарик */
+.giftboom-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 16px 20px;
+    margin-top: 60px;
+}
+
+.giftboom-ball {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: giftboom-pulse 2s infinite alternate;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.giftboom-ball:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+}
+
+@keyframes giftboom-pulse {
+    from {
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    }
+    to {
+        box-shadow: 0 4px 25px rgba(255, 107, 107, 0.8);
+    }
 }
 
 /* Игровое поле */
@@ -443,36 +488,6 @@ body {
     transform: translateY(0);
 }
 
-/* Информация о ставке */
-.bet-info {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: transparent;
-    backdrop-filter: blur(5px);
-    margin: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    flex-shrink: 0;
-}
-
-.bet-info-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 12px;
-}
-
-.bet-info-item span:first-child {
-    color: #999;
-    margin-bottom: 4px;
-}
-
-.bet-info-item span:last-child {
-    color: #fff;
-    font-weight: bold;
-}
-
 /* Модальное окно */
 .modal {
     display: none;
@@ -610,9 +625,10 @@ body {
         flex-direction: column;
     }
     
-    .bet-info {
-        flex-direction: column;
-        gap: 8px;
+    .giftboom-ball {
+        width: 70px;
+        height: 70px;
+        font-size: 11px;
     }
 }
 
