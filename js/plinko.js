@@ -1,3 +1,4 @@
+
 class PlinkoGame {
     constructor() {
         // Game state
@@ -5,7 +6,7 @@ class PlinkoGame {
         this.isDemoMode = false;
         this.currentBet = 0.1;
         this.balance = 0;
-        this.difficultyMode = 'easy';
+        this.difficultyMode = 'easy'; // легкий, средний, сложный
         
         // Canvas setup
         this.canvas = document.getElementById('gameCanvas');
@@ -17,17 +18,18 @@ class PlinkoGame {
         this.pegs = [];
         this.slots = [];
 
-        // 🔥 ФИЗИКА КАК В 1WIN - ВЫСОКАЯ ВОЛАТИЛЬНОСТЬ
-        this.gravity = 0.8;
-        this.bounce = 0.65;
-        this.friction = 0.985;
+        // Physics
+        this.gravity = 0.6;
+        this.bounce = 0.7;
+        this.friction = 0.99;
 
-        // 🔥 СИСТЕМА СЛУЧАЙНЫХ БОЛЬШИХ ВЫИГРЫШЕЙ
+        // 🔥 ОБНОВЛЕННАЯ СИСТЕМА: Притяжение к маленьким множителям + 2 случайных шара каждые 8-15 шаров
         this.ballsDropped = 0;
-        this.bigWinCounter = 0;
-        this.nextBigWinAt = Math.floor(Math.random() * 15) + 10;
-        this.consecutiveSmallWins = 0;
+        this.nextRandomBallsAt = Math.floor(Math.random() * 8) + 8; // 8-15 шаров
+        this.randomBallsRemaining = 0;
+        this.randomBallsActive = 0;
 
+        // Initialize
         this.setupEventListeners();
         this.createPegs();
         this.createSlots();
@@ -78,125 +80,113 @@ class PlinkoGame {
         });
 
         document.getElementById('dropBall').addEventListener('click', () => this.dropBall());
+
+        // 🔥 УБРАНО: Клик по canvas для броска шара - теперь только через кнопку
+        // this.canvas.addEventListener('click', (e) => {
+        //     if (this.currentBet > 0 && this.balance >= this.currentBet) {
+        //         const rect = this.canvas.getBoundingClientRect();
+        //         const x = e.clientX - rect.left;
+        //         this.dropBallAt(x);
+        //     } else {
+        //         this.showError('Недостаточно средств');
+        //     }
+        // });
     }
 
     createPegs() {
-        const rows = 12;
+        const rows = 10;
         const verticalSpacing = this.canvas.height / (rows + 2);
+
+        // Базовый горизонтальный шаг как раньше — сохраняем общий вид
         const baseHorizontalSpacing = this.canvas.width / (rows + 1);
-        const sideMargin = this.pegRadius + 2;
+        const sideMargin = this.pegRadius + 2; // безопасный отступ, чтобы крайние колышки были полностью видны
 
         for (let row = 0; row < rows; row++) {
             const pegsInRow = row + 3;
+
+            // Ширина ряда при базовом шаге
             let rowSpacing = baseHorizontalSpacing;
             let rowWidth = (pegsInRow - 1) * rowSpacing;
+
+            // Максимальная ширина ряда с учётом отступов
             const maxRowWidth = this.canvas.width - sideMargin * 2;
 
+            // Если ряд слишком широкый (актуально для нижних рядов), слегка уменьшаем шаг
             if (rowWidth > maxRowWidth) {
                 rowSpacing = maxRowWidth / (pegsInRow - 1);
                 rowWidth = maxRowWidth;
             }
 
-            const startX = (this.canvas.width - rowWidth) / 2;
+            const startX = (this.canvas.width - rowWidth) / 2; // остаётся по центру
 
             for (let i = 0; i < pegsInRow; i++) {
-                const randomOffset = (Math.random() - 0.5) * 8;
                 this.pegs.push({
-                    x: startX + i * rowSpacing + randomOffset,
-                    y: verticalSpacing * (row + 2) + (Math.random() - 0.5) * 5,
+                    x: startX + i * rowSpacing,
+                    y: verticalSpacing * (row + 2),
                     radius: this.pegRadius
                 });
             }
         }
     }
 
-    createSlots() {
-        const slotCount = 7;
-        const sideMargin = 10;
-        const availableWidth = this.canvas.width - (sideMargin * 2);
-        const slotWidth = availableWidth / slotCount;
-        
-        const multipliersByDifficulty = {
-            easy: [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8],
-            medium: [8.4, 4.7, 0.5, 0.2, 0.5, 4.7, 8.4],
-            hard: [15.6, 8.7, 0.2, 0.1, 0.2, 8.7, 15.6]
-        };
-        
-        const multipliers = multipliersByDifficulty[this.difficultyMode];
-        
-        this.slots = [];
-        for (let i = 0; i < slotCount; i++) {
-            this.slots.push({
-                x: sideMargin + (i * slotWidth),
-                width: slotWidth,
-                multiplier: multipliers[i],
-                index: i
-            });
-        }
-        
-        this.updateSlotsDisplay();
-        
-        console.log(`🎯 Слоты созданы для режима ${this.difficultyMode}:`, this.slots.map(s => `${s.multiplier}x`).join(' | '));
+   createSlots() {
+    const slotCount = 7;
+    // 🔥 ИСПРАВЛЕНИЕ: Добавляем отступы с краев для полного отображения слотов
+    const sideMargin = 10; // отступ с каждой стороны
+    const availableWidth = this.canvas.width - (sideMargin * 2);
+    const slotWidth = availableWidth / slotCount;
+    
+    // Множители по режимам сложности
+    const multipliersByDifficulty = {
+    easy: [15.8, 2.2, 0.8, 0.4, 0.8, 2.2, 15.8],    // Легкий (обновлено: 5.8 → 15.8)
+    medium: [32.6, 4.7, 0.5, 0.2, 0.5, 4.7, 32.6],  // Средний (обновлено: 8.4 → 32.6)
+    hard: [78.4, 8.7, 0.2, 0.1, 0.2, 8.7, 78.4]     // Сложный (обновлено: 15.6 → 78.4)
+};
+    const multipliers = multipliersByDifficulty[this.difficultyMode];
+    
+    this.slots = [];
+    for (let i = 0; i < slotCount; i++) {
+        this.slots.push({
+            x: sideMargin + (i * slotWidth), // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ слева
+            width: slotWidth,
+            multiplier: multipliers[i],
+            index: i
+        });
     }
+    
+    // Обновляем слоты в HTML
+    this.updateSlotsDisplay();
+    
+    console.log(`🎯 Слоты созданы для режима ${this.difficultyMode}:`, this.slots.map(s => `${s.multiplier}x`).join(' | '));
+}
 
-    updateSlotsDisplay() {
-        const slotsContainer = document.getElementById('slots');
-        if (slotsContainer) {
-            const slotElements = slotsContainer.querySelectorAll('.slot');
-            this.slots.forEach((slot, index) => {
-                if (slotElements[index]) {
-                    slotElements[index].textContent = `${slot.multiplier}x`;
-                    slotElements[index].setAttribute('data-value', slot.multiplier.toString());
-                    
-                    slotElements[index].className = 'slot';
-                    
-                    if (slot.multiplier >= 5) {
-                        slotElements[index].classList.add('high-multiplier');
-                    } else if (slot.multiplier >= 2) {
-                        slotElements[index].classList.add('medium-multiplier');
-                    } else if (slot.multiplier >= 0.8) {
-                        slotElements[index].classList.add('low-multiplier');
-                    } else {
-                        slotElements[index].classList.add('lowest-multiplier');
-                    }
+updateSlotsDisplay() {
+    const slotsContainer = document.getElementById('slots');
+    if (slotsContainer) {
+        const slotElements = slotsContainer.querySelectorAll('.slot');
+        this.slots.forEach((slot, index) => {
+            if (slotElements[index]) {
+                slotElements[index].textContent = `${slot.multiplier}x`;
+                slotElements[index].setAttribute('data-value', slot.multiplier.toString());
+                
+                // 🔥 ОБНОВЛЯЕМ ЦВЕТА В РЕАЛЬНОМ ВРЕМЕНИ
+                // Удаляем все цветовые классы
+                slotElements[index].className = 'slot';
+                
+                // Добавляем соответствующий цвет в зависимости от множителя
+                if (slot.multiplier >= 5) {
+                    slotElements[index].classList.add('high-multiplier');
+                } else if (slot.multiplier >= 2) {
+                    slotElements[index].classList.add('medium-multiplier');
+                } else if (slot.multiplier >= 0.8) {
+                    slotElements[index].classList.add('low-multiplier');
+                } else {
+                    slotElements[index].classList.add('lowest-multiplier');
                 }
-            });
-        }
-    }
-
-    // 🔥 НОВАЯ СИСТЕМА ГЕНЕРАЦИИ РЕЗУЛЬТАТОВ КАК В 1WIN
-    generatePlinkoResult() {
-        const random = Math.random() * 100;
-        
-        // 🔥 ВЫСОКАЯ ВОЛАТИЛЬНОСТЬ: 70% малые выигрыши, 25% средние, 5% крупные
-        if (this.bigWinCounter > 0) {
-            // Принудительный большой выигрыш
-            this.bigWinCounter--;
-            const bigMultipliers = [5.8, 8.4, 15.6, 26.0, 100.0];
-            return bigMultipliers[Math.floor(Math.random() * bigMultipliers.length)];
-        }
-
-        if (random < 70) {
-            // 70% - малые выигрыши (0.2x - 1.5x)
-            this.consecutiveSmallWins++;
-            return 0.2 + Math.random() * 1.3;
-        } else if (random < 95) {
-            // 25% - средние выигрыши (1.5x - 5x)
-            this.consecutiveSmallWins = 0;
-            return 1.5 + Math.random() * 3.5;
-        } else {
-            // 5% - крупные выигрыши (5x - 100x)
-            this.consecutiveSmallWins = 0;
-            
-            // После 10+ малых выигрышей подряд увеличиваем шанс большого
-            if (this.consecutiveSmallWins >= 10) {
-                return 20 + Math.random() * 80;
             }
-            
-            return 5 + Math.random() * 95;
-        }
+        });
     }
-
+}
     async dropBall() {
         if (this.currentBet > 0 && this.balance >= this.currentBet) {
             const x = this.canvas.width / 2;
@@ -208,6 +198,7 @@ class PlinkoGame {
 
     async dropBallAt(x) {
         try {
+            // 🔥 ПРОВЕРКА БАЛАНСА ПЕРЕД СТАВКОЙ
             if (this.balance < this.currentBet) {
                 this.showError('Недостаточно средств');
                 return;
@@ -235,20 +226,44 @@ class PlinkoGame {
             const result = await response.json();
             
             if (result.success) {
+                // Обновляем баланс сразу после ставки
                 this.balance = result.new_balance;
                 this.updateUI();
                 
+                // 🔥 ОБНОВЛЕННАЯ СИСТЕМА СЛУЧАЙНЫХ ШАРОВ: каждые 8-15 шаров
+                this.ballsDropped++;
+                
+                // Проверяем, нужно ли сделать этот шар случайным
+                let isRandomBall = false;
+                if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining > 0) {
+                    isRandomBall = true;
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲 Случайный шар активирован! Осталось: ${this.randomBallsRemaining}`);
+                }
+                // Если пришло время для новых случайных шаров
+                else if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining === 0) {
+                    this.randomBallsRemaining = 2; // 🔥 ТЕПЕРЬ 2 СЛУЧАЙНЫХ ШАРА
+                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 8) + 8; // 🔥 ИЗМЕНЕНО: 8-15 шаров
+                    isRandomBall = true;
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
+                }
+
+                // Create ball
                 const ball = {
                     x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
                     y: this.ballRadius,
-                    vx: (Math.random() - 0.5) * 4,
+                    vx: (Math.random() - 0.5) * 2,
                     vy: 0,
                     radius: this.ballRadius,
                     bet: this.currentBet,
                     gameId: result.game_id,
                     isFinished: false,
                     finishedAt: 0,
-                    createdAt: Date.now()
+                    createdAt: Date.now(),
+                    isRandomMode: isRandomBall
                 };
 
                 this.activeBalls.push(ball);
@@ -263,110 +278,26 @@ class PlinkoGame {
         }
     }
 
-    // 🔥 ФИЗИКА С ВЫСОКОЙ СЛУЧАЙНОСТЬЮ КАК В 1WIN
-    updateBall() {
-        for (let i = this.activeBalls.length - 1; i >= 0; i--) {
-            const ball = this.activeBalls[i];
-
-            const currentTime = Date.now();
-            const ballLifetime = currentTime - (ball.createdAt || currentTime);
-            if ((ball.isFinished && currentTime - ball.finishedAt > 300) || ballLifetime > 15000) {
-                this.activeBalls.splice(i, 1);
-                continue;
-            }
-
-            if (ball.isFinished) continue;
-
-            // 🔥 УСИЛЕННАЯ ФИЗИКА С БОЛЬШЕЙ СЛУЧАЙНОСТЬЮ
-            ball.vy += this.gravity;
-            
-            // 🔥 СИЛЬНЫЕ СЛУЧАЙНЫЕ ВОЗДЕЙСТВИЯ КАК В 1WIN
-            ball.vx += (Math.random() - 0.5) * 0.8;
-            ball.vy += (Math.random() - 0.5) * 0.3;
-            
-            ball.x += ball.vx;
-            ball.y += ball.vy;
-            ball.vx *= this.friction;
-            ball.vy *= this.friction;
-
-            // 🔥 ХАОТИЧЕСКОЕ ДВИЖЕНИЕ - ШАРИК МОЖЕТ ПОЛЕТЕТЬ КУДА УГОДНО
-            if (Math.random() < 0.3) {
-                ball.vx += (Math.random() - 0.5) * 4;
-                ball.vy += (Math.random() - 0.3) * 2;
-            }
-
-            // Столкновения со стенами
-            if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
-                ball.vx *= -this.bounce;
-                ball.vx += (Math.random() - 0.5) * 2;
-                ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
-            }
-
-            // Столкновения с колышками - БОЛЕЕ ХАОТИЧНЫЕ
-            this.pegs.forEach(peg => {
-                const dx = ball.x - peg.x;
-                const dy = ball.y - peg.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < ball.radius + peg.radius) {
-                    const angle = Math.atan2(dy, dx);
-                    const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-                    
-                    const randomBounce = angle + (Math.random() - 0.5) * 1.0;
-                    
-                    ball.vx = Math.cos(randomBounce) * speed * this.bounce;
-                    ball.vy = Math.sin(randomBounce) * speed * this.bounce;
-                    
-                    ball.vx += (Math.random() - 0.5) * 1.5;
-                    ball.vy += (Math.random() - 0.5) * 1.0;
-                    
-                    const minDistance = ball.radius + peg.radius;
-                    ball.x = peg.x + Math.cos(angle) * minDistance;
-                    ball.y = peg.y + Math.sin(angle) * minDistance;
-                }
-            });
-
-            // Проверка достижения низа
-            const bottomThreshold = this.canvas.height - 15;
-            const isAtBottom = ball.y + ball.radius > bottomThreshold;
-            
-            if (isAtBottom && !ball.isFinished) {
-                ball.isFinished = true;
-                ball.finishedAt = Date.now();
-                
-                // 🔥 ГЕНЕРАЦИЯ РЕЗУЛЬТАТА ПО АЛГОРИТМУ 1WIN
-                this.ballsDropped++;
-                
-                if (this.ballsDropped >= this.nextBigWinAt) {
-                    this.bigWinCounter = 1 + Math.floor(Math.random() * 2);
-                    this.nextBigWinAt = this.ballsDropped + Math.floor(Math.random() * 20) + 15;
-                    console.log(`🎰 АКТИВИРОВАН БОЛЬШОЙ ВЫИГРЫШ! Осталось: ${this.bigWinCounter}`);
-                }
-
-                const finalMultiplier = this.generatePlinkoResult();
-                
-                let closestSlot = 0;
-                let minDiff = Infinity;
-                
-                this.slots.forEach((slot, index) => {
-                    const diff = Math.abs(slot.multiplier - finalMultiplier);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        closestSlot = index;
-                    }
-                });
-
-                console.log(`🎯 Результат: ${finalMultiplier.toFixed(2)}x, слот: ${closestSlot}`);
-                
-                setTimeout(() => {
-                    this.handleBallInSlot(ball, closestSlot, finalMultiplier);
-                }, 100);
-            }
-        }
-    }
-
-    async handleBallInSlot(ball, slotIndex, realMultiplier) {
+    async handleBallInSlot(ball, slotIndex) {
         try {
+            // 🔥 УМЕНЬШАЕМ СЧЕТЧИК АКТИВНЫХ СЛУЧАЙНЫХ ШАРОВ
+            if (ball.isRandomMode && this.randomBallsActive > 0) {
+                this.randomBallsActive--;
+                console.log(`🎲 Случайный шар завершен. Активных: ${this.randomBallsActive}, осталось в серии: ${this.randomBallsRemaining}`);
+            }
+
+            // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ (с учетом отступов)
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / this.slots.length;
+            const ballCenterX = ball.x - sideMargin; // Вычитаем отступ слева
+            const calculatedSlotIndex = Math.floor(ballCenterX / slotWidth);
+            const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, calculatedSlotIndex));
+            
+            const realMultiplier = this.slots[finalSlotIndex].multiplier;
+            
+            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${realMultiplier}x, случайный: ${ball.isRandomMode}`);
+
             const response = await fetch('/api/plinko/drop', {
                 method: 'POST',
                 headers: {
@@ -375,7 +306,7 @@ class PlinkoGame {
                 body: JSON.stringify({
                     gameId: ball.gameId,
                     telegramId: this.currentUser.id,
-                    finalSlot: slotIndex,
+                    finalSlot: finalSlotIndex,
                     realMultiplier: realMultiplier
                 })
             });
@@ -387,45 +318,132 @@ class PlinkoGame {
             const result = await response.json();
             
             if (result.success) {
+                // 🔥 ОБНОВЛЯЕМ БАЛАНС ПОСЛЕ ВЫИГРЫША
                 this.balance = result.new_balance;
                 this.updateUI();
-                
-                if (realMultiplier >= 10) {
-                    this.showBigWinNotification(realMultiplier, result.win_amount);
-                }
             }
         } catch (error) {
             console.error('Handle ball error:', error);
         }
     }
 
-    // 🔥 ФУНКЦИЯ ДЛЯ КРУПНЫХ ВЫИГРЫШЕЙ
-    showBigWinNotification(multiplier, winAmount) {
-        const notification = document.createElement('div');
-        notification.className = 'big-win-notification';
-        notification.innerHTML = `
-            <div class="big-win-content">
-                <div class="big-win-icon">🎰</div>
-                <div class="big-win-text">
-                    <div class="big-win-title">ОГРОМНЫЙ ВЫИГРЫШ!</div>
-                    <div class="big-win-multiplier">${multiplier.toFixed(2)}x</div>
-                    <div class="big-win-amount">+${winAmount.toFixed(2)} TON</div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => notification.classList.add('show'), 100);
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 1000);
-        }, 5000);
-    }
+   updateBall() {
+    for (let i = this.activeBalls.length - 1; i >= 0; i--) {
+        const ball = this.activeBalls[i];
 
+        // Удаление завершенных шариков
+        const currentTime = Date.now();
+        const ballLifetime = currentTime - (ball.createdAt || currentTime);
+        const isStuckBall = ballLifetime > 10000;
+        const isSlowBall = ball.y > this.canvas.height * 0.9 && Math.abs(ball.vy) < 0.1 && ballLifetime > 3000;
+        
+        if ((ball.isFinished && currentTime - ball.finishedAt > 300) || isStuckBall || isSlowBall) {
+            this.activeBalls.splice(i, 1);
+            continue;
+        }
+
+        if (ball.isFinished) {
+            continue;
+        }
+
+        // Базовая физика
+        ball.vy += this.gravity;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= this.friction;
+        ball.vy *= this.friction;
+
+        // 🔥 НОВЫЙ АЛГОРИТМ: 80% к центру, 20% по бокам
+        if (Math.random() < 0.8) {
+            // Шарик катится к центру (слоты 2, 3, 4)
+            const centerSlots = [2, 3, 4];
+            const targetSlot = centerSlots[Math.floor(Math.random() * centerSlots.length)];
+            
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / 7;
+            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth;
+            
+            // Легкая коррекция движения к центру
+            if (ball.y > this.canvas.height * 0.4) {
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * 0.008;
+            }
+        } else {
+            // Шарик катится по бокам (слоты 0, 1, 5, 6)
+            const sideSlots = [0, 1, 5, 6];
+            const targetSlot = sideSlots[Math.floor(Math.random() * sideSlots.length)];
+            
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / 7;
+            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth;
+            
+            // Легкая коррекция движения к бокам
+            if (ball.y > this.canvas.height * 0.4) {
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * 0.006;
+            }
+        }
+
+        // Добавляем немного случайности для естественности
+        ball.vx += (Math.random() - 0.5) * 0.01;
+
+        // Столкновения со стенами
+        if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
+            ball.vx *= -this.bounce;
+            ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
+        }
+
+        // Столкновения с колышками
+        this.pegs.forEach(peg => {
+            const dx = ball.x - peg.x;
+            const dy = ball.y - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < ball.radius + peg.radius) {
+                const angle = Math.atan2(dy, dx);
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                
+                const randomAngle = angle + (Math.random() - 0.5) * 0.1;
+                
+                ball.vx = Math.cos(randomAngle) * speed * this.bounce;
+                ball.vy = Math.sin(randomAngle) * speed * this.bounce;
+                
+                const minDistance = ball.radius + peg.radius;
+                ball.x = peg.x + Math.cos(angle) * minDistance;
+                ball.y = peg.y + Math.sin(angle) * minDistance;
+            }
+        });
+
+        // Проверка достижения низа
+        const bottomThreshold = this.canvas.height - 15;
+        const isAtBottom = ball.y + ball.radius > bottomThreshold;
+        
+        if (isAtBottom && !ball.isFinished) {
+            ball.isFinished = true;
+            ball.finishedAt = Date.now();
+            
+            // Определение слота
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / this.slots.length;
+            const ballCenterX = ball.x - sideMargin;
+            const slotIndex = Math.floor(ballCenterX / slotWidth);
+            const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
+            
+            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${this.slots[finalSlotIndex].multiplier}x`);
+            
+            setTimeout(() => {
+                this.handleBallInSlot(ball, finalSlotIndex);
+            }, 100);
+        }
+    }
+}
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Draw pegs
         this.pegs.forEach(peg => {
             this.ctx.beginPath();
             this.ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
@@ -433,16 +451,23 @@ class PlinkoGame {
             this.ctx.fill();
         });
 
+        // Draw balls
         this.activeBalls.forEach(ball => {
             if (ball.isFinished) return;
             
             this.ctx.beginPath();
             this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = '#1e5cb8';
+            
+            if (ball.isRandomMode) {
+                this.ctx.fillStyle = '#1e5cb8';
+            } else {
+                this.ctx.fillStyle = '#1e5cb8';
+            }
+            
             this.ctx.fill();
             
             this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = '#1e5cb8';
+            this.ctx.shadowColor = ball.isRandomMode ? '#1e5cb8' : '#1e5cb8';
             this.ctx.fill();
             this.ctx.shadowBlur = 0;
         });
@@ -456,6 +481,10 @@ class PlinkoGame {
 
     updateUI() {
         document.getElementById('balance').textContent = this.balance.toFixed(2);
+        
+        // 🔥 ИСПРАВЛЕНИЕ: Удалена строка с currentBet, так как элемента больше нет
+        // document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
+        
         document.getElementById('betAmount').value = this.currentBet.toFixed(1);
 
         const dropButton = document.getElementById('dropBall');
@@ -600,11 +629,16 @@ async function processDeposit() {
     }
 }
 
+window.addEventListener('load', () => {
+    window.plinkoGame = new PlinkoGame();
+});
+
 // Функция смены режима сложности
 function changeDifficulty(difficulty) {
     if (window.plinkoGame) {
         window.plinkoGame.difficultyMode = difficulty;
         
+        // Обновляем активную кнопку
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.getAttribute('data-difficulty') === difficulty) {
@@ -612,6 +646,7 @@ function changeDifficulty(difficulty) {
             }
         });
         
+        // Пересоздаем слоты с новыми множителями
         window.plinkoGame.createSlots();
         
         console.log(`🎯 Режим изменен на: ${difficulty}`);
@@ -624,74 +659,3 @@ window.onclick = function(event) {
         closeDepositModal();
     }
 }
-
-// 🔥 CSS ДЛЯ УВЕДОМЛЕНИЙ О БОЛЬШИХ ВЫИГРЫШАХ
-const bigWinCSS = `
-.big-win-notification {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
-    background: linear-gradient(135deg, #ffd700, #ff6b00);
-    border: 3px solid #ffeb3b;
-    border-radius: 20px;
-    padding: 20px;
-    color: #000;
-    font-weight: bold;
-    text-align: center;
-    z-index: 10000;
-    opacity: 0;
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
-}
-
-.big-win-notification.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
-
-.big-win-content {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.big-win-icon {
-    font-size: 3em;
-    animation: bounce 0.5s infinite alternate;
-}
-
-.big-win-text {
-    text-align: left;
-}
-
-.big-win-title {
-    font-size: 1.2em;
-    margin-bottom: 5px;
-}
-
-.big-win-multiplier {
-    font-size: 2em;
-    color: #e91e63;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-}
-
-.big-win-amount {
-    font-size: 1.5em;
-    color: #4caf50;
-}
-
-@keyframes bounce {
-    from { transform: scale(1); }
-    to { transform: scale(1.2); }
-}
-`;
-
-// Добавляем стили в документ
-const style = document.createElement('style');
-style.textContent = bigWinCSS;
-document.head.appendChild(style);
-
-window.addEventListener('load', () => {
-    window.plinkoGame = new PlinkoGame();
-});
