@@ -199,87 +199,87 @@ updateSlotsDisplay() {
         }
     }
 
-   async dropBallAt(x) {
-    try {
-        // 🔥 ПРОВЕРКА БАЛАНСА ПЕРЕД СТАВКОЙ
-        if (this.balance < this.currentBet) {
-            this.showError('Недостаточно средств');
-            return;
-        }
-
-        const response = await fetch('/api/plinko/start', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                telegramId: this.currentUser.id,
-                betAmount: this.currentBet,
-                rows: 10,
-                demoMode: this.isDemoMode,
-                difficultyMode: this.difficultyMode
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Ошибка при размещении ставки');
-        }
-
-        const result = await response.json();
-        
-        if (result.success) {
-            // Обновляем баланс сразу после ставки
-            this.balance = result.new_balance;
-            this.updateUI();
-            
-            // 🔥 ОБНОВЛЯЕМ СИСТЕМУ СЛУЧАЙНЫХ ШАРОВ
-            this.ballsDropped++;
-            
-            // Проверяем, нужно ли сделать этот шар случайным
-            let isRandomBall = false;
-            if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining > 0) {
-                isRandomBall = true;
-                this.randomBallsRemaining--;
-                this.randomBallsActive++;
-                console.log(`🎲 Случайный шар активирован! Осталось: ${this.randomBallsRemaining}`);
-            }
-            // Если пришло время для новых случайных шаров
-            else if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining === 0) {
-                this.randomBallsRemaining = 2; // 🔥 ТЕПЕРЬ 2 СЛУЧАЙНЫХ ШАРА
-                this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 26) + 25; // Следующие через 25-50 шаров
-                isRandomBall = true;
-                this.randomBallsRemaining--;
-                this.randomBallsActive++;
-                console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
+    async dropBallAt(x) {
+        try {
+            // 🔥 ПРОВЕРКА БАЛАНСА ПЕРЕД СТАВКОЙ
+            if (this.balance < this.currentBet) {
+                this.showError('Недостаточно средств');
+                return;
             }
 
-            // Create ball - ВОЗВРАЩАЕМ ОРИГИНАЛЬНЫЙ КОД
-            const ball = {
-                x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
-                y: this.ballRadius,
-                vx: (Math.random() - 0.5) * 2,
-                vy: 0,
-                radius: this.ballRadius,
-                bet: this.currentBet,
-                gameId: result.game_id,
-                isFinished: false,
-                finishedAt: 0,
-                createdAt: Date.now(),
-                isRandomMode: isRandomBall
-            };
+            const response = await fetch('/api/plinko/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    telegramId: this.currentUser.id,
+                    betAmount: this.currentBet,
+                    rows: 10,
+                    demoMode: this.isDemoMode,
+                    difficultyMode: this.difficultyMode
+                })
+            });
 
-            this.activeBalls.push(ball);
-            this.updateUI();
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Ошибка при размещении ставки');
+            }
 
-        } else {
-            throw new Error(result.error);
+            const result = await response.json();
+            
+            if (result.success) {
+                // Обновляем баланс сразу после ставки
+                this.balance = result.new_balance;
+                this.updateUI();
+                
+                // 🔥 ОБНОВЛЯЕМ СИСТЕМУ СЛУЧАЙНЫХ ШАРОВ
+                this.ballsDropped++;
+                
+                // Проверяем, нужно ли сделать этот шар случайным
+                let isRandomBall = false;
+                if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining > 0) {
+                    isRandomBall = true;
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲 Случайный шар активирован! Осталось: ${this.randomBallsRemaining}`);
+                }
+                // Если пришло время для новых случайных шаров
+                else if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining === 0) {
+                    this.randomBallsRemaining = 2; // 🔥 ТЕПЕРЬ 2 СЛУЧАЙНЫХ ШАРА
+                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 26) + 25; // Следующие через 25-50 шаров
+                    isRandomBall = true;
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
+                }
+
+                // Create ball
+                const ball = {
+                    x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
+                    y: this.ballRadius,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: 0,
+                    radius: this.ballRadius,
+                    bet: this.currentBet,
+                    gameId: result.game_id,
+                    isFinished: false,
+                    finishedAt: 0,
+                    createdAt: Date.now(),
+                    isRandomMode: isRandomBall
+                };
+
+                this.activeBalls.push(ball);
+                this.updateUI();
+
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            console.error('Drop ball error:', error);
+            this.showError(error.message || 'Ошибка при размещении ставки');
         }
-    } catch (error) {
-        console.error('Drop ball error:', error);
-        this.showError(error.message || 'Ошибка при размещении ставки');
     }
-}
 
     async handleBallInSlot(ball, slotIndex) {
         try {
