@@ -25,6 +25,12 @@ class PlinkoGame {
         this.bounce = 0.7;
         this.friction = 0.99;
 
+        // 🔥 НОВАЯ СИСТЕМА: Циклы притяжения
+        this.ballsDropped = 0;
+        this.attractionEnabled = true;
+        this.randomBallsRemaining = 0;
+        this.totalBallsDropped = 0;
+
         // Initialize
         this.setupEventListeners();
         this.createPegs();
@@ -169,6 +175,20 @@ class PlinkoGame {
                 this.balance = result.new_balance;
                 this.updateUI();
                 
+                // 🔥 ОБНОВЛЯЕМ СИСТЕМУ ЦИКЛОВ ПРИТЯЖЕНИЯ
+                this.totalBallsDropped++;
+                this.ballsDropped++;
+                
+                // Проверяем, нужно ли активировать случайные шары
+                if (this.attractionEnabled && this.ballsDropped >= 30) {
+                    this.activateRandomBallsMode();
+                }
+                
+                // Проверяем, нужно ли вернуть притяжение
+                if (!this.attractionEnabled && this.randomBallsRemaining <= 0) {
+                    this.restoreAttractionMode();
+                }
+
                 // Create ball
                 const ball = {
                     x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
@@ -180,11 +200,16 @@ class PlinkoGame {
                     gameId: result.game_id,
                     isFinished: false,
                     finishedAt: 0,
-                    createdAt: Date.now() // 🔥 ДОБАВЛЕНО: Время создания шарика
+                    createdAt: Date.now(),
+                    // 🔥 ДОБАВЛЯЕМ ФЛАГ ДЛЯ СЛУЧАЙНОГО РЕЖИМА
+                    isRandomMode: !this.attractionEnabled
                 };
 
                 this.activeBalls.push(ball);
                 this.updateUI();
+
+                // 🔥 УВЕДОМЛЕНИЕ О РЕЖИМЕ
+                this.showModeNotification(ball.isRandomMode);
 
             } else {
                 throw new Error(result.error);
@@ -195,8 +220,45 @@ class PlinkoGame {
         }
     }
 
+    // 🔥 НОВАЯ ФУНКЦИЯ: Активация режима случайных шаров
+    activateRandomBallsMode() {
+        this.attractionEnabled = false;
+        this.randomBallsRemaining = Math.floor(Math.random() * 3) + 3; // 3-5 случайных шаров
+        this.ballsDropped = 0;
+        
+        console.log(`🎲 Активирован режим случайных шаров! Осталось шаров: ${this.randomBallsRemaining}`);
+    }
+
+    // 🔥 НОВАЯ ФУНКЦИЯ: Восстановление режима притяжения
+    restoreAttractionMode() {
+        this.attractionEnabled = true;
+        this.randomBallsRemaining = 0;
+        this.ballsDropped = 0;
+        
+        console.log(`🎯 Восстановлен режим притяжения! Следующие 30 шаров с притяжением к центру`);
+    }
+
+    // 🔥 НОВАЯ ФУНКЦИЯ: Уведомление о смене режима
+    showModeNotification(isRandomMode) {
+        if (isRandomMode) {
+            this.showToast('info', '🎲 Случайный режим', 
+                `Шар летит без притяжения! Осталось случайных шаров: ${this.randomBallsRemaining}`, 4000);
+        } else {
+            if (this.totalBallsDropped % 30 === 1) {
+                this.showToast('info', '🎯 Режим притяжения', 
+                    'Шары притягиваются к центру. Через 30 шаров - случайный режим!', 4000);
+            }
+        }
+    }
+
     async handleBallInSlot(ball, slotIndex) {
         try {
+            // 🔥 УМЕНЬШАЕМ СЧЕТЧИК СЛУЧАЙНЫХ ШАРОВ ЕСЛИ НУЖНО
+            if (ball.isRandomMode) {
+                this.randomBallsRemaining--;
+                console.log(`🎲 Случайный шар завершен. Осталось: ${this.randomBallsRemaining}`);
+            }
+
             // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ
             const slotWidth = this.canvas.width / this.slots.length;
             const ballCenterX = ball.x;
@@ -262,55 +324,65 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 ПРИТЯЖЕНИЕ РАБОТАЕТ СРАЗУ ПОСЛЕ СПАВНА ШАРИКА
-        // Определяем куда притягивать (к низким множителям - центру)
-        const slotWidth = this.canvas.width / 7;
-        const lowMultiplierSlots = [2, 3, 4]; // Слоты с низкими множителями (0.8x, 0.4x, 0.8x)
-        
-        // Всегда притягиваем к низким множителям (центру)
-        let targetSlot = 3; // Центральный слот (0.4x) по умолчанию
-        
-        // Ищем ближайший низкий слот
-        let minDistance = Infinity;
-        lowMultiplierSlots.forEach(slotIndex => {
-            const slotCenterX = (slotIndex + 0.5) * slotWidth;
-            const distance = Math.abs(ball.x - slotCenterX);
-            if (distance < minDistance) {
-                minDistance = distance;
-                targetSlot = slotIndex;
+        // 🔥 ИЗМЕНЕННАЯ ЛОГИКА: ПРИТЯЖЕНИЕ РАБОТАЕТ ТОЛЬКО КОГДА ВКЛЮЧЕНО
+        if (this.attractionEnabled && !ball.isRandomMode) {
+            // 🔥 ПРИТЯЖЕНИЕ К ЦЕНТРУ (НИЗКИМ МНОЖИТЕЛЯМ)
+            const slotWidth = this.canvas.width / 7;
+            const lowMultiplierSlots = [2, 3, 4]; // Слоты с низкими множителями (0.8x, 0.4x, 0.8x)
+            
+            // Всегда притягиваем к низким множителям (центру)
+            let targetSlot = 3; // Центральный слот (0.4x) по умолчанию
+            
+            // Ищем ближайший низкий слот
+            let minDistance = Infinity;
+            lowMultiplierSlots.forEach(slotIndex => {
+                const slotCenterX = (slotIndex + 0.5) * slotWidth;
+                const distance = Math.abs(ball.x - slotCenterX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    targetSlot = slotIndex;
+                }
+            });
+            
+            const targetX = (targetSlot + 0.5) * slotWidth;
+            const distanceToTarget = Math.abs(ball.x - targetX);
+            
+            // 🔥 ПРИТЯЖЕНИЕ РАБОТАЕТ ВСЕГДА В РЕЖИМЕ ПРИТЯЖЕНИЯ
+            if (distanceToTarget > 2) {
+                // Сила притяжения - постоянная, не зависит от высоты
+                const basePullStrength = 0.008; // Базовая сила притяжения
+                
+                // Коррекция на основе расстояния
+                const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.015;
+                
+                const totalPullStrength = basePullStrength + distanceCorrection;
+                
+                // Притяжение к центру
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * totalPullStrength;
+                
+                // Слегка увеличиваем вертикальную скорость
+                ball.vy += 0.005;
             }
-        });
-        
-        const targetX = (targetSlot + 0.5) * slotWidth;
-        const distanceToTarget = Math.abs(ball.x - targetX);
-        
-        // 🔥 ПРИТЯЖЕНИЕ РАБОТАЕТ ВСЕГДА, С САМОГО НАЧАЛА
-        if (distanceToTarget > 2) {
-            // Сила притяжения - постоянная, не зависит от высоты
-            const basePullStrength = 0.008; // Базовая сила притяжения
             
-            // Коррекция на основе расстояния
-            const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.015;
-            
-            const totalPullStrength = basePullStrength + distanceCorrection;
-            
-            // Притяжение к центру
-            const pullDirection = targetX - ball.x;
-            ball.vx += pullDirection * totalPullStrength;
-            
-            // Слегка увеличиваем вертикальную скорость
-            ball.vy += 0.005;
-        }
-        
-        // 🔥 ДОПОЛНИТЕЛЬНОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
-        if (ball.y > this.canvas.height * 0.7) {
-            const extraPull = 0.012;
-            const pullDirection = targetX - ball.x;
-            ball.vx += pullDirection * extraPull;
-            
-            // Замедление при приближении к цели
-            if (distanceToTarget < slotWidth * 0.3) {
-                ball.vx *= 0.95;
+            // 🔥 ДОПОЛНИТЕЛЬНОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
+            if (ball.y > this.canvas.height * 0.7) {
+                const extraPull = 0.012;
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * extraPull;
+                
+                // Замедление при приближении к цели
+                if (distanceToTarget < slotWidth * 0.3) {
+                    ball.vx *= 0.95;
+                }
+            }
+        } else {
+            // 🔥 РЕЖИМ СЛУЧАЙНЫХ ШАРОВ: минимальная коррекция траектории
+            // Только для предотвращения застревания у стенок
+            if (ball.x < this.ballRadius * 2) {
+                ball.vx += 0.01;
+            } else if (ball.x > this.canvas.width - this.ballRadius * 2) {
+                ball.vx -= 0.01;
             }
         }
 
@@ -381,15 +453,31 @@ class PlinkoGame {
             
             this.ctx.beginPath();
             this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = '#1e5cb8';
+            
+            // 🔥 РАЗНЫЙ ЦВЕТ ДЛЯ РЕЖИМОВ
+            if (ball.isRandomMode) {
+                this.ctx.fillStyle = '#ff6b35'; // Оранжевый для случайного режима
+            } else {
+                this.ctx.fillStyle = '#1e5cb8'; // Синий для режима притяжения
+            }
+            
             this.ctx.fill();
             
             // Add glow
             this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = '#1e5cb8';
+            this.ctx.shadowColor = ball.isRandomMode ? '#ff6b35' : '#1e5cb8';
             this.ctx.fill();
             this.ctx.shadowBlur = 0;
         });
+
+        // 🔥 ОТОБРАЖЕНИЕ ИНФОРМАЦИИ О РЕЖИМЕ (опционально)
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.font = '12px Arial';
+        this.ctx.fillText(`Режим: ${this.attractionEnabled ? 'Притяжение' : 'Случайный'}`, 10, 20);
+        this.ctx.fillText(`Шары: ${this.totalBallsDropped}`, 10, 35);
+        if (!this.attractionEnabled) {
+            this.ctx.fillText(`Осталось случайных: ${this.randomBallsRemaining}`, 10, 50);
+        }
     }
 
     gameLoop() {
@@ -448,17 +536,16 @@ class PlinkoGame {
         this.updateUI();
     }
 
-    // Notification system - оставил только ошибку "Недостаточно средств"
-    showToast(type, title, message, duration = 3000) {
-        // 🔥 УБРАЛ ВСЕ УВЕДОМЛЕНИЯ КРОМЕ ОШИБОК
-        if (type !== 'error') return;
-        
+    // 🔥 ОБНОВЛЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ
+    showToast(type, title, message, duration = 4000) {
         const toastContainer = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         
         const icons = {
-            error: 'bi bi-x-circle-fill'
+            error: 'bi bi-x-circle-fill',
+            info: 'bi bi-info-circle-fill',
+            success: 'bi bi-check-circle-fill'
         };
         
         toast.innerHTML = `
