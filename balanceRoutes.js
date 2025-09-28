@@ -17,8 +17,9 @@ router.post('/create-invoice', async (req, res) => {
 
         // МИНИМАЛЬНЫЙ ДЕПОЗИТ: 0.1 TON (минимально возможный для Crypto Bot)
         if (amount < 0.1) {
-    return res.status(400).json({ error: 'Минимальная сумма вывода: 0.1 TON' });
-}
+            return res.status(400).json({ error: 'Минимальный депозит: 0.1 TON' });
+        }
+
         const invoice = await cryptoPayRequest('createInvoice', {
             asset: 'TON',
             amount: amount.toString(),

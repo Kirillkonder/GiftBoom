@@ -68,6 +68,7 @@ module.exports = function(db, users, transactions, casinoBank, casinoDemoBank, a
   });
 
   // API: Вывод прибыли владельцу
+  // API: Вывод прибыли владельцу
 router.post('/admin/withdraw-profit', adminMiddleware, async (req, res) => {
     const { telegramId, amount } = req.body;
 
@@ -110,7 +111,6 @@ router.post('/admin/withdraw-profit', adminMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Withdrawal error' });
     }
 });
-
 
   // API: Добавить демо баланс пользователю
   router.post('/admin/add-demo-balance', adminMiddleware, async (req, res) => {
