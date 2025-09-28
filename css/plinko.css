@@ -624,3 +624,65 @@ body {
         padding-right: max(16px, env(safe-area-inset-right));
     }
 }
+/* Контейнер для шарика-источника */
+.gift-ball-container {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Шарик с надписью GiftBoom */
+.gift-ball {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b35, #ff8e53);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: float-gift 3s ease-in-out infinite;
+    box-shadow: 
+        0 0 20px rgba(255, 107, 53, 0.6),
+        inset 0 0 20px rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.gift-text {
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    line-height: 1.1;
+}
+
+/* Анимация плавающего движения */
+@keyframes float-gift {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-8px) scale(1.05); }
+}
+
+/* Эффект свечения */
+.gift-ball::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.4), rgba(255, 142, 83, 0.2));
+    z-index: -1;
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.1); }
+}
