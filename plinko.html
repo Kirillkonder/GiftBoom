@@ -35,27 +35,25 @@
 
         <!-- Игровое поле -->
         <div class="game-board-container">
-    <!-- 🔥 МОДЕЛЬКА ШАРИКА GIFTBOOM -->
-    <div class="gift-ball-model">
-        <div class="ball">
-            <span class="text">GiftBoom</span>
+            <!-- GiftBoom шарик -->
+            <div class="giftboom-ball" id="giftboomBall">
+                <div class="giftboom-text">GiftBoom</div>
+            </div>
+            
+            <div class="game-board">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+            
+            <div id="slots" class="slots-container">
+                <div class="slot" data-value="5.8">5.8x</div>
+                <div class="slot" data-value="2.2">2.2x</div>
+                <div class="slot" data-value="0.8">0.8x</div>
+                <div class="slot" data-value="0.4">0.4x</div>
+                <div class="slot" data-value="0.8">0.8x</div>
+                <div class="slot" data-value="2.2">2.2x</div>
+                <div class="slot" data-value="5.8">5.8x</div>
+            </div>
         </div>
-    </div>
-    
-    <div class="game-board">
-        <canvas id="gameCanvas"></canvas>
-    </div>
-    
-    <div id="slots" class="slots-container">
-        <div class="slot" data-value="5.8">5.8x</div>
-        <div class="slot" data-value="2.2">2.2x</div>
-        <div class="slot" data-value="0.8">0.8x</div>
-        <div class="slot" data-value="0.4">0.4x</div>
-        <div class="slot" data-value="0.8">0.8x</div>
-        <div class="slot" data-value="2.2">2.2x</div>
-        <div class="slot" data-value="5.8">5.8x</div>
-    </div>
-</div>
 
         <!-- Режимы сложности -->
         <div class="difficulty-panel">
@@ -80,14 +78,6 @@
                 <div class="action-buttons">
                     <button id="dropBall" class="btn primary">Бросить шар</button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Информация о ставке -->
-        <div class="bet-info">
-            <div class="bet-info-item">
-                <span>Ставка</span>
-                <span id="currentBet">0.00 TON</span>
             </div>
         </div>
     </div>

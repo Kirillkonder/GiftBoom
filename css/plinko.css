@@ -149,17 +149,51 @@ body {
     transform: scale(1.1);
 }
 
+/* GiftBoom шарик */
+.giftboom-ball {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.7);
+    animation: float 3s ease-in-out infinite;
+    cursor: pointer;
+    border: 3px solid #fff;
+}
+
+.giftboom-text {
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes float {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
+}
+
 /* Игровое поле */
 .game-board-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0;
-    padding: 0 16px;
+    padding: 80px 16px 0; /* Добавили отступ сверху для GiftBoom шарика */
     margin-bottom: 15px;
     flex: 1;
     justify-content: center;
     min-height: 0;
+    position: relative;
 }
 
 .game-board {
@@ -343,6 +377,7 @@ body {
     padding: 0 16px 20px;
     background: transparent;
     flex-shrink: 0;
+    margin-top: auto; /* Прижимаем к низу */
 }
 
 .bet-controls {
@@ -441,36 +476,6 @@ body {
 
 .btn:active {
     transform: translateY(0);
-}
-
-/* Информация о ставке */
-.bet-info {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: transparent;
-    backdrop-filter: blur(5px);
-    margin: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    flex-shrink: 0;
-}
-
-.bet-info-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 12px;
-}
-
-.bet-info-item span:first-child {
-    color: #999;
-    margin-bottom: 4px;
-}
-
-.bet-info-item span:last-child {
-    color: #fff;
-    font-weight: bold;
 }
 
 /* Модальное окно */
@@ -610,9 +615,14 @@ body {
         flex-direction: column;
     }
     
-    .bet-info {
-        flex-direction: column;
-        gap: 8px;
+    .giftboom-ball {
+        width: 70px;
+        height: 70px;
+        top: 15px;
+    }
+    
+    .giftboom-text {
+        font-size: 11px;
     }
 }
 
@@ -621,68 +631,5 @@ body {
     .game-container {
         padding-left: max(16px, env(safe-area-inset-left));
         padding-right: max(16px, env(safe-area-inset-right));
-    }
-}
-
-/* 🔥 МОДЕЛЬКА ШАРИКА НАД ПОЛЕМ */
-.gift-ball-model {
-    position: absolute;
-    top: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 5;
-    width: 80px;
-    height: 80px;
-}
-
-.gift-ball-model .ball {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff6b35, #ff8e53);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 3px solid #fff;
-    box-shadow: 
-        0 0 20px rgba(255, 107, 53, 0.7),
-        inset 0 0 15px rgba(255, 255, 255, 0.3);
-    animation: gift-float 3s ease-in-out infinite;
-}
-
-.gift-ball-model .text {
-    color: #fff;
-    font-weight: bold;
-    font-size: 10px;
-    text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    line-height: 1.1;
-    letter-spacing: 0.5px;
-}
-
-@keyframes gift-float {
-    0%, 100% { 
-        transform: translateY(0px);
-    }
-    50% { 
-        transform: translateY(-5px);
-    }
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 480px) {
-    .gift-ball-model {
-        top: -40px;
-        width: 70px;
-        height: 70px;
-    }
-    
-    .gift-ball-model .ball {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .gift-ball-model .text {
-        font-size: 9px;
     }
 }
