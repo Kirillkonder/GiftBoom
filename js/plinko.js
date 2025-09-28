@@ -67,12 +67,17 @@ class PlinkoGame {
     }
 
     resizeCanvas() {
-        const board = document.querySelector('.game-board');
-        this.canvas.width = board.clientWidth;
-        this.canvas.height = board.clientHeight;
-        this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.012;
-        this.ballRadius = this.pegRadius * 1.2;
-    }
+    const board = document.querySelector('.game-board');
+    this.canvas.width = board.clientWidth;
+    this.canvas.height = board.clientHeight;
+    
+    // 🔥 ИСПРАВЛЕНИЕ: Более точный расчет размеров
+    const minDimension = Math.min(this.canvas.width, this.canvas.height);
+    this.pegRadius = minDimension * 0.012;
+    this.ballRadius = this.pegRadius * 1.2;
+    
+    console.log(`🔄 Размер канваса: ${this.canvas.width}x${this.canvas.height}, радиус колышка: ${this.pegRadius}`);
+}
 
     setupEventListeners() {
         window.addEventListener('resize', () => {
@@ -96,24 +101,34 @@ class PlinkoGame {
     }
 
     createPegs() {
-        const rows = 10;
-        const spacing = this.canvas.height / (rows + 2);
-        const horizontalSpacing = this.canvas.width / (rows + 1);
+    const rows = 10;
+    const spacing = this.canvas.height / (rows + 2);
+    
+    // 🔥 ИСПРАВЛЕНИЕ: Правильно рассчитываем горизонтальное расстояние
+    // Учитываем отступы от краев для полного отображения всех колышков
+    const horizontalMargin = this.pegRadius * 2; // Отступ от краев
+    const availableWidth = this.canvas.width - (horizontalMargin * 2);
+    
+    this.pegs = [];
+    
+    for (let row = 0; row < rows; row++) {
+        const pegsInRow = row + 3;
+        
+        // 🔥 ИСПРАВЛЕНИЕ: Правильно рассчитываем расстояние между колышками
+        const horizontalSpacing = availableWidth / (pegsInRow - 1);
+        const startX = horizontalMargin;
 
-        for (let row = 0; row < rows; row++) {
-            const pegsInRow = row + 3;
-            const startX = (this.canvas.width - (pegsInRow - 1) * horizontalSpacing) / 2;
-
-            for (let i = 0; i < pegsInRow; i++) {
-                this.pegs.push({
-                    x: startX + i * horizontalSpacing,
-                    y: spacing * (row + 2),
-                    radius: this.pegRadius
-                });
-            }
+        for (let i = 0; i < pegsInRow; i++) {
+            this.pegs.push({
+                x: startX + i * horizontalSpacing,
+                y: spacing * (row + 2),
+                radius: this.pegRadius
+            });
         }
     }
-
+    
+    console.log(`🎯 Создано ${this.pegs.length} колышков на поле ${this.canvas.width}x${this.canvas.height}`);
+}
    createSlots() {
     const slotCount = 7;
     const slotWidth = this.canvas.width / slotCount;
