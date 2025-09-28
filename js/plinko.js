@@ -25,11 +25,12 @@ class PlinkoGame {
         this.bounce = 0.7;
         this.friction = 0.99;
 
-        // 🔥 НОВАЯ СИСТЕМА: Циклы притяжения
+        // 🔥 ОБНОВЛЕННАЯ СИСТЕМА: Рандомные циклы притяжения
         this.ballsDropped = 0;
         this.attractionEnabled = true;
         this.randomBallsRemaining = 0;
         this.totalBallsDropped = 0;
+        this.nextRandomModeAt = this.generateNextRandomThreshold(); // 🔥 Рандомный порог
 
         // Initialize
         this.setupEventListeners();
@@ -180,7 +181,7 @@ class PlinkoGame {
                 this.ballsDropped++;
                 
                 // Проверяем, нужно ли активировать случайные шары
-                if (this.attractionEnabled && this.ballsDropped >= 30) {
+                if (this.attractionEnabled && this.ballsDropped >= this.nextRandomModeAt) {
                     this.activateRandomBallsMode();
                 }
                 
@@ -208,9 +209,6 @@ class PlinkoGame {
                 this.activeBalls.push(ball);
                 this.updateUI();
 
-                // 🔥 УВЕДОМЛЕНИЕ О РЕЖИМЕ
-                this.showModeNotification(ball.isRandomMode);
-
             } else {
                 throw new Error(result.error);
             }
@@ -220,35 +218,29 @@ class PlinkoGame {
         }
     }
 
-    // 🔥 НОВАЯ ФУНКЦИЯ: Активация режима случайных шаров
-    activateRandomBallsMode() {
-        this.attractionEnabled = false;
-        this.randomBallsRemaining = Math.floor(Math.random() * 3) + 3; // 3-5 случайных шаров
-        this.ballsDropped = 0;
-        
-        console.log(`🎲 Активирован режим случайных шаров! Осталось шаров: ${this.randomBallsRemaining}`);
+    // 🔥 НОВАЯ ФУНКЦИЯ: Генерация рандомного порога
+    generateNextRandomThreshold() {
+        return Math.floor(Math.random() * 26) + 25; // 25-50 шаров
     }
 
-    // 🔥 НОВАЯ ФУНКЦИЯ: Восстановление режима притяжения
+    // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ: Активация режима случайных шаров
+    activateRandomBallsMode() {
+        this.attractionEnabled = false;
+        // 🔥 ТЕПЕРЬ МАКСИМУМ 2 ШАРА, ИНОГДА 1
+        this.randomBallsRemaining = Math.random() < 0.7 ? 2 : 1; // 70% шанс на 2 шара, 30% на 1
+        this.ballsDropped = 0;
+        
+        console.log(`🎲 Активирован режим случайных шаров! Осталось шаров: ${this.randomBallsRemaining} (порог был: ${this.nextRandomModeAt})`);
+    }
+
+    // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ: Восстановление режима притяжения
     restoreAttractionMode() {
         this.attractionEnabled = true;
         this.randomBallsRemaining = 0;
         this.ballsDropped = 0;
+        this.nextRandomModeAt = this.generateNextRandomThreshold(); // 🔥 Генерируем новый рандомный порог
         
-        console.log(`🎯 Восстановлен режим притяжения! Следующие 30 шаров с притяжением к центру`);
-    }
-
-    // 🔥 НОВАЯ ФУНКЦИЯ: Уведомление о смене режима
-    showModeNotification(isRandomMode) {
-        if (isRandomMode) {
-            this.showToast('info', '🎲 Случайный режим', 
-                `Шар летит без притяжения! Осталось случайных шаров: ${this.randomBallsRemaining}`, 4000);
-        } else {
-            if (this.totalBallsDropped % 30 === 1) {
-                this.showToast('info', '🎯 Режим притяжения', 
-                    'Шары притягиваются к центру. Через 30 шаров - случайный режим!', 4000);
-            }
-        }
+        console.log(`🎯 Восстановлен режим притяжения! Следующий случайный режим через: ${this.nextRandomModeAt} шаров`);
     }
 
     async handleBallInSlot(ball, slotIndex) {
@@ -470,14 +462,7 @@ class PlinkoGame {
             this.ctx.shadowBlur = 0;
         });
 
-        // 🔥 ОТОБРАЖЕНИЕ ИНФОРМАЦИИ О РЕЖИМЕ (опционально)
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        this.ctx.font = '12px Arial';
-        this.ctx.fillText(`Режим: ${this.attractionEnabled ? 'Притяжение' : 'Случайный'}`, 10, 20);
-        this.ctx.fillText(`Шары: ${this.totalBallsDropped}`, 10, 35);
-        if (!this.attractionEnabled) {
-            this.ctx.fillText(`Осталось случайных: ${this.randomBallsRemaining}`, 10, 50);
-        }
+        // 🔥 УБРАЛ ОТОБРАЖЕНИЕ ИНФОРМАЦИИ О РЕЖИМЕ (по требованию)
     }
 
     gameLoop() {
@@ -536,16 +521,17 @@ class PlinkoGame {
         this.updateUI();
     }
 
-    // 🔥 ОБНОВЛЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ
-    showToast(type, title, message, duration = 4000) {
+    // 🔥 ОБНОВЛЕННАЯ СИСТЕМА УВЕДОМЛЕНИЙ (только ошибки)
+    showToast(type, title, message, duration = 3000) {
+        // 🔥 УБРАЛ ВСЕ УВЕДОМЛЕНИЯ КРОМЕ ОШИБОК
+        if (type !== 'error') return;
+        
         const toastContainer = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         
         const icons = {
-            error: 'bi bi-x-circle-fill',
-            info: 'bi bi-info-circle-fill',
-            success: 'bi bi-check-circle-fill'
+            error: 'bi bi-x-circle-fill'
         };
         
         toast.innerHTML = `
