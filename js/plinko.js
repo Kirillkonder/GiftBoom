@@ -1,5 +1,5 @@
-// 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
-// 100% притяжение к маленьким множителям (0.4x и 0.8x)
+
+// 🔥 ИСПРАВЛЕННАЯ ОШИБКА: Удален currentBet из updateUI()
 
 class PlinkoGame {
     constructor() {
@@ -518,7 +518,9 @@ updateSlotsDisplay() {
 
     updateUI() {
         document.getElementById('balance').textContent = this.balance.toFixed(2);
-        document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
+        
+        // 🔥 ИСПРАВЛЕНИЕ: Удалена строка с currentBet, так как элемента больше нет
+        // document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
         
         document.getElementById('betAmount').value = this.currentBet.toFixed(1);
 
