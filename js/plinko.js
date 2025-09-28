@@ -1,6 +1,4 @@
 
-// 🔥 ИСПРАВЛЕННАЯ ОШИБКА: Удален currentBet из updateUI()
-
 class PlinkoGame {
     constructor() {
         // Game state
@@ -25,9 +23,9 @@ class PlinkoGame {
         this.bounce = 0.7;
         this.friction = 0.99;
 
-        // 🔥 ОБНОВЛЕННАЯ СИСТЕМА: Притяжение к маленьким множителям + 2 случайных шара каждые 6-10 шаров ДЛЯ ВСЕХ РЕЖИМОВ
+        // 🔥 ОБНОВЛЕННАЯ СИСТЕМА: Притяжение к маленьким множителям + 2 случайных шара каждые 8-15 шаров
         this.ballsDropped = 0;
-        this.nextRandomBallsAt = Math.floor(Math.random() * 5) + 6; // 6-10 шаров
+        this.nextRandomBallsAt = Math.floor(Math.random() * 8) + 8; // 8-15 шаров
         this.randomBallsRemaining = 0;
         this.randomBallsActive = 0;
 
@@ -84,6 +82,15 @@ class PlinkoGame {
         document.getElementById('dropBall').addEventListener('click', () => this.dropBall());
 
         // 🔥 УБРАНО: Клик по canvas для броска шара - теперь только через кнопку
+        // this.canvas.addEventListener('click', (e) => {
+        //     if (this.currentBet > 0 && this.balance >= this.currentBet) {
+        //         const rect = this.canvas.getBoundingClientRect();
+        //         const x = e.clientX - rect.left;
+        //         this.dropBallAt(x);
+        //     } else {
+        //         this.showError('Недостаточно средств');
+        //     }
+        // });
     }
 
     createPegs() {
@@ -104,7 +111,7 @@ class PlinkoGame {
             // Максимальная ширина ряда с учётом отступов
             const maxRowWidth = this.canvas.width - sideMargin * 2;
 
-            // Если ряд слишком широкий (актуально для нижних рядов), слегка уменьшаем шаг
+            // Если ряд слишком широкый (актуально для нижних рядов), слегка уменьшаем шаг
             if (rowWidth > maxRowWidth) {
                 rowSpacing = maxRowWidth / (pegsInRow - 1);
                 rowWidth = maxRowWidth;
@@ -224,7 +231,7 @@ updateSlotsDisplay() {
                 this.balance = result.new_balance;
                 this.updateUI();
                 
-                // 🔥 ОБНОВЛЕННАЯ СИСТЕМА СЛУЧАЙНЫХ ШАРОВ: каждые 6-10 шаров ДЛЯ ВСЕХ РЕЖИМОВ
+                // 🔥 ОБНОВЛЕННАЯ СИСТЕМА СЛУЧАЙНЫХ ШАРОВ: каждые 8-15 шаров
                 this.ballsDropped++;
                 
                 // Проверяем, нужно ли сделать этот шар случайным
@@ -238,7 +245,7 @@ updateSlotsDisplay() {
                 // Если пришло время для новых случайных шаров
                 else if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining === 0) {
                     this.randomBallsRemaining = 2; // 🔥 ТЕПЕРЬ 2 СЛУЧАЙНЫХ ШАРА
-                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 5) + 6; // 🔥 ИЗМЕНЕНО: 6-10 шаров ДЛЯ ВСЕХ РЕЖИМОВ
+                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 8) + 8; // 🔥 ИЗМЕНЕНО: 8-15 шаров
                     isRandomBall = true;
                     this.randomBallsRemaining--;
                     this.randomBallsActive++;
@@ -509,6 +516,9 @@ updateSlotsDisplay() {
 
     updateUI() {
         document.getElementById('balance').textContent = this.balance.toFixed(2);
+        
+        // 🔥 ИСПРАВЛЕНИЕ: Удалена строка с currentBet, так как элемента больше нет
+        // document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
         
         document.getElementById('betAmount').value = this.currentBet.toFixed(1);
 
