@@ -1,33 +1,40 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plinko Game - Modified Physics</title>
+    <title>Plinko Game - Cyberpunk Edition</title>
     <!-- 🔥 ИЗМЕНЕННАЯ ФИЗИКА: 85% шанс попадания в 0.8x и 0.4x, 15% в 2.2x и 5.8x -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/plinko.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="plinko.css">
 </head>
 <body>
-    <!-- Фон с сеткой на всю страницу -->
-    <div class="grid-background"></div>
+    <!-- Киберпанк фон с эффектами -->
+    <div class="cyberpunk-background">
+        <div class="grid-lines"></div>
+        <div class="neon-particles"></div>
+        <div class="glitch-overlay"></div>
+    </div>
     
     <div class="game-container">
         <!-- Верхняя панель -->
         <div class="top-panel">
             <div class="close-btn" onclick="goBack()">
-                <span>←</span>
+                <span class="glitch-text">←</span>
             </div>
             <div class="top-right">
                 <div class="balance">
                     <i class="bi bi-currency-exchange"></i>
-                    <span id="balance">0.00</span>
+                    <span id="balance" class="glitch-text">0.00</span>
                     <button class="balance-plus-btn" onclick="openDepositModal()">
                         <i class="bi bi-plus"></i>
                     </button>
                 </div>
-                <div id="demo-badge" style="display: none; background: #ff9500; color: black; padding: 2px 6px; border-radius: 8px; font-size: 10px;">
+                <div id="demo-badge" style="display: none;" class="demo-badge">
                     DEMO
                 </div>
             </div>
@@ -37,26 +44,57 @@
         <div class="game-board-container">
             <div class="game-board">
                 <canvas id="gameCanvas"></canvas>
+                <div class="board-overlay"></div>
             </div>
             
             <div id="slots" class="slots-container">
-                <div class="slot" data-value="5.8">5.8x</div>
-                <div class="slot" data-value="2.2">2.2x</div>
-                <div class="slot" data-value="0.8">0.8x</div>
-                <div class="slot" data-value="0.4">0.4x</div>
-                <div class="slot" data-value="0.8">0.8x</div>
-                <div class="slot" data-value="2.2">2.2x</div>
-                <div class="slot" data-value="5.8">5.8x</div>
+                <div class="slot cyber-slot" data-value="5.8">
+                    <span class="slot-value">5.8x</span>
+                    <div class="slot-glow"></div>
+                </div>
+                <div class="slot cyber-slot" data-value="2.2">
+                    <span class="slot-value">2.2x</span>
+                    <div class="slot-glow"></div>
+                </div>
+                <div class="slot cyber-slot" data-value="0.8">
+                    <span class="slot-value">0.8x</span>
+                    <div class="slot-glow"></div>
+                </div>
+                <div class="slot cyber-slot" data-value="0.4">
+                    <span class="slot-value">0.4x</span>
+                    <div class="slot-glow"></div>
+                </div>
+                <div class="slot cyber-slot" data-value="0.8">
+                    <span class="slot-value">0.8x</span>
+                    <div class="slot-glow"></div>
+                </div>
+                <div class="slot cyber-slot" data-value="2.2">
+                    <span class="slot-value">2.2x</span>
+                    <div class="slot-glow"></div>
+                </div>
+                <div class="slot cyber-slot" data-value="5.8">
+                    <span class="slot-value">5.8x</span>
+                    <div class="slot-glow"></div>
+                </div>
             </div>
         </div>
 
         <!-- Режимы сложности -->
         <div class="difficulty-panel">
-            <div class="difficulty-title">Режим сложности:</div>
+            <div class="difficulty-title glitch-text">РЕЖИМ СЛОЖНОСТИ:</div>
             <div class="difficulty-buttons">
-                <button class="difficulty-btn active" data-difficulty="easy" onclick="changeDifficulty('easy')">Легкий</button>
-                <button class="difficulty-btn" data-difficulty="medium" onclick="changeDifficulty('medium')">Средний</button>
-                <button class="difficulty-btn" data-difficulty="hard" onclick="changeDifficulty('hard')">Сложный</button>
+                <button class="difficulty-btn active" data-difficulty="easy" onclick="changeDifficulty('easy')">
+                    <span class="btn-text">ЛЕГКИЙ</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button class="difficulty-btn" data-difficulty="medium" onclick="changeDifficulty('medium')">
+                    <span class="btn-text">СРЕДНИЙ</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button class="difficulty-btn" data-difficulty="hard" onclick="changeDifficulty('hard')">
+                    <span class="btn-text">СЛОЖНЫЙ</span>
+                    <div class="btn-glow"></div>
+                </button>
             </div>
         </div>
 
@@ -64,14 +102,27 @@
         <div class="control-panel">
             <div class="bet-controls">
                 <div class="bet-amount-selector">
-                    <button class="bet-amount-btn" onclick="decreaseBet()">-</button>
-                    <input type="number" id="betAmount" value="0.1" min="0.1" max="100" step="0.1" onchange="validateBetAmount()">
-                    <span class="ton-label">TON</span>
-                    <button class="bet-amount-btn" onclick="increaseBet()">+</button>
+                    <button class="bet-amount-btn cyber-btn" onclick="decreaseBet()">
+                        <span>-</span>
+                        <div class="btn-scanner"></div>
+                    </button>
+                    <div class="bet-input-container">
+                        <input type="number" id="betAmount" value="0.1" min="0.1" max="100" step="0.1" onchange="validateBetAmount()">
+                        <span class="ton-label">TON</span>
+                        <div class="input-glow"></div>
+                    </div>
+                    <button class="bet-amount-btn cyber-btn" onclick="increaseBet()">
+                        <span>+</span>
+                        <div class="btn-scanner"></div>
+                    </button>
                 </div>
                 
                 <div class="action-buttons">
-                    <button id="dropBall" class="btn primary">Бросить шар</button>
+                    <button id="dropBall" class="btn primary cyber-primary-btn">
+                        <span class="btn-text">БРОСИТЬ ШАР</span>
+                        <div class="btn-waves"></div>
+                        <div class="btn-glow"></div>
+                    </button>
                 </div>
             </div>
         </div>
@@ -79,28 +130,35 @@
         <!-- Информация о ставке -->
         <div class="bet-info">
             <div class="bet-info-item">
-                <span>Ставка</span>
-                <span id="currentBet">0.00 TON</span>
+                <span class="info-label">СТАВКА</span>
+                <span id="currentBet" class="info-value glitch-text">0.00 TON</span>
+                <div class="info-line"></div>
             </div>
         </div>
     </div>
 
     <!-- Модальное окно пополнения баланса -->
     <div id="deposit-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content cyber-modal">
             <div class="modal-header">
-                <h3>💰 Пополнить баланс</h3>
-                <span class="close" onclick="closeDepositModal()">&times;</span>
+                <h3 class="glitch-text">💰 ПОПОЛНИТЬ БАЛАНС</h3>
+                <span class="close cyber-close" onclick="closeDepositModal()">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="deposit-info">
-                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
+                    <p id="deposit-mode-info" class="cyber-text">Пополнение через Crypto Pay</p>
                 </div>
-                <div class="input-group">
-                    <label for="deposit-amount">Сумма (TON):</label>
-                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
+                <div class="input-group cyber-input-group">
+                    <label for="deposit-amount" class="cyber-label">Сумма (TON):</label>
+                    <div class="cyber-input-container">
+                        <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
+                        <div class="input-scanner"></div>
+                    </div>
                 </div>
-                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
+                <button class="modal-btn deposit-btn cyber-deposit-btn" onclick="processDeposit()">
+                    <span>ПОПОЛНИТЬ</span>
+                    <div class="btn-pulse"></div>
+                </button>
             </div>
         </div>
     </div>
