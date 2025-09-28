@@ -254,37 +254,10 @@ updateSlotsDisplay() {
                 console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
             }
 
-            // 🔥 АНИМАЦИЯ ВЫПАДЕНИЯ ИЗ ШАРИКА-ИСТОЧНИКА
-            const giftBall = document.getElementById('giftBall');
-            if (giftBall) {
-                // Анимация уменьшения шарика-источника
-                giftBall.style.transform = 'scale(0.8)';
-                giftBall.style.transition = 'transform 0.2s ease';
-                
-                setTimeout(() => {
-                    giftBall.style.transform = 'scale(1)';
-                }, 200);
-            }
-
-            // Create ball - начинаем от центра шарика-источника
-            const giftBallRect = giftBall ? giftBall.getBoundingClientRect() : null;
-            const canvasRect = this.canvas.getBoundingClientRect();
-            
-            let startX = x;
-            let startY = this.ballRadius;
-            
-            // Если есть шарик-источник, начинаем от его центра
-            if (giftBallRect && canvasRect) {
-                const giftCenterX = giftBallRect.left + giftBallRect.width / 2 - canvasRect.left;
-                const giftBottomY = giftBallRect.bottom - canvasRect.top;
-                
-                startX = giftCenterX;
-                startY = giftBottomY + this.ballRadius;
-            }
-
+            // Create ball - ВОЗВРАЩАЕМ СТАРЫЙ КОД БЕЗ GiftBoom
             const ball = {
-                x: Math.max(this.ballRadius, Math.min(startX, this.canvas.width - this.ballRadius)),
-                y: startY,
+                x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
+                y: this.ballRadius,
                 vx: (Math.random() - 0.5) * 2,
                 vy: 0,
                 radius: this.ballRadius,

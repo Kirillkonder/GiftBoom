@@ -9,11 +9,9 @@
     <link rel="stylesheet" href="css/plinko.css">
 </head>
 <body>
-    <!-- Фон с сеткой на всю страницу -->
     <div class="grid-background"></div>
     
     <div class="game-container">
-        <!-- Верхняя панель -->
         <div class="top-panel">
             <div class="close-btn" onclick="goBack()">
                 <span>←</span>
@@ -32,14 +30,13 @@
             </div>
         </div>
 
-        <!-- Шарик-источник GiftBoom -->
+        <!-- GiftBoom ТОЛЬКО КАК ДЕКОРАТИВНЫЙ ЭЛЕМЕНТ -->
         <div class="gift-ball-container">
-            <div class="gift-ball" id="giftBall">
+            <div class="gift-ball">
                 <span class="gift-text">GiftBoom</span>
             </div>
         </div>
 
-        <!-- Игровое поле -->
         <div class="game-board-container">
             <div class="game-board">
                 <canvas id="gameCanvas"></canvas>
@@ -56,7 +53,6 @@
             </div>
         </div>
 
-        <!-- Режимы сложности -->
         <div class="difficulty-panel">
             <div class="difficulty-title">Режим сложности:</div>
             <div class="difficulty-buttons">
@@ -66,7 +62,6 @@
             </div>
         </div>
 
-        <!-- Панель управления -->
         <div class="control-panel">
             <div class="bet-controls">
                 <div class="bet-amount-selector">
@@ -83,7 +78,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно пополнения баланса -->
     <div id="deposit-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
