@@ -354,74 +354,41 @@ updateSlotsDisplay() {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x и 0.8x)
-        if (!ball.isRandomMode) {
+        // 🔥 НОВЫЙ АЛГОРИТМ: 80% к центру, 20% по бокам
+        if (Math.random() < 0.8) {
+            // Шарик катится к центру (слоты 2, 3, 4)
+            const centerSlots = [2, 3, 4];
+            const targetSlot = centerSlots[Math.floor(Math.random() * centerSlots.length)];
+            
             const sideMargin = 10;
             const availableWidth = this.canvas.width - (sideMargin * 2);
             const slotWidth = availableWidth / 7;
+            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth;
             
-            // 🔥 МАЛЕНЬКИЕ МНОЖИТЕЛИ: слоты 2 (0.8x), 3 (0.4x), 4 (0.8x)
-            const smallMultiplierSlots = [2, 3, 4];
-            
-            // Выбираем ближайший маленький множитель
-            let targetSlot = 3; // По умолчанию к центру (0.4x)
-            let minDistance = Infinity;
-            
-            smallMultiplierSlots.forEach(slotIndex => {
-                const slotCenterX = sideMargin + (slotIndex + 0.5) * slotWidth; // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ
-                const distance = Math.abs(ball.x - slotCenterX);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    targetSlot = slotIndex;
-                }
-            });
-            
-            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth; // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ
-            const distanceToTarget = Math.abs(ball.x - targetX);
-            
-            // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ
-            if (distanceToTarget > 2) {
-                const basePullStrength = 0.015;
-                const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.025;
-                const totalPullStrength = basePullStrength + distanceCorrection;
-                
+            // Легкая коррекция движения к центру
+            if (ball.y > this.canvas.height * 0.4) {
                 const pullDirection = targetX - ball.x;
-                ball.vx += pullDirection * totalPullStrength;
-                ball.vy += 0.008;
-            }
-            
-            // 🔥 УСИЛЕННОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
-            if (ball.y > this.canvas.height * 0.6) {
-                const extraPull = 0.02;
-                const pullDirection = targetX - ball.x;
-                ball.vx += pullDirection * extraPull;
-                
-                if (distanceToTarget < slotWidth * 0.5) {
-                    ball.vx *= 0.9;
-                }
-            }
-            
-            // 🔥 ТОЧНАЯ КОРРЕКЦИЯ В САМОМ НИЗУ
-            if (ball.y > this.canvas.height * 0.8) {
-                const precisionPull = 0.03;
-                const pullDirection = targetX - ball.x;
-                ball.vx += pullDirection * precisionPull;
-                
-                if (distanceToTarget < slotWidth * 0.2) {
-                    ball.vx *= 0.8;
-                }
+                ball.vx += pullDirection * 0.008;
             }
         } else {
-            // 🔥 СЛУЧАЙНЫЙ ШАР: минимальная коррекция
-            if (ball.x < this.ballRadius * 2) {
-                ball.vx += 0.015;
-            } else if (ball.x > this.canvas.width - this.ballRadius * 2) {
-                ball.vx -= 0.015;
-            }
+            // Шарик катится по бокам (слоты 0, 1, 5, 6)
+            const sideSlots = [0, 1, 5, 6];
+            const targetSlot = sideSlots[Math.floor(Math.random() * sideSlots.length)];
             
-            // Добавляем немного случайности
-            ball.vx += (Math.random() - 0.5) * 0.02;
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / 7;
+            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth;
+            
+            // Легкая коррекция движения к бокам
+            if (ball.y > this.canvas.height * 0.4) {
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * 0.006;
+            }
         }
+
+        // Добавляем немного случайности для естественности
+        ball.vx += (Math.random() - 0.5) * 0.01;
 
         // Столкновения со стенами
         if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
@@ -458,15 +425,15 @@ updateSlotsDisplay() {
             ball.isFinished = true;
             ball.finishedAt = Date.now();
             
-            // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступы при определении слота
+            // Определение слота
             const sideMargin = 10;
             const availableWidth = this.canvas.width - (sideMargin * 2);
             const slotWidth = availableWidth / this.slots.length;
-            const ballCenterX = ball.x - sideMargin; // Вычитаем отступ слева
+            const ballCenterX = ball.x - sideMargin;
             const slotIndex = Math.floor(ballCenterX / slotWidth);
             const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
             
-            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${this.slots[finalSlotIndex].multiplier}x, случайный: ${ball.isRandomMode}`);
+            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${this.slots[finalSlotIndex].multiplier}x`);
             
             setTimeout(() => {
                 this.handleBallInSlot(ball, finalSlotIndex);
@@ -474,7 +441,6 @@ updateSlotsDisplay() {
         }
     }
 }
-
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
