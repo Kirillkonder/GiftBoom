@@ -328,15 +328,15 @@ updateSlotsDisplay() {
         }
     }
 
-  updateBall() {
+   updateBall() {
     for (let i = this.activeBalls.length - 1; i >= 0; i--) {
         const ball = this.activeBalls[i];
 
         // Удаление завершенных шариков
         const currentTime = Date.now();
         const ballLifetime = currentTime - (ball.createdAt || currentTime);
-        const isStuckBall = ballLifetime > 15000; // Увеличено время до 15 секунд
-        const isSlowBall = ball.y > this.canvas.height * 0.9 && Math.abs(ball.vy) < 0.05 && ballLifetime > 5000; // Уменьшена скорость и увеличено время
+        const isStuckBall = ballLifetime > 10000;
+        const isSlowBall = ball.y > this.canvas.height * 0.9 && Math.abs(ball.vy) < 0.1 && ballLifetime > 3000;
         
         if ((ball.isFinished && currentTime - ball.finishedAt > 300) || isStuckBall || isSlowBall) {
             this.activeBalls.splice(i, 1);
@@ -347,14 +347,14 @@ updateSlotsDisplay() {
             continue;
         }
 
-        // 🔥 ЗАМЕДЛЕННАЯ ФИЗИКА
-        ball.vy += this.gravity * 0.3; // Уменьшена гравитация в 3 раза
-        ball.x += ball.vx * 0.7; // Замедлено горизонтальное движение
-        ball.y += ball.vy * 0.7; // Замедлено вертикальное движение
-        ball.vx *= this.friction * 0.98; // Увеличено трение
-        ball.vy *= this.friction * 0.98; // Увеличено трение
+        // Базовая физика
+        ball.vy += this.gravity;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= this.friction;
+        ball.vy *= this.friction;
 
-        // 🔥 НОВЫЙ АЛГОРИТМ: 80% к центру, 20% по бокам (ЗАМЕДЛЕННЫЙ)
+        // 🔥 НОВЫЙ АЛГОРИТМ: 80% к центру, 20% по бокам
         if (Math.random() < 0.8) {
             // Шарик катится к центру (слоты 2, 3, 4)
             const centerSlots = [2, 3, 4];
@@ -365,10 +365,10 @@ updateSlotsDisplay() {
             const slotWidth = availableWidth / 7;
             const targetX = sideMargin + (targetSlot + 0.5) * slotWidth;
             
-            // ОЧЕНЬ легкая коррекция движения к центру
-            if (ball.y > this.canvas.height * 0.3) {
+            // Легкая коррекция движения к центру
+            if (ball.y > this.canvas.height * 0.4) {
                 const pullDirection = targetX - ball.x;
-                ball.vx += pullDirection * 0.003; // Уменьшена сила коррекции
+                ball.vx += pullDirection * 0.008;
             }
         } else {
             // Шарик катится по бокам (слоты 0, 1, 5, 6)
@@ -380,23 +380,23 @@ updateSlotsDisplay() {
             const slotWidth = availableWidth / 7;
             const targetX = sideMargin + (targetSlot + 0.5) * slotWidth;
             
-            // ОЧЕНЬ легкая коррекция движения к бокам
-            if (ball.y > this.canvas.height * 0.3) {
+            // Легкая коррекция движения к бокам
+            if (ball.y > this.canvas.height * 0.4) {
                 const pullDirection = targetX - ball.x;
-                ball.vx += pullDirection * 0.002; // Уменьшена сила коррекции
+                ball.vx += pullDirection * 0.006;
             }
         }
 
-        // Минимальная случайность
-        ball.vx += (Math.random() - 0.5) * 0.005;
+        // Добавляем немного случайности для естественности
+        ball.vx += (Math.random() - 0.5) * 0.01;
 
-        // Столкновения со стенами (с уменьшенным отскоком)
+        // Столкновения со стенами
         if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
-            ball.vx *= -this.bounce * 0.8; // Уменьшена сила отскока
+            ball.vx *= -this.bounce;
             ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
         }
 
-        // Столкновения с колышками (с уменьшенным отскоком)
+        // Столкновения с колышками
         this.pegs.forEach(peg => {
             const dx = ball.x - peg.x;
             const dy = ball.y - peg.y;
@@ -406,10 +406,10 @@ updateSlotsDisplay() {
                 const angle = Math.atan2(dy, dx);
                 const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
                 
-                const randomAngle = angle + (Math.random() - 0.5) * 0.05; // Уменьшена случайность
+                const randomAngle = angle + (Math.random() - 0.5) * 0.1;
                 
-                ball.vx = Math.cos(randomAngle) * speed * this.bounce * 0.7; // Уменьшена сила отскока
-                ball.vy = Math.sin(randomAngle) * speed * this.bounce * 0.7; // Уменьшена сила отскока
+                ball.vx = Math.cos(randomAngle) * speed * this.bounce;
+                ball.vy = Math.sin(randomAngle) * speed * this.bounce;
                 
                 const minDistance = ball.radius + peg.radius;
                 ball.x = peg.x + Math.cos(angle) * minDistance;
