@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const cron = require('node-cron');
 const Loki = require('lokijs');
 const WebSocket = require('ws');
-const fs = require('fs');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -43,94 +43,6 @@ let rocketGame = {
 };
 
 let plinkoGames, plinkoBets;
-
-// Функция для сохранения состояния
-function saveServerState() {
-    try {
-        const state = {
-            users: users ? users.data : [],
-            casinoBank: casinoBank ? casinoBank.data : [],
-            casinoDemoBank: casinoDemoBank ? casinoDemoBank.data : [],
-            rtpSystem: rtpSystem,
-            savedAt: new Date()
-        };
-        
-        const statePath = process.env.NODE_ENV === 'production' ? 
-            '/tmp/server-state.json' : 
-            'server-state.json';
-            
-        fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
-        console.log('💾 Состояние сервера сохранено');
-    } catch (error) {
-        console.error('❌ Ошибка сохранения состояния:', error);
-    }
-}
-
-// Функция для загрузки состояния
-function loadServerState() {
-    try {
-        const statePath = process.env.NODE_ENV === 'production' ? 
-            '/tmp/server-state.json' : 
-            'server-state.json';
-            
-        if (fs.existsSync(statePath)) {
-            const stateData = fs.readFileSync(statePath, 'utf8');
-            const state = JSON.parse(stateData);
-            
-            console.log('📥 Загружаем сохраненное состояние сервера...');
-            
-            // Восстанавливаем данные пользователей
-            if (state.users && users) {
-                state.users.forEach(user => {
-                    const existing = users.findOne({ telegram_id: user.telegram_id });
-                    if (!existing) {
-                        users.insert(user);
-                    } else {
-                        users.update({
-                            ...existing,
-                            main_balance: user.main_balance,
-                            demo_balance: user.demo_balance,
-                            total_deposits: user.total_deposits || 0
-                        });
-                    }
-                });
-            }
-            
-            // Восстанавливаем банки казино
-            if (state.casinoBank && casinoBank && state.casinoBank[0]) {
-                const currentBank = casinoBank.findOne({});
-                if (currentBank) {
-                    casinoBank.update({
-                        ...currentBank,
-                        total_balance: state.casinoBank[0].total_balance
-                    });
-                }
-            }
-            
-            if (state.casinoDemoBank && casinoDemoBank && state.casinoDemoBank[0]) {
-                const currentDemoBank = casinoDemoBank.findOne({});
-                if (currentDemoBank) {
-                    casinoDemoBank.update({
-                        ...currentDemoBank,
-                        total_balance: state.casinoDemoBank[0].total_balance
-                    });
-                }
-            }
-            
-            // Восстанавливаем RTP систему
-            if (state.rtpSystem) {
-                Object.assign(rtpSystem, state.rtpSystem);
-            }
-            
-            console.log('✅ Состояние сервера восстановлено');
-            
-        } else {
-            console.log('📝 Файл состояния не найден, начинаем с чистого состояния');
-        }
-    } catch (error) {
-        console.error('❌ Ошибка загрузки состояния:', error);
-    }
-}
 
 // RTP система - отслеживание доходности за день
 let rtpSystem = {
@@ -286,7 +198,7 @@ function initDatabase() {
                 users = db.getCollection('users');
                 transactions = db.getCollection('transactions');
                 casinoBank = db.getCollection('casino_bank');
-                casinoDemoBank = db.getCollection('casino_demo_bank'); // Новая коллекция
+                casinoDemoBank = db.getCollection('casino_demo_bank');
                 adminLogs = db.getCollection('admin_logs');
                 minesGames = db.getCollection('mines_games');
                 rocketGames = db.getCollection('rocket_games');
@@ -302,8 +214,8 @@ function initDatabase() {
                     users.insert({
                         telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
                         main_balance: 0,
-                        demo_balance: 50, // 50 TON вместо 1000
-                        total_deposits: 0, // Новое поле для отслеживания депозитов
+                        demo_balance: 50,
+                        total_deposits: 0,
                         created_at: new Date(),
                         demo_mode: false,
                         is_admin: true
@@ -326,11 +238,10 @@ function initDatabase() {
                     });
                 }
 
-                // Добавляем демо-банк казино
                 if (!casinoDemoBank) {
                     casinoDemoBank = db.addCollection('casino_demo_bank');
                     casinoDemoBank.insert({
-                        total_balance: 500, // 500 TON демо-банк вместо 10000
+                        total_balance: 500,
                         owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
                         created_at: new Date(),
                         updated_at: new Date()
@@ -374,9 +285,42 @@ function initDatabase() {
                 }
                 
                 console.log('LokiJS database initialized');
-                setTimeout(() => {
-    loadServerState();
-}, 1000);
+                
+                // 🔥 ВОССТАНАВЛИВАЕМ РЕАЛЬНЫЙ БАЛАНС ИЗ CRYPTO BOT
+                setTimeout(async () => {
+                    try {
+                        console.log('🔄 Восстанавливаем реальный баланс из Crypto Bot...');
+                        const response = await axios.get('https://pay.crypt.bot/api/getBalance', {
+                            headers: {
+                                'Crypto-Pay-API-Token': process.env.CRYPTO_PAY_MAINNET_TOKEN,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.data.ok) {
+                            const tonBalance = response.data.result.find(asset => asset.currency_code === 'TON');
+                            if (tonBalance) {
+                                const realBalance = parseFloat(tonBalance.available);
+                                const currentBank = getCasinoBank();
+                                
+                                console.log(`💰 Crypto Bot баланс: ${realBalance} TON`);
+                                console.log(`🏦 Наш банк до восстановления: ${currentBank.total_balance} TON`);
+                                
+                                // Обновляем банк казино реальным балансом
+                                casinoBank.update({
+                                    ...currentBank,
+                                    total_balance: realBalance,
+                                    updated_at: new Date()
+                                });
+                                
+                                console.log('✅ Реальный баланс восстановлен из Crypto Bot');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Ошибка восстановления баланса:', error.message);
+                    }
+                }, 2000);
+                
                 resolve(true);
             },
             autosave: true,
@@ -2157,23 +2101,6 @@ async function startServer() {
         setInterval(syncCasinoBalance, 5 * 60 * 1000);
     }, 10000); // Ждем 10 секунд после старта
     
-    loadServerState();
-
-// Сохраняем состояние каждые 30 секунд
-setInterval(saveServerState, 30000);
-
-// Сохраняем состояние при завершении процесса
-process.on('SIGINT', () => {
-    console.log('🔄 Сохраняем состояние перед завершением...');
-    saveServerState();
-    process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-    console.log('🔄 Сохраняем состояние перед завершением...');
-    saveServerState();
-    process.exit(0);
-});
     console.log(`TON Casino Server started on port ${PORT}`);
     console.log(`Синхронизация баланса активирована (каждые 5 минут)`);
 }
