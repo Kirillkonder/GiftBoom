@@ -97,17 +97,34 @@ class PlinkoGame {
 
     createPegs() {
         const rows = 10;
-        const spacing = this.canvas.height / (rows + 2);
-        const horizontalSpacing = this.canvas.width / (rows + 1);
+        const verticalSpacing = this.canvas.height / (rows + 2);
+
+        // Базовый горизонтальный шаг как раньше — сохраняем общий вид
+        const baseHorizontalSpacing = this.canvas.width / (rows + 1);
+        const sideMargin = this.pegRadius + 2; // безопасный отступ, чтобы крайние колышки были полностью видны
 
         for (let row = 0; row < rows; row++) {
             const pegsInRow = row + 3;
-            const startX = (this.canvas.width - (pegsInRow - 1) * horizontalSpacing) / 2;
+
+            // Ширина ряда при базовом шаге
+            let rowSpacing = baseHorizontalSpacing;
+            let rowWidth = (pegsInRow - 1) * rowSpacing;
+
+            // Максимальная ширина ряда с учётом отступов
+            const maxRowWidth = this.canvas.width - sideMargin * 2;
+
+            // Если ряд слишком широкий (актуально для нижних рядов), слегка уменьшаем шаг
+            if (rowWidth > maxRowWidth) {
+                rowSpacing = maxRowWidth / (pegsInRow - 1);
+                rowWidth = maxRowWidth;
+            }
+
+            const startX = (this.canvas.width - rowWidth) / 2; // остаётся по центру
 
             for (let i = 0; i < pegsInRow; i++) {
                 this.pegs.push({
-                    x: startX + i * horizontalSpacing,
-                    y: spacing * (row + 2),
+                    x: startX + i * rowSpacing,
+                    y: verticalSpacing * (row + 2),
                     radius: this.pegRadius
                 });
             }
