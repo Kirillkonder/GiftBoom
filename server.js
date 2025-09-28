@@ -198,7 +198,7 @@ function initDatabase() {
                 users = db.getCollection('users');
                 transactions = db.getCollection('transactions');
                 casinoBank = db.getCollection('casino_bank');
-                casinoDemoBank = db.getCollection('casino_demo_bank');
+                casinoDemoBank = db.getCollection('casino_demo_bank'); // Новая коллекция
                 adminLogs = db.getCollection('admin_logs');
                 minesGames = db.getCollection('mines_games');
                 rocketGames = db.getCollection('rocket_games');
@@ -214,8 +214,8 @@ function initDatabase() {
                     users.insert({
                         telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
                         main_balance: 0,
-                        demo_balance: 50,
-                        total_deposits: 0,
+                        demo_balance: 50, // 50 TON вместо 1000
+                        total_deposits: 0, // Новое поле для отслеживания депозитов
                         created_at: new Date(),
                         demo_mode: false,
                         is_admin: true
@@ -238,10 +238,11 @@ function initDatabase() {
                     });
                 }
 
+                // Добавляем демо-банк казино
                 if (!casinoDemoBank) {
                     casinoDemoBank = db.addCollection('casino_demo_bank');
                     casinoDemoBank.insert({
-                        total_balance: 500,
+                        total_balance: 500, // 500 TON демо-банк вместо 10000
                         owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
                         created_at: new Date(),
                         updated_at: new Date()
@@ -285,42 +286,6 @@ function initDatabase() {
                 }
                 
                 console.log('LokiJS database initialized');
-                
-                // 🔥 ВОССТАНАВЛИВАЕМ РЕАЛЬНЫЙ БАЛАНС ИЗ CRYPTO BOT
-                setTimeout(async () => {
-                    try {
-                        console.log('🔄 Восстанавливаем реальный баланс из Crypto Bot...');
-                        const response = await axios.get('https://pay.crypt.bot/api/getBalance', {
-                            headers: {
-                                'Crypto-Pay-API-Token': process.env.CRYPTO_PAY_MAINNET_TOKEN,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        if (response.data.ok) {
-                            const tonBalance = response.data.result.find(asset => asset.currency_code === 'TON');
-                            if (tonBalance) {
-                                const realBalance = parseFloat(tonBalance.available);
-                                const currentBank = getCasinoBank();
-                                
-                                console.log(`💰 Crypto Bot баланс: ${realBalance} TON`);
-                                console.log(`🏦 Наш банк до восстановления: ${currentBank.total_balance} TON`);
-                                
-                                // Обновляем банк казино реальным балансом
-                                casinoBank.update({
-                                    ...currentBank,
-                                    total_balance: realBalance,
-                                    updated_at: new Date()
-                                });
-                                
-                                console.log('✅ Реальный баланс восстановлен из Crypto Bot');
-                            }
-                        }
-                    } catch (error) {
-                        console.error('❌ Ошибка восстановления баланса:', error.message);
-                    }
-                }, 2000);
-                
                 resolve(true);
             },
             autosave: true,
