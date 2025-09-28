@@ -1,5 +1,5 @@
 // 🔥 ИЗМЕНЕННАЯ ФИЗИКА PLINKO: 
-// 100% притяжение к маленьким множителям
+// 100% притяжение к маленьким множителям (0.4x и 0.8x)
 
 class PlinkoGame {
     constructor() {
@@ -24,10 +24,11 @@ class PlinkoGame {
         this.bounce = 0.7;
         this.friction = 0.99;
 
-        // 🔥 УПРОЩЕННАЯ СИСТЕМА: Только притяжение к маленьким множителям
+        // 🔥 ОБНОВЛЕННАЯ СИСТЕМА: Притяжение к маленьким множителям + 2 случайных шара
         this.ballsDropped = 0;
-        this.nextRandomBallAt = Math.floor(Math.random() * 26) + 25; // 25-50 шаров
-        this.randomBallActive = false;
+        this.nextRandomBallsAt = Math.floor(Math.random() * 26) + 25; // 25-50 шаров
+        this.randomBallsRemaining = 0;
+        this.randomBallsActive = 0;
 
         // Initialize
         this.setupEventListeners();
@@ -116,7 +117,7 @@ class PlinkoGame {
     const slotCount = 7;
     const slotWidth = this.canvas.width / slotCount;
     
-    // Множители: БОЛЬШИЕ по краям (5.8x), МАЛЕНЬКИЕ в центре (0.4x)
+    // Множители: БОЛЬШИЕ по краям (5.8x), МАЛЕНЬКИЕ в центре (0.4x, 0.8x)
     const multipliers = [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8];
     
     for (let i = 0; i < slotCount; i++) {
@@ -178,11 +179,20 @@ class PlinkoGame {
                 
                 // Проверяем, нужно ли сделать этот шар случайным
                 let isRandomBall = false;
-                if (this.ballsDropped >= this.nextRandomBallAt && !this.randomBallActive) {
+                if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining > 0) {
                     isRandomBall = true;
-                    this.randomBallActive = true;
-                    this.nextRandomBallAt = this.ballsDropped + Math.floor(Math.random() * 26) + 25; // Следующий через 25-50 шаров
-                    console.log(`🎲 Активирован случайный шар! Следующий будет через: ${this.nextRandomBallAt - this.ballsDropped} шаров`);
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲 Случайный шар активирован! Осталось: ${this.randomBallsRemaining}`);
+                }
+                // Если пришло время для новых случайных шаров
+                else if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining === 0) {
+                    this.randomBallsRemaining = 2; // 🔥 ТЕПЕРЬ 2 СЛУЧАЙНЫХ ШАРА
+                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 26) + 25; // Следующие через 25-50 шаров
+                    isRandomBall = true;
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
                 }
 
                 // Create ball
@@ -197,7 +207,7 @@ class PlinkoGame {
                     isFinished: false,
                     finishedAt: 0,
                     createdAt: Date.now(),
-                    isRandomMode: isRandomBall // 🔥 Только один шар будет случайным
+                    isRandomMode: isRandomBall
                 };
 
                 this.activeBalls.push(ball);
@@ -214,10 +224,10 @@ class PlinkoGame {
 
     async handleBallInSlot(ball, slotIndex) {
         try {
-            // 🔥 СБРАСЫВАЕМ ФЛАГ СЛУЧАЙНОГО ШАРА ЕСЛИ НУЖНО
-            if (ball.isRandomMode && this.randomBallActive) {
-                this.randomBallActive = false;
-                console.log(`🎲 Случайный шар завершен. Ожидаем следующий через: ${this.nextRandomBallAt - this.ballsDropped} шаров`);
+            // 🔥 УМЕНЬШАЕМ СЧЕТЧИК АКТИВНЫХ СЛУЧАЙНЫХ ШАРОВ
+            if (ball.isRandomMode && this.randomBallsActive > 0) {
+                this.randomBallsActive--;
+                console.log(`🎲 Случайный шар завершен. Активных: ${this.randomBallsActive}, осталось в серии: ${this.randomBallsRemaining}`);
             }
 
             // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ
@@ -285,66 +295,70 @@ class PlinkoGame {
         ball.vx *= this.friction;
         ball.vy *= this.friction;
 
-        // 🔥 УСИЛЕННОЕ ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x)
+        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x и 0.8x)
         if (!ball.isRandomMode) {
-            // 🔥 ПРИТЯЖЕНИЕ ТОЛЬКО К ЦЕНТРАЛЬНОМУ СЛОТУ (0.4x)
             const slotWidth = this.canvas.width / 7;
-            const targetSlot = 3; // Центральный слот с множителем 0.4x
-            const targetX = (targetSlot + 0.5) * slotWidth;
             
+            // 🔥 МАЛЕНЬКИЕ МНОЖИТЕЛИ: слоты 2 (0.8x), 3 (0.4x), 4 (0.8x)
+            const smallMultiplierSlots = [2, 3, 4];
+            
+            // Выбираем ближайший маленький множитель
+            let targetSlot = 3; // По умолчанию к центру (0.4x)
+            let minDistance = Infinity;
+            
+            smallMultiplierSlots.forEach(slotIndex => {
+                const slotCenterX = (slotIndex + 0.5) * slotWidth;
+                const distance = Math.abs(ball.x - slotCenterX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    targetSlot = slotIndex;
+                }
+            });
+            
+            const targetX = (targetSlot + 0.5) * slotWidth;
             const distanceToTarget = Math.abs(ball.x - targetX);
             
-            // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ К ЦЕНТРУ
+            // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ
             if (distanceToTarget > 2) {
-                // Усиленная сила притяжения
-                const basePullStrength = 0.015; // Увеличена сила притяжения
-                
-                // Коррекция на основе расстояния
+                const basePullStrength = 0.015;
                 const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.025;
-                
                 const totalPullStrength = basePullStrength + distanceCorrection;
                 
-                // Притяжение к центру
                 const pullDirection = targetX - ball.x;
                 ball.vx += pullDirection * totalPullStrength;
-                
-                // Увеличиваем вертикальную скорость для быстрого падения
                 ball.vy += 0.008;
             }
             
-            // 🔥 ОЧЕНЬ СИЛЬНОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
-            if (ball.y > this.canvas.height * 0.6) { // Начинаем раньше
-                const extraPull = 0.02; // Усиленное притяжение
+            // 🔥 УСИЛЕННОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
+            if (ball.y > this.canvas.height * 0.6) {
+                const extraPull = 0.02;
                 const pullDirection = targetX - ball.x;
                 ball.vx += pullDirection * extraPull;
                 
-                // Сильное замедление при приближении к цели
                 if (distanceToTarget < slotWidth * 0.5) {
                     ball.vx *= 0.9;
                 }
             }
             
-            // 🔥 ДОПОЛНИТЕЛЬНАЯ КОРРЕКЦИЯ ДЛЯ ТОЧНОСТИ
+            // 🔥 ТОЧНАЯ КОРРЕКЦИЯ В САМОМ НИЗУ
             if (ball.y > this.canvas.height * 0.8) {
                 const precisionPull = 0.03;
                 const pullDirection = targetX - ball.x;
                 ball.vx += pullDirection * precisionPull;
                 
-                // Фиксируем позицию рядом с целевым слотом
                 if (distanceToTarget < slotWidth * 0.2) {
                     ball.vx *= 0.8;
                 }
             }
         } else {
-            // 🔥 СЛУЧАЙНЫЙ ШАР: минимальная коррекция, чистая случайность
-            // Только для предотвращения застревания у стенок
+            // 🔥 СЛУЧАЙНЫЙ ШАР: минимальная коррекция
             if (ball.x < this.ballRadius * 2) {
                 ball.vx += 0.015;
             } else if (ball.x > this.canvas.width - this.ballRadius * 2) {
                 ball.vx -= 0.015;
             }
             
-            // Слегка увеличиваем случайность движения
+            // Добавляем немного случайности
             ball.vx += (Math.random() - 0.5) * 0.02;
         }
 
@@ -415,16 +429,14 @@ class PlinkoGame {
             this.ctx.beginPath();
             this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
             
-            // 🔥 РАЗНЫЙ ЦВЕТ ДЛЯ РЕЖИМОВ
             if (ball.isRandomMode) {
-                this.ctx.fillStyle = '#ff6b35'; // Оранжевый для случайного режима
+                this.ctx.fillStyle = '#ff6b35';
             } else {
-                this.ctx.fillStyle = '#1e5cb8'; // Синий для режима притяжения
+                this.ctx.fillStyle = '#1e5cb8';
             }
             
             this.ctx.fill();
             
-            // Add glow
             this.ctx.shadowBlur = 10;
             this.ctx.shadowColor = ball.isRandomMode ? '#ff6b35' : '#1e5cb8';
             this.ctx.fill();
