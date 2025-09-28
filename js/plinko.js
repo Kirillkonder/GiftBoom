@@ -694,3 +694,119 @@ window.onclick = function(event) {
         closeDepositModal();
     }
 }
+
+// ========== GIFTBOOM АНИМАЦИЯ ==========
+
+class GiftBoomAnimation {
+    constructor() {
+        this.container = document.getElementById('miniBallsContainer');
+        this.giftBoomBall = document.querySelector('.giftboom-ball');
+        this.isAnimating = false;
+        this.animationInterval = null;
+        
+        this.init();
+    }
+    
+    init() {
+        // Запускаем постоянную анимацию маленьких шариков
+        this.startContinuousAnimation();
+        
+        // Добавляем обработчик клика на GiftBoom шарик
+        if (this.giftBoomBall) {
+            this.giftBoomBall.addEventListener('click', () => {
+                this.triggerBurstAnimation();
+            });
+        }
+    }
+    
+    startContinuousAnimation() {
+        this.animationInterval = setInterval(() => {
+            this.createMiniBall();
+        }, 800); // Создаем новый шарик каждые 800мс
+    }
+    
+    createMiniBall(isBurst = false) {
+        if (!this.container) return;
+        
+        const miniBall = document.createElement('div');
+        miniBall.className = 'mini-ball';
+        
+        // Случайный тип шарика (разные цвета)
+        const types = ['type-1', 'type-2', 'type-3', 'type-4'];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        miniBall.classList.add(randomType);
+        
+        // Случайное направление полета
+        const angle = isBurst 
+            ? Math.random() * 2 * Math.PI // При взрыве - во все стороны
+            : (Math.random() * Math.PI) - (Math.PI / 2); // Обычно - вниз и в стороны
+            
+        const distance = isBurst 
+            ? 60 + Math.random() * 40 // При взрыве - дальше
+            : 30 + Math.random() * 30; // Обычно - ближе
+            
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+        
+        // Устанавливаем CSS переменные для анимации
+        miniBall.style.setProperty('--dx', dx + 'px');
+        miniBall.style.setProperty('--dy', dy + 'px');
+        
+        // Случайная задержка анимации
+        const delay = isBurst ? Math.random() * 200 : 0;
+        miniBall.style.animationDelay = delay + 'ms';
+        
+        // Добавляем в контейнер
+        this.container.appendChild(miniBall);
+        
+        // Удаляем после завершения анимации
+        setTimeout(() => {
+            if (miniBall && miniBall.parentNode) {
+                miniBall.parentNode.removeChild(miniBall);
+            }
+        }, 1500 + delay);
+    }
+    
+    triggerBurstAnimation() {
+        if (this.isAnimating) return;
+        
+        this.isAnimating = true;
+        
+        // Добавляем класс для анимации взрыва основного шарика
+        this.giftBoomBall.classList.add('clicked');
+        
+        // Создаем много маленьких шариков для эффекта взрыва
+        for (let i = 0; i < 12; i++) {
+            setTimeout(() => {
+                this.createMiniBall(true);
+            }, i * 50);
+        }
+        
+        // Возвращаем в исходное состояние
+        setTimeout(() => {
+            this.giftBoomBall.classList.remove('clicked');
+            this.isAnimating = false;
+        }, 600);
+    }
+    
+    destroy() {
+        if (this.animationInterval) {
+            clearInterval(this.animationInterval);
+        }
+    }
+}
+
+// Инициализируем GiftBoom анимацию при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    // Небольшая задержка для убеждения, что все элементы загружены
+    setTimeout(() => {
+        window.giftBoomAnimation = new GiftBoomAnimation();
+    }, 1000);
+});
+
+// Очищаем при закрытии страницы
+window.addEventListener('beforeunload', () => {
+    if (window.giftBoomAnimation) {
+        window.giftBoomAnimation.destroy();
+    }
+});

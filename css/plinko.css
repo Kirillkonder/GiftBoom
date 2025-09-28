@@ -624,3 +624,161 @@ body {
         padding-right: max(16px, env(safe-area-inset-right));
     }
 }
+
+/* ========== GIFTBOOM ШАРИК И АНИМАЦИЯ ========== */
+
+/* Контейнер для GiftBoom шарика */
+.giftboom-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    z-index: 5;
+}
+
+/* Основной GiftBoom шарик */
+.giftboom-ball {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e, #ffd700);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 
+        0 0 20px rgba(255, 107, 53, 0.6),
+        0 0 40px rgba(255, 107, 53, 0.4),
+        inset 0 2px 10px rgba(255, 255, 255, 0.3);
+    animation: giftboom-pulse 2s infinite ease-in-out;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+}
+
+.giftboom-ball:hover {
+    transform: scale(1.1);
+    animation-duration: 1s;
+}
+
+/* Текст внутри шарика */
+.giftboom-text {
+    color: #fff;
+    font-weight: bold;
+    font-size: 11px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    z-index: 2;
+    text-align: center;
+    line-height: 1.1;
+}
+
+/* Анимация пульсации основного шарика */
+@keyframes giftboom-pulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 
+            0 0 20px rgba(255, 107, 53, 0.6),
+            0 0 40px rgba(255, 107, 53, 0.4),
+            inset 0 2px 10px rgba(255, 255, 255, 0.3);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 
+            0 0 30px rgba(255, 107, 53, 0.8),
+            0 0 60px rgba(255, 107, 53, 0.6),
+            inset 0 2px 10px rgba(255, 255, 255, 0.5);
+    }
+}
+
+/* Контейнер для маленьких шариков */
+.mini-balls-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Маленькие шарики */
+.mini-ball {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, #1e5cb8, #2668b3);
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(30, 92, 184, 0.8);
+    animation: mini-ball-fly 1.5s linear infinite;
+}
+
+/* Вариации маленьких шариков */
+.mini-ball.type-1 {
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    box-shadow: 0 0 6px rgba(255, 71, 87, 0.8);
+}
+
+.mini-ball.type-2 {
+    background: linear-gradient(135deg, #2ed573, #26de81);
+    box-shadow: 0 0 6px rgba(46, 213, 115, 0.8);
+}
+
+.mini-ball.type-3 {
+    background: linear-gradient(135deg, #ffa502, #ffb142);
+    box-shadow: 0 0 6px rgba(255, 165, 2, 0.8);
+}
+
+.mini-ball.type-4 {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    box-shadow: 0 0 6px rgba(255, 107, 53, 0.8);
+}
+
+/* Анимация полета маленьких шариков */
+@keyframes mini-ball-fly {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(var(--dx), var(--dy)) scale(1);
+    }
+    70% {
+        opacity: 0.8;
+        transform: translate(calc(var(--dx) * 2), calc(var(--dy) * 2)) scale(0.8);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(var(--dx) * 3), calc(var(--dy) * 3)) scale(0.3);
+    }
+}
+
+/* Дополнительная анимация при клике */
+.giftboom-ball.clicked {
+    animation: giftboom-explode 0.6s ease-out;
+}
+
+@keyframes giftboom-explode {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Адаптивность для маленьких экранов */
+@media (max-width: 480px) {
+    .giftboom-ball {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .giftboom-text {
+        font-size: 10px;
+    }
+    
+    .mini-ball {
+        width: 6px;
+        height: 6px;
+    }
+}
