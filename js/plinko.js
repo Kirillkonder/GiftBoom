@@ -36,7 +36,6 @@ class PlinkoGame {
         this.createPegs();
         this.createSlots();
         this.initializeUser();
-        this.setupGiftBoom();
         this.gameLoop();
     }
 
@@ -96,24 +95,6 @@ class PlinkoGame {
         });
     }
 
-    setupGiftBoom() {
-        const giftBoomBall = document.getElementById('giftboomBall');
-        if (giftBoomBall) {
-            giftBoomBall.addEventListener('click', () => {
-                this.dropBallFromGiftBoom();
-            });
-        }
-    }
-
-    dropBallFromGiftBoom() {
-        if (this.currentBet > 0 && this.balance >= this.currentBet) {
-            const centerX = this.canvas.width / 2;
-            this.dropBallAt(centerX);
-        } else {
-            this.showError('Недостаточно средств');
-        }
-    }
-
     createPegs() {
         const rows = 10;
         const verticalSpacing = this.canvas.height / (rows + 2);
@@ -132,7 +113,7 @@ class PlinkoGame {
             // Максимальная ширина ряда с учётом отступов
             const maxRowWidth = this.canvas.width - sideMargin * 2;
 
-            // Если ряд слишком широкый (актуально для нижних рядов), слегка уменьшаем шаг
+            // Если ряд слишком широкий (актуально для нижних рядов), слегка уменьшаем шаг
             if (rowWidth > maxRowWidth) {
                 rowSpacing = maxRowWidth / (pegsInRow - 1);
                 rowWidth = maxRowWidth;
@@ -263,359 +244,453 @@ updateSlotsDisplay() {
                     this.randomBallsActive++;
                     console.log(`🎲 Случайный шар активирован! Осталось: ${this.randomBallsRemaining}`);
                 }
-                
-                // Создаем шар с учетом случайности
-                this.createBall(x, result.ball_id, isRandomBall);
-                
-                // Если случайные шары закончились, планируем следующий набор
-                if (this.randomBallsRemaining === 0 && this.randomBallsActive === 0) {
-                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 26) + 25; // 25-50 шаров
-                    this.randomBallsRemaining = 2;
-                    console.log(`🎯 Следующие случайные шары через ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
+                // Если пришло время для новых случайных шаров
+                else if (this.ballsDropped >= this.nextRandomBallsAt && this.randomBallsRemaining === 0) {
+                    this.randomBallsRemaining = 2; // 🔥 ТЕПЕРЬ 2 СЛУЧАЙНЫХ ШАРА
+                    this.nextRandomBallsAt = this.ballsDropped + Math.floor(Math.random() * 26) + 25; // Следующие через 25-50 шаров
+                    isRandomBall = true;
+                    this.randomBallsRemaining--;
+                    this.randomBallsActive++;
+                    console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
                 }
-                
+
+                // Create ball
+                const ball = {
+                    x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
+                    y: this.ballRadius,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: 0,
+                    radius: this.ballRadius,
+                    bet: this.currentBet,
+                    gameId: result.game_id,
+                    isFinished: false,
+                    finishedAt: 0,
+                    createdAt: Date.now(),
+                    isRandomMode: isRandomBall
+                };
+
+                this.activeBalls.push(ball);
+                this.updateUI();
+
             } else {
-                throw new Error(result.error || 'Ошибка при размещении ставки');
+                throw new Error(result.error);
             }
-
         } catch (error) {
-            console.error('Error dropping ball:', error);
-            this.showError(error.message);
+            console.error('Drop ball error:', error);
+            this.showError(error.message || 'Ошибка при размещении ставки');
         }
     }
 
-    createBall(startX, ballId, isRandomBall = false) {
-        const ball = {
-            id: ballId,
-            x: startX,
-            y: 0,
-            radius: this.ballRadius,
-            velocityX: 0,
-            velocityY: 0,
-            isDropping: true,
-            multiplier: null,
-            color: isRandomBall ? '#FFD700' : '#1e5cb8', // Золотой для случайных шаров
-            isRandomBall: isRandomBall,
-            hasLanded: false
-        };
-
-        this.activeBalls.push(ball);
-        return ball;
-    }
-
-    updateBall(ball) {
-        if (!ball.isDropping) return;
-
-        // Apply gravity
-        ball.velocityY += this.gravity;
-
-        // Apply velocity
-        ball.x += ball.velocityX;
-        ball.y += ball.velocityY;
-
-        // Apply friction
-        ball.velocityX *= this.friction;
-        ball.velocityY *= this.friction;
-
-        // Check peg collisions
-        this.checkPegCollisions(ball);
-
-        // Check wall collisions
-        this.checkWallCollisions(ball);
-
-        // Check slot landing
-        this.checkSlotLanding(ball);
-
-        // Remove balls that fall off screen
-        if (ball.y > this.canvas.height + 50) {
-            ball.isDropping = false;
-            this.activeBalls = this.activeBalls.filter(b => b !== ball);
-        }
-    }
-
-    checkPegCollisions(ball) {
-        for (const peg of this.pegs) {
-            const dx = ball.x - peg.x;
-            const dy = ball.y - peg.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < ball.radius + peg.radius) {
-                // Collision response
-                const angle = Math.atan2(dy, dx);
-                const targetX = peg.x + Math.cos(angle) * (ball.radius + peg.radius);
-                const targetY = peg.y + Math.sin(angle) * (ball.radius + peg.radius);
-
-                ball.x = targetX;
-                ball.y = targetY;
-
-                // 🔥 ИЗМЕНЕННАЯ ФИЗИКА: 85% шанс притяжения к маленьким множителям
-                // Если это не случайный шар, применяем притяжение к маленьким множителям
-                if (!ball.isRandomBall) {
-                    // 85% шанс притяжения к маленьким множителям (0.4x и 0.8x)
-                    if (Math.random() < 0.85) {
-                        // Определяем направление к центральным слотам (индексы 2, 3, 4)
-                        const centerX = this.canvas.width / 2;
-                        const direction = centerX - ball.x > 0 ? 1 : -1;
-                        
-                        // Добавляем небольшое притяжение к центру
-                        ball.velocityX += direction * 0.3;
-                    } else {
-                        // 15% шанс движения к большим множителям
-                        const direction = Math.random() > 0.5 ? 1 : -1;
-                        ball.velocityX += direction * 0.5;
-                    }
-                } else {
-                    // 🔥 СЛУЧАЙНЫЕ ШАРЫ: Полностью случайное движение
-                    ball.velocityX += (Math.random() - 0.5) * 2;
-                }
-
-                // Normal bounce physics
-                const normalX = dx / distance;
-                const normalY = dy / distance;
-                const dotProduct = ball.velocityX * normalX + ball.velocityY * normalY;
-
-                ball.velocityX = (ball.velocityX - 2 * dotProduct * normalX) * this.bounce;
-                ball.velocityY = (ball.velocityY - 2 * dotProduct * normalY) * this.bounce;
-
-                // Add some randomness
-                ball.velocityX += (Math.random() - 0.5) * 0.5;
-            }
-        }
-    }
-
-    checkWallCollisions(ball) {
-        // Left wall
-        if (ball.x - ball.radius < 0) {
-            ball.x = ball.radius;
-            ball.velocityX = Math.abs(ball.velocityX) * this.bounce;
-        }
-        // Right wall
-        if (ball.x + ball.radius > this.canvas.width) {
-            ball.x = this.canvas.width - ball.radius;
-            ball.velocityX = -Math.abs(ball.velocityX) * this.bounce;
-        }
-    }
-
-    checkSlotLanding(ball) {
-        if (ball.y + ball.radius >= this.canvas.height - 20 && !ball.hasLanded) {
-            for (const slot of this.slots) {
-                if (ball.x >= slot.x && ball.x <= slot.x + slot.width) {
-                    ball.isDropping = false;
-                    ball.hasLanded = true;
-                    ball.multiplier = slot.multiplier;
-                    
-                    // 🔥 ОБНОВЛЯЕМ СТАТУС СЛУЧАЙНЫХ ШАРОВ
-                    if (ball.isRandomBall) {
-                        this.randomBallsActive--;
-                        console.log(`🎲 Случайный шар приземлился! Активных: ${this.randomBallsActive}`);
-                    }
-                    
-                    this.processBallResult(ball);
-                    break;
-                }
-            }
-        }
-    }
-
-    async processBallResult(ball) {
+    async handleBallInSlot(ball, slotIndex) {
         try {
-            const response = await fetch('/api/plinko/result', {
+            // 🔥 УМЕНЬШАЕМ СЧЕТЧИК АКТИВНЫХ СЛУЧАЙНЫХ ШАРОВ
+            if (ball.isRandomMode && this.randomBallsActive > 0) {
+                this.randomBallsActive--;
+                console.log(`🎲 Случайный шар завершен. Активных: ${this.randomBallsActive}, осталось в серии: ${this.randomBallsRemaining}`);
+            }
+
+            // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ (с учетом отступов)
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / this.slots.length;
+            const ballCenterX = ball.x - sideMargin; // Вычитаем отступ слева
+            const calculatedSlotIndex = Math.floor(ballCenterX / slotWidth);
+            const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, calculatedSlotIndex));
+            
+            const realMultiplier = this.slots[finalSlotIndex].multiplier;
+            
+            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${realMultiplier}x, случайный: ${ball.isRandomMode}`);
+
+            const response = await fetch('/api/plinko/drop', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    ballId: ball.id,
-                    multiplier: ball.multiplier,
-                    demoMode: this.isDemoMode
+                    gameId: ball.gameId,
+                    telegramId: this.currentUser.id,
+                    finalSlot: finalSlotIndex,
+                    realMultiplier: realMultiplier
                 })
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    this.balance = result.new_balance;
-                    this.updateUI();
-                    
-                    // Show win notification for wins
-                    if (ball.multiplier > 1) {
-                        this.showWinNotification(ball.multiplier);
-                    }
-                }
+            if (!response.ok) {
+                throw new Error('Ошибка при обработке выигрыша');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                // 🔥 ОБНОВЛЯЕМ БАЛАНС ПОСЛЕ ВЫИГРЫША
+                this.balance = result.new_balance;
+                this.updateUI();
             }
         } catch (error) {
-            console.error('Error processing ball result:', error);
+            console.error('Handle ball error:', error);
         }
-
-        // Remove ball after delay
-        setTimeout(() => {
-            this.activeBalls = this.activeBalls.filter(b => b !== ball);
-        }, 2000);
     }
 
-    draw() {
-        // Clear canvas
+   updateBall() {
+    for (let i = this.activeBalls.length - 1; i >= 0; i--) {
+        const ball = this.activeBalls[i];
+
+        // Удаление завершенных шариков
+        const currentTime = Date.now();
+        const ballLifetime = currentTime - (ball.createdAt || currentTime);
+        const isStuckBall = ballLifetime > 10000;
+        const isSlowBall = ball.y > this.canvas.height * 0.9 && Math.abs(ball.vy) < 0.1 && ballLifetime > 3000;
+        
+        if ((ball.isFinished && currentTime - ball.finishedAt > 300) || isStuckBall || isSlowBall) {
+            this.activeBalls.splice(i, 1);
+            continue;
+        }
+
+        if (ball.isFinished) {
+            continue;
+        }
+
+        // Базовая физика
+        ball.vy += this.gravity;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= this.friction;
+        ball.vy *= this.friction;
+
+        // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x и 0.8x)
+        if (!ball.isRandomMode) {
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / 7;
+            
+            // 🔥 МАЛЕНЬКИЕ МНОЖИТЕЛИ: слоты 2 (0.8x), 3 (0.4x), 4 (0.8x)
+            const smallMultiplierSlots = [2, 3, 4];
+            
+            // Выбираем ближайший маленький множитель
+            let targetSlot = 3; // По умолчанию к центру (0.4x)
+            let minDistance = Infinity;
+            
+            smallMultiplierSlots.forEach(slotIndex => {
+                const slotCenterX = sideMargin + (slotIndex + 0.5) * slotWidth; // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ
+                const distance = Math.abs(ball.x - slotCenterX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    targetSlot = slotIndex;
+                }
+            });
+            
+            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth; // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ
+            const distanceToTarget = Math.abs(ball.x - targetX);
+            
+            // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ
+            if (distanceToTarget > 2) {
+                const basePullStrength = 0.015;
+                const distanceCorrection = (distanceToTarget / this.canvas.width) * 0.025;
+                const totalPullStrength = basePullStrength + distanceCorrection;
+                
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * totalPullStrength;
+                ball.vy += 0.008;
+            }
+            
+            // 🔥 УСИЛЕННОЕ ПРИТЯЖЕНИЕ В НИЖНЕЙ ЧАСТИ
+            if (ball.y > this.canvas.height * 0.6) {
+                const extraPull = 0.02;
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * extraPull;
+                
+                if (distanceToTarget < slotWidth * 0.5) {
+                    ball.vx *= 0.9;
+                }
+            }
+            
+            // 🔥 ТОЧНАЯ КОРРЕКЦИЯ В САМОМ НИЗУ
+            if (ball.y > this.canvas.height * 0.8) {
+                const precisionPull = 0.03;
+                const pullDirection = targetX - ball.x;
+                ball.vx += pullDirection * precisionPull;
+                
+                if (distanceToTarget < slotWidth * 0.2) {
+                    ball.vx *= 0.8;
+                }
+            }
+        } else {
+            // 🔥 СЛУЧАЙНЫЙ ШАР: минимальная коррекция
+            if (ball.x < this.ballRadius * 2) {
+                ball.vx += 0.015;
+            } else if (ball.x > this.canvas.width - this.ballRadius * 2) {
+                ball.vx -= 0.015;
+            }
+            
+            // Добавляем немного случайности
+            ball.vx += (Math.random() - 0.5) * 0.02;
+        }
+
+        // Столкновения со стенами
+        if (ball.x - ball.radius < 0 || ball.x + ball.radius > this.canvas.width) {
+            ball.vx *= -this.bounce;
+            ball.x = ball.x - ball.radius < 0 ? ball.radius : this.canvas.width - ball.radius;
+        }
+
+        // Столкновения с колышками
+        this.pegs.forEach(peg => {
+            const dx = ball.x - peg.x;
+            const dy = ball.y - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < ball.radius + peg.radius) {
+                const angle = Math.atan2(dy, dx);
+                const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+                
+                const randomAngle = angle + (Math.random() - 0.5) * 0.1;
+                
+                ball.vx = Math.cos(randomAngle) * speed * this.bounce;
+                ball.vy = Math.sin(randomAngle) * speed * this.bounce;
+                
+                const minDistance = ball.radius + peg.radius;
+                ball.x = peg.x + Math.cos(angle) * minDistance;
+                ball.y = peg.y + Math.sin(angle) * minDistance;
+            }
+        });
+
+        // Проверка достижения низа
+        const bottomThreshold = this.canvas.height - 15;
+        const isAtBottom = ball.y + ball.radius > bottomThreshold;
+        
+        if (isAtBottom && !ball.isFinished) {
+            ball.isFinished = true;
+            ball.finishedAt = Date.now();
+            
+            // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступы при определении слота
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / this.slots.length;
+            const ballCenterX = ball.x - sideMargin; // Вычитаем отступ слева
+            const slotIndex = Math.floor(ballCenterX / slotWidth);
+            const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
+            
+            console.log(`🎯 Шарик упал в слот ${finalSlotIndex}, множитель: ${this.slots[finalSlotIndex].multiplier}x, случайный: ${ball.isRandomMode}`);
+            
+            setTimeout(() => {
+                this.handleBallInSlot(ball, finalSlotIndex);
+            }, 100);
+        }
+    }
+}
+
+    drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw pegs
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        for (const peg of this.pegs) {
+        this.pegs.forEach(peg => {
             this.ctx.beginPath();
             this.ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             this.ctx.fill();
-        }
-
-        // Draw slots
-        for (const slot of this.slots) {
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            this.ctx.fillRect(slot.x, this.canvas.height - 20, slot.width, 20);
-        }
+        });
 
         // Draw balls
-        for (const ball of this.activeBalls) {
-            this.ctx.fillStyle = ball.color;
+        this.activeBalls.forEach(ball => {
+            if (ball.isFinished) return;
+            
             this.ctx.beginPath();
             this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            
+            if (ball.isRandomMode) {
+                this.ctx.fillStyle = '#1e5cb8';
+            } else {
+                this.ctx.fillStyle = '#1e5cb8';
+            }
+            
             this.ctx.fill();
-
-            // Add glow effect for random balls
-            if (ball.isRandomBall) {
-                this.ctx.shadowColor = '#FFD700';
-                this.ctx.shadowBlur = 15;
-                this.ctx.fill();
-                this.ctx.shadowBlur = 0;
-            }
-
-            // Draw multiplier if ball has landed
-            if (ball.multiplier) {
-                this.ctx.fillStyle = '#fff';
-                this.ctx.font = '12px Arial';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText(
-                    `${ball.multiplier}x`, 
-                    ball.x, 
-                    ball.y - ball.radius - 5
-                );
-            }
-        }
+            
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = ball.isRandomMode ? '#1e5cb8' : '#1e5cb8';
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+        });
     }
 
     gameLoop() {
-        for (const ball of this.activeBalls) {
-            this.updateBall(ball);
-        }
-        this.draw();
+        this.drawGame();
+        this.updateBall();
         requestAnimationFrame(() => this.gameLoop());
     }
 
     updateUI() {
         document.getElementById('balance').textContent = this.balance.toFixed(2);
-        document.getElementById('betAmount').value = this.currentBet;
+        document.getElementById('currentBet').textContent = this.currentBet.toFixed(1) + ' TON';
+        
+        document.getElementById('betAmount').value = this.currentBet.toFixed(1);
+
+        const dropButton = document.getElementById('dropBall');
+        dropButton.disabled = this.currentBet === 0 || this.currentBet > this.balance;
+        
+        if (this.currentBet > this.balance) {
+            dropButton.style.background = 'linear-gradient(135deg, #1e5cb8, #1e5cb8)';
+            dropButton.textContent = 'Недостаточно средств';
+        } else {
+            dropButton.style.background = 'linear-gradient(135deg, #1e5cb8, #2668b3)';
+            dropButton.textContent = 'Бросить шар';
+        }
+    }
+
+    decreaseBet() {
+        if (this.currentBet > 0.1) {
+            this.currentBet = Math.max(0.1, this.currentBet - 0.1);
+            this.updateUI();
+        }
+    }
+
+    increaseBet() {
+        if (this.currentBet < 100) {
+            this.currentBet = Math.min(100, this.currentBet + 0.1);
+            this.updateUI();
+        }
+    }
+
+    validateBetAmount() {
+        const betInput = document.getElementById('betAmount');
+        let value = parseFloat(betInput.value);
+        
+        if (isNaN(value)) {
+            value = 0.1;
+        }
+        
+        value = Math.max(0.1, Math.min(100, value));
+        betInput.value = value.toFixed(1);
+        this.currentBet = value;
+        this.updateUI();
+    }
+
+    showToast(type, title, message, duration = 3000) {
+        if (type !== 'error') return;
+        
+        const toastContainer = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        const icons = {
+            error: 'bi bi-x-circle-fill'
+        };
+        
+        toast.innerHTML = `
+            <i class="toast-icon ${icons[type]}"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">
+                <i class="bi bi-x"></i>
+            </button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
     }
 
     showError(message) {
-        this.showToast(message, 'error');
-    }
-
-    showWinNotification(multiplier) {
-        this.showToast(`🎉 Вы выиграли ${multiplier}x!`, 'success');
-    }
-
-    showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        
-        const container = document.getElementById('toast-container');
-        container.appendChild(toast);
-        
-        setTimeout(() => toast.classList.add('show'), 100);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => container.removeChild(toast), 300);
-        }, 3000);
-    }
-
-    changeDifficulty(mode) {
-        this.difficultyMode = mode;
-        
-        // Update UI
-        document.querySelectorAll('.difficulty-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-difficulty="${mode}"]`).classList.add('active');
-        
-        // Recreate slots with new multipliers
-        this.createSlots();
-        
-        console.log(`🎯 Режим сложности изменен на: ${mode}`);
+        this.showToast('error', 'Ошибка', message);
     }
 }
 
-// Global functions for UI interactions
+// Global functions
 function goBack() {
-    window.history.back();
+    window.location.href = 'index.html';
 }
 
-function openDepositModal() {
+function decreaseBet() {
+    window.plinkoGame.decreaseBet();
+}
+
+function increaseBet() {
+    window.plinkoGame.increaseBet();
+}
+
+function validateBetAmount() {
+    window.plinkoGame.validateBetAmount();
+}
+
+async function openDepositModal() {
     document.getElementById('deposit-modal').style.display = 'block';
 }
 
 function closeDepositModal() {
     document.getElementById('deposit-modal').style.display = 'none';
+    document.getElementById('deposit-amount').value = '';
 }
 
-function processDeposit() {
+async function processDeposit() {
     const amount = parseFloat(document.getElementById('deposit-amount').value);
-    if (amount && amount > 0) {
-        // Здесь будет логика пополнения через Crypto Pay
-        alert(`Пополнение на ${amount} TON будет обработано через Crypto Pay`);
-        closeDepositModal();
-    } else {
-        alert('Введите корректную сумму');
+    
+    if (!amount || amount < 1) {
+        alert('Минимальный депозит: 1 TON');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: window.plinkoGame.currentUser.id,
+                amount: amount,
+                demoMode: window.plinkoGame.isDemoMode
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            if (window.plinkoGame.isDemoMode) {
+                await window.plinkoGame.loadUserData();
+                alert(`Демо-депозит ${amount} TON успешно зачислен!`);
+            } else {
+                window.open(result.invoice_url, '_blank');
+                alert(`Откройте Crypto Bot для оплаты ${amount} TON`);
+            }
+            
+            closeDepositModal();
+        } else {
+            alert('Ошибка при создании депозита: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Deposit error:', error);
+        alert('Ошибка при создании депозита');
     }
 }
 
-function changeDifficulty(mode) {
-    if (window.plinkoGame) {
-        window.plinkoGame.changeDifficulty(mode);
-    }
-}
-
-function decreaseBet() {
-    if (window.plinkoGame) {
-        window.plinkoGame.currentBet = Math.max(0.1, window.plinkoGame.currentBet - 0.1);
-        window.plinkoGame.updateUI();
-    }
-}
-
-function increaseBet() {
-    if (window.plinkoGame) {
-        window.plinkoGame.currentBet = Math.min(100, window.plinkoGame.currentBet + 0.1);
-        window.plinkoGame.updateUI();
-    }
-}
-
-function validateBetAmount() {
-    if (window.plinkoGame) {
-        const input = document.getElementById('betAmount');
-        let value = parseFloat(input.value);
-        if (isNaN(value) || value < 0.1) value = 0.1;
-        if (value > 100) value = 100;
-        window.plinkoGame.currentBet = parseFloat(value.toFixed(1));
-        window.plinkoGame.updateUI();
-    }
-}
-
-// Initialize game when page loads
 window.addEventListener('load', () => {
     window.plinkoGame = new PlinkoGame();
 });
 
-// Close modal when clicking outside
-window.addEventListener('click', (e) => {
+// Функция смены режима сложности
+function changeDifficulty(difficulty) {
+    if (window.plinkoGame) {
+        window.plinkoGame.difficultyMode = difficulty;
+        
+        // Обновляем активную кнопку
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-difficulty') === difficulty) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Пересоздаем слоты с новыми множителями
+        window.plinkoGame.createSlots();
+        
+        console.log(`🎯 Режим изменен на: ${difficulty}`);
+    }
+}
+
+window.onclick = function(event) {
     const modal = document.getElementById('deposit-modal');
-    if (e.target === modal) {
+    if (event.target === modal) {
         closeDepositModal();
     }
-});
+}
