@@ -6,55 +6,60 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
 
     // API: Создать инвойс для пополнения (режим/демо)
     router.post('/create-invoice', async (req, res) => {
-        const { telegramId, amount, demoMode } = req.body;
+    const { telegramId, amount, demoMode } = req.body;
 
-        try {
-            const user = users.findOne({ telegram_id: parseInt(telegramId) });
-            
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            // Создаем инвойс в Crypto Pay
-            const invoice = await cryptoPayRequest('createInvoice', {
-                asset: 'TON',
-                amount: amount,
-                description: `Deposit for user ${telegramId}`,
-                hidden_message: 'Thank you for your deposit!',
-                payload: JSON.stringify({
-                    telegram_id: telegramId,
-                    demo_mode: demoMode
-                }),
-                paid_btn_name: 'openBot',
-                paid_btn_url: 'https://t.me/your_bot'
-            }, demoMode);
-
-            if (!invoice.ok) {
-                return res.status(500).json({ error: invoice.error });
-            }
-
-            // Сохраняем транзакцию как pending
-            const transaction = transactions.insert({
-                user_id: user.$loki,
-                amount: amount,
-                type: 'deposit',
-                status: 'pending',
-                invoice_id: invoice.result.invoice_id,
-                demo_mode: demoMode,
-                created_at: new Date()
-            });
-
-            res.json({
-                success: true,
-                invoice_url: invoice.result.pay_url,
-                invoice_id: invoice.result.invoice_id
-            });
-
-        } catch (error) {
-            console.error('Create invoice error:', error);
-            res.status(500).json({ error: 'Server error' });
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
-    });
+
+        // ДОБАВЬ ЭТУ ПРОВЕРКУ:
+        if (amount < 0.3) {
+            return res.status(400).json({ error: 'Минимальный депозит: 0.3 TON' });
+        }
+
+        // Создаем инвойс в Crypto Pay
+        const invoice = await cryptoPayRequest('createInvoice', {
+            asset: 'TON',
+            amount: amount,
+            description: `Deposit for user ${telegramId}`,
+            hidden_message: 'Thank you for your deposit!',
+            payload: JSON.stringify({
+                telegram_id: telegramId,
+                demo_mode: demoMode
+            }),
+            paid_btn_name: 'openBot',
+            paid_btn_url: 'https://t.me/your_bot'
+        }, demoMode);
+
+        if (!invoice.ok) {
+            return res.status(500).json({ error: invoice.error });
+        }
+
+        // Сохраняем транзакцию как pending
+        const transaction = transactions.insert({
+            user_id: user.$loki,
+            amount: amount,
+            type: 'deposit',
+            status: 'pending',
+            invoice_id: invoice.result.invoice_id,
+            demo_mode: demoMode,
+            created_at: new Date()
+        });
+
+        res.json({
+            success: true,
+            invoice_url: invoice.result.pay_url,
+            invoice_id: invoice.result.invoice_id
+        });
+
+    } catch (error) {
+        console.error('Create invoice error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
     // API: Вывод средств через Crypto Bot
     router.post('/withdraw', async (req, res) => {
