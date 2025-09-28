@@ -20,15 +20,6 @@ class PlinkoGame {
         this.pegs = [];
         this.slots = [];
 
-        // 🎁 БОЛЬШОЙ ШАРИК GIFTBOOM
-        this.giftBall = {
-            x: 0, // будет установлен в resizeCanvas
-            y: 0, // будет установлен в resizeCanvas  
-            radius: 0, // будет установлен в resizeCanvas
-            pulsePhase: 0,
-            glowIntensity: 0
-        };
-
         // Physics
         this.gravity = 0.6;
         this.bounce = 0.7;
@@ -81,11 +72,6 @@ class PlinkoGame {
         this.canvas.height = board.clientHeight;
         this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.012;
         this.ballRadius = this.pegRadius * 1.2;
-        
-        // 🎁 НАСТРОЙКА БОЛЬШОГО ШАРИКА GIFTBOOM
-        this.giftBall.radius = Math.min(this.canvas.width, this.canvas.height) * 0.08; // 8% от размера canvas
-        this.giftBall.x = this.canvas.width / 2;
-        this.giftBall.y = this.giftBall.radius + 10; // Небольшой отступ сверху
     }
 
     setupEventListeners() {
@@ -111,10 +97,7 @@ class PlinkoGame {
 
     createPegs() {
         const rows = 10;
-        // 🎁 Учитываем большой шарик - начинаем колышки ниже него
-        const startY = this.giftBall.y + this.giftBall.radius + 30; // Отступ от GiftBoom шарика
-        const availableHeight = this.canvas.height - startY - 60; // Оставляем место для слотов
-        const verticalSpacing = availableHeight / rows;
+        const verticalSpacing = this.canvas.height / (rows + 2);
 
         // Базовый горизонтальный шаг как раньше — сохраняем общий вид
         const baseHorizontalSpacing = this.canvas.width / (rows + 1);
@@ -141,7 +124,7 @@ class PlinkoGame {
             for (let i = 0; i < pegsInRow; i++) {
                 this.pegs.push({
                     x: startX + i * rowSpacing,
-                    y: startY + verticalSpacing * row, // 🎁 Используем новую стартовую позицию
+                    y: verticalSpacing * (row + 2),
                     radius: this.pegRadius
                 });
             }
@@ -271,15 +254,12 @@ updateSlotsDisplay() {
                     console.log(`🎲🎲 Запуск 2 случайных шаров! Следующие через: ${this.nextRandomBallsAt - this.ballsDropped} шаров`);
                 }
 
-                // Create ball - выпадает из большого шарика GiftBoom
-                const angleFromGiftBall = (Math.random() - 0.5) * 0.8; // Случайный угол выпадения
-                const distanceFromCenter = this.giftBall.radius * 0.8; // Выпадает с края большого шарика
-                
+                // Create ball
                 const ball = {
-                    x: this.giftBall.x + Math.cos(angleFromGiftBall) * distanceFromCenter,
-                    y: this.giftBall.y + this.giftBall.radius + this.ballRadius,
-                    vx: Math.cos(angleFromGiftBall) * 1.5 + (Math.random() - 0.5) * 2,
-                    vy: Math.abs(Math.sin(angleFromGiftBall)) * 2 + 0.5,
+                    x: Math.max(this.ballRadius, Math.min(x, this.canvas.width - this.ballRadius)),
+                    y: this.ballRadius,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: 0,
                     radius: this.ballRadius,
                     bet: this.currentBet,
                     gameId: result.game_id,
@@ -499,51 +479,6 @@ updateSlotsDisplay() {
 
     drawGame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // 🎁 РИСУЕМ БОЛЬШОЙ ШАРИК GIFTBOOM
-        this.giftBall.pulsePhase += 0.05;
-        this.giftBall.glowIntensity = Math.sin(this.giftBall.pulsePhase) * 0.3 + 0.7;
-        
-        const pulseDelta = Math.sin(this.giftBall.pulsePhase * 2) * 2;
-        const currentRadius = this.giftBall.radius + pulseDelta;
-        
-        // Основной шарик с градиентом
-        const gradient = this.ctx.createRadialGradient(
-            this.giftBall.x, this.giftBall.y, 0,
-            this.giftBall.x, this.giftBall.y, currentRadius
-        );
-        gradient.addColorStop(0, `rgba(30, 92, 184, ${this.giftBall.glowIntensity})`);
-        gradient.addColorStop(0.7, `rgba(30, 92, 184, ${this.giftBall.glowIntensity * 0.8})`);
-        gradient.addColorStop(1, `rgba(30, 92, 184, 0.3)`);
-        
-        // Свечение
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = '#1e5cb8';
-        
-        this.ctx.beginPath();
-        this.ctx.arc(this.giftBall.x, this.giftBall.y, currentRadius, 0, Math.PI * 2);
-        this.ctx.fillStyle = gradient;
-        this.ctx.fill();
-        
-        // Обводка
-        this.ctx.strokeStyle = `rgba(255, 255, 255, ${this.giftBall.glowIntensity * 0.6})`;
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-        
-        this.ctx.shadowBlur = 0;
-        
-        // Текст "GiftBoom"
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.font = `bold ${currentRadius * 0.25}px Arial`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        
-        // Тень для текста
-        this.ctx.shadowBlur = 5;
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        
-        this.ctx.fillText('GiftBoom', this.giftBall.x, this.giftBall.y);
-        this.ctx.shadowBlur = 0;
 
         // Draw pegs
         this.pegs.forEach(peg => {
