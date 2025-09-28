@@ -68,49 +68,43 @@ module.exports = function(db, users, transactions, casinoBank, casinoDemoBank, a
   });
 
   // API: Вывод прибыли владельцу
-  // API: Вывод прибыли владельцу
-router.post('/admin/withdraw-profit', adminMiddleware, async (req, res) => {
+  router.post('/admin/withdraw-profit', adminMiddleware, async (req, res) => {
     const { telegramId, amount } = req.body;
 
     try {
-        const bank = casinoBank.findOne({});
+      const bank = casinoBank.findOne({});
+      
+      if (bank.total_balance < amount) {
+        return res.status(400).json({ error: 'Недостаточно средств в банке казино' });
+      }
+
+      // Выводим через Crypto Pay
+      const transfer = await cryptoPayRequest('transfer', {
+        user_id: telegramId,
+        asset: 'TON',
+        amount: amount.toString(),
+        spend_id: `owner_withdraw_${Date.now()}`
+      }, false);
+
+      if (transfer.ok && transfer.result) {
+        updateCasinoBank(-amount);
         
-        if (bank.total_balance < amount) {
-            return res.status(400).json({ error: 'Недостаточно средств в банке казино' });
-        }
-
-        // МИНИМАЛЬНЫЙ ВЫВОД БАНКА: 0.1 TON
-        if (amount < 0.1) {
-            return res.status(400).json({ error: 'Минимальная сумма вывода из банка: 0.1 TON' });
-        }
-
-        // Выводим через Crypto Pay
-        const transfer = await cryptoPayRequest('transfer', {
-            user_id: telegramId,
-            asset: 'TON',
-            amount: amount.toString(),
-            spend_id: `owner_withdraw_${Date.now()}`
-        }, false);
-
-        if (transfer.ok && transfer.result) {
-            updateCasinoBank(-amount);
-            
-            logAdminAction('withdraw_profit', telegramId, { amount: amount });
-            
-            res.json({
-                success: true,
-                message: 'Profit withdrawn successfully',
-                hash: transfer.result.hash,
-                new_balance: bank.total_balance - amount
-            });
-        } else {
-            res.status(500).json({ error: 'Withdrawal failed' });
-        }
+        logAdminAction('withdraw_profit', telegramId, { amount: amount });
+        
+        res.json({
+          success: true,
+          message: 'Profit withdrawn successfully',
+          hash: transfer.result.hash,
+          new_balance: bank.total_balance - amount
+        });
+      } else {
+        res.status(500).json({ error: 'Withdrawal failed' });
+      }
     } catch (error) {
-        console.error('Withdraw profit error:', error);
-        res.status(500).json({ error: 'Withdrawal error' });
+      console.error('Withdraw profit error:', error);
+      res.status(500).json({ error: 'Withdrawal error' });
     }
-});
+  });
 
   // API: Добавить демо баланс пользователю
   router.post('/admin/add-demo-balance', adminMiddleware, async (req, res) => {
