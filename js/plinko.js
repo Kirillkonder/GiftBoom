@@ -67,17 +67,12 @@ class PlinkoGame {
     }
 
     resizeCanvas() {
-    const board = document.querySelector('.game-board');
-    this.canvas.width = board.clientWidth;
-    this.canvas.height = board.clientHeight;
-    
-    // 🔥 ИСПРАВЛЕНИЕ: Более точный расчет размеров
-    const minDimension = Math.min(this.canvas.width, this.canvas.height);
-    this.pegRadius = minDimension * 0.012;
-    this.ballRadius = this.pegRadius * 1.2;
-    
-    console.log(`🔄 Размер канваса: ${this.canvas.width}x${this.canvas.height}, радиус колышка: ${this.pegRadius}`);
-}
+        const board = document.querySelector('.game-board');
+        this.canvas.width = board.clientWidth;
+        this.canvas.height = board.clientHeight;
+        this.pegRadius = Math.min(this.canvas.width, this.canvas.height) * 0.012;
+        this.ballRadius = this.pegRadius * 1.2;
+    }
 
     setupEventListeners() {
         window.addEventListener('resize', () => {
@@ -101,37 +96,30 @@ class PlinkoGame {
     }
 
     createPegs() {
-    const rows = 10;
-    const spacing = this.canvas.height / (rows + 2);
-    
-    // 🔥 ИСПРАВЛЕНИЕ: Правильно рассчитываем горизонтальное расстояние
-    // Учитываем отступы от краев для полного отображения всех колышков
-    const horizontalMargin = this.pegRadius * 2; // Отступ от краев
-    const availableWidth = this.canvas.width - (horizontalMargin * 2);
-    
-    this.pegs = [];
-    
-    for (let row = 0; row < rows; row++) {
-        const pegsInRow = row + 3;
-        
-        // 🔥 ИСПРАВЛЕНИЕ: Правильно рассчитываем расстояние между колышками
-        const horizontalSpacing = availableWidth / (pegsInRow - 1);
-        const startX = horizontalMargin;
+        const rows = 10;
+        const spacing = this.canvas.height / (rows + 2);
+        const horizontalSpacing = this.canvas.width / (rows + 1);
 
-        for (let i = 0; i < pegsInRow; i++) {
-            this.pegs.push({
-                x: startX + i * horizontalSpacing,
-                y: spacing * (row + 2),
-                radius: this.pegRadius
-            });
+        for (let row = 0; row < rows; row++) {
+            const pegsInRow = row + 3;
+            const startX = (this.canvas.width - (pegsInRow - 1) * horizontalSpacing) / 2;
+
+            for (let i = 0; i < pegsInRow; i++) {
+                this.pegs.push({
+                    x: startX + i * horizontalSpacing,
+                    y: spacing * (row + 2),
+                    radius: this.pegRadius
+                });
+            }
         }
     }
-    
-    console.log(`🎯 Создано ${this.pegs.length} колышков на поле ${this.canvas.width}x${this.canvas.height}`);
-}
+
    createSlots() {
     const slotCount = 7;
-    const slotWidth = this.canvas.width / slotCount;
+    // 🔥 ИСПРАВЛЕНИЕ: Добавляем отступы с краев для полного отображения слотов
+    const sideMargin = 10; // отступ с каждой стороны
+    const availableWidth = this.canvas.width - (sideMargin * 2);
+    const slotWidth = availableWidth / slotCount;
     
     // Множители по режимам сложности
     const multipliersByDifficulty = {
@@ -145,7 +133,7 @@ class PlinkoGame {
     this.slots = [];
     for (let i = 0; i < slotCount; i++) {
         this.slots.push({
-            x: i * slotWidth,
+            x: sideMargin + (i * slotWidth), // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ слева
             width: slotWidth,
             multiplier: multipliers[i],
             index: i
@@ -284,9 +272,11 @@ updateSlotsDisplay() {
                 console.log(`🎲 Случайный шар завершен. Активных: ${this.randomBallsActive}, осталось в серии: ${this.randomBallsRemaining}`);
             }
 
-            // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ
-            const slotWidth = this.canvas.width / this.slots.length;
-            const ballCenterX = ball.x;
+            // 🔥 ТОЧНОЕ ОПРЕДЕЛЕНИЕ СЛОТА И МНОЖИТЕЛЯ (с учетом отступов)
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / this.slots.length;
+            const ballCenterX = ball.x - sideMargin; // Вычитаем отступ слева
             const calculatedSlotIndex = Math.floor(ballCenterX / slotWidth);
             const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, calculatedSlotIndex));
             
@@ -351,7 +341,9 @@ updateSlotsDisplay() {
 
         // 🔥 ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ (0.4x и 0.8x)
         if (!ball.isRandomMode) {
-            const slotWidth = this.canvas.width / 7;
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / 7;
             
             // 🔥 МАЛЕНЬКИЕ МНОЖИТЕЛИ: слоты 2 (0.8x), 3 (0.4x), 4 (0.8x)
             const smallMultiplierSlots = [2, 3, 4];
@@ -361,7 +353,7 @@ updateSlotsDisplay() {
             let minDistance = Infinity;
             
             smallMultiplierSlots.forEach(slotIndex => {
-                const slotCenterX = (slotIndex + 0.5) * slotWidth;
+                const slotCenterX = sideMargin + (slotIndex + 0.5) * slotWidth; // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ
                 const distance = Math.abs(ball.x - slotCenterX);
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -369,7 +361,7 @@ updateSlotsDisplay() {
                 }
             });
             
-            const targetX = (targetSlot + 0.5) * slotWidth;
+            const targetX = sideMargin + (targetSlot + 0.5) * slotWidth; // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступ
             const distanceToTarget = Math.abs(ball.x - targetX);
             
             // 🔥 СИЛЬНОЕ ПРИТЯЖЕНИЕ К МАЛЕНЬКИМ МНОЖИТЕЛЯМ
@@ -451,8 +443,11 @@ updateSlotsDisplay() {
             ball.isFinished = true;
             ball.finishedAt = Date.now();
             
-            const slotWidth = this.canvas.width / this.slots.length;
-            const ballCenterX = ball.x;
+            // 🔥 ИСПРАВЛЕНИЕ: Учитываем отступы при определении слота
+            const sideMargin = 10;
+            const availableWidth = this.canvas.width - (sideMargin * 2);
+            const slotWidth = availableWidth / this.slots.length;
+            const ballCenterX = ball.x - sideMargin; // Вычитаем отступ слева
             const slotIndex = Math.floor(ballCenterX / slotWidth);
             const finalSlotIndex = Math.max(0, Math.min(this.slots.length - 1, slotIndex));
             
