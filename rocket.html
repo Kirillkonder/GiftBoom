@@ -3,159 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBER ROCKET</title>
+    <title>Rocket Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/rocket.css">
 </head>
 <body>
-    <!-- Cyberpunk Grid Background -->
-    <div class="cyber-grid"></div>
-    <div class="cyber-scanlines"></div>
-    <div class="cyber-noise"></div>
+    <!-- Фон с сеткой на всю страницу -->
+    <div class="grid-background"></div>
     
     <div class="game-container">
-        <!-- Top Panel - Cyberpunk Style -->
-        <div class="top-panel">
-            <div class="close-btn" onclick="goBack()">
-                <span class="cyber-arrow">← EXIT</span>
-                <div class="btn-glow"></div>
-            </div>
-            <div class="top-right">
-                <!-- Players Counter -->
-                <div class="players-counter">
-                    <i class="bi bi-people-fill"></i>
-                    <span id="playersCount">0</span>
-                    <div class="counter-glow"></div>
-                </div>
-                <div class="balance">
-                    <i class="bi bi-currency-exchange"></i>
-                    <span id="balance">0.00</span>
-                    <button class="balance-plus-btn" onclick="openDepositModal()">
-                        <i class="bi bi-plus"></i>
-                    </button>
-                    <div class="balance-glow"></div>
-                </div>
-                <div id="demo-badge" style="display: none;" class="demo-badge">
-                    DEMO
-                </div>
-            </div>
+        <!-- Верхняя панель -->
+       <div class="top-panel">
+    <div class="close-btn" onclick="goBack()">
+        <!-- Убрали крестик -->
+        <span>←</span>
+    </div>
+    <div class="top-right">
+        <!-- Счетчик игроков -->
+        <div class="players-counter">
+            <i class="bi bi-people-fill" style="color: #00c851;"></i>
+            <span id="playersCount">0</span>
         </div>
+        <div class="balance">
+            <i class="bi bi-currency-exchange"></i>
+            <span id="balance">0.00</span>
+            <button class="balance-plus-btn" onclick="openDepositModal()">
+                <i class="bi bi-plus"></i>
+            </button>
+        </div>
+        <!-- Убрали таймер -->
+        <div id="demo-badge" style="display: none; background: #ff9500; color: black; padding: 2px 6px; border-radius: 8px; font-size: 10px;">
+            DEMO
+        </div>
+    </div>
+</div>
 
-        <!-- Game Field - Cyberpunk Rocket Arena -->
+        <!-- Игровое поле с ракеткой -->
         <div class="game-field">
-            <div class="cyber-hud">
-                <div class="hud-corner top-left"></div>
-                <div class="hud-corner top-right"></div>
-                <div class="hud-corner bottom-left"></div>
-                <div class="hud-corner bottom-right"></div>
-            </div>
             <div class="rocket-container">
                 <div id="rocketCanvas" class="rocket-canvas">
-                    <div class="rocket-trail"></div>
-                    <img src="Rocket.png" alt="Cyber Rocket" id="rocket" class="rocket">
+                    <img src="Rocket.png" alt="Rocket" id="rocket" class="rocket">
                     <div class="center-timer" id="centerTimer" style="display: none;">
-                        <span id="centerTimerText">0</span>
-                        <div class="timer-glow"></div>
-                    </div>
+    <span id="centerTimerText">0</span>
+</div>
                 </div>
             </div>
         </div>
 
-        <!-- Coefficients - Cyberpunk History Display -->
+        
+        <!-- Таймер/История - ПОДНЯТА ВЫШЕ -->
         <div class="coefficients">
-            <div class="coeff-header">
-                <span class="cyber-text">MULTIPLIER HISTORY</span>
-                <div class="header-line"></div>
-            </div>
-            <div class="coeff-list">
-                <div class="coeff-item active" id="timerDisplay">READY</div>
-                <div class="coeff-item" id="historyItem1">1.00</div>
-                <div class="coeff-item" id="historyItem2">1.00</div>
-                <div class="coeff-item" id="historyItem3">1.00</div>
-                <div class="coeff-item" id="historyItem4">1.00</div>
-                <div class="coeff-item" id="historyItem5">1.00</div>
-            </div>
+            <div class="coeff-item active" id="timerDisplay"></div>
+            <div class="coeff-item" id="historyItem1">1.00</div>
+            <div class="coeff-item" id="historyItem2">1.00</div>
+            <div class="coeff-item" id="historyItem3">1.00</div>
+            <div class="coeff-item" id="historyItem4">1.00</div>
+            <div class="coeff-item" id="historyItem5">1.00</div>
         </div>
 
-        <!-- Bet Controls - Cyberpunk Interface -->
+        <!-- Кнопки ставки и вывода - ОБЪЕДИНЕНЫ В ОДНУ -->
         <div class="bet-controls">
             <div class="bet-amount-selector">
-                <div class="selector-label">
-                    <span class="cyber-text">BET AMOUNT</span>
-                    <div class="label-line"></div>
-                </div>
-                <div class="amount-controls">
-                    <button class="bet-amount-btn decrease" onclick="decreaseBet()">
-                        <span>-</span>
-                        <div class="btn-pulse"></div>
-                    </button>
-                    <div class="amount-display">
-                        <input type="number" id="betAmount" value="5" min="0.1" max="100" step="0.1" onchange="validateBetAmount()">
-                        <span class="ton-label">TON</span>
-                        <div class="input-glow"></div>
-                    </div>
-                    <button class="bet-amount-btn increase" onclick="increaseBet()">
-                        <span>+</span>
-                        <div class="btn-pulse"></div>
-                    </button>
-                </div>
+                <button class="bet-amount-btn" onclick="decreaseBet()">-</button>
+                <input type="number" id="betAmount" value="5" min="0.1" max="100" step="0.1" onchange="validateBetAmount()">
+                <span class="ton-label">TON</span>
+                <button class="bet-amount-btn" onclick="increaseBet()">+</button>
             </div>
             <div class="bet-button-container">
-                <button class="bet-button" id="actionButton" onclick="handleAction()">
-                    <span class="btn-text">LAUNCH ROCKET</span>
-                    <div class="btn-cyber-glow"></div>
-                    <div class="btn-scan-line"></div>
-                </button>
+                <button class="bet-button" id="actionButton" onclick="handleAction()">Поставить</button>
             </div>
         </div>
 
-        <!-- Players Section - Cyberpunk Terminal -->
+        <!-- Список игроков -->
         <div class="players-section">
-            <div class="terminal-header">
-                <span class="terminal-title">ACTIVE PILOTS</span>
-                <div class="terminal-line"></div>
-                <div class="terminal-dots">
-                    <span></span><span></span><span></span>
-                </div>
+            <div class="players-header">
+                <span>Игроки</span>
             </div>
             <div class="players-list" id="playersList">
-                <!-- Players will be added via JS -->
+                <!-- Игроки будут добавляться через JS -->
             </div>
         </div>
     </div>
 
-    <!-- Deposit Modal - Cyberpunk Style -->
+    <!-- Модальное окно пополнения баланса -->
     <div id="deposit-modal" class="modal">
-        <div class="modal-backdrop"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">
-                    <i class="bi bi-currency-exchange"></i>
-                    CREDIT TRANSFER
-                </h3>
-                <span class="close" onclick="closeDepositModal()">
-                    <i class="bi bi-x"></i>
-                </span>
-                <div class="header-glow"></div>
+                <h3>💰 Пополнить баланс</h3>
+                <span class="close" onclick="closeDepositModal()">&times;</span>
             </div>
             <div class="modal-body">
                 <div class="deposit-info">
-                    <p id="deposit-mode-info" class="cyber-text">CRYPTO PAY PROTOCOL</p>
-                    <div class="info-line"></div>
+                    <p id="deposit-mode-info">Пополнение через Crypto Pay</p>
                 </div>
                 <div class="input-group">
-                    <label for="deposit-amount" class="cyber-label">AMOUNT (TON):</label>
-                    <div class="input-wrapper">
-                        <input type="number" id="deposit-amount" placeholder="Enter amount" min="1" step="0.01">
-                        <div class="input-cyber-glow"></div>
-                    </div>
+                    <label for="deposit-amount">Сумма (TON):</label>
+                    <input type="number" id="deposit-amount" placeholder="Введите сумму" min="1" step="0.01">
                 </div>
-                <button class="modal-btn deposit-btn" onclick="processDeposit()">
-                    <span>INITIATE TRANSFER</span>
-                    <div class="btn-cyber-effect"></div>
-                </button>
+                <button class="modal-btn deposit-btn" onclick="processDeposit()">Пополнить</button>
             </div>
         </div>
     </div>
