@@ -4,61 +4,62 @@ const router = express.Router();
 module.exports = function(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
 
     // API: Создать инвойс для депозита
-    router.post('/create-invoice', async (req, res) => {
-        const { telegramId, amount, demoMode } = req.body;
+    // balanceRoutes.js - исправленная функция создания инвойса
+router.post('/create-invoice', async (req, res) => {
+    const { telegramId, amount, demoMode } = req.body;
 
-        try {
-            const user = users.findOne({ telegram_id: parseInt(telegramId) });
-            
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            // НОВАЯ ПРОВЕРКА: Минимальный депозит 3 TON
-            if (amount < 3) {
-                return res.status(400).json({ error: 'Минимальный депозит: 3 TON' });
-            }
-
-            const invoice = await cryptoPayRequest('createInvoice', {
-                asset: 'TON',
-                amount: amount.toString(),
-                description: `Deposit for user ${telegramId}`,
-                hidden_message: `Deposit ${amount} TON`,
-                payload: JSON.stringify({
-                    telegram_id: telegramId,
-                    demo_mode: demoMode,
-                    amount: amount
-                }),
-                paid_btn_name: 'callback',
-                paid_btn_url: 'https://t.me/your_bot',
-                allow_comments: false
-            }, demoMode);
-
-            if (invoice.ok && invoice.result) {
-                // Сохраняем транзакцию как ожидающую
-                transactions.insert({
-                    user_id: user.$loki,
-                    amount: amount,
-                    type: 'deposit',
-                    status: 'pending',
-                    invoice_id: invoice.result.invoice_id,
-                    demo_mode: demoMode,
-                    created_at: new Date()
-                });
-
-                res.json({
-                    success: true,
-                    invoice_url: invoice.result.pay_url,
-                    invoice_id: invoice.result.invoice_id
-                });
-            } else {
-                res.status(500).json({ error: 'Failed to create invoice' });
-            }
-        } catch (error) {
-            console.error('Create invoice error:', error);
-            res.status(500).json({ error: 'Server error' });
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
-    });
+
+        // 🔥 ИСПРАВЛЕНИЕ: Минимальный депозит 0.3 TON вместо 3 TON
+        if (amount < 0.3) {
+            return res.status(400).json({ error: 'Минимальный депозит: 0.3 TON' });
+        }
+
+        const invoice = await cryptoPayRequest('createInvoice', {
+            asset: 'TON',
+            amount: amount.toString(),
+            description: `Deposit for user ${telegramId}`,
+            hidden_message: `Deposit ${amount} TON`,
+            payload: JSON.stringify({
+                telegram_id: telegramId,
+                demo_mode: demoMode,
+                amount: amount
+            }),
+            paid_btn_name: 'callback',
+            paid_btn_url: 'https://t.me/your_bot',
+            allow_comments: false
+        }, demoMode);
+
+        if (invoice.ok && invoice.result) {
+            // Сохраняем транзакцию как ожидающую
+            transactions.insert({
+                user_id: user.$loki,
+                amount: amount,
+                type: 'deposit',
+                status: 'pending',
+                invoice_id: invoice.result.invoice_id,
+                demo_mode: demoMode,
+                created_at: new Date()
+            });
+
+            res.json({
+                success: true,
+                invoice_url: invoice.result.pay_url,
+                invoice_id: invoice.result.invoice_id
+            });
+        } else {
+            res.status(500).json({ error: 'Failed to create invoice' });
+        }
+    } catch (error) {
+        console.error('Create invoice error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
     // API: Проверить статус инвойса
     router.post('/check-invoice', async (req, res) => {
