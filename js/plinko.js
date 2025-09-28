@@ -430,7 +430,7 @@ class PlinkoGame {
             this.ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
             
             if (ball.isRandomMode) {
-                this.ctx.fillStyle = '#ff6b35';
+                this.ctx.fillStyle = '#1e5cb8';
             } else {
                 this.ctx.fillStyle = '#1e5cb8';
             }
@@ -460,7 +460,7 @@ class PlinkoGame {
         dropButton.disabled = this.currentBet === 0 || this.currentBet > this.balance;
         
         if (this.currentBet > this.balance) {
-            dropButton.style.background = 'linear-gradient(135deg, #ff4757, #ff6b81)';
+            dropButton.style.background = 'linear-gradient(135deg, #1e5cb8, #1e5cb8)';
             dropButton.textContent = 'Недостаточно средств';
         } else {
             dropButton.style.background = 'linear-gradient(135deg, #1e5cb8, #2668b3)';
