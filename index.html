@@ -66,6 +66,42 @@
                 📤 Вывести средства
             </button>
         </div>
+
+        <!-- Секция промокодов -->
+<div class="promo-section">
+    <div class="section-title">🎁 Промокоды</div>
+    
+    <div class="promo-codes">
+        <div class="promo-item">
+            <div class="promo-code">BOOM10</div>
+            <div class="promo-info">+10% к любому депозиту</div>
+            <div class="promo-badge">Публичный</div>
+        </div>
+        
+        <div class="promo-item promo-featured">
+            <div class="promo-code">BOOM20</div>
+            <div class="promo-info">+20% к любому депозиту</div>
+            <div class="promo-badge">Стримерский</div>
+        </div>
+    </div>
+    
+    <div class="promo-input-group">
+        <input 
+            type="text" 
+            id="promo-code-input" 
+            placeholder="Введите промокод"
+            maxlength="10"
+            class="promo-input"
+        >
+        <button class="btn btn-promo" onclick="applyPromoCode()">
+            ✅ Применить
+        </button>
+    </div>
+    
+    <div class="promo-info-text">
+        💡 Промокод применяется к следующему депозиту
+    </div>
+</div>
         
         <div class="transaction-history">
             <div class="section-title">История операций</div>

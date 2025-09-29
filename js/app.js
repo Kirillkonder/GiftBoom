@@ -69,6 +69,136 @@ class TonCasinoApp {
         }
     }
 
+    async applyPromoCode() {
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const promoCode = promoCodeInput.value.trim();
+    
+    if (!promoCode) {
+        this.showError('Введите промокод');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/promo/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: this.tg.initDataUnsafe.user.id,
+                promoCode: promoCode
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Показываем успешное сообщение
+            this.showPromoSuccess(`Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`);
+            promoCodeInput.value = '';
+        } else {
+            this.showPromoError(result.error);
+        }
+    } catch (error) {
+        console.error('Apply promo error:', error);
+        this.showPromoError('Ошибка при применении промокода');
+    }
+}
+
+showPromoSuccess(message) {
+    this.hidePromoMessage();
+    
+    const successDiv = document.createElement('div');
+    successDiv.className = 'promo-success';
+    successDiv.textContent = message;
+    
+    const promoSection = document.querySelector('.promo-section');
+    promoSection.appendChild(successDiv);
+    
+    setTimeout(() => {
+        this.hidePromoMessage();
+    }, 5000);
+}
+
+showPromoError(message) {
+    this.hidePromoMessage();
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'promo-error';
+    errorDiv.textContent = message;
+    
+    const promoSection = document.querySelector('.promo-section');
+    promoSection.appendChild(errorDiv);
+    
+    setTimeout(() => {
+        this.hidePromoMessage();
+    }, 5000);
+}
+
+hidePromoMessage() {
+    const promoSection = document.querySelector('.promo-section');
+    const successMsg = promoSection.querySelector('.promo-success');
+    const errorMsg = promoSection.querySelector('.promo-error');
+    
+    if (successMsg) successMsg.remove();
+    if (errorMsg) errorMsg.remove();
+}
+
+// Обновить функцию processDeposit для передачи промокода
+async processDeposit() {
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    
+    if (!amount || amount < 0.3) {
+        this.showError('Минимальный депозит: 0.3 TON');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: this.tg.initDataUnsafe.user.id,
+                amount: amount,
+                demoMode: this.demoMode,
+                promoCode: this.activePromoCode // Добавляем промокод
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            if (this.demoMode) {
+                await this.loadUserData();
+                this.tg.showPopup({
+                    title: "✅ Демо-пополнение",
+                    message: `Демо-депозит ${amount} TON успешно зачислен!`,
+                    buttons: [{ type: "ok" }]
+                });
+            } else {
+                let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
+                if (result.bonus_applied) {
+                    message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
+                    message += `\n💎 Итого: ${result.final_amount.toFixed(2)} TON`;
+                }
+                
+                window.open(result.invoice_url, '_blank');
+                this.tg.showPopup({
+                    title: "Оплата TON",
+                    message: message,
+                    buttons: [{ type: "ok" }]
+                });
+                this.checkDepositStatus(result.invoice_id);
+            }
+            
+            closeDepositModal();
+        } else {
+            this.showError('Ошибка при создании депозита: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Deposit error:', error);
+        this.showError('Ошибка при создании депозита');
+    }
+}
+
     updateTransactionHistory(transactions) {
         const transactionsContainer = document.getElementById('transactions');
         if (transactionsContainer) {
@@ -641,6 +771,10 @@ function withdrawProfit() {
 
 function addDemoBalance() { 
     app.addDemoBalance();
+}
+
+function applyPromoCode() {
+    app.applyPromoCode();
 }
 
 // Инициализация

@@ -653,3 +653,120 @@ input[type="text"]:focus {
 
 /* Анимации для ракетки */
 
+/* Стили для промокодов */
+.promo-section {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.promo-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.promo-item {
+    background: rgba(45, 50, 62, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.promo-item.promo-featured {
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(230, 163, 54, 0.2));
+    border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
+.promo-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+.promo-info {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promo-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.promo-featured .promo-badge {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.promo-input {
+    flex: 1;
+    padding: 12px;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #f0f0f0;
+}
+
+.promo-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-promo {
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
+    width: auto;
+    padding: 12px 20px;
+}
+
+.btn-promo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.5);
+}
+
+.promo-info-text {
+    text-align: center;
+    font-size: 12px;
+    color: #a0a0a0;
+    line-height: 1.4;
+}
+
+.promo-success {
+    background: rgba(0, 184, 148, 0.2);
+    border: 1px solid rgba(0, 184, 148, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.promo-error {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}

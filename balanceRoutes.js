@@ -3,10 +3,10 @@ const router = express.Router();
 
 module.exports = function(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
 
-    // API: Создать инвойс для депозита
-    // balanceRoutes.js - исправленная функция создания инвойса
+
+// API: Создать инвойс для депозита
 router.post('/create-invoice', async (req, res) => {
-    const { telegramId, amount, demoMode } = req.body;
+    const { telegramId, amount, demoMode, promoCode } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -20,15 +20,34 @@ router.post('/create-invoice', async (req, res) => {
             return res.status(400).json({ error: 'Минимальный депозит: 0.3 TON' });
         }
 
+        let finalAmount = amount;
+        let bonusAmount = 0;
+        let appliedPromoCode = null;
+
+        // 🔥 НОВАЯ ЛОГИКА: Применяем промокод если передан
+        if (promoCode && !demoMode) {
+            const promoResult = applyPromoCode(telegramId, promoCode, amount);
+            if (promoResult.success) {
+                finalAmount = promoResult.totalAmount;
+                bonusAmount = promoResult.bonusAmount;
+                appliedPromoCode = promoCode.toUpperCase();
+                console.log(`🎁 Применен промокод ${appliedPromoCode}: +${bonusAmount.toFixed(2)} TON`);
+            }
+            // Если промокод невалидный, просто игнорируем его
+        }
+
         const invoice = await cryptoPayRequest('createInvoice', {
             asset: 'TON',
-            amount: amount.toString(),
+            amount: amount.toString(), // Отправляем исходную сумму
             description: `Deposit for user ${telegramId}`,
-            hidden_message: `Deposit ${amount} TON`,
+            hidden_message: `Deposit ${amount} TON${appliedPromoCode ? ` + ${bonusAmount.toFixed(2)} TON bonus (${appliedPromoCode})` : ''}`,
             payload: JSON.stringify({
                 telegram_id: telegramId,
                 demo_mode: demoMode,
-                amount: amount
+                amount: amount,
+                final_amount: finalAmount, // Сохраняем итоговую сумму с бонусом
+                bonus_amount: bonusAmount,
+                promo_code: appliedPromoCode
             }),
             paid_btn_name: 'callback',
             paid_btn_url: 'https://t.me/your_bot',
@@ -39,18 +58,25 @@ router.post('/create-invoice', async (req, res) => {
             // Сохраняем транзакцию как ожидающую
             transactions.insert({
                 user_id: user.$loki,
-                amount: amount,
+                amount: finalAmount, // Сохраняем итоговую сумму с бонусом
+                original_amount: amount, // Сохраняем исходную сумму
+                bonus_amount: bonusAmount,
                 type: 'deposit',
                 status: 'pending',
                 invoice_id: invoice.result.invoice_id,
                 demo_mode: demoMode,
+                promo_code: appliedPromoCode,
                 created_at: new Date()
             });
 
             res.json({
                 success: true,
                 invoice_url: invoice.result.pay_url,
-                invoice_id: invoice.result.invoice_id
+                invoice_id: invoice.result.invoice_id,
+                bonus_applied: bonusAmount > 0,
+                bonus_amount: bonusAmount,
+                final_amount: finalAmount,
+                promo_code: appliedPromoCode
             });
         } else {
             res.status(500).json({ error: 'Failed to create invoice' });
@@ -60,66 +86,76 @@ router.post('/create-invoice', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
     // API: Проверить статус инвойса
-    router.post('/check-invoice', async (req, res) => {
-        const { invoiceId, demoMode } = req.body;
+    // API: Проверить статус инвойса
+router.post('/check-invoice', async (req, res) => {
+    const { invoiceId, demoMode } = req.body;
 
-        try {
-            const invoice = await cryptoPayRequest('getInvoices', {
-                invoice_ids: invoiceId
-            }, demoMode);
+    try {
+        const invoice = await cryptoPayRequest('getInvoices', {
+            invoice_ids: invoiceId
+        }, demoMode);
 
-            if (invoice.ok && invoice.result.items.length > 0) {
-                const invoiceData = invoice.result.items[0];
+        if (invoice.ok && invoice.result.items.length > 0) {
+            const invoiceData = invoice.result.items[0];
+            
+            if (invoiceData.status === 'paid') {
+                // Находим транзакцию и обновляем баланс
+                const transaction = transactions.findOne({ invoice_id: invoiceId });
                 
-                if (invoiceData.status === 'paid') {
-                    // Находим транзакцию и обновляем баланс
-                    const transaction = transactions.findOne({ invoice_id: invoiceId });
+                if (transaction && transaction.status === 'pending') {
+                    const user = users.get(transaction.user_id);
                     
-                    if (transaction && transaction.status === 'pending') {
-                        const user = users.get(transaction.user_id);
-                        
-                        if (demoMode) {
-                            users.update({
-                                ...user,
-                                demo_balance: user.demo_balance + transaction.amount,
-                                total_deposits: (user.total_deposits || 0) + transaction.amount
-                            });
-                        } else {
-                            users.update({
-                                ...user,
-                                main_balance: user.main_balance + transaction.amount,
-                                total_deposits: (user.total_deposits || 0) + transaction.amount
-                            });
-                        }
-
-                        // Обновляем статус транзакции
-                        transactions.update({
-                            ...transaction,
-                            status: 'completed',
-                            updated_at: new Date()
-                        });
-
-                        res.json({ 
-                            success: true, 
-                            status: 'paid',
-                            amount: transaction.amount
+                    // 🔥 ОБНОВЛЕНИЕ: Используем final_amount вместо amount
+                    const depositAmount = transaction.final_amount || transaction.amount;
+                    
+                    if (demoMode) {
+                        users.update({
+                            ...user,
+                            demo_balance: user.demo_balance + depositAmount,
+                            total_deposits: (user.total_deposits || 0) + depositAmount
                         });
                     } else {
-                        res.json({ success: false, status: 'not_found' });
+                        users.update({
+                            ...user,
+                            main_balance: user.main_balance + depositAmount,
+                            total_deposits: (user.total_deposits || 0) + depositAmount
+                        });
                     }
+
+                    // Обновляем статус транзакции
+                    transactions.update({
+                        ...transaction,
+                        status: 'completed',
+                        updated_at: new Date()
+                    });
+
+                    // 🔥 ОБНОВЛЯЕМ RTP СТАТИСТИКУ
+                    if (!demoMode) {
+                        updateRTPStats('realBank', depositAmount, 0);
+                    }
+
+                    res.json({ 
+                        success: true, 
+                        status: 'paid',
+                        amount: depositAmount,
+                        bonus_amount: transaction.bonus_amount || 0,
+                        promo_code: transaction.promo_code
+                    });
                 } else {
-                    res.json({ success: true, status: invoiceData.status });
+                    res.json({ success: false, status: 'not_found' });
                 }
             } else {
-                res.json({ success: false, status: 'not_found' });
+                res.json({ success: true, status: invoiceData.status });
             }
-        } catch (error) {
-            console.error('Check invoice error:', error);
-            res.status(500).json({ error: 'Server error' });
+        } else {
+            res.json({ success: false, status: 'not_found' });
         }
-    });
+    } catch (error) {
+        console.error('Check invoice error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});;
 
     // API: Создать вывод средств
     router.post('/create-withdrawal', async (req, res) => {

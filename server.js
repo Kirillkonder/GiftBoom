@@ -190,6 +190,117 @@ function getUserDisplayName(userData) {
     return `User_${userData.telegram_id || userData.id || 'unknown'}`;
 }
 
+
+const referralSystem = {
+    promoCodes: {
+        'BOOM10': {
+            code: 'BOOM10',
+            bonusPercent: 10,
+            isPublic: true,
+            description: 'Публичный промокод +10% к депозиту',
+            usedCount: 0
+        },
+        'BOOM20': {
+            code: 'BOOM20', 
+            bonusPercent: 20,
+            isPublic: false,
+            description: 'Стримерский промокод +20% к депозиту',
+            usedCount: 0
+        }
+    },
+    userReferrals: {} // telegram_id -> промокод
+};
+
+// Функция применения промокода
+function applyPromoCode(telegramId, promoCode, depositAmount) {
+    const promo = referralSystem.promoCodes[promoCode.toUpperCase()];
+    
+    if (!promo) {
+        return { success: false, error: 'Промокод не найден' };
+    }
+    
+    // Проверяем, не использовал ли уже пользователь промокод
+    if (referralSystem.userReferrals[telegramId]) {
+        return { success: false, error: 'Вы уже использовали промокод' };
+    }
+    
+    // Применяем промокод
+    const bonusAmount = depositAmount * (promo.bonusPercent / 100);
+    referralSystem.userReferrals[telegramId] = promo.code;
+    promo.usedCount++;
+    
+    console.log(`🎁 Применен промокод ${promo.code} для пользователя ${telegramId}: +${bonusAmount.toFixed(2)} TON`);
+    
+    return {
+        success: true,
+        bonusAmount: bonusAmount,
+        bonusPercent: promo.bonusPercent,
+        totalAmount: depositAmount + bonusAmount
+    };
+}
+
+// Функция проверки промокода
+function validatePromoCode(promoCode) {
+    const promo = referralSystem.promoCodes[promoCode.toUpperCase()];
+    if (!promo) {
+        return { valid: false, error: 'Промокод не найден' };
+    }
+    return { valid: true, promo: promo };
+}
+
+// API: Применить промокод
+app.post('/api/promo/apply', async (req, res) => {
+    const { telegramId, promoCode } = req.body;
+
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const result = validatePromoCode(promoCode);
+        if (!result.valid) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        // Проверяем, не использовал ли уже пользователь промокод
+        if (referralSystem.userReferrals[telegramId]) {
+            return res.status(400).json({ error: 'Вы уже использовали промокод' });
+        }
+
+        res.json({
+            success: true,
+            promo: result.promo,
+            message: `Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`
+        });
+
+    } catch (error) {
+        console.error('Apply promo error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Получить информацию о промокодах
+app.get('/api/promo/info', async (req, res) => {
+    try {
+        const publicPromos = Object.values(referralSystem.promoCodes)
+            .filter(promo => promo.isPublic)
+            .map(promo => ({
+                code: promo.code,
+                bonusPercent: promo.bonusPercent,
+                description: promo.description
+            }));
+
+        res.json({
+            success: true,
+            promoCodes: publicPromos
+        });
+    } catch (error) {
+        console.error('Get promo info error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 function initDatabase() {
     return new Promise((resolve) => {
         db = new Loki(dbPath, {
