@@ -18,7 +18,9 @@ function checkAdminAccess(allowedAdmins) {
   };
 }
 
-module.exports = function(db, users, transactions, casinoBank, casinoDemoBank, adminLogs, minesGames, rocketGames, rocketBets, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, syncCasinoBalance) {
+module.exports = function(db, users, transactions, casinoBank, 
+  casinoDemoBank, adminLogs, minesGames, rocketGames, rocketBets, cryptoPayRequest, updateCasinoBank, 
+  updateCasinoDemoBank, syncCasinoBalance, promoCodes) {
   
   // Список разрешенных администраторов
   const allowedAdmins = [
