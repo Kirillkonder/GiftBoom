@@ -66,32 +66,6 @@
                 📤 Вывести средства
             </button>
         </div>
-
-        <div class="promo-section">
-    <div class="section-title">🎁 Промокоды</div>
-    
-    <!-- Публичный промокод -->
-    <div class="promo-card public">
-        <div class="promo-badge">BOOM10</div>
-        <div class="promo-info">
-            <div class="promo-discount">+10% к депозиту</div>
-            <div class="promo-description">Введите BOOM10 при пополнении</div>
-        </div>
-    </div>
-    
-    <!-- Стримерский промокод -->
-    <div class="promo-card streamer">
-        <div class="promo-badge">BOOM20</div>
-        <div class="promo-info">
-            <div class="promo-discount">+20% к депозиту</div>
-            <div class="promo-description">Для стримеров и партнеров</div>
-        </div>
-    </div>
-    
-    <div class="promo-instruction">
-        💡 Как использовать: Введите промокод при пополнении баланса
-    </div>
-</div>
         
         <div class="transaction-history">
             <div class="section-title">История операций</div>
@@ -127,47 +101,23 @@
     </div>
 
     <!-- Модальное окно депозита -->
-  <div id="deposit-modal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeDepositModal()">&times;</span>
-        <h3>Пополнение баланса</h3>
-        
-        <!-- Поле для промокода -->
-        <input 
-            type="text" 
-            id="promo-code" 
-            placeholder="Промокод (необязательно)"
-            maxlength="10"
-        >
-        
-        <input 
-            type="number" 
-            id="deposit-amount" 
-            placeholder="Введите сумму в TON"
-            min="0.3"
-            step="0.1"
-        >
-        
-        <!-- Информация о бонусе -->
-        <div id="bonus-info" style="display: none; background: rgba(0, 184, 148, 0.2); padding: 10px; border-radius: 8px; margin: 10px 0;">
-            <div style="color: #00b894; font-weight: bold; text-align: center;">
-                🎁 Бонус: <span id="bonus-amount">0</span> TON
-            </div>
-            <div style="color: #00b894; font-size: 12px; text-align: center;">
-                Итого: <span id="total-amount">0</span> TON
-            </div>
-        </div>
-        
-        <button class="btn btn-primary" onclick="processDeposit()">
-            ✅ Пополнить
-        </button>
-        
-        <div class="deposit-info">
-            <p><strong>Минимальный депозит: 0.3 TON</strong></p>
-            <p>Доступные промокоды: BOOM10 (+10%), BOOM20 (+20%)</p>
-            <p id="deposit-mode-info">Оплата через Crypto Pay</p>
-        </div>
-    </div>
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDepositModal()">&times;</span>
+            <h3>Пополнение баланса</h3>
+            <input 
+                type="number" 
+                id="deposit-amount" 
+                placeholder="Введите сумму в TON"
+                min="0.3"
+                step="0.1"
+            >
+            <button class="btn btn-primary" onclick="processDeposit()">
+                ✅ Пополнить
+            </button>
+            <div class="deposit-info">
+    <p><strong>Минимальный депозит: 0.3 TON</strong></p>
+    <p id="deposit-mode-info">Оплата через Crypto Pay</p>
 </div>
         </div>
     </div>

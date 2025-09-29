@@ -4,10 +4,9 @@ const router = express.Router();
 module.exports = function(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
 
     // API: Создать инвойс для депозита
-  // В balanceRoutes.js, в функции создания инвойса, добавь:
-
+    // balanceRoutes.js - исправленная функция создания инвойса
 router.post('/create-invoice', async (req, res) => {
-    const { telegramId, amount, demoMode, promoCode } = req.body; // Добавлен promoCode
+    const { telegramId, amount, demoMode } = req.body;
 
     try {
         const user = users.findOne({ telegram_id: parseInt(telegramId) });
@@ -16,33 +15,20 @@ router.post('/create-invoice', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // 🔥 ИСПРАВЛЕНИЕ: Минимальный депозит 0.3 TON вместо 3 TON
         if (amount < 0.3) {
             return res.status(400).json({ error: 'Минимальный депозит: 0.3 TON' });
         }
 
-        let bonusAmount = 0;
-        let finalAmount = amount;
-        
-        // Применяем промокод если указан
-        if (promoCode && !demoMode) {
-            const promoResult = usePromoCode(promoCode, parseInt(telegramId), amount);
-            if (promoResult.valid) {
-                bonusAmount = promoResult.bonus;
-                finalAmount = amount + bonusAmount;
-            }
-        }
-
         const invoice = await cryptoPayRequest('createInvoice', {
             asset: 'TON',
-            amount: amount.toString(), // Платим только реальную сумму
+            amount: amount.toString(),
             description: `Deposit for user ${telegramId}`,
-            hidden_message: `Deposit ${amount} TON${bonusAmount > 0 ? ` + ${bonusAmount} TON bonus` : ''}`,
+            hidden_message: `Deposit ${amount} TON`,
             payload: JSON.stringify({
                 telegram_id: telegramId,
                 demo_mode: demoMode,
-                amount: amount,
-                promo_code: promoCode,
-                bonus_amount: bonusAmount
+                amount: amount
             }),
             paid_btn_name: 'callback',
             paid_btn_url: 'https://t.me/your_bot',
@@ -50,26 +36,21 @@ router.post('/create-invoice', async (req, res) => {
         }, demoMode);
 
         if (invoice.ok && invoice.result) {
-            // Сохраняем транзакцию с информацией о бонусе
+            // Сохраняем транзакцию как ожидающую
             transactions.insert({
                 user_id: user.$loki,
-                amount: finalAmount, // Сохраняем общую сумму (депозит + бонус)
+                amount: amount,
                 type: 'deposit',
                 status: 'pending',
                 invoice_id: invoice.result.invoice_id,
                 demo_mode: demoMode,
-                promo_code: promoCode,
-                bonus_amount: bonusAmount,
-                base_amount: amount,
                 created_at: new Date()
             });
 
             res.json({
                 success: true,
                 invoice_url: invoice.result.pay_url,
-                invoice_id: invoice.result.invoice_id,
-                bonus_amount: bonusAmount,
-                final_amount: finalAmount
+                invoice_id: invoice.result.invoice_id
             });
         } else {
             res.status(500).json({ error: 'Failed to create invoice' });
