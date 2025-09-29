@@ -443,17 +443,7 @@ function initDatabase() {
                         is_active: true
                     });
                     
-                    promoCodes.insert({
-                        code: 'BOOM20',
-                        bonus_percent: 20,
-                        is_public: false,
-                        description: 'Стримерский промокод +20% к депозиту',
-                        used_count: 0,
-                        max_uses: null,
-                        created_by: 842428912,
-                        created_at: new Date(),
-                        is_active: true
-                    });
+                    
                 }
                 
                 console.log('LokiJS database initialized');
