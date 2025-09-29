@@ -294,6 +294,124 @@ function initDatabase() {
     });
 }
 
+// Добавь после инициализации базы данных в server.js
+
+// Система промокодов
+let promoCodes = {
+    "BOOM10": {
+        code: "BOOM10",
+        discount: 10, // 10%
+        type: "public",
+        used_by: [],
+        max_uses: 10000,
+        current_uses: 0,
+        active: true
+    },
+    "BOOM20": {
+        code: "BOOM20", 
+        discount: 20, // 20%
+        type: "streamer",
+        used_by: [],
+        max_uses: 10000,
+        current_uses: 0,
+        active: true
+    }
+};
+
+// Функция проверки промокода
+function validatePromoCode(code, telegramId) {
+    const promo = promoCodes[code];
+    
+    if (!promo || !promo.active) {
+        return { valid: false, error: "Промокод недействителен" };
+    }
+    
+    if (promo.used_by.includes(telegramId)) {
+        return { valid: false, error: "Вы уже использовали этот промокод" };
+    }
+    
+    if (promo.current_uses >= promo.max_uses) {
+        return { valid: false, error: "Промокод больше недействителен" };
+    }
+    
+    return { 
+        valid: true, 
+        discount: promo.discount,
+        code: promo.code
+    };
+}
+
+// Функция применения промокода
+function usePromoCode(code, telegramId, depositAmount) {
+    const validation = validatePromoCode(code, telegramId);
+    
+    if (!validation.valid) {
+        return validation;
+    }
+    
+    const promo = promoCodes[code];
+    const bonus = (depositAmount * promo.discount) / 100;
+    
+    // Обновляем статистику промокода
+    promo.used_by.push(telegramId);
+    promo.current_uses++;
+    
+    return {
+        valid: true,
+        bonus: bonus,
+        discount: promo.discount,
+        code: promo.code
+    };
+}
+
+// API: Применить промокод при депозите
+app.post('/api/promo/apply', async (req, res) => {
+    const { telegramId, promoCode, depositAmount } = req.body;
+
+    try {
+        const result = usePromoCode(promoCode, parseInt(telegramId), parseFloat(depositAmount));
+        
+        if (result.valid) {
+            res.json({
+                success: true,
+                bonus: result.bonus,
+                discount: result.discount,
+                total_amount: depositAmount + result.bonus,
+                message: `Промокод применен! +${result.bonus.toFixed(2)} TON (${result.discount}%)`
+            });
+        } else {
+            res.json({
+                success: false,
+                error: result.error
+            });
+        }
+    } catch (error) {
+        console.error('Promo code error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Получить активные промокоды
+app.get('/api/promo/active', async (req, res) => {
+    try {
+        const activePromos = Object.values(promoCodes).filter(promo => 
+            promo.active && promo.current_uses < promo.max_uses
+        );
+        
+        res.json({
+            success: true,
+            promoCodes: activePromos.map(promo => ({
+                code: promo.code,
+                discount: promo.discount,
+                type: promo.type
+            }))
+        });
+    } catch (error) {
+        console.error('Get active promos error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Функция для работы с Crypto Pay API
 async function cryptoPayRequest(method, data = {}, demoMode = false) {
   try {
