@@ -770,3 +770,133 @@ input[type="text"]:focus {
     margin-top: 10px;
     text-align: center;
 }
+
+/* Стили для админки промокодов */
+.create-promo-section {
+    background: rgba(45, 50, 62, 0.8);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.create-promo-section h4 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.checkbox-group input {
+    margin-right: 10px;
+}
+
+.checkbox-group label {
+    color: #a0a0a0;
+    font-size: 14px;
+}
+
+.promocodes-list-section h4 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
+}
+
+.promocodes-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.promocode-item {
+    background: rgba(35, 40, 52, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.promocode-item.active {
+    border-left: 4px solid #00b894;
+}
+
+.promocode-item.inactive {
+    border-left: 4px solid #ff6b6b;
+    opacity: 0.7;
+}
+
+.promocode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.promocode-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+}
+
+.promocode-status {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.promocode-details {
+    margin-bottom: 10px;
+}
+
+.promocode-bonus {
+    font-size: 16px;
+    font-weight: bold;
+    color: #00b894;
+    margin-bottom: 5px;
+}
+
+.promocode-uses {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promocode-limit {
+    font-size: 12px;
+    color: #fdcb6e;
+    margin-bottom: 5px;
+}
+
+.promocode-description {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promocode-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+.promocode-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 12px;
+    width: auto;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.no-promocodes {
+    text-align: center;
+    color: #a0a0a0;
+    padding: 20px;
+}

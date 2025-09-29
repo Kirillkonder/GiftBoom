@@ -223,5 +223,119 @@ module.exports = function(db, users, transactions, casinoBank, casinoDemoBank, a
     }
   });
 
+
+  // API: Получить все промокоды
+router.get('/admin/promocodes/:telegramId', adminMiddleware, async (req, res) => {
+    try {
+        const allPromoCodes = promoCodes.chain()
+            .simplesort('created_at', true)
+            .data();
+
+        res.json({
+            success: true,
+            promoCodes: allPromoCodes
+        });
+    } catch (error) {
+        console.error('Get promocodes error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Создать новый промокод
+router.post('/admin/promocodes/create', adminMiddleware, async (req, res) => {
+    const { telegramId, code, bonusPercent, isPublic, description, maxUses } = req.body;
+
+    try {
+        // Проверяем, не существует ли уже такой промокод
+        const existingPromo = promoCodes.findOne({ code: code.toUpperCase() });
+        if (existingPromo) {
+            return res.status(400).json({ error: 'Промокод уже существует' });
+        }
+
+        const newPromo = promoCodes.insert({
+            code: code.toUpperCase(),
+            bonus_percent: parseInt(bonusPercent),
+            is_public: Boolean(isPublic),
+            description: description || `Промокод +${bonusPercent}% к депозиту`,
+            used_count: 0,
+            max_uses: maxUses ? parseInt(maxUses) : null,
+            created_by: parseInt(telegramId),
+            created_at: new Date(),
+            is_active: true
+        });
+
+        logAdminAction('create_promocode', telegramId, { 
+            code: code.toUpperCase(),
+            bonus_percent: bonusPercent
+        });
+
+        res.json({
+            success: true,
+            promoCode: newPromo,
+            message: `Промокод ${code.toUpperCase()} создан успешно!`
+        });
+    } catch (error) {
+        console.error('Create promocode error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Удалить промокод
+router.post('/admin/promocodes/delete', adminMiddleware, async (req, res) => {
+    const { telegramId, code } = req.body;
+
+    try {
+        const promo = promoCodes.findOne({ code: code.toUpperCase() });
+        if (!promo) {
+            return res.status(404).json({ error: 'Промокод не найден' });
+        }
+
+        promoCodes.remove(promo);
+
+        logAdminAction('delete_promocode', telegramId, { 
+            code: code.toUpperCase()
+        });
+
+        res.json({
+            success: true,
+            message: `Промокод ${code.toUpperCase()} удален`
+        });
+    } catch (error) {
+        console.error('Delete promocode error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// API: Активировать/деактивировать промокод
+router.post('/admin/promocodes/toggle', adminMiddleware, async (req, res) => {
+    const { telegramId, code } = req.body;
+
+    try {
+        const promo = promoCodes.findOne({ code: code.toUpperCase() });
+        if (!promo) {
+            return res.status(404).json({ error: 'Промокод не найден' });
+        }
+
+        promoCodes.update({
+            ...promo,
+            is_active: !promo.is_active
+        });
+
+        logAdminAction('toggle_promocode', telegramId, { 
+            code: code.toUpperCase(),
+            new_status: !promo.is_active
+        });
+
+        res.json({
+            success: true,
+            is_active: !promo.is_active,
+            message: `Промокод ${code.toUpperCase()} ${!promo.is_active ? 'активирован' : 'деактивирован'}`
+        });
+    } catch (error) {
+        console.error('Toggle promocode error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
   return router;
 };

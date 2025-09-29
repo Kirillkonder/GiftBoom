@@ -773,6 +773,168 @@ function addDemoBalance() {
     app.addDemoBalance();
 }
 
+async function openPromoCodesAdmin() {
+    document.getElementById('promocodes-admin-modal').style.display = 'block';
+    await loadPromoCodesAdmin();
+}
+
+// Функция для загрузки списка промокодов
+async function loadPromoCodesAdmin() {
+    try {
+        const response = await fetch(`/api/admin/promocodes/${app.tg.initDataUnsafe.user.id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            renderPromoCodesList(result.promoCodes);
+        }
+    } catch (error) {
+        console.error('Load promocodes error:', error);
+        alert('Ошибка загрузки промокодов');
+    }
+}
+
+// Функция для отображения списка промокодов
+function renderPromoCodesList(promoCodes) {
+    const container = document.getElementById('promocodes-list');
+    if (!container) return;
+
+    if (promoCodes.length === 0) {
+        container.innerHTML = '<div class="no-promocodes">Нет созданных промокодов</div>';
+        return;
+    }
+
+    container.innerHTML = promoCodes.map(promo => `
+        <div class="promocode-item ${promo.is_active ? 'active' : 'inactive'}">
+            <div class="promocode-header">
+                <div class="promocode-code">${promo.code}</div>
+                <div class="promocode-status">${promo.is_active ? '🟢 Активен' : '🔴 Неактивен'}</div>
+            </div>
+            <div class="promocode-details">
+                <div class="promocode-bonus">+${promo.bonus_percent}% к депозиту</div>
+                <div class="promocode-uses">Использован: ${promo.used_count} раз</div>
+                ${promo.max_uses ? `<div class="promocode-limit">Лимит: ${promo.max_uses} использований</div>` : ''}
+                <div class="promocode-description">${promo.description}</div>
+                <div class="promocode-meta">
+                    Создан: ${new Date(promo.created_at).toLocaleDateString()}
+                    ${promo.is_public ? '• 📢 Публичный' : '• 🔒 Приватный'}
+                </div>
+            </div>
+            <div class="promocode-actions">
+                <button class="btn btn-small ${promo.is_active ? 'btn-secondary' : 'btn-primary'}" 
+                        onclick="togglePromoCode('${promo.code}')">
+                    ${promo.is_active ? 'Деактивировать' : 'Активировать'}
+                </button>
+                <button class="btn btn-small btn-danger" 
+                        onclick="deletePromoCode('${promo.code}')">
+                    Удалить
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Функция для создания нового промокода
+async function createNewPromoCode() {
+    const code = document.getElementById('new-promo-code').value.trim();
+    const bonusPercent = document.getElementById('new-promo-percent').value;
+    const isPublic = document.getElementById('new-promo-public').checked;
+    const description = document.getElementById('new-promo-description').value;
+    const maxUses = document.getElementById('new-promo-max-uses').value;
+
+    if (!code || !bonusPercent) {
+        alert('Заполните код и процент бонуса');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/promocodes/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: app.tg.initDataUnsafe.user.id,
+                code: code,
+                bonusPercent: bonusPercent,
+                isPublic: isPublic,
+                description: description,
+                maxUses: maxUses || null
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            document.getElementById('new-promo-code').value = '';
+            document.getElementById('new-promo-percent').value = '';
+            document.getElementById('new-promo-description').value = '';
+            document.getElementById('new-promo-max-uses').value = '';
+            await loadPromoCodesAdmin();
+        } else {
+            alert('Ошибка: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Create promocode error:', error);
+        alert('Ошибка при создании промокода');
+    }
+}
+
+// Функция для удаления промокода
+async function deletePromoCode(code) {
+    if (!confirm(`Удалить промокод ${code}?`)) return;
+
+    try {
+        const response = await fetch('/api/admin/promocodes/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: app.tg.initDataUnsafe.user.id,
+                code: code
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            await loadPromoCodesAdmin();
+        } else {
+            alert('Ошибка: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Delete promocode error:', error);
+        alert('Ошибка при удалении промокода');
+    }
+}
+
+// Функция для активации/деактивации промокода
+async function togglePromoCode(code) {
+    try {
+        const response = await fetch('/api/admin/promocodes/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: app.tg.initDataUnsafe.user.id,
+                code: code
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            await loadPromoCodesAdmin();
+        } else {
+            alert('Ошибка: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Toggle promocode error:', error);
+        alert('Ошибка при изменении статуса промокода');
+    }
+}
+
+function closePromoCodesAdmin() {
+    document.getElementById('promocodes-admin-modal').style.display = 'none';
+}
+
 function applyPromoCode() {
     app.applyPromoCode();
 }

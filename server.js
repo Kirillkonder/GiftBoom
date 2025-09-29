@@ -213,38 +213,64 @@ const referralSystem = {
 
 // Функция применения промокода
 function applyPromoCode(telegramId, promoCode, depositAmount) {
-    const promo = referralSystem.promoCodes[promoCode.toUpperCase()];
+    const promo = promoCodes.findOne({ 
+        code: promoCode.toUpperCase(),
+        is_active: true 
+    });
     
     if (!promo) {
-        return { success: false, error: 'Промокод не найден' };
+        return { success: false, error: 'Промокод не найден или неактивен' };
     }
-    
+
+    // Проверяем лимит использований
+    if (promo.max_uses && promo.used_count >= promo.max_uses) {
+        return { success: false, error: 'Лимит использований промокода исчерпан' };
+    }
+
     // Проверяем, не использовал ли уже пользователь промокод
     if (referralSystem.userReferrals[telegramId]) {
         return { success: false, error: 'Вы уже использовали промокод' };
     }
-    
+
     // Применяем промокод
-    const bonusAmount = depositAmount * (promo.bonusPercent / 100);
+    const bonusAmount = depositAmount * (promo.bonus_percent / 100);
+    
+    // Обновляем счетчик использований
+    promoCodes.update({
+        ...promo,
+        used_count: promo.used_count + 1
+    });
+
     referralSystem.userReferrals[telegramId] = promo.code;
-    promo.usedCount++;
     
     console.log(`🎁 Применен промокод ${promo.code} для пользователя ${telegramId}: +${bonusAmount.toFixed(2)} TON`);
     
     return {
         success: true,
         bonusAmount: bonusAmount,
-        bonusPercent: promo.bonusPercent,
-        totalAmount: depositAmount + bonusAmount
+        bonusPercent: promo.bonus_percent,
+        totalAmount: depositAmount + bonusAmount,
+        promo: promo
     };
 }
 
+
 // Функция проверки промокода
 function validatePromoCode(promoCode) {
-    const promo = referralSystem.promoCodes[promoCode.toUpperCase()];
+    const promo = promoCodes.findOne({ 
+        code: promoCode.toUpperCase(),
+        is_active: true 
+    });
+    
     if (!promo) {
         return { valid: false, error: 'Промокод не найден' };
     }
+
+    // Проверяем лимит использований
+    if (promo.max_uses && promo.used_count >= promo.max_uses) {
+        return { valid: false, error: 'Лимит использований промокода исчерпан' };
+    }
+
     return { valid: true, promo: promo };
 }
 
@@ -393,6 +419,38 @@ function initDatabase() {
                 if (!rocketBets) {
                     rocketBets = db.addCollection('rocket_bets', {
                         indices: ['game_id', 'user_id', 'created_at']
+                    });
+                }
+
+                if (!promoCodes) {
+                    promoCodes = db.addCollection('promo_codes', {
+                        indices: ['code', 'created_by'],
+                        unique: ['code']
+                    });
+                    
+                    // Создаем дефолтные промокоды
+                    promoCodes.insert({
+                        code: 'BOOM10',
+                        bonus_percent: 10,
+                        is_public: true,
+                        description: 'Публичный промокод +10% к депозиту',
+                        used_count: 0,
+                        max_uses: null,
+                        created_by: 842428912,
+                        created_at: new Date(),
+                        is_active: true
+                    });
+                    
+                    promoCodes.insert({
+                        code: 'BOOM20',
+                        bonus_percent: 20,
+                        is_public: false,
+                        description: 'Стримерский промокод +20% к депозиту',
+                        used_count: 0,
+                        max_uses: null,
+                        created_by: 842428912,
+                        created_at: new Date(),
+                        is_active: true
                     });
                 }
                 
