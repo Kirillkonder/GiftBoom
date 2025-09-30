@@ -131,6 +131,24 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.user-info-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-id {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.user-nickname {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
 .demo-badge {
     position: absolute;
     top: 15px;
@@ -166,7 +184,7 @@ body {
 }
 
 .games-section,
-.deposit-section,
+.balance-control-section,
 .transaction-history {
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
@@ -200,12 +218,22 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
+    padding: 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(45, 50, 62, 0.8);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .transaction-item:last-child {
     border-bottom: none;
+    margin-bottom: 0;
 }
 
 .transaction-info {
@@ -215,6 +243,8 @@ body {
 .transaction-type {
     font-weight: bold;
     color: #f0f0f0;
+    font-size: 16px;
+    margin-bottom: 5px;
 }
 
 .transaction-date {
@@ -224,21 +254,27 @@ body {
 
 .transaction-amount {
     font-weight: bold;
-    font-size: 16px;
+    font-size: 18px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .transaction-positive {
     color: #00b894;
+    background: rgba(0, 184, 148, 0.2);
 }
 
 .transaction-negative {
     color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.2);
 }
 
 .no-transactions {
     text-align: center;
     color: #a0a0a0;
     padding: 20px;
+    font-style: italic;
 }
 
 /* Нижнее игровое меню */
@@ -439,6 +475,14 @@ input[type="text"]:focus {
     .game-name {
         font-size: 9px;
     }
+    
+    .transaction-item {
+        padding: 12px;
+    }
+    
+    .transaction-amount {
+        font-size: 16px;
+    }
 }
 
 /* Animation for buttons */
@@ -469,10 +513,7 @@ input[type="text"]:focus {
     background: rgba(102, 126, 234, 0.7);
 }
 
-
-/* Существующие стили остаются без изменений */
-
-/* Новые стили для Mines */
+/* Стили для Mines */
 .mines-container {
     max-width: 600px;
     margin: 0 auto;
@@ -598,9 +639,6 @@ input[type="text"]:focus {
     color: white;
 }
 
-
-
-
 .rocket-game {
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
@@ -609,16 +647,6 @@ input[type="text"]:focus {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-
-
-
-
-
-
-
-
-/* Rocket specific styles */
-
 .back-button {
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -632,26 +660,6 @@ input[type="text"]:focus {
 .back-button:hover {
     background: rgba(255, 255, 255, 0.2);
 }
-
-
-/* Rocket specific styles */
-
-
-.back-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Анимации для ракетки */
 
 /* Стили для промокодов */
 .promo-section {
@@ -771,15 +779,15 @@ input[type="text"]:focus {
     text-align: center;
 }
 
-/* Стили для админки промокодов */
+/* Стили для админ-панели промокодов */
 .create-promo-section {
-    background: rgba(45, 50, 62, 0.8);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.create-promo-section h4 {
+.create-promo-section h4,
+.promocodes-list-section h4 {
     margin-bottom: 15px;
     color: #f0f0f0;
 }
@@ -787,11 +795,12 @@ input[type="text"]:focus {
 .checkbox-group {
     display: flex;
     align-items: center;
+    gap: 10px;
     margin: 10px 0;
 }
 
-.checkbox-group input {
-    margin-right: 10px;
+.checkbox-group input[type="checkbox"] {
+    width: auto;
 }
 
 .checkbox-group label {
@@ -799,104 +808,90 @@ input[type="text"]:focus {
     font-size: 14px;
 }
 
-.promocodes-list-section h4 {
-    margin-bottom: 15px;
-    color: #f0f0f0;
-}
-
 .promocodes-list {
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
+    margin-bottom: 15px;
 }
 
-.promocode-item {
-    background: rgba(35, 40, 52, 0.8);
+.promocode-admin-item {
+    background: rgba(45, 50, 62, 0.8);
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.promocode-item.active {
-    border-left: 4px solid #00b894;
-}
-
-.promocode-item.inactive {
-    border-left: 4px solid #ff6b6b;
-    opacity: 0.7;
-}
-
-.promocode-header {
+.promocode-admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
-.promocode-code {
-    font-size: 18px;
+.promocode-admin-code {
+    font-size: 16px;
     font-weight: bold;
     color: #f0f0f0;
     font-family: 'Courier New', monospace;
 }
 
-.promocode-status {
-    font-size: 12px;
+.promocode-admin-badge {
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
     font-weight: bold;
 }
 
-.promocode-details {
+.promocode-admin-badge.public {
+    background: linear-gradient(135deg, #00b894, #008066);
+}
+
+.promocode-admin-badge.private {
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+}
+
+.promocode-admin-details {
+    font-size: 12px;
+    color: #a0a0a0;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.promocode-admin-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #a0a0a0;
     margin-bottom: 10px;
 }
 
-.promocode-bonus {
-    font-size: 16px;
-    font-weight: bold;
-    color: #00b894;
-    margin-bottom: 5px;
-}
-
-.promocode-uses {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 5px;
-}
-
-.promocode-limit {
-    font-size: 12px;
-    color: #fdcb6e;
-    margin-bottom: 5px;
-}
-
-.promocode-description {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 5px;
-}
-
-.promocode-meta {
-    font-size: 12px;
-    color: #666;
-}
-
-.promocode-actions {
+.promocode-admin-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
 }
 
 .btn-small {
-    padding: 8px 12px;
+    padding: 6px 12px;
     font-size: 12px;
     width: auto;
+    margin: 0;
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    background: linear-gradient(135deg, #ff6b6b, #e74c3c);
+    color: white;
 }
 
-.no-promocodes {
-    text-align: center;
-    color: #a0a0a0;
-    padding: 20px;
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+}
+
+.btn-admin-promo {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: white;
+    width: 100%;
 }
