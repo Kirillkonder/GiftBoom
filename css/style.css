@@ -16,47 +16,47 @@ body {
     margin: 0 auto;
     padding: 15px;
     min-height: 100vh;
-    padding-bottom: 70px; /* Уменьшено для нижнего меню */
+    padding-bottom: 70px;
 }
 
 .header {
     text-align: center;
-    margin-bottom: 15px; /* Уменьшено */
-    padding: 12px; /* Уменьшено */
+    margin-bottom: 8px;
+    padding: 12px;
     background: rgba(25, 30, 42, 0.95);
-    border-radius: 15px; /* Уменьшено */
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3); /* Уменьшено */
+    border-radius: 15px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header h1 {
-    font-size: 22px; /* Уменьшено */
+    font-size: 22px;
     color: #f0f0f0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .header p {
     color: #a0a0a0;
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
 }
 
 .mode-switcher {
     display: none;
-    margin: 12px 0; /* Уменьшено */
-    padding: 8px; /* Уменьшено */
+    margin: 12px 0;
+    padding: 8px;
     background: #1e0b0b;
-    border-radius: 8px; /* Уменьшено */
+    border-radius: 8px;
     text-align: center;
 }
 
 .mode-badge {
     display: inline-block;
-    padding: 5px 10px; /* Уменьшено */
-    border-radius: 15px; /* Уменьшено */
-    font-size: 11px; /* Уменьшено */
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 11px;
     font-weight: bold;
-    margin-bottom: 8px; /* Уменьшено */
+    margin-bottom: 8px;
 }
 
 .mode-badge.mainnet {
@@ -70,23 +70,23 @@ body {
 }
 
 .mode-info {
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
     color: #a0a0a0;
-    margin-bottom: 8px; /* Уменьшено */
+    margin-bottom: 8px;
 }
 
 .btn {
     display: inline-block;
-    padding: 10px 20px; /* Уменьшено */
+    padding: 10px 20px;
     border: none;
-    border-radius: 10px; /* Уменьшено */
-    font-size: 13px; /* Уменьшено */
+    border-radius: 10px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.3s ease;
-    margin: 4px; /* Уменьшено */
-    width: calc(100% - 8px); /* Уменьшено */
+    margin: 4px;
+    width: calc(100% - 8px);
 }
 
 .btn-primary {
@@ -96,7 +96,7 @@ body {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5); /* Уменьшено */
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 .btn-secondary {
@@ -106,7 +106,7 @@ body {
 
 .btn-secondary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(253, 121, 168, 0.5); /* Уменьшено */
+    box-shadow: 0 6px 20px rgba(253, 121, 168, 0.5);
 }
 
 .btn-mode {
@@ -117,52 +117,52 @@ body {
 .btn-admin {
     background: linear-gradient(135deg, #fdcb6e, #e6a336);
     color: white;
-    margin-bottom: 12px; /* Уменьшено */
+    margin-bottom: 8px;
 }
 
 /* Карточка профиля и баланса */
 .profile-card {
     background: rgba(25, 30, 42, 0.95);
-    border-radius: 15px; /* Уменьшено */
-    padding: 20px; /* Уменьшено */
+    border-radius: 15px;
+    padding: 20px;
     text-align: center;
-    margin-bottom: 15px; /* Уменьшено */
+    margin-bottom: 8px;
     position: relative;
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2); /* Уменьшено */
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .demo-badge {
     position: absolute;
-    top: 12px; /* Уменьшено */
-    right: 12px; /* Уменьшено */
+    top: 12px;
+    right: 12px;
     background: linear-gradient(135deg, #fdcb6e, #e6a336);
     color: #1a1a1a;
-    padding: 3px 6px; /* Уменьшено */
-    border-radius: 8px; /* Уменьшено */
-    font-size: 9px; /* Уменьшено */
+    padding: 3px 6px;
+    border-radius: 8px;
+    font-size: 9px;
     font-weight: bold;
 }
 
 .balance-section {
-    margin: 15px 0; /* Уменьшено */
+    margin: 15px 0;
 }
 
 .balance-label {
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
     color: #a0a0a0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .balance-amount {
-    font-size: 42px; /* Уменьшено */
+    font-size: 42px;
     font-weight: bold;
     color: #f0f0f0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .balance-currency {
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
     color: #a0a0a0;
 }
 
@@ -170,41 +170,70 @@ body {
 .games-section,
 .promo-section,
 .transaction-history {
-    padding: 15px; /* Уменьшено */
-    margin-bottom: 15px; /* Уменьшено */
+    padding: 15px;
+    margin-bottom: 8px;
     text-align: center;
 }
 
 .section-title {
-    font-size: 16px; /* Уменьшено */
+    font-size: 16px;
     font-weight: bold;
     color: #f0f0f0;
-    margin-bottom: 12px; /* Уменьшено */
+    margin-bottom: 12px;
     text-align: center;
 }
 
 .game-info {
     text-align: center;
     color: #a0a0a0;
-    font-size: 13px; /* Уменьшено */
-    line-height: 1.4; /* Уменьшено */
-    margin-bottom: 12px; /* Уменьшено */
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 12px;
 }
 
 .transaction-history {
-    max-height: 280px; /* Уменьшено */
+    max-height: 280px;
     overflow-y: auto;
+    background: rgba(25, 30, 42, 0.5);
+    border-radius: 15px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .transaction-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px; /* Уменьшено */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(25, 30, 42, 0.8);
-    border-radius: 8px; /* Уменьшено */
-    margin-bottom: 6px; /* Уменьшено */
+    padding: 12px;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    background: linear-gradient(135deg, rgba(45, 50, 62, 0.9), rgba(35, 40, 52, 0.9));
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.transaction-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: linear-gradient(180deg, #667eea, #5a6fd8);
+    transition: width 0.3s ease;
+}
+
+.transaction-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.transaction-item:hover::before {
+    width: 100%;
+    opacity: 0.1;
 }
 
 .transaction-item:last-child {
@@ -214,35 +243,41 @@ body {
 
 .transaction-info {
     flex: 1;
+    text-align: left;
 }
 
 .transaction-type {
     font-weight: bold;
     color: #f0f0f0;
+    font-size: 14px;
+    margin-bottom: 4px;
 }
 
 .transaction-date {
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     color: #a0a0a0;
 }
 
 .transaction-amount {
     font-weight: bold;
-    font-size: 15px; /* Уменьшено */
+    font-size: 16px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .transaction-positive {
     color: #00b894;
+    text-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
 }
 
 .transaction-negative {
     color: #ff6b6b;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
 }
 
 .no-transactions {
     text-align: center;
     color: #a0a0a0;
-    padding: 15px; /* Уменьшено */
+    padding: 15px;
 }
 
 /* Нижнее игровое меню */
@@ -256,7 +291,7 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-around;
-    padding: 8px 0; /* Уменьшено */
+    padding: 8px 0;
     z-index: 1000;
 }
 
@@ -264,11 +299,11 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 6px 10px; /* Уменьшено */
+    padding: 6px 10px;
     cursor: pointer;
     transition: all 0.3s ease;
-    border-radius: 8px; /* Уменьшено */
-    min-width: 55px; /* Уменьшено */
+    border-radius: 8px;
+    min-width: 55px;
 }
 
 .game-menu-item:hover {
@@ -281,12 +316,12 @@ body {
 }
 
 .game-icon {
-    font-size: 22px; /* Уменьшено */
-    margin-bottom: 3px; /* Уменьшено */
+    font-size: 22px;
+    margin-bottom: 3px;
 }
 
 .game-name {
-    font-size: 9px; /* Уменьшено */
+    font-size: 9px;
     color: #a0a0a0;
     text-align: center;
     font-weight: 500;
@@ -307,21 +342,21 @@ body {
 
 .modal-content {
     background: #191e2a;
-    margin: 8% auto; /* Уменьшено */
-    padding: 20px; /* Уменьшено */
-    border-radius: 15px; /* Уменьшено */
+    margin: 8% auto;
+    padding: 20px;
+    border-radius: 15px;
     width: 90%;
     max-width: 350px;
     position: relative;
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4); /* Уменьшено */
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .close {
     position: absolute;
-    right: 15px; /* Уменьшено */
-    top: 12px; /* Уменьшено */
-    font-size: 26px; /* Уменьшено */
+    right: 15px;
+    top: 12px;
+    font-size: 26px;
     font-weight: bold;
     cursor: pointer;
     color: #a0a0a0;
@@ -329,19 +364,19 @@ body {
 
 .modal h3 {
     text-align: center;
-    margin-bottom: 15px; /* Уменьшено */
+    margin-bottom: 15px;
     color: #f0f0f0;
 }
 
 input[type="number"],
 input[type="text"] {
     width: 100%;
-    padding: 12px; /* Уменьшено */
+    padding: 12px;
     background: rgba(35, 40, 52, 0.8);
     border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px; /* Уменьшено */
-    font-size: 15px; /* Уменьшено */
-    margin-bottom: 12px; /* Уменьшено */
+    border-radius: 10px;
+    font-size: 15px;
+    margin-bottom: 12px;
     transition: border-color 0.3s ease;
     color: #f0f0f0;
 }
@@ -355,30 +390,30 @@ input[type="text"]:focus {
 .deposit-info,
 .withdraw-info {
     text-align: center;
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     color: #a0a0a0;
-    margin-top: 12px; /* Уменьшено */
-    line-height: 1.3; /* Уменьшено */
+    margin-top: 12px;
+    line-height: 1.3;
 }
 
 /* Стили для контента игр */
 .game-content {
     text-align: center;
-    padding: 15px 0; /* Уменьшено */
+    padding: 15px 0;
     color: #a0a0a0;
-    line-height: 1.5; /* Уменьшено */
+    line-height: 1.5;
 }
 
 /* Admin Panel Styles */
 .admin-stats {
-    margin: 15px 0; /* Уменьшено */
+    margin: 15px 0;
 }
 
 .admin-stat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0; /* Уменьшено */
+    padding: 8px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -398,16 +433,16 @@ input[type="text"]:focus {
 
 .admin-warning {
     text-align: center;
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     color: #ff6b6b;
-    margin-top: 12px; /* Уменьшено */
+    margin-top: 12px;
     font-weight: bold;
 }
 
 /* Responsive Design */
 @media (max-width: 480px) {
     .container {
-        padding: 12px; /* Уменьшено */
+        padding: 12px;
     }
     
     .balance-amount {
@@ -415,16 +450,16 @@ input[type="text"]:focus {
     }
     
     .modal-content {
-        margin: 15% auto; /* Уменьшено */
+        margin: 15% auto;
         width: 95%;
     }
     
     .games-menu {
-        padding: 6px 0; /* Уменьшено */
+        padding: 6px 0;
     }
     
     .game-menu-item {
-        padding: 5px 7px; /* Уменьшено */
+        padding: 5px 7px;
         min-width: 50px;
     }
     
@@ -469,14 +504,14 @@ input[type="text"]:focus {
 .promo-codes {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Уменьшено */
-    margin-bottom: 12px; /* Уменьшено */
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .promo-item {
     background: rgba(45, 50, 62, 0.8);
-    border-radius: 10px; /* Уменьшено */
-    padding: 12px; /* Уменьшено */
+    border-radius: 10px;
+    padding: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
 }
@@ -487,28 +522,28 @@ input[type="text"]:focus {
 }
 
 .promo-code {
-    font-size: 16px; /* Уменьшено */
+    font-size: 16px;
     font-weight: bold;
     color: #f0f0f0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
     font-family: 'Courier New', monospace;
 }
 
 .promo-info {
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
     color: #a0a0a0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .promo-badge {
     position: absolute;
-    top: 8px; /* Уменьшено */
-    right: 8px; /* Уменьшено */
+    top: 8px;
+    right: 8px;
     background: linear-gradient(135deg, #667eea, #5a6fd8);
     color: white;
-    padding: 3px 6px; /* Уменьшено */
-    border-radius: 6px; /* Уменьшено */
-    font-size: 9px; /* Уменьшено */
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-size: 9px;
     font-weight: bold;
 }
 
@@ -518,17 +553,17 @@ input[type="text"]:focus {
 
 .promo-input-group {
     display: flex;
-    gap: 8px; /* Уменьшено */
-    margin-bottom: 8px; /* Уменьшено */
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .promo-input {
     flex: 1;
-    padding: 10px; /* Уменьшено */
+    padding: 10px;
     background: rgba(35, 40, 52, 0.8);
     border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px; /* Уменьшено */
-    font-size: 13px; /* Уменьшено */
+    border-radius: 6px;
+    font-size: 13px;
     color: #f0f0f0;
 }
 
@@ -541,82 +576,82 @@ input[type="text"]:focus {
     background: linear-gradient(135deg, #00b894, #008066);
     color: white;
     width: auto;
-    padding: 10px 16px; /* Уменьшено */
+    padding: 10px 16px;
 }
 
 .btn-promo:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.5); /* Уменьшено */
+    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.5);
 }
 
 .promo-info-text {
     text-align: center;
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     color: #a0a0a0;
-    line-height: 1.3; /* Уменьшено */
+    line-height: 1.3;
 }
 
 .promo-success {
     background: rgba(0, 184, 148, 0.2);
     border: 1px solid rgba(0, 184, 148, 0.5);
-    padding: 8px; /* Уменьшено */
-    border-radius: 6px; /* Уменьшено */
-    margin-top: 8px; /* Уменьшено */
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 8px;
     text-align: center;
 }
 
 .promo-error {
     background: rgba(255, 107, 107, 0.2);
     border: 1px solid rgba(255, 107, 107, 0.5);
-    padding: 8px; /* Уменьшено */
-    border-radius: 6px; /* Уменьшено */
-    margin-top: 8px; /* Уменьшено */
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 8px;
     text-align: center;
 }
 
 /* Стили для админки промокодов */
 .create-promo-section {
     background: rgba(45, 50, 62, 0.8);
-    padding: 12px; /* Уменьшено */
-    border-radius: 10px; /* Уменьшено */
-    margin-bottom: 15px; /* Уменьшено */
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
 }
 
 .create-promo-section h4 {
-    margin-bottom: 12px; /* Уменьшено */
+    margin-bottom: 12px;
     color: #f0f0f0;
 }
 
 .checkbox-group {
     display: flex;
     align-items: center;
-    margin: 8px 0; /* Уменьшено */
+    margin: 8px 0;
 }
 
 .checkbox-group input {
-    margin-right: 8px; /* Уменьшено */
+    margin-right: 8px;
 }
 
 .checkbox-group label {
     color: #a0a0a0;
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
 }
 
 .promocodes-list-section h4 {
-    margin-bottom: 12px; /* Уменьшено */
+    margin-bottom: 12px;
     color: #f0f0f0;
 }
 
 .promocodes-list {
-    max-height: 380px; /* Уменьшено */
+    max-height: 380px;
     overflow-y: auto;
 }
 
 .promocode-item {
     background: rgba(35, 40, 52, 0.8);
-    border-radius: 10px; /* Уменьшено */
-    padding: 12px; /* Уменьшено */
-    margin-bottom: 8px; /* Уменьшено */
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -633,64 +668,64 @@ input[type="text"]:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px; /* Уменьшено */
+    margin-bottom: 8px;
 }
 
 .promocode-code {
-    font-size: 16px; /* Уменьшено */
+    font-size: 16px;
     font-weight: bold;
     color: #f0f0f0;
     font-family: 'Courier New', monospace;
 }
 
 .promocode-status {
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     font-weight: bold;
 }
 
 .promocode-details {
-    margin-bottom: 8px; /* Уменьшено */
+    margin-bottom: 8px;
 }
 
 .promocode-bonus {
-    font-size: 15px; /* Уменьшено */
+    font-size: 15px;
     font-weight: bold;
     color: #00b894;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .promocode-uses {
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
     color: #a0a0a0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .promocode-limit {
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     color: #fdcb6e;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .promocode-description {
-    font-size: 13px; /* Уменьшено */
+    font-size: 13px;
     color: #a0a0a0;
-    margin-bottom: 3px; /* Уменьшено */
+    margin-bottom: 3px;
 }
 
 .promocode-meta {
-    font-size: 11px; /* Уменьшено */
+    font-size: 11px;
     color: #666;
 }
 
 .promocode-actions {
     display: flex;
-    gap: 8px; /* Уменьшено */
-    margin-top: 8px; /* Уменьшено */
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .btn-small {
-    padding: 6px 10px; /* Уменьшено */
-    font-size: 11px; /* Уменьшено */
+    padding: 6px 10px;
+    font-size: 11px;
     width: auto;
 }
 
@@ -701,5 +736,5 @@ input[type="text"]:focus {
 .no-promocodes {
     text-align: center;
     color: #a0a0a0;
-    padding: 15px; /* Уменьшено */
+    padding: 15px;
 }
