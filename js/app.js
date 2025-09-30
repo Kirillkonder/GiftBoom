@@ -145,6 +145,7 @@ hidePromoMessage() {
 // Обновить функцию processDeposit для передачи промокода
 async processDeposit() {
     const amount = parseFloat(document.getElementById('deposit-amount').value);
+    const promoCode = document.getElementById('promo-code-input')?.value.trim() || '';
     
     if (!amount || amount < 0.3) {
         this.showError('Минимальный депозит: 0.3 TON');
@@ -159,7 +160,7 @@ async processDeposit() {
                 telegramId: this.tg.initDataUnsafe.user.id,
                 amount: amount,
                 demoMode: this.demoMode,
-                promoCode: this.activePromoCode // Добавляем промокод
+                promoCode: promoCode
             })
         });
 
@@ -178,6 +179,8 @@ async processDeposit() {
                 if (result.bonus_applied) {
                     message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
                     message += `\n💎 Итого: ${result.final_amount.toFixed(2)} TON`;
+                    // Очищаем поле промокода после успешного применения
+                    document.getElementById('promo-code-input').value = '';
                 }
                 
                 window.open(result.invoice_url, '_blank');

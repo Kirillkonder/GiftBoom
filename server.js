@@ -228,12 +228,19 @@ function applyPromoCode(telegramId, promoCode, depositAmount) {
     }
 
     // Проверяем, не использовал ли уже пользователь промокод
-    if (referralSystem.userReferrals[telegramId]) {
-        return { success: false, error: 'Вы уже использовали промокод' };
+    const userUsedPromo = transactions.findOne({
+        user_id: users.findOne({ telegram_id: parseInt(telegramId) }).$loki,
+        promo_code: promo.code,
+        status: 'completed'
+    });
+
+    if (userUsedPromo) {
+        return { success: false, error: 'Вы уже использовали этот промокод' };
     }
 
     // Применяем промокод
     const bonusAmount = depositAmount * (promo.bonus_percent / 100);
+    const totalAmount = depositAmount + bonusAmount;
     
     // Обновляем счетчик использований
     promoCodes.update({
@@ -241,18 +248,17 @@ function applyPromoCode(telegramId, promoCode, depositAmount) {
         used_count: promo.used_count + 1
     });
 
-    referralSystem.userReferrals[telegramId] = promo.code;
-    
-    console.log(`🎁 Применен промокод ${promo.code} для пользователя ${telegramId}: +${bonusAmount.toFixed(2)} TON`);
+    console.log(`🎁 Применен промокод ${promo.code} для пользователя ${telegramId}: +${bonusAmount.toFixed(2)} TON (${promo.bonus_percent}%)`);
     
     return {
         success: true,
         bonusAmount: bonusAmount,
         bonusPercent: promo.bonus_percent,
-        totalAmount: depositAmount + bonusAmount,
+        totalAmount: totalAmount,
         promo: promo
     };
 }
+
 
 
 // Функция проверки промокода
@@ -271,7 +277,17 @@ function validatePromoCode(promoCode) {
         return { valid: false, error: 'Лимит использований промокода исчерпан' };
     }
 
-    return { valid: true, promo: promo };
+    return { 
+        valid: true, 
+        promo: {
+            code: promo.code,
+            bonus_percent: promo.bonus_percent,
+            description: promo.description,
+            used_count: promo.used_count,
+            max_uses: promo.max_uses,
+            is_public: promo.is_public
+        } 
+    };
 }
 
 // API: Применить промокод
