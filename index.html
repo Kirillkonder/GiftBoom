@@ -49,6 +49,23 @@
                 <div>Balance: <span id="debug-balance">-</span></div>
             </div>
             
+            <!-- Секция промокодов (только информационная) -->
+            <div class="promo-section">
+                <div class="section-title">🎁 Активные промокоды</div>
+                
+                <div class="promo-codes">
+                    <div class="promo-item">
+                        <div class="promo-code">BOOM10</div>
+                        <div class="promo-info">+10% к любому депозиту</div>
+                        <div class="promo-badge">Публичный</div>
+                    </div>
+                </div>
+                
+                <div class="promo-info-text">
+                    💡 Введите промокод при пополнении для получения бонуса
+                </div>
+            </div>
+
             <div class="deposit-section">
                 <div class="section-title">Управление балансом</div>
                 
@@ -63,36 +80,6 @@
                 <button class="btn btn-primary" onclick="openPromoCodesAdmin()" style="margin-top: 10px;">
                     🎁 Управление промокодами
                 </button>
-            </div>
-
-            <!-- Секция промокодов -->
-            <div class="promo-section">
-                <div class="section-title">🎁 Промокоды</div>
-                
-                <div class="promo-codes">
-                    <div class="promo-item">
-                        <div class="promo-code">BOOM10</div>
-                        <div class="promo-info">+10% к любому депозиту</div>
-                        <div class="promo-badge">Публичный</div>
-                    </div>
-                </div>
-                
-                <div class="promo-input-group">
-                    <input 
-                        type="text" 
-                        id="promo-code-input" 
-                        placeholder="Введите промокод"
-                        maxlength="10"
-                        class="promo-input"
-                    >
-                    <button class="btn btn-promo" onclick="applyPromoCode()">
-                        ✅ Применить
-                    </button>
-                </div>
-                
-                <div class="promo-info-text">
-                    💡 Промокод применяется к следующему депозиту
-                </div>
             </div>
         </div>
         
@@ -130,11 +117,11 @@
                     min="0.3"
                     step="0.1"
                 >
-                <!-- 🔥 НОВОЕ ПОЛЕ для ввода промокода прямо в модалке депозита -->
+                <!-- 🔥 ЕДИНСТВЕННОЕ поле для ввода промокода -->
                 <input 
                     type="text" 
                     id="deposit-promo-code" 
-                    placeholder="Промокод (необязательно)"
+                    placeholder="Промокод (например: BOOM10)"
                     maxlength="20"
                     class="promo-input"
                     style="margin-top: 10px;"
