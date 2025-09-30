@@ -42,13 +42,9 @@ class TonCasinoApp {
 
     showAdminButton() {
         const adminBtn = document.getElementById('admin-button');
-        const promoAdminBtn = document.querySelector('.btn-admin-promo')
         if (adminBtn) {
             adminBtn.style.display = 'block';
         }
-        if (promoAdminBtn && this.isAdminUser) {
-        promoAdminBtn.style.display = 'block';
-    }
     }
 
  async loadUserData() {

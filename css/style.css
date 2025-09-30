@@ -5,377 +5,207 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0a0e1a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
     min-height: 100vh;
-    color: #e8eaed;
-    position: relative;
-    overflow-x: hidden;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
+    color: #e6e6e6;
 }
 
 .container {
-    max-width: 440px;
-    min-height: 100vh;
-    padding: 1rem 1rem 90px 1rem;
-    position: relative;
-    z-index: 1;
+    max-width: 400px;
     margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    padding-bottom: 80px; /* Добавлено место для нижнего меню */
 }
 
-/* Header Styles */
 .header {
     text-align: center;
-    margin-bottom: 1.5rem;
-    padding: 1.25rem 1rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(168, 85, 247, 0.05));
-    border-bottom: 2px solid rgba(59, 130, 246, 0.2);
-    position: relative;
-}
-
-.header::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 2px;
-    background: linear-gradient(90deg, #3b82f6, #a855f7);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header h1 {
-    font-size: 1.75rem;
-    color: #ffffff;
-    margin-bottom: 0.25rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    font-size: 24px;
+    color: #f0f0f0;
+    margin-bottom: 5px;
 }
 
 .header p {
-    color: #9ca3af;
-    font-size: 0.875rem;
-    font-weight: 400;
+    color: #a0a0a0;
+    font-size: 14px;
 }
 
-/* Mode Switcher */
 .mode-switcher {
-    display: none;
-    background: rgba(17, 24, 39, 0.6);
-    border-left: 3px solid #3b82f6;
-    padding: 1rem;
-    margin-bottom: 1rem;
+    display: none; /* Скрываем по умолчанию, покажется через JS если есть доступ */
+    margin: 15px 0;
+    padding: 10px;
+    background: #1e0b0b;
+    border-radius: 10px;
+    text-align: center;
 }
 
 .mode-badge {
     display: inline-block;
-    padding: 0.375rem 0.875rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
 .mode-badge.mainnet {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #00b894, #008066);
     color: white;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
 }
 
 .mode-badge.testnet {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
     color: white;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
 }
 
 .mode-info {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-top: 0.5rem;
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 10px;
 }
 
-/* Buttons */
 .btn {
-    width: 100%;
-    padding: 0.875rem 1.25rem;
+    display: inline-block;
+    padding: 12px 24px;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
+    font-size: 14px;
     font-weight: 600;
-    font-size: 0.9375rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 0.3px;
-    margin-bottom: 0.75rem;
-}
-
-.btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-    transition: left 0.5s ease;
-}
-
-.btn:hover::before {
-    left: 100%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin: 5px;
+    width: calc(100% - 10px);
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
     color: white;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #a855f7, #9333ea);
+    background: linear-gradient(135deg, #fd79a8, #e84393);
     color: white;
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #9333ea, #7e22ce);
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(253, 121, 168, 0.5);
 }
 
 .btn-mode {
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    background: linear-gradient(135deg, #74b9ff, #5a9de6);
     color: white;
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
-}
-
-.btn-mode:hover {
-    background: linear-gradient(135deg, #0891b2, #0e7490);
-    box-shadow: 0 0 30px rgba(6, 182, 212, 0.5);
 }
 
 .btn-admin {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
     color: white;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+    margin-bottom: 15px;
 }
 
-.btn-admin:hover {
-    background: linear-gradient(135deg, #d97706, #b45309);
-    box-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
-}
-
-.btn:active {
-    transform: scale(0.98);
-}
-
-/* Profile Card */
 .profile-card {
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(31, 41, 55, 0.8));
-    border-left: 3px solid #3b82f6;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
     position: relative;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.profile-card::before {
-    content: '';
+.demo-badge {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: #1a1a1a;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
 }
 
 .balance-section {
-    text-align: center;
+    margin: 20px 0;
 }
 
 .balance-label {
-    color: #9ca3af;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 500;
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
 }
 
 .balance-amount {
-    color: #ffffff;
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
-    text-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
-    letter-spacing: -2px;
+    font-size: 48px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 5px;
 }
 
 .balance-currency {
-    color: #6b7280;
-    font-size: 0.9375rem;
-    font-weight: 500;
+    font-size: 14px;
+    color: #a0a0a0;
 }
 
-/* Games Section */
-.games-section {
-    margin-bottom: 1.5rem;
-}
-
-.game-info {
-    background: rgba(17, 24, 39, 0.6);
-    border-left: 3px solid #a855f7;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    color: #e8eaed;
-    font-size: 0.9375rem;
-}
-
-/* Promo Section */
-.promo-section {
-    margin-bottom: 1.5rem;
-}
-
-.promo-item {
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.6), rgba(31, 41, 55, 0.6));
-    border-left: 3px solid #10b981;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.promo-item:hover {
-    border-left-width: 5px;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
-}
-
-.promo-code {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #10b981;
-    margin-bottom: 0.25rem;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-}
-
-.promo-info {
-    font-size: 0.875rem;
-    color: #9ca3af;
-}
-
-.promo-badge {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background: rgba(59, 130, 246, 0.2);
-    color: #3b82f6;
-    padding: 0.25rem 0.625rem;
-    border-radius: 4px;
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.promo-input-group {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.promo-input {
-    flex: 1;
-    background: rgba(17, 24, 39, 0.8);
-    border: 2px solid rgba(75, 85, 99, 0.5);
-    color: #e8eaed;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 0.9375rem;
-    transition: all 0.2s ease;
-}
-
-.promo-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background: rgba(17, 24, 39, 0.95);
-}
-
-.btn-promo {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    white-space: nowrap;
-}
-
-.btn-promo:hover {
-    background: linear-gradient(135deg, #059669, #047857);
-    box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-    transform: translateY(-1px);
-}
-
-/* Transaction History */
+.games-section,
+.deposit-section,
 .transaction-history {
-    background: linear-gradient(135deg, rgba(17, 24, 39, 0.6), rgba(31, 41, 55, 0.6));
-    border-left: 3px solid #a855f7;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    max-height: 400px;
-    overflow-y: auto;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .section-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.game-info {
+    text-align: center;
+    color: #a0a0a0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.transaction-history {
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .transaction-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.875rem 0;
-    border-bottom: 1px solid rgba(75, 85, 99, 0.3);
-    transition: all 0.2s ease;
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .transaction-item:last-child {
     border-bottom: none;
-}
-
-.transaction-item:hover {
-    padding-left: 0.5rem;
-    background: rgba(59, 130, 246, 0.05);
 }
 
 .transaction-info {
@@ -383,68 +213,62 @@ body::before {
 }
 
 .transaction-type {
-    font-weight: 600;
-    color: #e8eaed;
-    font-size: 0.9375rem;
-    margin-bottom: 0.25rem;
+    font-weight: bold;
+    color: #f0f0f0;
 }
 
 .transaction-date {
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: 12px;
+    color: #a0a0a0;
 }
 
 .transaction-amount {
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: bold;
+    font-size: 16px;
 }
 
 .transaction-positive {
-    color: #10b981;
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    color: #00b894;
 }
 
 .transaction-negative {
-    color: #ef4444;
-    text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+    color: #ff6b6b;
 }
 
 .no-transactions {
     text-align: center;
-    color: #6b7280;
-    padding: 1.5rem;
-    font-size: 0.9375rem;
+    color: #a0a0a0;
+    padding: 20px;
 }
 
-/* Games Menu - БЕЗ ИЗМЕНЕНИЙ */
+/* Нижнее игровое меню */
 .games-menu {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(17, 24, 39, 0.98);
-    backdrop-filter: blur(20px);
-    border-top: 2px solid rgba(59, 130, 246, 0.2);
+    background: rgba(25, 30, 42, 0.98);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-around;
-    padding: 8px 0;
+    padding: 10px 0;
     z-index: 1000;
-    box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.5);
 }
 
 .game-menu-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 6px 10px;
+    padding: 8px 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    border-radius: 8px;
-    min-width: 55px;
+    border-radius: 10px;
+    min-width: 60px;
 }
 
 .game-menu-item:hover {
-    background: rgba(59, 130, 246, 0.15);
+    background: rgba(102, 126, 234, 0.2);
     transform: translateY(-2px);
 }
 
@@ -453,222 +277,552 @@ body::before {
 }
 
 .game-icon {
-    font-size: 22px;
-    margin-bottom: 3px;
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
 .game-name {
-    font-size: 9px;
-    color: #9ca3af;
+    font-size: 10px;
+    color: #a0a0a0;
     text-align: center;
     font-weight: 500;
+}
+
+.footer {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    margin-top: 30px;
+    padding: 10px;
 }
 
 /* Modal Styles */
 .modal {
     display: none;
     position: fixed;
-    z-index: 2000;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #111827, #1f2937);
-    margin: 5% auto;
-    padding: 2rem 1.5rem;
-    border-radius: 8px;
-    border-top: 3px solid #3b82f6;
+    background: #191e2a;
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 20px;
     width: 90%;
-    max-width: 400px;
+    max-width: 350px;
     position: relative;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-    max-height: 85vh;
-    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .close {
     position: absolute;
-    right: 1rem;
-    top: 1rem;
-    font-size: 1.75rem;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    color: #6b7280;
-    transition: color 0.2s ease;
-    line-height: 1;
+    color: #a0a0a0;
 }
 
-.close:hover {
-    color: #e8eaed;
+.modal h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #f0f0f0;
 }
 
-.modal-content h3 {
-    color: #ffffff;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.modal-content h4 {
-    color: #e8eaed;
-    margin-bottom: 1rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-}
-
-/* Form Controls */
-.form-control,
 input[type="number"],
-input[type="text"],
-textarea {
+input[type="text"] {
     width: 100%;
-    background: rgba(17, 24, 39, 0.8);
-    border: 2px solid rgba(75, 85, 99, 0.5);
-    color: #e8eaed;
-    padding: 0.875rem 1rem;
-    border-radius: 6px;
-    font-size: 0.9375rem;
-    margin-bottom: 0.875rem;
-    transition: all 0.2s ease;
+    padding: 15px;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s ease;
+    color: #f0f0f0;
 }
 
-.form-control:focus,
 input[type="number"]:focus,
-input[type="text"]:focus,
-textarea:focus {
+input[type="text"]:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background: rgba(17, 24, 39, 0.95);
+    border-color: #667eea;
 }
 
-.form-control::placeholder,
-input::placeholder,
-textarea::placeholder {
-    color: #6b7280;
-}
-
-/* Deposit & Withdraw Info */
 .deposit-info,
 .withdraw-info {
     text-align: center;
-    color: #9ca3af;
-    line-height: 1.6;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: rgba(17, 24, 39, 0.5);
-    border-radius: 6px;
-    border-left: 3px solid rgba(59, 130, 246, 0.3);
+    font-size: 12px;
+    color: #a0a0a0;
+    margin-top: 15px;
+    line-height: 1.4;
 }
 
-.deposit-info p,
-.withdraw-info p {
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-}
-
-/* Game Content */
+/* Стили для контента игр */
 .game-content {
     text-align: center;
-    padding: 1rem 0;
-    color: #9ca3af;
-    line-height: 1.8;
-}
-
-.game-content p {
-    margin-bottom: 0.75rem;
-    font-size: 0.9375rem;
+    padding: 20px 0;
+    color: #a0a0a0;
+    line-height: 1.6;
 }
 
 /* Admin Panel Styles */
 .admin-stats {
-    margin-bottom: 1.5rem;
+    margin: 20px 0;
 }
 
 .admin-stat-item {
-    background: rgba(17, 24, 39, 0.6);
-    border-left: 3px solid #f59e0b;
-    padding: 0.875rem 1rem;
-    margin-bottom: 0.75rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-stat-item:last-child {
+    border-bottom: none;
 }
 
 .admin-stat-label {
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: #9ca3af;
+    font-weight: bold;
+    color: #f0f0f0;
 }
 
 .admin-stat-value {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #ffffff;
+    font-weight: bold;
+    color: #00b894;
 }
 
 .admin-warning {
     text-align: center;
-    color: #f59e0b;
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background: rgba(245, 158, 11, 0.1);
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 12px;
+    color: #ff6b6b;
+    margin-top: 15px;
+    font-weight: bold;
 }
 
-/* Promo Codes Admin */
+/* Responsive Design */
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .balance-amount {
+        font-size: 36px;
+    }
+    
+    .modal-content {
+        margin: 20% auto;
+        width: 95%;
+    }
+    
+    .games-menu {
+        padding: 8px 0;
+    }
+    
+    .game-menu-item {
+        padding: 6px 8px;
+        min-width: 50px;
+    }
+    
+    .game-icon {
+        font-size: 20px;
+    }
+    
+    .game-name {
+        font-size: 9px;
+    }
+}
+
+/* Animation for buttons */
+.btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
+}
+
+
+/* Существующие стили остаются без изменений */
+
+/* Новые стили для Mines */
+.mines-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.bet-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.bet-input {
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.mines-select {
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.start-btn {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.start-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.mines-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mine-cell {
+    aspect-ratio: 1;
+    background: #007bff;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+}
+
+.mine-cell.revealed {
+    background: #28a745;
+}
+
+.mine-cell.mine {
+    background: #dc3545;
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.cashout-btn {
+    padding: 15px 30px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.cashout-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.result-message {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.win {
+    background: #d4edda;
+    color: #155724;
+}
+
+.lose {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-test {
+    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    color: white;
+}
+
+
+
+
+.rocket-game {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+
+
+
+
+
+
+
+
+/* Rocket specific styles */
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+
+/* Rocket specific styles */
+
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Анимации для ракетки */
+
+/* Стили для промокодов */
+.promo-section {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.promo-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.promo-item {
+    background: rgba(45, 50, 62, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.promo-item.promo-featured {
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(230, 163, 54, 0.2));
+    border: 1px solid rgba(253, 203, 110, 0.3);
+}
+
+.promo-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 5px;
+    font-family: 'Courier New', monospace;
+}
+
+.promo-info {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promo-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.promo-featured .promo-badge {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.promo-input {
+    flex: 1;
+    padding: 12px;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #f0f0f0;
+}
+
+.promo-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-promo {
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
+    width: auto;
+    padding: 12px 20px;
+}
+
+.btn-promo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.5);
+}
+
+.promo-info-text {
+    text-align: center;
+    font-size: 12px;
+    color: #a0a0a0;
+    line-height: 1.4;
+}
+
+.promo-success {
+    background: rgba(0, 184, 148, 0.2);
+    border: 1px solid rgba(0, 184, 148, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.promo-error {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+/* Стили для админки промокодов */
 .create-promo-section {
-    background: rgba(17, 24, 39, 0.5);
-    border-left: 3px solid #10b981;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 6px;
+    background: rgba(45, 50, 62, 0.8);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.create-promo-section h4 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
 }
 
 .checkbox-group {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin: 10px 0;
 }
 
-.checkbox-group input[type="checkbox"] {
-    width: auto;
-    margin: 0;
+.checkbox-group input {
+    margin-right: 10px;
 }
 
 .checkbox-group label {
-    color: #e8eaed;
-    font-size: 0.9375rem;
-    cursor: pointer;
+    color: #a0a0a0;
+    font-size: 14px;
+}
+
+.promocodes-list-section h4 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
 }
 
 .promocodes-list {
-    max-height: 350px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
 .promocode-item {
-    background: rgba(17, 24, 39, 0.8);
-    border-left: 3px solid #6b7280;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    border-radius: 6px;
+    background: rgba(35, 40, 52, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .promocode-item.active {
-    border-left-color: #10b981;
+    border-left: 4px solid #00b894;
 }
 
 .promocode-item.inactive {
-    border-left-color: #ef4444;
+    border-left: 4px solid #ff6b6b;
     opacity: 0.7;
 }
 
@@ -676,108 +830,73 @@ textarea::placeholder {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 10px;
 }
 
 .promocode-code {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #e8eaed;
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
     font-family: 'Courier New', monospace;
 }
 
 .promocode-status {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.promocode-details {
+    margin-bottom: 10px;
 }
 
 .promocode-bonus {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: #10b981;
-    margin-bottom: 0.25rem;
+    font-size: 16px;
+    font-weight: bold;
+    color: #00b894;
+    margin-bottom: 5px;
 }
 
-.promocode-uses,
-.promocode-description {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-bottom: 0.25rem;
+.promocode-uses {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
 }
 
 .promocode-limit {
-    font-size: 0.75rem;
-    color: #f59e0b;
+    font-size: 12px;
+    color: #fdcb6e;
+    margin-bottom: 5px;
+}
+
+.promocode-description {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
 }
 
 .promocode-meta {
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: 12px;
+    color: #666;
 }
 
 .promocode-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .btn-small {
-    padding: 0.5rem 0.875rem;
-    font-size: 0.8125rem;
-    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    width: auto;
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    border: none;
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
-}
-
-.btn-danger:hover {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
 }
 
 .no-promocodes {
     text-align: center;
-    color: #6b7280;
-    padding: 1.5rem;
-    font-size: 0.9375rem;
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(17, 24, 39, 0.5);
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(59, 130, 246, 0.5);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(59, 130, 246, 0.7);
-}
-
-/* Responsive Design */
-@media (max-width: 576px) {
-    .container {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-    }
-    
-    .balance-amount {
-        font-size: 2.5rem;
-    }
-    
-    .modal-content {
-        margin: 10% auto;
-        width: 95%;
-        padding: 1.5rem 1rem;
-    }
+    color: #a0a0a0;
+    padding: 20px;
 }
