@@ -120,6 +120,7 @@ body {
     margin-bottom: 15px;
 }
 
+/* Карточка профиля и баланса */
 .profile-card {
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
@@ -165,15 +166,13 @@ body {
     color: #a0a0a0;
 }
 
+/* Секции без карточек */
 .games-section,
-.deposit-section,
+.promo-section,
 .transaction-history {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
 }
 
 .section-title {
@@ -189,6 +188,7 @@ body {
     color: #a0a0a0;
     font-size: 14px;
     line-height: 1.5;
+    margin-bottom: 15px;
 }
 
 .transaction-history {
@@ -202,10 +202,14 @@ body {
     align-items: center;
     padding: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(25, 30, 42, 0.8);
+    border-radius: 10px;
+    margin-bottom: 8px;
 }
 
 .transaction-item:last-child {
     border-bottom: none;
+    margin-bottom: 0;
 }
 
 .transaction-info {
@@ -286,14 +290,6 @@ body {
     color: #a0a0a0;
     text-align: center;
     font-weight: 500;
-}
-
-.footer {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
-    margin-top: 30px;
-    padding: 10px;
 }
 
 /* Modal Styles */
@@ -469,200 +465,7 @@ input[type="text"]:focus {
     background: rgba(102, 126, 234, 0.7);
 }
 
-
-/* Существующие стили остаются без изменений */
-
-/* Новые стили для Mines */
-.mines-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.bet-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.bet-input {
-    padding: 10px;
-    border: 2px solid #333;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.mines-select {
-    padding: 10px;
-    border: 2px solid #333;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.start-btn {
-    padding: 10px 20px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.start-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.game-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 10px;
-    background: #f5f5f5;
-    border-radius: 5px;
-}
-
-.mines-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.mine-cell {
-    aspect-ratio: 1;
-    background: #007bff;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 18px;
-    color: white;
-}
-
-.mine-cell.revealed {
-    background: #28a745;
-}
-
-.mine-cell.mine {
-    background: #dc3545;
-}
-
-.game-controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.cashout-btn {
-    padding: 15px 30px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.cashout-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.result-message {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    margin: 20px 0;
-    padding: 20px;
-    border-radius: 5px;
-}
-
-.win {
-    background: #d4edda;
-    color: #155724;
-}
-
-.lose {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.btn-test {
-    background: linear-gradient(135deg, #74b9ff, #5a9de6);
-    color: white;
-}
-
-
-
-
-.rocket-game {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-
-
-
-
-
-
-
-
-/* Rocket specific styles */
-
-.back-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-
-/* Rocket specific styles */
-
-
-.back-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Анимации для ракетки */
-
 /* Стили для промокодов */
-.promo-section {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 .promo-codes {
     display: flex;
     flex-direction: column;
@@ -900,4 +703,3 @@ input[type="text"]:focus {
     color: #a0a0a0;
     padding: 20px;
 }
-
