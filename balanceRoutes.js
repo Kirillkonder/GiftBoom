@@ -54,89 +54,98 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
 
     // API: Создать инвойс для депозита
     router.post('/create-invoice', async (req, res) => {
-        const { telegramId, amount, demoMode, promoCode } = req.body;
+    const { telegramId, amount, demoMode, promoCode } = req.body;
 
-        try {
-            const user = users.findOne({ telegram_id: parseInt(telegramId) });
-            
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
+    console.log(`💰 Создание инвойса: пользователь ${telegramId}, сумма ${amount}, демо: ${demoMode}, промокод: ${promoCode}`);
 
-            // 🔥 ИСПРАВЛЕНИЕ: Минимальный депозит 0.3 TON вместо 3 TON
-            if (amount < 0.3) {
-                return res.status(400).json({ error: 'Минимальный депозит: 0.3 TON' });
-            }
-
-            let finalAmount = amount;
-            let bonusAmount = 0;
-            let appliedPromoCode = null;
-            let promoResult = null;
-
-            // 🔥 НОВАЯ ЛОГИКА: Применяем промокод если передан
-            if (promoCode && !demoMode) {
-                promoResult = applyPromoCode(telegramId, promoCode, amount);
-                if (promoResult.success) {
-                    finalAmount = promoResult.totalAmount;
-                    bonusAmount = promoResult.bonusAmount;
-                    appliedPromoCode = promoCode.toUpperCase();
-                    console.log(`🎁 Применен промокод ${appliedPromoCode}: +${bonusAmount.toFixed(2)} TON (${promoResult.bonusPercent}%)`);
-                } else {
-                    return res.status(400).json({ error: promoResult.error });
-                }
-            }
-
-            const invoice = await cryptoPayRequest('createInvoice', {
-                asset: 'TON',
-                amount: amount.toString(), // Отправляем исходную сумму
-                description: `Deposit for user ${telegramId}`,
-                hidden_message: `Deposit ${amount} TON${bonusAmount > 0 ? ` + ${bonusAmount.toFixed(2)} TON bonus (${appliedPromoCode})` : ''}`,
-                payload: JSON.stringify({
-                    telegram_id: telegramId,
-                    demo_mode: demoMode,
-                    amount: amount,
-                    final_amount: finalAmount, // Сохраняем итоговую сумму с бонусом
-                    bonus_amount: bonusAmount,
-                    promo_code: appliedPromoCode
-                }),
-                paid_btn_name: 'callback',
-                paid_btn_url: 'https://t.me/your_bot',
-                allow_comments: false
-            }, demoMode);
-
-            if (invoice.ok && invoice.result) {
-                // Сохраняем транзакцию как ожидающую
-                transactions.insert({
-                    user_id: user.$loki,
-                    amount: finalAmount, // Сохраняем итоговую сумму с бонусом
-                    original_amount: amount, // Сохраняем исходную сумму
-                    bonus_amount: bonusAmount,
-                    type: 'deposit',
-                    status: 'pending',
-                    invoice_id: invoice.result.invoice_id,
-                    demo_mode: demoMode,
-                    promo_code: appliedPromoCode,
-                    created_at: new Date()
-                });
-
-                res.json({
-                    success: true,
-                    invoice_url: invoice.result.pay_url,
-                    invoice_id: invoice.result.invoice_id,
-                    bonus_applied: bonusAmount > 0,
-                    bonus_amount: bonusAmount,
-                    bonus_percent: promoResult ? promoResult.bonusPercent : 0,
-                    final_amount: finalAmount,
-                    promo_code: appliedPromoCode
-                });
-            } else {
-                res.status(500).json({ error: 'Failed to create invoice' });
-            }
-        } catch (error) {
-            console.error('Create invoice error:', error);
-            res.status(500).json({ error: 'Server error' });
+    try {
+        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
-    });
+
+        // 🔥 ИСПРАВЛЕНИЕ: Минимальный депозит 0.3 TON вместо 3 TON
+        if (amount < 0.3) {
+            return res.status(400).json({ error: 'Минимальный депозит: 0.3 TON' });
+        }
+
+        let finalAmount = parseFloat(amount);
+        let bonusAmount = 0;
+        let appliedPromoCode = null;
+        let promoResult = null;
+
+        // 🔥 НОВАЯ ЛОГИКА: Применяем промокод если передан
+        if (promoCode && !demoMode) {
+            console.log(`🎁 Применение промокода: ${promoCode}`);
+            promoResult = applyPromoCode(telegramId, promoCode, amount);
+            if (promoResult.success) {
+                finalAmount = promoResult.totalAmount;
+                bonusAmount = promoResult.bonusAmount;
+                appliedPromoCode = promoCode.toUpperCase();
+                console.log(`✅ Промокод применен: +${bonusAmount.toFixed(2)} TON (${promoResult.bonusPercent}%)`);
+            } else {
+                console.log(`❌ Ошибка промокода: ${promoResult.error}`);
+                return res.status(400).json({ error: promoResult.error });
+            }
+        } else if (promoCode && demoMode) {
+            console.log(`ℹ️ Промокоды не применяются в демо-режиме`);
+        }
+
+        const invoice = await cryptoPayRequest('createInvoice', {
+            asset: 'TON',
+            amount: amount.toString(), // Отправляем исходную сумму в Crypto Pay
+            description: `Deposit for user ${telegramId}`,
+            hidden_message: `Deposit ${amount} TON${bonusAmount > 0 ? ` + ${bonusAmount.toFixed(2)} TON bonus (${appliedPromoCode})` : ''}`,
+            payload: JSON.stringify({
+                telegram_id: telegramId,
+                demo_mode: demoMode,
+                amount: amount,
+                final_amount: finalAmount, // Сохраняем итоговую сумму с бонусом
+                bonus_amount: bonusAmount,
+                promo_code: appliedPromoCode
+            }),
+            paid_btn_name: 'callback',
+            paid_btn_url: 'https://t.me/your_bot',
+            allow_comments: false
+        }, demoMode);
+
+        if (invoice.ok && invoice.result) {
+            // Сохраняем транзакцию как ожидающую
+            transactions.insert({
+                user_id: user.$loki,
+                amount: finalAmount, // Сохраняем итоговую сумму с бонусом
+                original_amount: parseFloat(amount), // Сохраняем исходную сумму
+                bonus_amount: bonusAmount,
+                type: 'deposit',
+                status: 'pending',
+                invoice_id: invoice.result.invoice_id,
+                demo_mode: demoMode,
+                promo_code: appliedPromoCode,
+                created_at: new Date()
+            });
+
+            console.log(`✅ Инвойс создан: ${invoice.result.invoice_id}`);
+            
+            res.json({
+                success: true,
+                invoice_url: invoice.result.pay_url,
+                invoice_id: invoice.result.invoice_id,
+                bonus_applied: bonusAmount > 0,
+                bonus_amount: bonusAmount,
+                bonus_percent: promoResult ? promoResult.bonusPercent : 0,
+                final_amount: finalAmount,
+                promo_code: appliedPromoCode
+            });
+        } else {
+            console.log(`❌ Ошибка создания инвойса:`, invoice);
+            res.status(500).json({ error: 'Failed to create invoice' });
+        }
+    } catch (error) {
+        console.error('Create invoice error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
     // API: Проверить статус инвойса
     router.post('/check-invoice', async (req, res) => {

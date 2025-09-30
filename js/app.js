@@ -573,7 +573,11 @@ async processDeposit() {
     // app.js - исправленная функция processDeposit
 async processDeposit() {
     const amount = parseFloat(document.getElementById('deposit-amount').value);
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const promoCode = promoCodeInput ? promoCodeInput.value.trim() : '';
     
+    console.log(`💰 Депозит: сумма ${amount}, промокод: ${promoCode}`);
+
     // ИЗМЕНЕНО: Минимальный депозит 0.3 TON вместо 3 TON
     if (!amount || amount < 0.3) {
         this.showError('Минимальный депозит: 0.3 TON');
@@ -587,7 +591,8 @@ async processDeposit() {
             body: JSON.stringify({
                 telegramId: this.tg.initDataUnsafe.user.id,
                 amount: amount,
-                demoMode: this.demoMode
+                demoMode: this.demoMode,
+                promoCode: promoCode
             })
         });
 
@@ -604,17 +609,31 @@ async processDeposit() {
                 });
             } else {
                 // Для реального режима открываем инвойс
+                let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
+                if (result.bonus_applied) {
+                    message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
+                    message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
+                    
+                    // Очищаем поле промокода после успешного применения
+                    if (promoCodeInput) {
+                        promoCodeInput.value = '';
+                    }
+                    
+                    console.log(`✅ Промокод применен: +${result.bonus_amount.toFixed(2)} TON`);
+                }
+                
                 window.open(result.invoice_url, '_blank');
                 this.tg.showPopup({
                     title: "Оплата TON",
-                    message: `Откройте Crypto Bot для оплаты ${amount} TON`,
+                    message: message,
                     buttons: [{ type: "ok" }]
                 });
-                this.checkDepositStatus(result.invoice_id);
+                this.checkDepositStatus(result.invoice_id, result.final_amount);
             }
             
             closeDepositModal();
         } else {
+            console.log(`❌ Ошибка депозита:`, result.error);
             this.showError('Ошибка при создании депозита: ' + result.error);
         }
     } catch (error) {
@@ -623,42 +642,52 @@ async processDeposit() {
     }
 }
 
-    async checkDepositStatus(invoiceId) {
-        const checkInterval = setInterval(async () => {
-            try {
-                const response = await fetch('/api/check-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        invoiceId: invoiceId,
-                        demoMode: this.demoMode
-                    })
+    async checkDepositStatus(invoiceId, expectedAmount = null) {
+    console.log(`🔍 Проверка статуса инвойса: ${invoiceId}`);
+    
+    const checkInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/check-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    invoiceId: invoiceId,
+                    demoMode: this.demoMode
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'paid') {
+                clearInterval(checkInterval);
+                
+                let message = 'Депозит успешно зачислен!';
+                if (result.bonus_amount > 0) {
+                    message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON`;
+                    message += `\n💎 Итого: ${result.amount.toFixed(2)} TON`;
+                }
+                
+                this.tg.showPopup({
+                    title: "✅ Успешно",
+                    message: message,
+                    buttons: [{ type: "ok" }]
                 });
                 
-                const result = await response.json();
-                
-                if (result.status === 'paid') {
-                    clearInterval(checkInterval);
-                    this.tg.showPopup({
-                        title: "✅ Успешно",
-                        message: 'Депозит успешно зачислен!',
-                        buttons: [{ type: "ok" }]
-                    });
-                    await this.loadUserData();
-                    await this.loadTransactionHistory();
-                } else if (result.status === 'expired' || result.status === 'cancelled') {
-                    clearInterval(checkInterval);
-                    this.tg.showPopup({
-                        title: "❌ Ошибка",
-                        message: 'Платеж отменен или просрочен',
-                        buttons: [{ type: "ok" }]
-                    });
-                }
-            } catch (error) {
-                console.error('Status check error:', error);
+                await this.loadUserData();
+                await this.loadTransactionHistory();
+            } else if (result.status === 'expired' || result.status === 'cancelled') {
+                clearInterval(checkInterval);
+                this.tg.showPopup({
+                    title: "❌ Ошибка",
+                    message: 'Платеж отменен или просрочен',
+                    buttons: [{ type: "ok" }]
+                });
             }
-        }, 5000);
-    }
+        } catch (error) {
+            console.error('Status check error:', error);
+        }
+    }, 5000);
+}
 
     async processWithdraw() {
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
@@ -814,9 +843,9 @@ function renderPromoCodesList(promoCodes) {
             </div>
             <div class="promocode-details">
                 <div class="promocode-bonus">+${promo.bonus_percent}% к депозиту</div>
-                <div class="promocode-uses">Использован: ${promo.used_count} раз</div>
-                ${promo.max_uses ? `<div class="promocode-limit">Лимит: ${promo.max_uses} использований</div>` : ''}
-                <div class="promocode-description">${promo.description}</div>
+                <div class="promocode-uses">Использован: ${promo.used_count || 0} раз</div>
+                ${promo.max_uses ? `<div class="promocode-limit">Лимит: ${promo.max_uses} использований</div>` : '<div class="promocode-limit">Безлимитный</div>'}
+                <div class="promocode-description">${promo.description || 'Нет описания'}</div>
                 <div class="promocode-meta">
                     Создан: ${new Date(promo.created_at).toLocaleDateString()}
                     ${promo.is_public ? '• 📢 Публичный' : '• 🔒 Приватный'}
@@ -835,6 +864,7 @@ function renderPromoCodesList(promoCodes) {
         </div>
     `).join('');
 }
+
 
 // Функция для создания нового промокода
 async function createNewPromoCode() {
