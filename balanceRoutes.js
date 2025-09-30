@@ -3,54 +3,78 @@ const router = express.Router();
 
 module.exports = function(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
 
-    // Функция применения промокода
-    function applyPromoCode(telegramId, promoCode, depositAmount) {
-        const promo = db.getCollection('promo_codes').findOne({ 
-            code: promoCode.toUpperCase(),
-            is_active: true 
-        });
-        
-        if (!promo) {
-            return { success: false, error: 'Промокод не найден или неактивен' };
-        }
-
-        // Проверяем лимит использований
-        if (promo.max_uses && promo.used_count >= promo.max_uses) {
-            return { success: false, error: 'Лимит использований промокода исчерпан' };
-        }
-
-        // Проверяем, не использовал ли уже пользователь промокод
-        const user = users.findOne({ telegram_id: parseInt(telegramId) });
-        const userUsedPromo = transactions.findOne({
-            user_id: user.$loki,
-            promo_code: promo.code,
-            status: 'completed'
-        });
-
-        if (userUsedPromo) {
-            return { success: false, error: 'Вы уже использовали этот промокод' };
-        }
-
-        // Применяем промокод
-        const bonusAmount = depositAmount * (promo.bonus_percent / 100);
-        const totalAmount = depositAmount + bonusAmount;
-        
-        // Обновляем счетчик использований
-        db.getCollection('promo_codes').update({
-            ...promo,
-            used_count: promo.used_count + 1
-        });
-
-        console.log(`🎁 Применен промокод ${promo.code} для пользователя ${telegramId}: +${bonusAmount.toFixed(2)} TON (${promo.bonus_percent}%)`);
-        
-        return {
-            success: true,
-            bonusAmount: bonusAmount,
-            bonusPercent: promo.bonus_percent,
-            totalAmount: totalAmount,
-            promo: promo
-        };
+    // Функция применения промокода - ИСПРАВЛЕННАЯ ВЕРСИЯ
+function applyPromoCode(telegramId, promoCode, depositAmount) {
+    console.log(`🔍 Поиск промокода: ${promoCode} для пользователя ${telegramId}`);
+    
+    const promo = db.getCollection('promo_codes').findOne({ 
+        code: promoCode.toUpperCase(),
+        is_active: true 
+    });
+    
+    if (!promo) {
+        console.log(`❌ Промокод ${promoCode} не найден или неактивен`);
+        return { success: false, error: 'Промокод не найден или неактивен' };
     }
+
+    console.log(`📊 Найден промокод: ${promo.code}, бонус: ${promo.bonus_percent}%, использований: ${promo.used_count}/${promo.max_uses || 'безлимит'}`);
+
+    // Проверяем лимит использований
+    if (promo.max_uses && promo.used_count >= promo.max_uses) {
+        console.log(`❌ Лимит использований промокода исчерпан: ${promo.used_count}/${promo.max_uses}`);
+        return { success: false, error: 'Лимит использований промокода исчерпан' };
+    }
+
+    // Находим пользователя
+    const user = users.findOne({ telegram_id: parseInt(telegramId) });
+    if (!user) {
+        return { success: false, error: 'Пользователь не найден' };
+    }
+
+    // Проверяем, не использовал ли уже пользователь промокод
+    const userUsedPromo = transactions.findOne({
+        user_id: user.$loki,
+        promo_code: promo.code,
+        status: 'completed'
+    });
+
+    if (userUsedPromo) {
+        console.log(`❌ Пользователь ${telegramId} уже использовал промокод ${promo.code}`);
+        return { success: false, error: 'Вы уже использовали этот промокод' };
+    }
+
+    // Применяем промокод
+    const bonusAmount = depositAmount * (promo.bonus_percent / 100);
+    const totalAmount = depositAmount + bonusAmount;
+    
+    // 🔥 ИСПРАВЛЕНИЕ: Правильно обновляем счетчик использований
+    const updatedUsedCount = (promo.used_count || 0) + 1;
+    db.getCollection('promo_codes').update({
+        ...promo,
+        used_count: updatedUsedCount
+    });
+
+    console.log(`🎁 Применен промокод ${promo.code} для пользователя ${telegramId}:`);
+    console.log(`   💰 Депозит: ${depositAmount.toFixed(2)} TON`);
+    console.log(`   🎁 Бонус: +${bonusAmount.toFixed(2)} TON (${promo.bonus_percent}%)`);
+    console.log(`   💎 Итого: ${totalAmount.toFixed(2)} TON`);
+    console.log(`   📊 Использований: ${updatedUsedCount}/${promo.max_uses || 'безлимит'}`);
+    
+    return {
+        success: true,
+        bonusAmount: bonusAmount,
+        bonusPercent: promo.bonus_percent,
+        totalAmount: totalAmount,
+        promo: {
+            code: promo.code,
+            bonus_percent: promo.bonus_percent,
+            description: promo.description,
+            used_count: updatedUsedCount, // 🔥 Теперь правильное значение
+            max_uses: promo.max_uses,
+            is_public: promo.is_public
+        }
+    };
+}
 
     // API: Создать инвойс для депозита
     router.post('/create-invoice', async (req, res) => {

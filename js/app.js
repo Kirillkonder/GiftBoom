@@ -145,8 +145,12 @@ hidePromoMessage() {
 // Обновить функцию processDeposit для передачи промокода
 async processDeposit() {
     const amount = parseFloat(document.getElementById('deposit-amount').value);
-    const promoCode = document.getElementById('promo-code-input')?.value.trim() || '';
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const promoCode = promoCodeInput ? promoCodeInput.value.trim() : '';
     
+    console.log(`💰 Депозит: сумма ${amount}, промокод: ${promoCode}`);
+
+    // ИЗМЕНЕНО: Минимальный депозит 0.3 TON вместо 3 TON
     if (!amount || amount < 0.3) {
         this.showError('Минимальный депозит: 0.3 TON');
         return;
@@ -166,8 +170,11 @@ async processDeposit() {
 
         const result = await response.json();
         
+        console.log('📋 Результат создания инвойса:', result); // 🔥 ДЛЯ ОТЛАДКИ
+        
         if (result.success) {
             if (this.demoMode) {
+                // Для демо-режима сразу обновляем баланс
                 await this.loadUserData();
                 this.tg.showPopup({
                     title: "✅ Демо-пополнение",
@@ -175,12 +182,22 @@ async processDeposit() {
                     buttons: [{ type: "ok" }]
                 });
             } else {
+                // Для реального режима открываем инвойс
                 let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
-                if (result.bonus_applied) {
+                
+                // 🔥 ИСПРАВЛЕНИЕ: Проверяем наличие бонуса
+                if (result.bonus_applied && result.bonus_amount > 0) {
                     message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
-                    message += `\n💎 Итого: ${result.final_amount.toFixed(2)} TON`;
+                    message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
+                    
                     // Очищаем поле промокода после успешного применения
-                    document.getElementById('promo-code-input').value = '';
+                    if (promoCodeInput) {
+                        promoCodeInput.value = '';
+                    }
+                    
+                    console.log(`✅ Промокод применен: +${result.bonus_amount.toFixed(2)} TON`);
+                } else {
+                    console.log('ℹ️ Промокод не применен или бонус 0');
                 }
                 
                 window.open(result.invoice_url, '_blank');
@@ -189,11 +206,12 @@ async processDeposit() {
                     message: message,
                     buttons: [{ type: "ok" }]
                 });
-                this.checkDepositStatus(result.invoice_id);
+                this.checkDepositStatus(result.invoice_id, result.final_amount);
             }
             
             closeDepositModal();
         } else {
+            console.log(`❌ Ошибка депозита:`, result.error);
             this.showError('Ошибка при создании депозита: ' + result.error);
         }
     } catch (error) {
