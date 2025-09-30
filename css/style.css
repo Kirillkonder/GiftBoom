@@ -16,13 +16,13 @@ body {
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
-    padding-bottom: 80px; /* Добавлено место для нижнего меню */
+    padding-bottom: 80px;
 }
 
+/* Обновленный Header с профилем и балансом */
 .header {
-    text-align: center;
     margin-bottom: 20px;
-    padding: 15px;
+    padding: 20px;
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -30,23 +30,114 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.header h1 {
-    font-size: 24px;
-    color: #f0f0f0;
-    margin-bottom: 5px;
+.profile-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
 }
 
-.header p {
-    color: #a0a0a0;
+.user-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.user-avatar {
+    font-size: 48px;
+    color: #667eea;
+    line-height: 1;
+}
+
+.user-avatar i {
+    display: block;
+}
+
+.user-data {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.username {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.username i {
+    color: #667eea;
     font-size: 14px;
 }
 
+.user-id {
+    font-size: 12px;
+    color: #a0a0a0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-id i {
+    font-size: 11px;
+}
+
+.balance-info {
+    text-align: right;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(90, 111, 216, 0.15));
+    border-radius: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    min-width: 140px;
+}
+
+.balance-label {
+    font-size: 11px;
+    color: #a0a0a0;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.balance-label i {
+    font-size: 12px;
+    color: #667eea;
+}
+
+.balance-amount {
+    font-size: 24px;
+    font-weight: bold;
+    color: #f0f0f0;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.balance-currency {
+    font-size: 11px;
+    color: #a0a0a0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.balance-currency i {
+    color: #fdcb6e;
+    font-size: 12px;
+}
+
 .mode-switcher {
-    display: none; /* Скрываем по умолчанию, покажется через JS если есть доступ */
+    display: none;
     margin: 15px 0;
-    padding: 10px;
-    background: #1e0b0b;
-    border-radius: 10px;
+    padding: 15px;
+    background: rgba(30, 11, 11, 0.6);
+    border-radius: 12px;
     text-align: center;
 }
 
@@ -73,6 +164,10 @@ body {
     font-size: 14px;
     color: #a0a0a0;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .btn {
@@ -87,6 +182,14 @@ body {
     transition: all 0.3s ease;
     margin: 5px;
     width: calc(100% - 10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn i {
+    font-size: 16px;
 }
 
 .btn-primary {
@@ -120,53 +223,13 @@ body {
     margin-bottom: 15px;
 }
 
-.profile-card {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 25px;
-    text-align: center;
-    margin-bottom: 20px;
-    position: relative;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.btn-promo {
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
 }
 
-.demo-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
-    color: #1a1a1a;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.balance-section {
-    margin: 20px 0;
-}
-
-.balance-label {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 5px;
-}
-
-.balance-amount {
-    font-size: 48px;
-    font-weight: bold;
-    color: #f0f0f0;
-    margin-bottom: 5px;
-}
-
-.balance-currency {
-    font-size: 14px;
-    color: #a0a0a0;
-}
-
-.games-section,
 .deposit-section,
+.promo-section,
 .transaction-history {
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
@@ -182,17 +245,20 @@ body {
     color: #f0f0f0;
     margin-bottom: 15px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-.game-info {
-    text-align: center;
-    color: #a0a0a0;
-    font-size: 14px;
-    line-height: 1.5;
+.section-title i {
+    font-size: 20px;
+    color: #667eea;
 }
 
+/* Обновленные стили для истории транзакций */
 .transaction-history {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
 }
 
@@ -200,31 +266,61 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(35, 40, 52, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+    background: rgba(35, 40, 52, 0.8);
+    transform: translateX(5px);
 }
 
 .transaction-item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .transaction-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .transaction-type {
-    font-weight: bold;
+    font-weight: 600;
     color: #f0f0f0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.transaction-type i {
+    font-size: 16px;
 }
 
 .transaction-date {
-    font-size: 12px;
+    font-size: 11px;
     color: #a0a0a0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.transaction-date i {
+    font-size: 10px;
 }
 
 .transaction-amount {
     font-weight: bold;
-    font-size: 16px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .transaction-positive {
@@ -238,7 +334,93 @@ body {
 .no-transactions {
     text-align: center;
     color: #a0a0a0;
-    padding: 20px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.no-transactions i {
+    font-size: 48px;
+    opacity: 0.3;
+}
+
+.no-transactions p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Промокоды */
+.promo-codes {
+    margin-bottom: 15px;
+}
+
+.promo-item {
+    background: rgba(35, 40, 52, 0.6);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.promo-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #00b894;
+    margin-bottom: 5px;
+}
+
+.promo-info {
+    font-size: 13px;
+    color: #a0a0a0;
+    margin-bottom: 8px;
+}
+
+.promo-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.promo-input {
+    flex: 1;
+    padding: 12px;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 14px;
+    color: #f0f0f0;
+    transition: border-color 0.3s ease;
+}
+
+.promo-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.promo-info-text {
+    text-align: center;
+    font-size: 12px;
+    color: #a0a0a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.promo-info-text i {
+    color: #667eea;
 }
 
 /* Нижнее игровое меню */
@@ -281,19 +463,15 @@ body {
     margin-bottom: 4px;
 }
 
+.game-icon i {
+    color: #667eea;
+}
+
 .game-name {
     font-size: 10px;
     color: #a0a0a0;
     text-align: center;
     font-weight: 500;
-}
-
-.footer {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
-    margin-top: 30px;
-    padding: 10px;
 }
 
 /* Modal Styles */
@@ -335,6 +513,14 @@ body {
     text-align: center;
     margin-bottom: 20px;
     color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal h3 i {
+    color: #667eea;
 }
 
 input[type="number"],
@@ -362,15 +548,26 @@ input[type="text"]:focus {
     font-size: 12px;
     color: #a0a0a0;
     margin-top: 15px;
-    line-height: 1.4;
+    line-height: 1.6;
 }
 
-/* Стили для контента игр */
 .game-content {
-    text-align: center;
+    text-align: left;
     padding: 20px 0;
     color: #a0a0a0;
-    line-height: 1.6;
+    line-height: 1.8;
+}
+
+.game-content p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.game-content i {
+    color: #667eea;
+    font-size: 16px;
 }
 
 /* Admin Panel Styles */
@@ -382,17 +579,26 @@ input[type="text"]:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    margin-bottom: 8px;
+    background: rgba(35, 40, 52, 0.5);
+    border-radius: 10px;
 }
 
 .admin-stat-item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .admin-stat-label {
-    font-weight: bold;
+    font-weight: 600;
     color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-stat-label i {
+    color: #667eea;
 }
 
 .admin-stat-value {
@@ -406,6 +612,41 @@ input[type="text"]:focus {
     color: #ff6b6b;
     margin-top: 15px;
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.create-promo-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.create-promo-section h4 {
+    color: #f0f0f0;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    color: #f0f0f0;
+}
+
+.promocodes-list-section h4 {
+    color: #f0f0f0;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.promocodes-list {
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 /* Responsive Design */
@@ -414,8 +655,27 @@ input[type="text"]:focus {
         padding: 15px;
     }
     
-    .balance-amount {
-        font-size: 36px;
+    .profile-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-details {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-data {
+        align-items: center;
+    }
+    
+    .balance-info {
+        width: 100%;
+    }
+    
+    .balance-label,
+    .balance-currency {
+        justify-content: center;
     }
     
     .modal-content {
@@ -467,436 +727,4 @@ input[type="text"]:focus {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(102, 126, 234, 0.7);
-}
-
-
-/* Существующие стили остаются без изменений */
-
-/* Новые стили для Mines */
-.mines-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.bet-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.bet-input {
-    padding: 10px;
-    border: 2px solid #333;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.mines-select {
-    padding: 10px;
-    border: 2px solid #333;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.start-btn {
-    padding: 10px 20px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.start-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.game-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 10px;
-    background: #f5f5f5;
-    border-radius: 5px;
-}
-
-.mines-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.mine-cell {
-    aspect-ratio: 1;
-    background: #007bff;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 18px;
-    color: white;
-}
-
-.mine-cell.revealed {
-    background: #28a745;
-}
-
-.mine-cell.mine {
-    background: #dc3545;
-}
-
-.game-controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.cashout-btn {
-    padding: 15px 30px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.cashout-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.result-message {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    margin: 20px 0;
-    padding: 20px;
-    border-radius: 5px;
-}
-
-.win {
-    background: #d4edda;
-    color: #155724;
-}
-
-.lose {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.btn-test {
-    background: linear-gradient(135deg, #74b9ff, #5a9de6);
-    color: white;
-}
-
-
-
-
-.rocket-game {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-
-
-
-
-
-
-
-
-/* Rocket specific styles */
-
-.back-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-
-/* Rocket specific styles */
-
-
-.back-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Анимации для ракетки */
-
-/* Стили для промокодов */
-.promo-section {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.promo-codes {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.promo-item {
-    background: rgba(45, 50, 62, 0.8);
-    border-radius: 12px;
-    padding: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-}
-
-.promo-item.promo-featured {
-    background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(230, 163, 54, 0.2));
-    border: 1px solid rgba(253, 203, 110, 0.3);
-}
-
-.promo-code {
-    font-size: 18px;
-    font-weight: bold;
-    color: #f0f0f0;
-    margin-bottom: 5px;
-    font-family: 'Courier New', monospace;
-}
-
-.promo-info {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 5px;
-}
-
-.promo-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: linear-gradient(135deg, #667eea, #5a6fd8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: bold;
-}
-
-.promo-featured .promo-badge {
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
-}
-
-.promo-input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.promo-input {
-    flex: 1;
-    padding: 12px;
-    background: rgba(35, 40, 52, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    font-size: 14px;
-    color: #f0f0f0;
-}
-
-.promo-input:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-.btn-promo {
-    background: linear-gradient(135deg, #00b894, #008066);
-    color: white;
-    width: auto;
-    padding: 12px 20px;
-}
-
-.btn-promo:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.5);
-}
-
-.promo-info-text {
-    text-align: center;
-    font-size: 12px;
-    color: #a0a0a0;
-    line-height: 1.4;
-}
-
-.promo-success {
-    background: rgba(0, 184, 148, 0.2);
-    border: 1px solid rgba(0, 184, 148, 0.5);
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 10px;
-    text-align: center;
-}
-
-.promo-error {
-    background: rgba(255, 107, 107, 0.2);
-    border: 1px solid rgba(255, 107, 107, 0.5);
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 10px;
-    text-align: center;
-}
-
-/* Стили для админки промокодов */
-.create-promo-section {
-    background: rgba(45, 50, 62, 0.8);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-}
-
-.create-promo-section h4 {
-    margin-bottom: 15px;
-    color: #f0f0f0;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    margin: 10px 0;
-}
-
-.checkbox-group input {
-    margin-right: 10px;
-}
-
-.checkbox-group label {
-    color: #a0a0a0;
-    font-size: 14px;
-}
-
-.promocodes-list-section h4 {
-    margin-bottom: 15px;
-    color: #f0f0f0;
-}
-
-.promocodes-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.promocode-item {
-    background: rgba(35, 40, 52, 0.8);
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.promocode-item.active {
-    border-left: 4px solid #00b894;
-}
-
-.promocode-item.inactive {
-    border-left: 4px solid #ff6b6b;
-    opacity: 0.7;
-}
-
-.promocode-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.promocode-code {
-    font-size: 18px;
-    font-weight: bold;
-    color: #f0f0f0;
-    font-family: 'Courier New', monospace;
-}
-
-.promocode-status {
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.promocode-details {
-    margin-bottom: 10px;
-}
-
-.promocode-bonus {
-    font-size: 16px;
-    font-weight: bold;
-    color: #00b894;
-    margin-bottom: 5px;
-}
-
-.promocode-uses {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 5px;
-}
-
-.promocode-limit {
-    font-size: 12px;
-    color: #fdcb6e;
-    margin-bottom: 5px;
-}
-
-.promocode-description {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 5px;
-}
-
-.promocode-meta {
-    font-size: 12px;
-    color: #666;
-}
-
-.promocode-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.btn-small {
-    padding: 8px 12px;
-    font-size: 12px;
-    width: auto;
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-}
-
-.no-promocodes {
-    text-align: center;
-    color: #a0a0a0;
-    padding: 20px;
 }
