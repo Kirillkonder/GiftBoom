@@ -27,53 +27,37 @@
         <!-- Блок header скрыт -->
         <div id="header" style="display: none;"></div>
         
-        <div class="games-section">
-            <div class="section-title">🎰 Игры казино</div>
+        <!-- Секция промокодов (только информационная) -->
+        <div class="promo-section">
+            <div class="section-title">🎁 Активные промокоды</div>
             
-            <div class="game-info" id="gameInfo" style="display: none;">
-                <div>Множитель: <span id="multiplier">1x</span></div>
-                <div>Выигрыш: <span id="potentialWin">0</span> TON</div>
-                <div id="betInfo">Ставка: 0 TON | Баланс: 0 TON</div>
-            </div>
-        
-            <div id="debug-info" style="display: none; background: #ffebee; padding: 10px; border-radius: 5px; margin: 10px 0;">
-                <div>Game ID: <span id="debug-game-id">-</span></div>
-                <div>Demo Mode: <span id="debug-demo-mode">-</span></div>
-                <div>Balance: <span id="debug-balance">-</span></div>
-            </div>
-            
-            <!-- Секция промокодов (только информационная) -->
-            <div class="promo-section">
-                <div class="section-title">🎁 Активные промокоды</div>
-                
-                <div class="promo-codes">
-                    <div class="promo-item">
-                        <div class="promo-code">BOOM10</div>
-                        <div class="promo-info">+10% к любому депозиту</div>
-                        <div class="promo-badge">Публичный</div>
-                    </div>
-                </div>
-                
-                <div class="promo-info-text">
-                    💡 Введите промокод при пополнении для получения бонуса
+            <div class="promo-codes">
+                <div class="promo-item">
+                    <div class="promo-code">BOOM10</div>
+                    <div class="promo-info">+10% к любому депозиту</div>
+                    <div class="promo-badge">Публичный</div>
                 </div>
             </div>
-
-            <div class="deposit-section">
-                <div class="section-title">Управление балансом</div>
-                
-                <button class="btn btn-primary" onclick="openDepositModal()">
-                    💰 Пополнить баланс
-                </button>
-                
-                <button class="btn btn-secondary" onclick="openWithdrawModal()">
-                    📤 Вывести средства
-                </button>
-
-                <button class="btn btn-primary" onclick="openPromoCodesAdmin()" style="margin-top: 10px;">
-                    🎁 Управление промокодами
-                </button>
+            
+            <div class="promo-info-text">
+                💡 Введите промокод при пополнении для получения бонуса
             </div>
+        </div>
+
+        <div class="deposit-section">
+            <div class="section-title">Управление балансом</div>
+            
+            <button class="btn btn-primary" onclick="openDepositModal()">
+                💰 Пополнить баланс
+            </button>
+            
+            <button class="btn btn-secondary" onclick="openWithdrawModal()">
+                📤 Вывести средства
+            </button>
+
+            <button class="btn btn-primary" onclick="openPromoCodesAdmin()" style="margin-top: 10px;">
+                🎁 Управление промокодами
+            </button>
         </div>
         
         <div class="transaction-history">
