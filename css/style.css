@@ -14,140 +14,19 @@ body {
 .container {
     max-width: 400px;
     margin: 0 auto;
-    padding: 20px;
-    min-height: 100vh;
     padding-bottom: 80px;
 }
 
-/* Обновленный Header с профилем и балансом */
-.header {
-    margin-bottom: 20px;
-    padding: 20px;
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.profile-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-}
-
-.user-details {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-}
-
-.user-avatar {
-    font-size: 48px;
-    color: #667eea;
-    line-height: 1;
-}
-
-.user-avatar i {
-    display: block;
-}
-
-.user-data {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.username {
-    font-size: 16px;
-    font-weight: 600;
-    color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.username i {
-    color: #667eea;
-    font-size: 14px;
-}
-
-.user-id {
-    font-size: 12px;
-    color: #a0a0a0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.user-id i {
-    font-size: 11px;
-}
-
-.balance-info {
-    text-align: right;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(90, 111, 216, 0.15));
-    border-radius: 12px;
-    border: 1px solid rgba(102, 126, 234, 0.3);
-    min-width: 140px;
-}
-
-.balance-label {
-    font-size: 11px;
-    color: #a0a0a0;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-}
-
-.balance-label i {
-    font-size: 12px;
-    color: #667eea;
-}
-
-.balance-amount {
-    font-size: 24px;
-    font-weight: bold;
-    color: #f0f0f0;
-    line-height: 1;
-    margin-bottom: 4px;
-}
-
-.balance-currency {
-    font-size: 11px;
-    color: #a0a0a0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-}
-
-.balance-currency i {
-    color: #fdcb6e;
-    font-size: 12px;
-}
-
+/* Специальные стили для кастомных элементов */
 .mode-switcher {
     display: none;
-    margin: 15px 0;
-    padding: 15px;
-    background: rgba(30, 11, 11, 0.6);
-    border-radius: 12px;
-    text-align: center;
 }
 
 .mode-badge {
-    display: inline-block;
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: bold;
-    margin-bottom: 10px;
 }
 
 .mode-badge.mainnet {
@@ -160,167 +39,69 @@ body {
     color: white;
 }
 
-.mode-info {
-    font-size: 14px;
-    color: #a0a0a0;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.btn {
-    display: inline-block;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    margin: 5px;
-    width: calc(100% - 10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.btn i {
-    font-size: 16px;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea, #5a6fd8);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-}
-
-.btn-secondary {
-    background: linear-gradient(135deg, #fd79a8, #e84393);
-    color: white;
-}
-
-.btn-secondary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(253, 121, 168, 0.5);
-}
-
-.btn-mode {
-    background: linear-gradient(135deg, #74b9ff, #5a9de6);
-    color: white;
-}
-
-.btn-admin {
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
-    color: white;
-    margin-bottom: 15px;
-}
-
-.btn-promo {
-    background: linear-gradient(135deg, #00b894, #008066);
-    color: white;
-}
-
-.deposit-section,
-.promo-section,
-.transaction-history {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.section-title {
-    font-size: 18px;
+.balance-amount {
     font-weight: bold;
     color: #f0f0f0;
-    margin-bottom: 15px;
-    text-align: center;
+}
+
+.demo-badge {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: #1a1a1a;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* Нижнее игровое меню */
+.games-menu {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.game-menu-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
 }
 
-.section-title i {
-    font-size: 20px;
-    color: #667eea;
+.game-menu-item:hover {
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
 }
 
-/* Обновленные стили для истории транзакций */
-.transaction-history {
-    max-height: 400px;
-    overflow-y: auto;
+.game-menu-item:active {
+    transform: scale(0.95);
 }
 
+.game-icon {
+    margin-bottom: 4px;
+}
+
+.game-name {
+    color: #a0a0a0;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Стили для транзакций */
 .transaction-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: rgba(35, 40, 52, 0.5);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
-}
-
-.transaction-item:hover {
-    background: rgba(35, 40, 52, 0.8);
-    transform: translateX(5px);
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .transaction-item:last-child {
-    margin-bottom: 0;
-}
-
-.transaction-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.transaction-type {
-    font-weight: 600;
-    color: #f0f0f0;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.transaction-type i {
-    font-size: 16px;
-}
-
-.transaction-date {
-    font-size: 11px;
-    color: #a0a0a0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.transaction-date i {
-    font-size: 10px;
-}
-
-.transaction-amount {
-    font-weight: bold;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    border-bottom: none;
 }
 
 .transaction-positive {
@@ -334,374 +115,40 @@ body {
 .no-transactions {
     text-align: center;
     color: #a0a0a0;
-    padding: 40px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    padding: 20px;
 }
 
-.no-transactions i {
-    font-size: 48px;
-    opacity: 0.3;
-}
-
-.no-transactions p {
-    margin: 0;
-    font-size: 14px;
-}
-
-/* Промокоды */
-.promo-codes {
-    margin-bottom: 15px;
-}
-
+/* Стили для промокодов */
 .promo-item {
-    background: rgba(35, 40, 52, 0.6);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
 }
 
 .promo-code {
-    font-size: 18px;
     font-weight: bold;
-    color: #00b894;
-    margin-bottom: 5px;
-}
-
-.promo-info {
-    font-size: 13px;
-    color: #a0a0a0;
-    margin-bottom: 8px;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
 }
 
 .promo-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, #00b894, #008066);
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
     color: white;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.promo-input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.promo-input {
-    flex: 1;
-    padding: 12px;
-    background: rgba(35, 40, 52, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    font-size: 14px;
-    color: #f0f0f0;
-    transition: border-color 0.3s ease;
-}
-
-.promo-input:focus {
-    outline: none;
-    border-color: #667eea;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
 }
 
 .promo-info-text {
     text-align: center;
     font-size: 12px;
     color: #a0a0a0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    line-height: 1.4;
 }
 
-.promo-info-text i {
-    color: #667eea;
-}
-
-/* Нижнее игровое меню */
-.games-menu {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(25, 30, 42, 0.98);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    z-index: 1000;
-}
-
-.game-menu-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 10px;
-    min-width: 60px;
-}
-
-.game-menu-item:hover {
-    background: rgba(102, 126, 234, 0.2);
-    transform: translateY(-2px);
-}
-
-.game-menu-item:active {
-    transform: scale(0.95);
-}
-
-.game-icon {
-    font-size: 24px;
-    margin-bottom: 4px;
-}
-
-.game-icon i {
-    color: #667eea;
-}
-
-.game-name {
-    font-size: 10px;
-    color: #a0a0a0;
-    text-align: center;
-    font-weight: 500;
-}
-
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
-}
-
-.modal-content {
-    background: #191e2a;
-    margin: 10% auto;
-    padding: 25px;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 350px;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.close {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    color: #a0a0a0;
-}
-
-.modal h3 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.modal h3 i {
-    color: #667eea;
-}
-
-input[type="number"],
-input[type="text"] {
-    width: 100%;
-    padding: 15px;
-    background: rgba(35, 40, 52, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    font-size: 16px;
-    margin-bottom: 15px;
-    transition: border-color 0.3s ease;
-    color: #f0f0f0;
-}
-
-input[type="number"]:focus,
-input[type="text"]:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-.deposit-info,
-.withdraw-info {
-    text-align: center;
-    font-size: 12px;
-    color: #a0a0a0;
-    margin-top: 15px;
-    line-height: 1.6;
-}
-
-.game-content {
-    text-align: left;
-    padding: 20px 0;
-    color: #a0a0a0;
-    line-height: 1.8;
-}
-
-.game-content p {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.game-content i {
-    color: #667eea;
-    font-size: 16px;
-}
-
-/* Admin Panel Styles */
-.admin-stats {
-    margin: 20px 0;
-}
-
-.admin-stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    margin-bottom: 8px;
-    background: rgba(35, 40, 52, 0.5);
-    border-radius: 10px;
-}
-
-.admin-stat-item:last-child {
-    margin-bottom: 0;
-}
-
-.admin-stat-label {
-    font-weight: 600;
-    color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.admin-stat-label i {
-    color: #667eea;
-}
-
-.admin-stat-value {
-    font-weight: bold;
-    color: #00b894;
-}
-
-.admin-warning {
-    text-align: center;
-    font-size: 12px;
-    color: #ff6b6b;
-    margin-top: 15px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.create-promo-section {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.create-promo-section h4 {
-    color: #f0f0f0;
-    margin-bottom: 15px;
-    font-size: 16px;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    color: #f0f0f0;
-}
-
-.promocodes-list-section h4 {
-    color: #f0f0f0;
-    margin-bottom: 15px;
-    font-size: 16px;
-}
-
-.promocodes-list {
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-/* Responsive Design */
-@media (max-width: 480px) {
-    .container {
-        padding: 15px;
-    }
-    
-    .profile-info {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .user-details {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .user-data {
-        align-items: center;
-    }
-    
-    .balance-info {
-        width: 100%;
-    }
-    
-    .balance-label,
-    .balance-currency {
-        justify-content: center;
-    }
-    
-    .modal-content {
-        margin: 20% auto;
-        width: 95%;
-    }
-    
-    .games-menu {
-        padding: 8px 0;
-    }
-    
-    .game-menu-item {
-        padding: 6px 8px;
-        min-width: 50px;
-    }
-    
-    .game-icon {
-        font-size: 20px;
-    }
-    
-    .game-name {
-        font-size: 9px;
-    }
-}
-
-/* Animation for buttons */
+/* Анимации */
 .btn {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -710,7 +157,90 @@ input[type="text"]:focus {
     transform: scale(0.98);
 }
 
-/* Scrollbar styling */
+/* Кастомные стили для Bootstrap */
+.bg-dark {
+    background-color: rgba(25, 30, 42, 0.95) !important;
+}
+
+.border-secondary {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.text-muted {
+    color: #a0a0a0 !important;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+        padding-bottom: 80px;
+    }
+    
+    .balance-amount {
+        font-size: 2.5rem;
+    }
+    
+    .game-menu-item {
+        padding: 6px 8px;
+    }
+    
+    .game-icon {
+        font-size: 1.25rem;
+    }
+    
+    .game-name {
+        font-size: 0.7rem;
+    }
+}
+
+/* Стили для игр */
+.mines-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mine-cell {
+    aspect-ratio: 1;
+    background: #007bff;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+}
+
+.mine-cell.revealed {
+    background: #28a745;
+}
+
+.mine-cell.mine {
+    background: #dc3545;
+}
+
+/* Специальные стили для модальных окон */
+.modal-content {
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Улучшенные тени */
+.card {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Плавные переходы */
+.card, .btn, .game-menu-item {
+    transition: all 0.3s ease;
+}
+
+/* Кастомный скроллбар */
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -727,4 +257,144 @@ input[type="text"]:focus {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(102, 126, 234, 0.7);
+}
+
+/* Стили для админки промокодов */
+.promocodes-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.promocode-item {
+    background: rgba(35, 40, 52, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.promocode-item.active {
+    border-left: 4px solid #00b894;
+}
+
+.promocode-item.inactive {
+    border-left: 4px solid #ff6b6b;
+    opacity: 0.7;
+}
+
+.promocode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.promocode-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+}
+
+.promocode-status {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.promocode-details {
+    margin-bottom: 10px;
+}
+
+.promocode-bonus {
+    font-size: 16px;
+    font-weight: bold;
+    color: #00b894;
+    margin-bottom: 5px;
+}
+
+.promocode-uses {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promocode-limit {
+    font-size: 12px;
+    color: #fdcb6e;
+    margin-bottom: 5px;
+}
+
+.promocode-description {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promocode-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+.promocode-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 12px;
+    width: auto;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.no-promocodes {
+    text-align: center;
+    color: #a0a0a0;
+    padding: 20px;
+}
+
+/* Rocket specific styles */
+.rocket-game {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Стили для успешных и ошибочных сообщений промокодов */
+.promo-success {
+    background: rgba(0, 184, 148, 0.2);
+    border: 1px solid rgba(0, 184, 148, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.promo-error {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
 }
