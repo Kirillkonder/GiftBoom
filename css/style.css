@@ -1,510 +1,195 @@
-/* ========================================
-   CYBERPUNK TON CASINO STYLES
-   ======================================== */
-
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-
-/* ========================================
-   BASE & RESET
-   ======================================== */
-
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-:root {
-    /* Cyberpunk Color Palette */
-    --cyber-black: #0a0e1a;
-    --cyber-dark: #0f1419;
-    --cyber-bg: #1a1f2e;
-    --cyber-cyan: #00ffff;
-    --cyber-magenta: #ff00ff;
-    --cyber-yellow: #ffff00;
-    --cyber-pink: #ff007f;
-    --cyber-purple: #8800ff;
-    --cyber-blue: #0088ff;
-    --cyber-green: #00ff88;
-    --cyber-red: #ff0044;
-    
-    /* Glows */
-    --glow-cyan: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
-    --glow-magenta: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-    --glow-yellow: 0 0 10px #ffff00, 0 0 20px #ffff00;
-    --glow-pink: 0 0 10px #ff007f, 0 0 20px #ff007f;
-}
-
 body {
-    font-family: 'Rajdhani', 'Segoe UI', sans-serif;
-    background: var(--cyber-black);
-    background-image: 
-        radial-gradient(circle at 20% 50%, rgba(136, 0, 255, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 90%, rgba(255, 0, 127, 0.1) 0%, transparent 50%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
     min-height: 100vh;
-    color: #e0e0e0;
-    position: relative;
-    overflow-x: hidden;
+    color: #e6e6e6;
 }
-
-/* ========================================
-   CYBERPUNK EFFECTS
-   ======================================== */
-
-/* Grid Background */
-.cyber-grid {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.3;
-}
-
-/* Scanlines Effect */
-.scanlines {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.15),
-        rgba(0, 0, 0, 0.15) 1px,
-        transparent 1px,
-        transparent 2px
-    );
-    pointer-events: none;
-    z-index: 1;
-    animation: scanline-move 8s linear infinite;
-}
-
-@keyframes scanline-move {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(100px); }
-}
-
-/* Glitch Text Effect */
-.cyber-text {
-    position: relative;
-    display: inline-block;
-}
-
-.cyber-text::before,
-.cyber-text::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.8;
-}
-
-.cyber-text::before {
-    color: var(--cyber-cyan);
-    animation: glitch-1 0.3s infinite;
-    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-}
-
-.cyber-text::after {
-    color: var(--cyber-magenta);
-    animation: glitch-2 0.3s infinite;
-    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
-}
-
-@keyframes glitch-1 {
-    0%, 100% { transform: translate(0); }
-    33% { transform: translate(-2px, 2px); }
-    66% { transform: translate(2px, -2px); }
-}
-
-@keyframes glitch-2 {
-    0%, 100% { transform: translate(0); }
-    33% { transform: translate(2px, -2px); }
-    66% { transform: translate(-2px, 2px); }
-}
-
-/* ========================================
-   CONTAINER & LAYOUT
-   ======================================== */
 
 .container {
     max-width: 400px;
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
-    padding-bottom: 90px;
-    position: relative;
-    z-index: 2;
+    padding-bottom: 80px; /* Добавлено место для нижнего меню */
 }
-
-/* ========================================
-   HEADER
-   ======================================== */
 
 .header {
     text-align: center;
     margin-bottom: 20px;
-    padding: 20px;
-    background: rgba(10, 14, 26, 0.9);
-    border-radius: 0;
-    border: 2px solid var(--cyber-cyan);
-    box-shadow: 
-        0 0 20px rgba(0, 255, 255, 0.3),
-        inset 0 0 20px rgba(0, 255, 255, 0.1);
-    position: relative;
-    overflow: hidden;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-}
-
-.header::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, var(--cyber-cyan), var(--cyber-magenta), var(--cyber-yellow));
-    z-index: -1;
-    opacity: 0.1;
-    animation: gradient-rotate 3s linear infinite;
-}
-
-@keyframes gradient-rotate {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
+    padding: 15px;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 26px;
-    font-weight: 900;
-    color: var(--cyber-cyan);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    text-shadow: var(--glow-cyan);
+    font-size: 24px;
+    color: #f0f0f0;
+    margin-bottom: 5px;
 }
 
 .header p {
-    color: #888;
-    font-size: 13px;
-    letter-spacing: 1px;
+    color: #a0a0a0;
+    font-size: 14px;
 }
 
-/* ========================================
-   MODE SWITCHER
-   ======================================== */
-
 .mode-switcher {
-    display: none;
+    display: none; /* Скрываем по умолчанию, покажется через JS если есть доступ */
     margin: 15px 0;
-    padding: 15px;
-    background: rgba(10, 14, 26, 0.8);
-    border: 2px solid var(--cyber-magenta);
-    border-radius: 0;
+    padding: 10px;
+    background: #1e0b0b;
+    border-radius: 10px;
     text-align: center;
-    box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
-    clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
 }
 
 .mode-badge {
     display: inline-block;
-    padding: 8px 20px;
-    border: 2px solid;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    position: relative;
-    clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
-.mode-badge.mainnet,
-.cyber-badge {
-    background: rgba(0, 255, 136, 0.1);
-    border-color: var(--cyber-green);
-    color: var(--cyber-green);
-    text-shadow: 0 0 10px var(--cyber-green);
+.mode-badge.mainnet {
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
 }
 
 .mode-badge.testnet {
-    background: rgba(255, 255, 0, 0.1);
-    border-color: var(--cyber-yellow);
-    color: var(--cyber-yellow);
-    text-shadow: 0 0 10px var(--cyber-yellow);
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: white;
 }
 
 .mode-info {
     font-size: 14px;
-    color: #999;
-    margin-bottom: 12px;
-    letter-spacing: 1px;
+    color: #a0a0a0;
+    margin-bottom: 10px;
 }
-
-/* ========================================
-   BUTTONS
-   ======================================== */
 
 .btn {
     display: inline-block;
-    padding: 14px 28px;
-    border: 2px solid;
-    border-radius: 0;
-    font-family: 'Orbitron', sans-serif;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 2px;
     transition: all 0.3s ease;
     margin: 5px;
     width: calc(100% - 10px);
-    position: relative;
-    overflow: hidden;
-    background: rgba(10, 14, 26, 0.9);
 }
 
-.btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.btn:hover::before {
-    left: 100%;
-}
-
-.btn-glitch {
-    position: relative;
-    display: inline-block;
-}
-
-.btn:hover .btn-glitch::before,
-.btn:hover .btn-glitch::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.btn-primary,
-.cyber-btn {
-    border-color: var(--cyber-cyan);
-    color: var(--cyber-cyan);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
 }
 
 .btn-primary:hover {
-    background: rgba(0, 255, 255, 0.1);
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
 
 .btn-secondary {
-    border-color: var(--cyber-magenta);
-    color: var(--cyber-magenta);
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+    color: white;
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 0, 255, 0.1);
-    box-shadow: 0 0 20px rgba(255, 0, 255, 0.6);
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(253, 121, 168, 0.5);
 }
 
 .btn-mode {
-    border-color: var(--cyber-blue);
-    color: var(--cyber-blue);
-    box-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
+    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    color: white;
 }
 
 .btn-admin {
-    border-color: var(--cyber-yellow);
-    color: var(--cyber-yellow);
-    box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: white;
     margin-bottom: 15px;
 }
 
-.btn-promo {
-    border-color: var(--cyber-green);
-    color: var(--cyber-green);
-    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-    width: auto;
-    padding: 12px 24px;
-}
-
-/* ========================================
-   PROFILE CARD
-   ======================================== */
-
-.profile-card,
-.cyber-panel {
-    background: rgba(10, 14, 26, 0.95);
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
-    padding: 30px;
+.profile-card {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 25px;
     text-align: center;
     margin-bottom: 20px;
     position: relative;
-    box-shadow: 
-        0 0 30px rgba(0, 255, 255, 0.2),
-        inset 0 0 30px rgba(0, 255, 255, 0.05);
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-}
-
-.profile-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--cyber-cyan), transparent);
-    animation: border-flow 2s linear infinite;
-}
-
-@keyframes border-flow {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .demo-badge {
     position: absolute;
     top: 15px;
     right: 15px;
-    padding: 6px 12px;
-    border: 2px solid var(--cyber-yellow);
-    background: rgba(255, 255, 0, 0.1);
-    color: var(--cyber-yellow);
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    text-shadow: 0 0 10px var(--cyber-yellow);
-    clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: #1a1a1a;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
 }
 
 .balance-section {
-    margin: 25px 0;
+    margin: 20px 0;
 }
 
-.balance-label,
-.cyber-label {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 3px;
+.balance-label {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
 }
 
-.balance-amount,
-.cyber-glow {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 56px;
-    font-weight: 900;
-    color: var(--cyber-cyan);
-    margin-bottom: 10px;
-    text-shadow: var(--glow-cyan);
-    animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-    0%, 100% { text-shadow: var(--glow-cyan); }
-    50% { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 60px #00ffff; }
+.balance-amount {
+    font-size: 48px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 5px;
 }
 
 .balance-currency {
     font-size: 14px;
-    color: #888;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    color: #a0a0a0;
 }
-
-/* ========================================
-   SECTIONS
-   ======================================== */
 
 .games-section,
 .deposit-section,
-.transaction-history,
-.promo-section {
-    background: rgba(10, 14, 26, 0.95);
-    border: 2px solid var(--cyber-magenta);
-    border-radius: 0;
-    padding: 25px;
+.transaction-history {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.section-title,
-.cyber-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--cyber-cyan);
-    margin-bottom: 20px;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    text-shadow: 0 0 15px var(--cyber-cyan);
-}
-
-.cyber-subtitle {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--cyber-magenta);
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
     margin-bottom: 15px;
     text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px var(--cyber-magenta);
 }
-
-/* ========================================
-   GAME INFO
-   ======================================== */
 
 .game-info {
     text-align: center;
-    color: #888;
+    color: #a0a0a0;
     font-size: 14px;
-    line-height: 1.8;
-    padding: 15px;
-    border: 1px solid var(--cyber-cyan);
-    background: rgba(0, 255, 255, 0.05);
-    margin-bottom: 15px;
+    line-height: 1.5;
 }
-
-.cyber-highlight {
-    color: var(--cyber-cyan);
-    font-weight: 700;
-    text-shadow: 0 0 10px var(--cyber-cyan);
-}
-
-/* ========================================
-   TRANSACTIONS
-   ======================================== */
 
 .transaction-history {
     max-height: 300px;
@@ -516,12 +201,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-    transition: background 0.3s;
-}
-
-.transaction-item:hover {
-    background: rgba(0, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .transaction-item:last-child {
@@ -533,248 +213,177 @@ body {
 }
 
 .transaction-type {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 600;
-    color: #e0e0e0;
+    font-weight: bold;
+    color: #f0f0f0;
 }
 
 .transaction-date {
-    font-size: 11px;
-    color: #666;
-    letter-spacing: 1px;
+    font-size: 12px;
+    color: #a0a0a0;
 }
 
 .transaction-amount {
-    font-weight: 700;
+    font-weight: bold;
     font-size: 16px;
 }
 
 .transaction-positive {
-    color: var(--cyber-green);
-    text-shadow: 0 0 10px var(--cyber-green);
+    color: #00b894;
 }
 
 .transaction-negative {
-    color: var(--cyber-red);
-    text-shadow: 0 0 10px var(--cyber-red);
+    color: #ff6b6b;
 }
 
 .no-transactions {
     text-align: center;
-    color: #666;
-    padding: 25px;
-    font-family: 'Orbitron', sans-serif;
-    letter-spacing: 2px;
+    color: #a0a0a0;
+    padding: 20px;
 }
 
-/* ========================================
-   GAMES MENU (BOTTOM)
-   ======================================== */
-
-.games-menu,
-.cyber-menu {
+/* Нижнее игровое меню */
+.games-menu {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(10, 14, 26, 0.98);
+    background: rgba(25, 30, 42, 0.98);
     backdrop-filter: blur(10px);
-    border-top: 2px solid var(--cyber-cyan);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-around;
-    padding: 12px 0;
+    padding: 10px 0;
     z-index: 1000;
-    box-shadow: 0 -5px 30px rgba(0, 255, 255, 0.3);
 }
 
-.game-menu-item,
-.cyber-game-item {
+.game-menu-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px 15px;
+    padding: 8px 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
-    min-width: 70px;
-    position: relative;
+    border-radius: 10px;
+    min-width: 60px;
 }
 
 .game-menu-item:hover {
-    border-color: var(--cyber-cyan);
-    background: rgba(0, 255, 255, 0.1);
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+    background: rgba(102, 126, 234, 0.2);
+    transform: translateY(-2px);
 }
 
 .game-menu-item:active {
-    transform: translateY(-2px) scale(0.98);
+    transform: scale(0.95);
 }
 
 .game-icon {
-    font-size: 28px;
-    margin-bottom: 5px;
-    filter: drop-shadow(0 0 5px var(--cyber-cyan));
+    font-size: 24px;
+    margin-bottom: 4px;
 }
 
 .game-name {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px;
-    color: var(--cyber-cyan);
+    font-size: 10px;
+    color: #a0a0a0;
     text-align: center;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-weight: 500;
 }
 
-/* ========================================
-   FOOTER
-   ======================================== */
-
-.footer,
-.cyber-footer {
+.footer {
     text-align: center;
-    color: #555;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
     margin-top: 30px;
-    padding: 15px;
-    letter-spacing: 2px;
+    padding: 10px;
 }
 
-/* ========================================
-   MODALS
-   ======================================== */
-
-.modal,
-.cyber-modal {
+/* Modal Styles */
+.modal {
     display: none;
     position: fixed;
-    z-index: 2000;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
 }
 
-.modal-content,
-.cyber-modal-content {
-    background: rgba(10, 14, 26, 0.98);
+.modal-content {
+    background: #191e2a;
     margin: 10% auto;
-    padding: 30px;
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
+    padding: 25px;
+    border-radius: 20px;
     width: 90%;
     max-width: 350px;
     position: relative;
-    box-shadow: 
-        0 0 50px rgba(0, 255, 255, 0.4),
-        inset 0 0 30px rgba(0, 255, 255, 0.1);
-    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.close,
-.cyber-close {
+.close {
     position: absolute;
     right: 20px;
     top: 15px;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    color: var(--cyber-cyan);
-    text-shadow: 0 0 10px var(--cyber-cyan);
-    transition: all 0.3s;
-}
-
-.close:hover {
-    color: var(--cyber-magenta);
-    text-shadow: 0 0 20px var(--cyber-magenta);
-    transform: rotate(90deg);
+    color: #a0a0a0;
 }
 
 .modal h3 {
     text-align: center;
-    margin-bottom: 25px;
-    font-family: 'Orbitron', sans-serif;
-    color: var(--cyber-cyan);
-    text-shadow: 0 0 15px var(--cyber-cyan);
+    margin-bottom: 20px;
+    color: #f0f0f0;
 }
 
-/* ========================================
-   INPUTS
-   ======================================== */
-
 input[type="number"],
-input[type="text"],
-.cyber-input {
+input[type="text"] {
     width: 100%;
     padding: 15px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
-    font-family: 'Rajdhani', sans-serif;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
     font-size: 16px;
     margin-bottom: 15px;
-    transition: all 0.3s ease;
-    color: #e0e0e0;
-    box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1);
+    transition: border-color 0.3s ease;
+    color: #f0f0f0;
 }
 
 input[type="number"]:focus,
-input[type="text"]:focus,
-.cyber-input:focus {
+input[type="text"]:focus {
     outline: none;
-    border-color: var(--cyber-magenta);
-    box-shadow: 
-        0 0 20px rgba(255, 0, 255, 0.5),
-        inset 0 0 20px rgba(255, 0, 255, 0.1);
-}
-
-input::placeholder {
-    color: #555;
+    border-color: #667eea;
 }
 
 .deposit-info,
 .withdraw-info {
     text-align: center;
     font-size: 12px;
-    color: #888;
-    margin-top: 20px;
-    line-height: 1.6;
-    letter-spacing: 1px;
+    color: #a0a0a0;
+    margin-top: 15px;
+    line-height: 1.4;
 }
 
-/* ========================================
-   GAME CONTENT
-   ======================================== */
-
+/* Стили для контента игр */
 .game-content {
     text-align: center;
-    padding: 25px 0;
-    color: #999;
-    line-height: 1.8;
+    padding: 20px 0;
+    color: #a0a0a0;
+    line-height: 1.6;
 }
 
-.game-content p {
-    margin-bottom: 10px;
-}
-
-/* ========================================
-   ADMIN PANEL
-   ======================================== */
-
+/* Admin Panel Styles */
 .admin-stats {
-    margin: 25px 0;
+    margin: 20px 0;
 }
 
 .admin-stat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .admin-stat-item:last-child {
@@ -782,280 +391,88 @@ input::placeholder {
 }
 
 .admin-stat-label {
-    font-weight: 600;
-    color: #ccc;
+    font-weight: bold;
+    color: #f0f0f0;
 }
 
 .admin-stat-value {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    color: var(--cyber-green);
-    text-shadow: 0 0 10px var(--cyber-green);
+    font-weight: bold;
+    color: #00b894;
 }
 
-.admin-warning,
-.cyber-warning {
+.admin-warning {
     text-align: center;
     font-size: 12px;
-    color: var(--cyber-red);
-    margin-top: 20px;
-    font-weight: 700;
-    text-shadow: 0 0 10px var(--cyber-red);
-    animation: blink-warning 2s ease-in-out infinite;
+    color: #ff6b6b;
+    margin-top: 15px;
+    font-weight: bold;
 }
 
-@keyframes blink-warning {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+/* Responsive Design */
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .balance-amount {
+        font-size: 36px;
+    }
+    
+    .modal-content {
+        margin: 20% auto;
+        width: 95%;
+    }
+    
+    .games-menu {
+        padding: 8px 0;
+    }
+    
+    .game-menu-item {
+        padding: 6px 8px;
+        min-width: 50px;
+    }
+    
+    .game-icon {
+        font-size: 20px;
+    }
+    
+    .game-name {
+        font-size: 9px;
+    }
 }
 
-/* ========================================
-   PROMO CODES
-   ======================================== */
-
-.promo-codes {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+/* Animation for buttons */
+.btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.promo-item,
-.cyber-card {
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
-    padding: 18px;
-    position: relative;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+.btn:active {
+    transform: scale(0.98);
 }
 
-.promo-item.promo-featured {
-    border-color: var(--cyber-yellow);
-    box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
 }
 
-.promo-code,
-.cyber-code {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--cyber-cyan);
-    margin-bottom: 8px;
-    text-shadow: 0 0 15px var(--cyber-cyan);
-    letter-spacing: 3px;
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
 }
 
-.promo-info {
-    font-size: 14px;
-    color: #999;
-    margin-bottom: 8px;
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 3px;
 }
 
-.promo-badge,
-.cyber-badge-small {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(0, 255, 255, 0.2);
-    border: 1px solid var(--cyber-cyan);
-    color: var(--cyber-cyan);
-    padding: 5px 10px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    text-shadow: 0 0 10px var(--cyber-cyan);
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
 }
 
-.promo-input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
 
-.promo-input {
-    flex: 1;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
-    font-size: 14px;
-    color: #e0e0e0;
-}
+/* Существующие стили остаются без изменений */
 
-.promo-info-text {
-    text-align: center;
-    font-size: 12px;
-    color: #777;
-    line-height: 1.5;
-}
-
-.promo-success {
-    background: rgba(0, 255, 136, 0.2);
-    border: 2px solid var(--cyber-green);
-    padding: 12px;
-    margin-top: 12px;
-    text-align: center;
-    color: var(--cyber-green);
-}
-
-.promo-error {
-    background: rgba(255, 0, 68, 0.2);
-    border: 2px solid var(--cyber-red);
-    padding: 12px;
-    margin-top: 12px;
-    text-align: center;
-    color: var(--cyber-red);
-}
-
-/* ========================================
-   PROMOCODES ADMIN
-   ======================================== */
-
-.create-promo-section {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 20px;
-    border: 2px solid var(--cyber-magenta);
-    margin-bottom: 25px;
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-}
-
-.create-promo-section h4 {
-    margin-bottom: 15px;
-    color: var(--cyber-magenta);
-    font-family: 'Orbitron', sans-serif;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    margin: 12px 0;
-}
-
-.checkbox-group input {
-    margin-right: 10px;
-}
-
-.checkbox-group label {
-    color: #999;
-    font-size: 14px;
-}
-
-.promocodes-list-section h4 {
-    margin-bottom: 15px;
-    color: var(--cyber-cyan);
-    font-family: 'Orbitron', sans-serif;
-}
-
-.promocodes-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.promocode-item {
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
-    padding: 15px;
-    margin-bottom: 12px;
-    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-}
-
-.promocode-item.active {
-    border-left: 4px solid var(--cyber-green);
-}
-
-.promocode-item.inactive {
-    border-left: 4px solid var(--cyber-red);
-    opacity: 0.7;
-}
-
-.promocode-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.promocode-code {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--cyber-cyan);
-    text-shadow: 0 0 10px var(--cyber-cyan);
-}
-
-.promocode-status {
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.promocode-details {
-    margin-bottom: 12px;
-}
-
-.promocode-bonus {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--cyber-green);
-    text-shadow: 0 0 10px var(--cyber-green);
-    margin-bottom: 5px;
-}
-
-.promocode-uses {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 5px;
-}
-
-.promocode-limit {
-    font-size: 12px;
-    color: var(--cyber-yellow);
-    margin-bottom: 5px;
-}
-
-.promocode-description {
-    font-size: 13px;
-    color: #999;
-    margin-bottom: 5px;
-}
-
-.promocode-meta {
-    font-size: 11px;
-    color: #666;
-}
-
-.promocode-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 12px;
-}
-
-.btn-small {
-    padding: 8px 16px;
-    font-size: 11px;
-    width: auto;
-}
-
-.btn-danger {
-    border-color: var(--cyber-red);
-    color: var(--cyber-red);
-    box-shadow: 0 0 10px rgba(255, 0, 68, 0.3);
-}
-
-.no-promocodes {
-    text-align: center;
-    color: #666;
-    padding: 25px;
-    font-family: 'Orbitron', sans-serif;
-}
-
-/* ========================================
-   MINES GAME SPECIFIC
-   ======================================== */
-
+/* Новые стили для Mines */
 .mines-container {
     max-width: 600px;
     margin: 0 auto;
@@ -1069,35 +486,42 @@ input::placeholder {
     flex-wrap: wrap;
 }
 
-.bet-input,
-.mines-select {
-    padding: 12px;
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
+.bet-input {
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 5px;
     font-size: 16px;
-    background: rgba(0, 0, 0, 0.5);
-    color: #e0e0e0;
+}
+
+.mines-select {
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 5px;
+    font-size: 16px;
 }
 
 .start-btn {
-    padding: 12px 24px;
-    background: rgba(0, 255, 255, 0.2);
-    border: 2px solid var(--cyber-cyan);
-    color: var(--cyber-cyan);
-    border-radius: 0;
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
     font-size: 16px;
-    font-weight: 700;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
 }
 
 .start-btn:disabled {
-    background: rgba(100, 100, 100, 0.2);
-    border-color: #555;
-    color: #555;
+    background: #ccc;
     cursor: not-allowed;
-    box-shadow: none;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
 }
 
 .mines-grid {
@@ -1109,37 +533,23 @@ input::placeholder {
 
 .mine-cell {
     aspect-ratio: 1;
-    background: rgba(0, 136, 255, 0.2);
-    border: 2px solid var(--cyber-blue);
-    border-radius: 0;
+    background: #007bff;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-weight: bold;
     font-size: 18px;
-    color: var(--cyber-blue);
-    transition: all 0.3s;
-    box-shadow: 0 0 10px rgba(0, 136, 255, 0.2);
-}
-
-.mine-cell:hover {
-    background: rgba(0, 136, 255, 0.3);
-    box-shadow: 0 0 20px rgba(0, 136, 255, 0.4);
+    color: white;
 }
 
 .mine-cell.revealed {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: var(--cyber-green);
-    color: var(--cyber-green);
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    background: #28a745;
 }
 
 .mine-cell.mine {
-    background: rgba(255, 0, 68, 0.2);
-    border-color: var(--cyber-red);
-    color: var(--cyber-red);
-    box-shadow: 0 0 20px rgba(255, 0, 68, 0.4);
+    background: #dc3545;
 }
 
 .game-controls {
@@ -1149,168 +559,344 @@ input::placeholder {
 }
 
 .cashout-btn {
-    padding: 15px 35px;
-    background: rgba(0, 255, 136, 0.2);
-    border: 2px solid var(--cyber-green);
-    color: var(--cyber-green);
-    border-radius: 0;
+    padding: 15px 30px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
     cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
     font-size: 18px;
-    font-weight: 700;
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+    font-weight: bold;
 }
 
 .cashout-btn:disabled {
-    background: rgba(100, 100, 100, 0.2);
-    border-color: #555;
-    color: #555;
+    background: #ccc;
     cursor: not-allowed;
-    box-shadow: none;
 }
 
 .result-message {
     text-align: center;
-    font-family: 'Orbitron', sans-serif;
     font-size: 24px;
-    font-weight: 700;
+    font-weight: bold;
     margin: 20px 0;
     padding: 20px;
-    border: 2px solid;
-    border-radius: 0;
+    border-radius: 5px;
 }
 
 .win {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: var(--cyber-green);
-    color: var(--cyber-green);
-    text-shadow: 0 0 20px var(--cyber-green);
+    background: #d4edda;
+    color: #155724;
 }
 
 .lose {
-    background: rgba(255, 0, 68, 0.2);
-    border-color: var(--cyber-red);
-    color: var(--cyber-red);
-    text-shadow: 0 0 20px var(--cyber-red);
+    background: #f8d7da;
+    color: #721c24;
 }
 
 .btn-test {
-    border-color: var(--cyber-blue);
-    color: var(--cyber-blue);
+    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    color: white;
 }
 
-/* ========================================
-   ROCKET GAME SPECIFIC
-   ======================================== */
+
+
 
 .rocket-game {
-    background: rgba(10, 14, 26, 0.95);
-    border: 2px solid var(--cyber-cyan);
-    border-radius: 0;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+
+
+
+
+
+
+
+
+/* Rocket specific styles */
+
 .back-button {
-    background: rgba(0, 255, 255, 0.1);
-    border: 2px solid var(--cyber-cyan);
-    color: var(--cyber-cyan);
-    padding: 10px 20px;
-    border-radius: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
     margin-bottom: 20px;
     cursor: pointer;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 600;
-    transition: all 0.3s;
 }
 
 .back-button:hover {
-    background: rgba(0, 255, 255, 0.2);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.2);
 }
 
-/* ========================================
-   SCROLLBAR
-   ======================================== */
 
-::-webkit-scrollbar {
-    width: 8px;
+/* Rocket specific styles */
+
+
+.back-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    cursor: pointer;
 }
 
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--cyber-cyan);
-    box-shadow: 0 0 10px var(--cyber-cyan);
+/* Анимации для ракетки */
+
+/* Стили для промокодов */
+.promo-section {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--cyber-magenta);
-    box-shadow: 0 0 15px var(--cyber-magenta);
+.promo-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-
-@media (max-width: 480px) {
-    .container {
-        padding: 15px;
-    }
-    
-    .balance-amount {
-        font-size: 44px;
-    }
-    
-    .modal-content {
-        margin: 20% auto;
-        width: 95%;
-    }
-    
-    .games-menu {
-        padding: 10px 0;
-    }
-    
-    .game-menu-item {
-        padding: 8px 12px;
-        min-width: 60px;
-    }
-    
-    .game-icon {
-        font-size: 24px;
-    }
-    
-    .game-name {
-        font-size: 10px;
-    }
+.promo-item {
+    background: rgba(45, 50, 62, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
 }
 
-/* ========================================
-   ANIMATIONS
-   ======================================== */
-
-.btn:active {
-    transform: scale(0.98);
+.promo-item.promo-featured {
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(230, 163, 54, 0.2));
+    border: 1px solid rgba(253, 203, 110, 0.3);
 }
 
-@keyframes cyber-flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+.promo-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    margin-bottom: 5px;
+    font-family: 'Courier New', monospace;
 }
 
-/* Additional neon pulse for important elements */
-.cyber-pulse {
-    animation: cyber-pulse 2s ease-in-out infinite;
+.promo-info {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
 }
 
-@keyframes cyber-pulse {
-    0%, 100% {
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-    50% {
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
-    }
+.promo-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.promo-featured .promo-badge {
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.promo-input {
+    flex: 1;
+    padding: 12px;
+    background: rgba(35, 40, 52, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #f0f0f0;
+}
+
+.promo-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-promo {
+    background: linear-gradient(135deg, #00b894, #008066);
+    color: white;
+    width: auto;
+    padding: 12px 20px;
+}
+
+.btn-promo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.5);
+}
+
+.promo-info-text {
+    text-align: center;
+    font-size: 12px;
+    color: #a0a0a0;
+    line-height: 1.4;
+}
+
+.promo-success {
+    background: rgba(0, 184, 148, 0.2);
+    border: 1px solid rgba(0, 184, 148, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.promo-error {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+/* Стили для админки промокодов */
+.create-promo-section {
+    background: rgba(45, 50, 62, 0.8);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.create-promo-section h4 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.checkbox-group input {
+    margin-right: 10px;
+}
+
+.checkbox-group label {
+    color: #a0a0a0;
+    font-size: 14px;
+}
+
+.promocodes-list-section h4 {
+    margin-bottom: 15px;
+    color: #f0f0f0;
+}
+
+.promocodes-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.promocode-item {
+    background: rgba(35, 40, 52, 0.8);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.promocode-item.active {
+    border-left: 4px solid #00b894;
+}
+
+.promocode-item.inactive {
+    border-left: 4px solid #ff6b6b;
+    opacity: 0.7;
+}
+
+.promocode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.promocode-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+    font-family: 'Courier New', monospace;
+}
+
+.promocode-status {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.promocode-details {
+    margin-bottom: 10px;
+}
+
+.promocode-bonus {
+    font-size: 16px;
+    font-weight: bold;
+    color: #00b894;
+    margin-bottom: 5px;
+}
+
+.promocode-uses {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promocode-limit {
+    font-size: 12px;
+    color: #fdcb6e;
+    margin-bottom: 5px;
+}
+
+.promocode-description {
+    font-size: 14px;
+    color: #a0a0a0;
+    margin-bottom: 5px;
+}
+
+.promocode-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+.promocode-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 12px;
+    width: auto;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.no-promocodes {
+    text-align: center;
+    color: #a0a0a0;
+    padding: 20px;
 }
