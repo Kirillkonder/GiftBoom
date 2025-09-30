@@ -256,6 +256,7 @@ async processDeposit() {
 updateUI() {
     if (this.userData) {
         const headerBalanceElement = document.getElementById('header-balance');
+        const userNameElement = document.getElementById('user-name');
         const headerDemoBadge = document.getElementById('header-demo-badge');
         const modeSwitcher = document.querySelector('.mode-switcher');
         const modeBadgeElement = document.getElementById('mode-badge');
@@ -270,9 +271,14 @@ updateUI() {
             headerBalanceElement.textContent = balance.toFixed(2);
         }
         
+        if (userNameElement && this.tg.initDataUnsafe.user) {
+            const userName = this.tg.initDataUnsafe.user.first_name || this.tg.initDataUnsafe.user.username || 'Пользователь';
+            userNameElement.textContent = userName;
+        }
+        
         if (headerDemoBadge) {
             headerDemoBadge.textContent = this.demoMode ? 'TESTNET' : 'MAINNET';
-            headerDemoBadge.style.display = this.demoMode ? 'inline-block' : 'none';
+            headerDemoBadge.style.display = this.demoMode ? 'block' : 'none';
         }
         
         if (modeSwitcher) {
