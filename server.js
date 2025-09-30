@@ -262,10 +262,20 @@ app.post('/api/promo/apply', async (req, res) => {
             return res.status(400).json({ error: 'Вы уже использовали промокод' });
         }
 
+        // 🔥 ИСПРАВЛЕНИЕ: Возвращаем promo с правильными полями в camelCase
+        const promo = {
+            code: result.promo.code,
+            bonusPercent: result.promo.bonus_percent,  // ← ИСПРАВЛЕНО
+            description: result.promo.description,
+            used_count: result.promo.used_count,
+            max_uses: result.promo.max_uses,
+            is_public: result.promo.is_public
+        };
+
         res.json({
             success: true,
-            promo: result.promo,
-            message: `Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`
+            promo: promo,
+            message: `Промокод активирован! +${result.promo.bonus_percent}% к следующему депозиту`
         });
 
     } catch (error) {
@@ -273,6 +283,7 @@ app.post('/api/promo/apply', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 
 // API: Получить информацию о промокодах
 app.get('/api/promo/info', async (req, res) => {

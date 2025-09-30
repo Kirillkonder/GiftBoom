@@ -91,7 +91,7 @@ class TonCasinoApp {
         const result = await response.json();
         
         if (result.success) {
-            // Показываем успешное сообщение
+            // 🔥 ИСПРАВЛЕНО: используем правильное поле bonusPercent
             this.showPromoSuccess(`Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`);
             promoCodeInput.value = '';
         } else {
@@ -142,15 +142,17 @@ hidePromoMessage() {
     if (errorMsg) errorMsg.remove();
 }
 
-// Обновить функцию processDeposit для передачи промокода
+// 🔥 ИСПРАВЛЕННАЯ функция processDeposit - берет промокод из модалки
 async processDeposit() {
     const amount = parseFloat(document.getElementById('deposit-amount').value);
-    const promoCodeInput = document.getElementById('promo-code-input');
-    const promoCode = promoCodeInput ? promoCodeInput.value.trim() : '';
     
-    console.log(`💰 Депозит: сумма ${amount}, промокод: ${promoCode}`);
+    // 🔥 Берем промокод из модалки депозита (приоритет) или из секции промокодов
+    const modalPromoInput = document.getElementById('deposit-promo-code');
+    const pagePromoInput = document.getElementById('promo-code-input');
+    const promoCode = (modalPromoInput?.value.trim()) || (pagePromoInput?.value?.trim()) || '';
+    
+    console.log(`💰 Депозит: сумма ${amount}, промокод: "${promoCode}"`);
 
-    // ИЗМЕНЕНО: Минимальный депозит 0.3 TON вместо 3 TON
     if (!amount || amount < 0.3) {
         this.showError('Минимальный депозит: 0.3 TON');
         return;
@@ -170,11 +172,10 @@ async processDeposit() {
 
         const result = await response.json();
         
-        console.log('📋 Результат создания инвойса:', result); // 🔥 ДЛЯ ОТЛАДКИ
+        console.log('📋 Результат создания инвойса:', result);
         
         if (result.success) {
             if (this.demoMode) {
-                // Для демо-режима сразу обновляем баланс
                 await this.loadUserData();
                 this.tg.showPopup({
                     title: "✅ Демо-пополнение",
@@ -182,18 +183,16 @@ async processDeposit() {
                     buttons: [{ type: "ok" }]
                 });
             } else {
-                // Для реального режима открываем инвойс
                 let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
                 
-                // 🔥 ИСПРАВЛЕНИЕ: Проверяем наличие бонуса
+                // 🔥 ИСПРАВЛЕНО: Проверяем правильные поля
                 if (result.bonus_applied && result.bonus_amount > 0) {
                     message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
                     message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
                     
-                    // Очищаем поле промокода после успешного применения
-                    if (promoCodeInput) {
-                        promoCodeInput.value = '';
-                    }
+                    // Очищаем промокод после успешного применения
+                    if (modalPromoInput) modalPromoInput.value = '';
+                    if (pagePromoInput) pagePromoInput.value = '';
                     
                     console.log(`✅ Промокод применен: +${result.bonus_amount.toFixed(2)} TON`);
                 } else {
@@ -264,7 +263,6 @@ async processDeposit() {
         const depositModeInfo = document.getElementById('deposit-mode-info');
         const withdrawModeInfo = document.getElementById('withdraw-mode-info');
         
-        // Показываем переключатель ТОЛЬКО админам
         if (modeSwitcher) {
             modeSwitcher.style.display = this.isAdminUser ? 'block' : 'none';
         }
@@ -358,13 +356,11 @@ async processDeposit() {
         const response = await fetch(`/api/admin/dashboard/${this.tg.initDataUnsafe.user.id}`);
         const data = await response.json();
         
-        // Обновляем все элементы банка
         document.getElementById('admin-bank-balance').textContent = data.bank_balance;
         document.getElementById('admin-demo-bank-balance').textContent = data.demo_bank_balance;
         document.getElementById('admin-total-users').textContent = data.total_users;
         document.getElementById('admin-total-transactions').textContent = data.total_transactions;
         
-        // Также обновляем элементы в других вкладках админки, если они есть
         const bankElements = document.querySelectorAll('.bank-balance');
         const demoBankElements = document.querySelectorAll('.demo-bank-balance');
         
@@ -447,12 +443,9 @@ async processDeposit() {
         }
     }
 
-    // Функция отображения ошибок
     showError(message, details = null) {
-        // Скрываем предыдущие ошибки
         this.hideError();
         
-        // Создаем элемент ошибки
         const errorDiv = document.createElement('div');
         errorDiv.id = 'error-message';
         errorDiv.className = 'error-message';
@@ -468,7 +461,6 @@ async processDeposit() {
             </div>
         `;
         
-        // Если есть детали об отыгрыше, добавляем их
         if (details && details.wagered !== undefined) {
             errorContent += `
                 <div class="error-details">
@@ -481,7 +473,6 @@ async processDeposit() {
         
         errorDiv.innerHTML = errorContent;
         
-        // Добавляем стили
         errorDiv.style.cssText = `
             position: fixed;
             top: 20px;
@@ -498,7 +489,6 @@ async processDeposit() {
             animation: slideDown 0.3s ease-out;
         `;
         
-        // Добавляем анимацию
         const style = document.createElement('style');
         style.textContent = `
             @keyframes slideDown {
@@ -575,7 +565,6 @@ async processDeposit() {
         document.head.appendChild(style);
         document.body.appendChild(errorDiv);
         
-        // Автоматически скрываем через 7 секунд
         setTimeout(() => {
             this.hideError();
         }, 7000);
@@ -587,78 +576,6 @@ async processDeposit() {
             errorDiv.remove();
         }
     }
-
-    // app.js - исправленная функция processDeposit
-async processDeposit() {
-    const amount = parseFloat(document.getElementById('deposit-amount').value);
-    const promoCodeInput = document.getElementById('promo-code-input');
-    const promoCode = promoCodeInput ? promoCodeInput.value.trim() : '';
-    
-    console.log(`💰 Депозит: сумма ${amount}, промокод: ${promoCode}`);
-
-    // ИЗМЕНЕНО: Минимальный депозит 0.3 TON вместо 3 TON
-    if (!amount || amount < 0.3) {
-        this.showError('Минимальный депозит: 0.3 TON');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/create-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                telegramId: this.tg.initDataUnsafe.user.id,
-                amount: amount,
-                demoMode: this.demoMode,
-                promoCode: promoCode
-            })
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-            if (this.demoMode) {
-                // Для демо-режима сразу обновляем баланс
-                await this.loadUserData();
-                this.tg.showPopup({
-                    title: "✅ Демо-пополнение",
-                    message: `Демо-депозит ${amount} TON успешно зачислен!`,
-                    buttons: [{ type: "ok" }]
-                });
-            } else {
-                // Для реального режима открываем инвойс
-                let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
-                if (result.bonus_applied) {
-                    message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
-                    message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
-                    
-                    // Очищаем поле промокода после успешного применения
-                    if (promoCodeInput) {
-                        promoCodeInput.value = '';
-                    }
-                    
-                    console.log(`✅ Промокод применен: +${result.bonus_amount.toFixed(2)} TON`);
-                }
-                
-                window.open(result.invoice_url, '_blank');
-                this.tg.showPopup({
-                    title: "Оплата TON",
-                    message: message,
-                    buttons: [{ type: "ok" }]
-                });
-                this.checkDepositStatus(result.invoice_id, result.final_amount);
-            }
-            
-            closeDepositModal();
-        } else {
-            console.log(`❌ Ошибка депозита:`, result.error);
-            this.showError('Ошибка при создании депозита: ' + result.error);
-        }
-    } catch (error) {
-        console.error('Deposit error:', error);
-        this.showError('Ошибка при создании депозита');
-    }
-}
 
     async checkDepositStatus(invoiceId, expectedAmount = null) {
     console.log(`🔍 Проверка статуса инвойса: ${invoiceId}`);
@@ -743,7 +660,6 @@ async processDeposit() {
                 
                 closeWithdrawModal();
             } else {
-                // НОВАЯ ОБРАБОТКА: Показываем детальную ошибку отыгрыша
                 if (result.error === 'Недостаточно отыгрыша') {
                     this.showError(result.message || 'Недостаточно отыгрыша для вывода средств', {
                         wagered: result.wagered,
@@ -783,6 +699,8 @@ function openDepositModal() {
 function closeDepositModal() {
     document.getElementById('deposit-modal').style.display = 'none';
     document.getElementById('deposit-amount').value = '';
+    const modalPromo = document.getElementById('deposit-promo-code');
+    if (modalPromo) modalPromo.value = '';
 }
 
 function openWithdrawModal() {
@@ -828,7 +746,6 @@ async function openPromoCodesAdmin() {
     await loadPromoCodesAdmin();
 }
 
-// Функция для загрузки списка промокодов
 async function loadPromoCodesAdmin() {
     try {
         const response = await fetch(`/api/admin/promocodes/${app.tg.initDataUnsafe.user.id}`);
@@ -843,7 +760,6 @@ async function loadPromoCodesAdmin() {
     }
 }
 
-// Функция для отображения списка промокодов
 function renderPromoCodesList(promoCodes) {
     const container = document.getElementById('promocodes-list');
     if (!container) return;
@@ -883,8 +799,6 @@ function renderPromoCodesList(promoCodes) {
     `).join('');
 }
 
-
-// Функция для создания нового промокода
 async function createNewPromoCode() {
     const code = document.getElementById('new-promo-code').value.trim();
     const bonusPercent = document.getElementById('new-promo-percent').value;
@@ -929,7 +843,6 @@ async function createNewPromoCode() {
     }
 }
 
-// Функция для удаления промокода
 async function deletePromoCode(code) {
     if (!confirm(`Удалить промокод ${code}?`)) return;
 
@@ -957,7 +870,6 @@ async function deletePromoCode(code) {
     }
 }
 
-// Функция для активации/деактивации промокода
 async function togglePromoCode(code) {
     try {
         const response = await fetch('/api/admin/promocodes/toggle', {
@@ -990,7 +902,6 @@ function applyPromoCode() {
     app.applyPromoCode();
 }
 
-// Инициализация
 document.addEventListener('DOMContentLoaded', function() {
     app = new TonCasinoApp();
 });
