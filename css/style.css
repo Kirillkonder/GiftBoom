@@ -901,81 +901,106 @@ input[type="text"]:focus {
     padding: 20px;
 }
 
-.header {
+/* Новые стили для шапки профиля */
+.header-profile {
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
     padding: 20px;
     margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
 }
 
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .user-info {
     display: flex;
     align-items: center;
     gap: 15px;
+    flex: 1;
 }
 
 .user-avatar {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
     background: linear-gradient(135deg, #667eea, #5a6fd8);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
+    color: white;
 }
 
 .user-details {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+    flex: 1;
 }
 
 .user-name {
     font-size: 18px;
     font-weight: bold;
     color: #f0f0f0;
+    margin-bottom: 5px;
 }
 
 .user-balance {
     display: flex;
-    align-items: baseline;
-    gap: 5px;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-.user-balance .balance-amount {
-    font-size: 24px;
-    font-weight: bold;
-    color: #f0f0f0;
-}
-
-.user-balance .balance-currency {
+.balance-label {
     font-size: 14px;
     color: #a0a0a0;
 }
 
-/* Удален блок profile-card */
-.profile-card {
-    display: none;
+.balance-amount {
+    font-size: 20px;
+    font-weight: bold;
+    color: #f0f0f0;
 }
 
-/* Обновленный demo-badge в шапке */
-.header .demo-badge {
+.balance-currency {
+    font-size: 14px;
+    color: #a0a0a0;
+}
+
+.header-profile .demo-badge {
     position: static;
     background: linear-gradient(135deg, #fdcb6e, #e6a336);
     color: #1a1a1a;
-    padding: 8px 12px;
+    padding: 6px 12px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
 }
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+    .header-profile {
+        padding: 15px;
+    }
+    
+    .user-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .user-name {
+        font-size: 16px;
+    }
+    
+    .balance-amount {
+        font-size: 18px;
+    }
+    
+    .user-balance {
+        gap: 5px;
+    }
+}
+
