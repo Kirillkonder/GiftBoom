@@ -9,37 +9,21 @@
 </head>
 <body>
     <div class="container">
-        <!-- Новая шапка с ником и балансом -->
+        <!-- Новая шапка с балансом -->
         <div class="header-profile">
             <div class="user-info">
                 <div class="user-avatar">👤</div>
                 <div class="user-details">
-                    <div class="user-name" id="user-name">Пользователь</div>
-                    <div class="user-balance">
-                        <span class="balance-label">Баланс:</span>
+                    <div class="user-balance-main">
                         <span class="balance-amount" id="header-balance">0</span>
                         <span class="balance-currency">TON</span>
                     </div>
+                    <div class="demo-badge" id="header-demo-badge">TESTNET</div>
                 </div>
             </div>
-            <div class="demo-badge" id="header-demo-badge">TESTNET</div>
         </div>
         
         <div id="header"></div>
-        
-        <button class="btn btn-admin" id="admin-button" onclick="openAdminPanel()" style="display: none;">
-            👑 Админ-панель
-        </button>
-
-        <div class="mode-switcher">
-            <div class="mode-badge" id="mode-badge">MAINNET</div>
-            <div class="mode-info" id="mode-info">
-                🌐 Реальный режим - настоящие TON
-            </div>
-            <button class="btn btn-mode" id="mode-button" onclick="toggleMode()">
-                🔄 Перейти к тестовым TON
-            </button>
-        </div>
         
         <div class="games-section">
             <div class="section-title">🎰 Игры казино</div>
@@ -94,6 +78,23 @@
             <div class="section-title">История операций</div>
             <div id="transactions">
                 <div class="no-transactions">Нет операций</div>
+            </div>
+        </div>
+
+        <!-- Админские кнопки перенесены вниз -->
+        <div class="admin-controls">
+            <button class="btn btn-admin" id="admin-button" onclick="openAdminPanel()" style="display: none;">
+                👑 Админ-панель
+            </button>
+
+            <div class="mode-switcher">
+                <div class="mode-badge" id="mode-badge">MAINNET</div>
+                <div class="mode-info" id="mode-info">
+                    🌐 Реальный режим - настоящие TON
+                </div>
+                <button class="btn btn-mode" id="mode-button" onclick="toggleMode()">
+                    🔄 Перейти к тестовым TON
+                </button>
             </div>
         </div>
         

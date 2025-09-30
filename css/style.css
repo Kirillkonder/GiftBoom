@@ -905,7 +905,7 @@ input[type="text"]:focus {
 .header-profile {
     background: rgba(25, 30, 42, 0.95);
     border-radius: 20px;
-    padding: 20px;
+    padding: 15px 20px;
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
@@ -913,8 +913,8 @@ input[type="text"]:focus {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
 }
+
 
 .user-info {
     display: flex;
@@ -958,6 +958,25 @@ input[type="text"]:focus {
     color: #a0a0a0;
 }
 
+.user-balance-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.user-balance-main .balance-amount {
+    font-size: 28px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+.user-balance-main .balance-currency {
+    font-size: 16px;
+    color: #a0a0a0;
+}
+
+
 .balance-amount {
     font-size: 20px;
     font-weight: bold;
@@ -969,16 +988,16 @@ input[type="text"]:focus {
     color: #a0a0a0;
 }
 
+
 .header-profile .demo-badge {
-    position: static;
     background: linear-gradient(135deg, #fdcb6e, #e6a336);
     color: #1a1a1a;
-    padding: 6px 12px;
-    border-radius: 12px;
+    padding: 4px 10px;
+    border-radius: 10px;
     font-size: 11px;
     font-weight: bold;
+    display: inline-block;
 }
-
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     .header-profile {
@@ -1001,6 +1020,63 @@ input[type="text"]:focus {
     
     .user-balance {
         gap: 5px;
+    }
+}
+
+
+/* Контейнер для админских контролов внизу */
+.admin-controls {
+    margin: 20px 0;
+    padding: 0 10px;
+}
+
+.admin-controls .btn-admin {
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.admin-controls .mode-switcher {
+    display: block;
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Убираем отступ снизу для нормального скролла */
+.container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    padding-bottom: 80px;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+    .header-profile {
+        padding: 12px 15px;
+    }
+    
+    .user-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .user-balance-main .balance-amount {
+        font-size: 24px;
+    }
+    
+    .user-balance-main .balance-currency {
+        font-size: 14px;
+    }
+    
+    .admin-controls {
+        margin: 15px 0;
+        padding: 0 5px;
     }
 }
 
