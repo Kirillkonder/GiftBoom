@@ -34,6 +34,7 @@ class TonCasinoApp {
         
         if (this.isAdmin) {
             this.showAdminButton();
+            this.showPromoAdminButton();
         }
     } catch (error) {
         console.error('Admin check error:', error);
@@ -46,6 +47,12 @@ class TonCasinoApp {
             adminBtn.style.display = 'block';
         }
     }
+    showPromoAdminButton() {
+    const promoAdminBtn = document.getElementById('promo-admin-button');
+    if (promoAdminBtn) {
+        promoAdminBtn.style.display = 'block';
+    }
+}
 
  async loadUserData() {
     try {
@@ -312,7 +319,7 @@ updateUI() {
         if (withdrawModeInfo) {
             withdrawModeInfo.textContent = this.demoMode ? 
                 'Демо-вывод (виртуальные TON)' : 
-                'Реальный вывод через Crypto Pay';
+                '';
         }
     }
 }

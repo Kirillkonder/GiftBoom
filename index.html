@@ -29,8 +29,6 @@
         
         <!-- Секция промокодов (только информационная) -->
         <div class="promo-section">
-            <div class="section-title">🎁 Активные промокоды</div>
-            
             <div class="promo-codes">
                 <div class="promo-item">
                     <div class="promo-code">BOOM10</div>
@@ -45,8 +43,6 @@
         </div>
 
         <div class="deposit-section">
-            <div class="section-title">Управление балансом</div>
-            
             <button class="btn btn-primary" onclick="openDepositModal()">
                 💰 Пополнить баланс
             </button>
@@ -55,7 +51,7 @@
                 📤 Вывести средства
             </button>
 
-            <button class="btn btn-primary" onclick="openPromoCodesAdmin()" style="margin-top: 10px;">
+            <button class="btn btn-primary" id="promo-admin-button" onclick="openPromoCodesAdmin()" style="margin-top: 10px; display: none;">
                 🎁 Управление промокодами
             </button>
         </div>
