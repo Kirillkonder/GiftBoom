@@ -900,3 +900,82 @@ input[type="text"]:focus {
     color: #a0a0a0;
     padding: 20px;
 }
+
+.header {
+    background: rgba(25, 30, 42, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.user-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+.user-balance {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.user-balance .balance-amount {
+    font-size: 24px;
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+.user-balance .balance-currency {
+    font-size: 14px;
+    color: #a0a0a0;
+}
+
+/* Удален блок profile-card */
+.profile-card {
+    display: none;
+}
+
+/* Обновленный demo-badge в шапке */
+.header .demo-badge {
+    position: static;
+    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    color: #1a1a1a;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}

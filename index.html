@@ -9,7 +9,22 @@
 </head>
 <body>
     <div class="container">
-        <div id="header"></div>
+        <!-- Новая шапка с информацией о пользователе и балансом -->
+        <div class="header">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <div class="user-name" id="user-name">Пользователь</div>
+                        <div class="user-balance">
+                            <span class="balance-amount" id="balance">0</span>
+                            <span class="balance-currency">TON</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-badge" id="demo-badge">TESTNET</div>
+            </div>
+        </div>
         
         <button class="btn btn-admin" id="admin-button" onclick="openAdminPanel()" style="display: none;">
             👑 Админ-панель
@@ -25,14 +40,7 @@
             </button>
         </div>
         
-        <div class="profile-card">
-            <div class="demo-badge" id="demo-badge">TESTNET</div>
-            <div class="balance-section">
-                <div class="balance-label">Ваш баланс</div>
-                <div class="balance-amount" id="balance">0</div>
-                <div class="balance-currency">TON coins</div>
-            </div>
-        </div>
+        <!-- Удален блок profile-card -->
         
         <div class="games-section">
             <div class="section-title">🎰 Игры казино</div>
