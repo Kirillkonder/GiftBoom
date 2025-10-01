@@ -828,7 +828,10 @@ input[type="text"]:focus {
 
 .promocodes-list {
     max-height: 400px;
-    overflow-y: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
 }
 
 .promocode-item {
