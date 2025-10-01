@@ -313,7 +313,7 @@ updateUI() {
         if (depositModeInfo) {
             depositModeInfo.textContent = this.demoMode ? 
                 'Демо-пополнение (виртуальные TON)' : 
-                'Реальное пополнение через Crypto Pay';
+                'Пополнение через Crypto Pay';
         }
         
         if (withdrawModeInfo) {
