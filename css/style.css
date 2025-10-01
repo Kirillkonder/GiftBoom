@@ -828,12 +828,23 @@ input[type="text"]:focus {
 
 .promocodes-list {
     max-height: 400px;
+    min-height: 200px;
     overflow-y: auto;
-    padding-right: 5px;
+    overflow-x: hidden;
 }
 
+.promocodes-list-section {
+    height: auto;
+    max-height: 500px;
+}
 .promocodes-list::-webkit-scrollbar {
     width: 6px;
+}
+
+.promocodes-list {
+    max-height: 400px !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
 }
 
 .promocodes-list::-webkit-scrollbar-track {
