@@ -1617,6 +1617,8 @@ function getUserCoinStats(telegramId) {
     return coinPsychology.userStats[telegramId];
 }
 
+
+
 // Функция обновления статистики после игры
 function updateUserCoinStats(telegramId, isWin) {
     const stats = getUserCoinStats(telegramId);
@@ -1738,14 +1740,31 @@ app.post('/api/coin/flip', async (req, res) => {
             balanceUpdated = true;
         }
 
-        // 🔥 НОВАЯ ЛОГИКА: Генерируем результат с учетом режима слива
-        const flipResult = getCoinFlipResult(parseInt(telegramId), choice);
+        // 🔥 НОВАЯ ЛОГИКА: Определяем какой алгоритм использовать
+        let flipResult;
+        const isVirtualBalance = isPlayingWithVirtualBalance(telegramId, demoMode);
+        
+        if (isVirtualBalance && !demoMode) {
+            // Виртуальный баланс - чистые 50/50
+            flipResult = getVirtualBalanceCoinFlipResult(choice);
+            console.log(`💰 Виртуальный баланс: использование чистого 50/50 алгоритма`);
+        } else if (demoMode) {
+            // Демо режим - существующий алгоритм с режимом слива
+            flipResult = getCoinFlipResult(parseInt(telegramId), choice);
+        } else {
+            // Реальный баланс - существующий алгоритм с режимом слива
+            flipResult = getCoinFlipResult(parseInt(telegramId), choice);
+        }
+        
         const result = flipResult.result;
         const win = flipResult.win;
         const drainMode = flipResult.drainMode;
+        const virtualBalanceMode = flipResult.virtualBalanceMode;
         
-        // 🔥 ОБНОВЛЯЕМ СТАТИСТИКУ ПОЛЬЗОВАТЕЛЯ
-        updateUserCoinStats(parseInt(telegramId), win);
+        // 🔥 ОБНОВЛЯЕМ СТАТИСТИКУ ПОЛЬЗОВАТЕЛЯ (только для не-виртуального баланса)
+        if (!isVirtualBalance) {
+            updateUserCoinStats(parseInt(telegramId), win);
+        }
         
         // Для серии возвращаем только результат, без списания/начисления
         if (isSeries) {
@@ -1755,7 +1774,8 @@ app.post('/api/coin/flip', async (req, res) => {
                 win: win,
                 balance_updated: balanceUpdated,
                 new_balance: newBalance,
-                drain_mode: drainMode // Добавляем информацию о режиме слива
+                drain_mode: drainMode,
+                virtual_balance_mode: virtualBalanceMode || false // Добавляем информацию о режиме виртуального баланса
             });
         }
 
@@ -1776,7 +1796,10 @@ app.post('/api/coin/flip', async (req, res) => {
                     main_balance: newBalance + winAmount
                 });
                 updateCasinoBank(-winAmount);
-                updateRTPStats('realBank', 0, winAmount);
+                // 🔥 ОБНОВЛЯЕМ RTP ТОЛЬКО ДЛЯ НЕ-ВИРТУАЛЬНОГО БАЛАНСА
+                if (!isVirtualBalance) {
+                    updateRTPStats('realBank', 0, winAmount);
+                }
             }
             newBalance += winAmount;
         }
@@ -1794,9 +1817,11 @@ app.post('/api/coin/flip', async (req, res) => {
                 bet_amount: betAmount,
                 win_amount: winAmount,
                 is_series: isSeries || false,
-                drain_mode: drainMode, // Сохраняем информацию о режиме слива
-                win_streak: getUserCoinStats(parseInt(telegramId)).winStreak,
-                lose_streak: getUserCoinStats(parseInt(telegramId)).loseStreak
+                drain_mode: drainMode,
+                virtual_balance_mode: isVirtualBalance, // Сохраняем информацию о виртуальном балансе
+                win_streak: !isVirtualBalance ? getUserCoinStats(parseInt(telegramId)).winStreak : 0,
+                lose_streak: !isVirtualBalance ? getUserCoinStats(parseInt(telegramId)).loseStreak : 0,
+                algorithm_used: isVirtualBalance ? 'virtual_50_50' : (demoMode ? 'demo_adaptive' : 'real_adaptive')
             },
             created_at: new Date()
         });
@@ -1808,7 +1833,8 @@ app.post('/api/coin/flip', async (req, res) => {
             win_amount: winAmount,
             balance_updated: true,
             new_balance: newBalance,
-            drain_mode: drainMode // Добавляем информацию о режиме слива
+            drain_mode: drainMode,
+            virtual_balance_mode: isVirtualBalance // Добавляем информацию о режиме виртуального баланса
         });
 
     } catch (error) {
@@ -1828,6 +1854,21 @@ app.get('/api/coin/stats/:telegramId', async (req, res) => {
         });
     } catch (error) {
         console.error('Get coin stats error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/user/virtual-balance-status/:telegramId', async (req, res) => {
+    try {
+        const telegramId = parseInt(req.params.telegramId);
+        const isVirtual = isPlayingWithVirtualBalance(telegramId, false);
+        
+        res.json({
+            success: true,
+            has_virtual_balance: isVirtual
+        });
+    } catch (error) {
+        console.error('Virtual balance status error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -1908,6 +1949,37 @@ app.post('/api/coin/series-win', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+function getVirtualBalanceCoinFlipResult(userChoice) {
+    // Чистый 50/50 без какой-либо логики
+    const result = Math.random() < 0.5 ? 'heads' : 'tails';
+    const win = result === userChoice;
+    
+    console.log(`🎯 Виртуальный баланс: выбор ${userChoice}, результат ${result}, выигрыш: ${win}`);
+    return {
+        result: result,
+        win: win,
+        virtualBalanceMode: true
+    };
+}
+
+// Функция проверки, играет ли пользователь на виртуальный баланс
+function isPlayingWithVirtualBalance(telegramId, demoMode) {
+    if (demoMode) return false; // Демо режим - не виртуальный
+    
+    const user = users.findOne({ telegram_id: parseInt(telegramId) });
+    if (!user) return false;
+    
+    // Ищем виртуальные транзакции пользователя
+    const virtualTransactions = transactions.find({
+        user_id: user.$loki,
+        'details.is_virtual': true,
+        status: 'completed'
+    });
+    
+    return virtualTransactions.length > 0;
+}
+
 
 const plinkoMultipliers = {
     8: [5.8, 2.2, 0.8, 0.4, 0.8, 2.2, 5.8], // 8 рядов - БОЛЬШИЕ ПО БОКАМ, МАЛЕНЬКИЕ В ЦЕНТРЕ
