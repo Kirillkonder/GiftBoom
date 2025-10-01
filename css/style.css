@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
+    background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #0d1117 100%);
     min-height: 100vh;
     color: #e6e6e6;
 }
@@ -16,18 +16,18 @@ body {
     margin: 0 auto;
     padding: 20px;
     min-height: 100vh;
-    padding-bottom: 80px; /* Добавлено место для нижнего меню */
+    padding-bottom: 80px;
 }
 
 .header {
     text-align: center;
     margin-bottom: 20px;
     padding: 15px;
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(20, 25, 37, 0.6);
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(102, 126, 234, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(102, 126, 234, 0.15);
 }
 
 .header h1 {
@@ -42,31 +42,36 @@ body {
 }
 
 .mode-switcher {
-    display: none; /* Скрываем по умолчанию, покажется через JS если есть доступ */
+    display: none;
     margin: 15px 0;
     padding: 10px;
-    background: #1e0b0b;
-    border-radius: 10px;
+    background: rgba(30, 11, 11, 0.5);
+    border-radius: 16px;
     text-align: center;
+    backdrop-filter: blur(10px);
 }
 
 .mode-badge {
     display: inline-block;
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 24px;
     font-size: 12px;
     font-weight: bold;
     margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .mode-badge.mainnet {
-    background: linear-gradient(135deg, #00b894, #008066);
+    background: linear-gradient(135deg, #00d2a0, #00b886);
     color: white;
+    box-shadow: 0 4px 15px rgba(0, 210, 160, 0.3);
 }
 
 .mode-badge.testnet {
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
-    color: white;
+    background: linear-gradient(135deg, #ffd93d, #f5b700);
+    color: #1a1a1a;
+    box-shadow: 0 4px 15px rgba(255, 217, 61, 0.3);
 }
 
 .mode-info {
@@ -77,70 +82,97 @@ body {
 
 .btn {
     display: inline-block;
-    padding: 12px 24px;
+    padding: 14px 24px;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 16px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin: 5px;
     width: calc(100% - 10px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: white;
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 12px 35px rgba(99, 102, 241, 0.5);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #fd79a8, #e84393);
+    background: linear-gradient(135deg, #ec4899, #f43f5e);
     color: white;
+    box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);
 }
 
 .btn-secondary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(253, 121, 168, 0.5);
+    box-shadow: 0 12px 35px rgba(236, 72, 153, 0.5);
 }
 
 .btn-mode {
-    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
     color: white;
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4);
 }
 
 .btn-admin {
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
-    color: white;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #1a1a1a;
     margin-bottom: 15px;
+    box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
+    font-weight: 700;
 }
 
 .profile-card {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
+    background: rgba(20, 25, 37, 0.6);
+    border-radius: 24px;
     padding: 25px;
     text-align: center;
     margin-bottom: 20px;
     position: relative;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(102, 126, 234, 0.15);
+    backdrop-filter: blur(20px);
 }
 
 .demo-badge {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    background: linear-gradient(135deg, #ffd93d, #f5b700);
     color: #1a1a1a;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-size: 10px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
     font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(255, 217, 61, 0.3);
 }
 
 .balance-section {
@@ -158,6 +190,7 @@ body {
     font-weight: bold;
     color: #f0f0f0;
     margin-bottom: 5px;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
 }
 
 .balance-currency {
@@ -168,12 +201,13 @@ body {
 .games-section,
 .deposit-section,
 .transaction-history {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
+    background: rgba(20, 25, 37, 0.6);
+    border-radius: 24px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    backdrop-filter: blur(20px);
 }
 
 .section-title {
@@ -201,7 +235,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .transaction-item:last-child {
@@ -228,7 +262,7 @@ body {
 }
 
 .transaction-positive {
-    color: #00b894;
+    color: #00d2a0;
 }
 
 .transaction-negative {
@@ -237,8 +271,9 @@ body {
 
 .no-transactions {
     text-align: center;
-    color: #a0a0a0;
+    color: #6b7280;
     padding: 20px;
+    font-size: 14px;
 }
 
 /* Нижнее игровое меню */
@@ -247,13 +282,14 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(25, 30, 42, 0.98);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 20, 30, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(102, 126, 234, 0.15);
     display: flex;
     justify-content: space-around;
     padding: 10px 0;
     z-index: 1000;
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.3);
 }
 
 .game-menu-item {
@@ -262,30 +298,31 @@ body {
     align-items: center;
     padding: 8px 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border-radius: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
     min-width: 60px;
 }
 
 .game-menu-item:hover {
-    background: rgba(102, 126, 234, 0.2);
-    transform: translateY(-2px);
+    background: rgba(99, 102, 241, 0.15);
+    transform: translateY(-3px);
 }
 
 .game-menu-item:active {
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(-1px);
 }
 
 .game-icon {
-    font-size: 24px;
+    font-size: 26px;
     margin-bottom: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .game-name {
-    font-size: 10px;
+    font-size: 11px;
     color: #a0a0a0;
     text-align: center;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .footer {
@@ -305,20 +342,21 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
 }
 
 .modal-content {
-    background: #191e2a;
+    background: linear-gradient(135deg, rgba(20, 25, 37, 0.95), rgba(15, 20, 30, 0.95));
     margin: 10% auto;
-    padding: 25px;
-    border-radius: 20px;
+    padding: 30px;
+    border-radius: 24px;
     width: 90%;
     max-width: 350px;
     position: relative;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    backdrop-filter: blur(20px);
 }
 
 .close {
@@ -328,41 +366,49 @@ body {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    color: #a0a0a0;
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+
+.close:hover {
+    color: #f0f0f0;
 }
 
 .modal h3 {
     text-align: center;
     margin-bottom: 20px;
     color: #f0f0f0;
+    font-size: 20px;
 }
 
 input[type="number"],
 input[type="text"] {
     width: 100%;
-    padding: 15px;
-    background: rgba(35, 40, 52, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    padding: 16px;
+    background: rgba(30, 35, 47, 0.8);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 14px;
     font-size: 16px;
     margin-bottom: 15px;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
     color: #f0f0f0;
 }
 
 input[type="number"]:focus,
 input[type="text"]:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: rgba(30, 35, 47, 1);
 }
 
 .deposit-info,
 .withdraw-info {
     text-align: center;
     font-size: 12px;
-    color: #a0a0a0;
+    color: #9ca3af;
     margin-top: 15px;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 /* Стили для контента игр */
@@ -382,8 +428,8 @@ input[type="text"]:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .admin-stat-item:last-child {
@@ -397,7 +443,7 @@ input[type="text"]:focus {
 
 .admin-stat-value {
     font-weight: bold;
-    color: #00b894;
+    color: #00d2a0;
 }
 
 .admin-warning {
@@ -433,11 +479,11 @@ input[type="text"]:focus {
     }
     
     .game-icon {
-        font-size: 20px;
+        font-size: 22px;
     }
     
     .game-name {
-        font-size: 9px;
+        font-size: 10px;
     }
 }
 
@@ -452,25 +498,22 @@ input[type="text"]:focus {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(102, 126, 234, 0.5);
-    border-radius: 3px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(102, 126, 234, 0.7);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(139, 92, 246, 0.7));
 }
-
-
-/* Существующие стили остаются без изменений */
 
 /* Новые стили для Mines */
 .mines-container {
@@ -594,101 +637,74 @@ input[type="text"]:focus {
 }
 
 .btn-test {
-    background: linear-gradient(135deg, #74b9ff, #5a9de6);
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
     color: white;
 }
-
-
-
 
 .rocket-game {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
+    background: rgba(20, 25, 37, 0.6);
+    border-radius: 24px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
 }
 
-
-
-
-
-
-
-
-
 /* Rocket specific styles */
-
 .back-button {
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
     padding: 10px 15px;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 20px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
 }
-
-
-/* Rocket specific styles */
-
-
-.back-button {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Анимации для ракетки */
 
 /* Стили для промокодов */
 .promo-section {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
+    background: rgba(20, 25, 37, 0.6);
+    border-radius: 24px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    backdrop-filter: blur(20px);
 }
 
 .promo-codes {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 15px;
 }
 
 .promo-item {
-    background: rgba(45, 50, 62, 0.8);
-    border-radius: 12px;
-    padding: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(45, 50, 62, 0.5), rgba(30, 35, 47, 0.5));
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid rgba(102, 126, 234, 0.15);
     position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .promo-item.promo-featured {
-    background: linear-gradient(135deg, rgba(253, 203, 110, 0.2), rgba(230, 163, 54, 0.2));
-    border: 1px solid rgba(253, 203, 110, 0.3);
+    background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(245, 183, 0, 0.15));
+    border: 1px solid rgba(255, 217, 61, 0.3);
 }
 
 .promo-code {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     color: #f0f0f0;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
 }
 
 .promo-info {
@@ -699,18 +715,21 @@ input[type="text"]:focus {
 
 .promo-badge {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: white;
-    padding: 4px 8px;
-    border-radius: 8px;
-    font-size: 10px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 11px;
     font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
 }
 
 .promo-featured .promo-badge {
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
 }
 
 .promo-input-group {
@@ -721,61 +740,64 @@ input[type="text"]:focus {
 
 .promo-input {
     flex: 1;
-    padding: 12px;
-    background: rgba(35, 40, 52, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    padding: 14px;
+    background: rgba(30, 35, 47, 0.8);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
     font-size: 14px;
     color: #f0f0f0;
+    transition: all 0.3s ease;
 }
 
 .promo-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .btn-promo {
-    background: linear-gradient(135deg, #00b894, #008066);
+    background: linear-gradient(135deg, #00d2a0, #00b886);
     color: white;
     width: auto;
     padding: 12px 20px;
+    box-shadow: 0 6px 20px rgba(0, 210, 160, 0.3);
 }
 
 .btn-promo:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 184, 148, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 210, 160, 0.4);
 }
 
 .promo-info-text {
     text-align: center;
-    font-size: 12px;
-    color: #a0a0a0;
-    line-height: 1.4;
+    font-size: 13px;
+    color: #9ca3af;
+    line-height: 1.5;
 }
 
 .promo-success {
-    background: rgba(0, 184, 148, 0.2);
-    border: 1px solid rgba(0, 184, 148, 0.5);
-    padding: 10px;
-    border-radius: 8px;
+    background: rgba(0, 210, 160, 0.15);
+    border: 1px solid rgba(0, 210, 160, 0.4);
+    padding: 12px;
+    border-radius: 12px;
     margin-top: 10px;
     text-align: center;
 }
 
 .promo-error {
-    background: rgba(255, 107, 107, 0.2);
-    border: 1px solid rgba(255, 107, 107, 0.5);
-    padding: 10px;
-    border-radius: 8px;
+    background: rgba(255, 107, 107, 0.15);
+    border: 1px solid rgba(255, 107, 107, 0.4);
+    padding: 12px;
+    border-radius: 12px;
     margin-top: 10px;
     text-align: center;
 }
 
 /* Стили для админки промокодов */
 .create-promo-section {
-    background: rgba(45, 50, 62, 0.8);
-    padding: 15px;
-    border-radius: 12px;
+    background: rgba(45, 50, 62, 0.5);
+    padding: 18px;
+    border-radius: 16px;
     margin-bottom: 20px;
 }
 
@@ -810,15 +832,15 @@ input[type="text"]:focus {
 }
 
 .promocode-item {
-    background: rgba(35, 40, 52, 0.8);
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(30, 35, 47, 0.8);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .promocode-item.active {
-    border-left: 4px solid #00b894;
+    border-left: 4px solid #00d2a0;
 }
 
 .promocode-item.inactive {
@@ -852,7 +874,7 @@ input[type="text"]:focus {
 .promocode-bonus {
     font-size: 16px;
     font-weight: bold;
-    color: #00b894;
+    color: #00d2a0;
     margin-bottom: 5px;
 }
 
@@ -864,7 +886,7 @@ input[type="text"]:focus {
 
 .promocode-limit {
     font-size: 12px;
-    color: #fdcb6e;
+    color: #fbbf24;
     margin-bottom: 5px;
 }
 
@@ -893,28 +915,28 @@ input[type="text"]:focus {
 
 .btn-danger {
     background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
 }
 
 .no-promocodes {
     text-align: center;
-    color: #a0a0a0;
+    color: #6b7280;
     padding: 20px;
 }
 
 /* Новые стили для шапки профиля */
 .header-profile {
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 20px;
-    padding: 15px 20px;
+    background: linear-gradient(135deg, rgba(20, 25, 37, 0.7), rgba(15, 20, 30, 0.7));
+    border-radius: 24px;
+    padding: 18px 22px;
     margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(102, 126, 234, 0.15);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(102, 126, 234, 0.15);
 }
-
 
 .user-info {
     display: flex;
@@ -924,15 +946,16 @@ input[type="text"]:focus {
 }
 
 .user-avatar {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #667eea, #5a6fd8);
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 24px;
     color: white;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
 .user-details {
@@ -943,7 +966,7 @@ input[type="text"]:focus {
     font-size: 18px;
     font-weight: bold;
     color: #f0f0f0;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 .user-balance {
@@ -955,7 +978,7 @@ input[type="text"]:focus {
 
 .balance-label {
     font-size: 14px;
-    color: #a0a0a0;
+    color: #9ca3af;
 }
 
 .user-balance-main {
@@ -966,63 +989,29 @@ input[type="text"]:focus {
 }
 
 .user-balance-main .balance-amount {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: bold;
     color: #f0f0f0;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
 }
 
 .user-balance-main .balance-currency {
     font-size: 16px;
-    color: #a0a0a0;
+    color: #9ca3af;
 }
-
-
-.balance-amount {
-    font-size: 20px;
-    font-weight: bold;
-    color: #f0f0f0;
-}
-
-.balance-currency {
-    font-size: 14px;
-    color: #a0a0a0;
-}
-
 
 .header-profile .demo-badge {
-    background: linear-gradient(135deg, #fdcb6e, #e6a336);
+    background: linear-gradient(135deg, #ffd93d, #f5b700);
     color: #1a1a1a;
-    padding: 4px 10px;
-    border-radius: 10px;
+    padding: 6px 12px;
+    border-radius: 12px;
     font-size: 11px;
     font-weight: bold;
     display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(255, 217, 61, 0.3);
 }
-/* Адаптивность для мобильных */
-@media (max-width: 480px) {
-    .header-profile {
-        padding: 15px;
-    }
-    
-    .user-avatar {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-    }
-    
-    .user-name {
-        font-size: 16px;
-    }
-    
-    .balance-amount {
-        font-size: 18px;
-    }
-    
-    .user-balance {
-        gap: 5px;
-    }
-}
-
 
 /* Контейнер для админских контролов внизу */
 .admin-controls {
@@ -1038,36 +1027,32 @@ input[type="text"]:focus {
 .admin-controls .mode-switcher {
     display: block;
     margin: 15px 0;
-    padding: 15px;
-    background: rgba(25, 30, 42, 0.95);
-    border-radius: 15px;
+    padding: 18px;
+    background: rgba(20, 25, 37, 0.6);
+    border-radius: 20px;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Убираем отступ снизу для нормального скролла */
-.container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    min-height: 100vh;
-    padding-bottom: 80px;
+    border: 1px solid rgba(102, 126, 234, 0.15);
+    backdrop-filter: blur(20px);
 }
 
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     .header-profile {
-        padding: 12px 15px;
+        padding: 14px 16px;
     }
     
     .user-avatar {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+    
+    .user-name {
+        font-size: 16px;
     }
     
     .user-balance-main .balance-amount {
-        font-size: 24px;
+        font-size: 26px;
     }
     
     .user-balance-main .balance-currency {
@@ -1079,4 +1064,3 @@ input[type="text"]:focus {
         padding: 0 5px;
     }
 }
-
