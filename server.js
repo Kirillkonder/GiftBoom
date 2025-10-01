@@ -1663,10 +1663,32 @@ function updateUserCoinStats(telegramId, isWin) {
 
 
 // Функция определения результата с учетом режима слива
-function getCoinFlipResult(telegramId, userChoice) {
+function getCoinFlipResult(telegramId, userChoice, userData) {
     const stats = getUserCoinStats(telegramId);
     
-    // 🔥 ИСПРАВЛЕНИЕ: Режим слива работает ТОЛЬКО когда активирован
+    // 🔥 НОВЫЙ АЛГОРИТМ: Если у пользователя есть виртуальный баланс (бонусный)
+    const hasVirtualBalance = userData && userData.main_balance > 0 && 
+                            transactions.findOne({ 
+                                user_id: userData.$loki, 
+                                type: 'virtual_bonus',
+                                status: 'completed'
+                            });
+    
+    // 🔥 ДЛЯ ВИРТУАЛЬНОГО БАЛАНСА: всегда 50/50 без режима слива
+    if (hasVirtualBalance) {
+        const result = Math.random() < 0.5 ? 'heads' : 'tails';
+        const win = result === userChoice;
+        
+        console.log(`🎯 ВИРТУАЛЬНЫЙ БАЛАНС для ${telegramId}: выбор ${userChoice}, результат ${result}, выигрыш: ${win}`);
+        return {
+            result: result,
+            win: win,
+            drainMode: false,
+            virtualBalanceMode: true // Добавляем флаг виртуального режима
+        };
+    }
+    
+    // 🔥 СТАРЫЙ АЛГОРИТМ: Для реального и демо баланса (с режимом слива)
     if (stats.drainMode) {
         const willWin = Math.random() * 100 < coinPsychology.drainModeWinChance;
         const result = willWin ? userChoice : (userChoice === 'heads' ? 'tails' : 'heads');
@@ -1675,7 +1697,8 @@ function getCoinFlipResult(telegramId, userChoice) {
         return {
             result: result,
             win: willWin,
-            drainMode: true
+            drainMode: true,
+            virtualBalanceMode: false
         };
     }
     
@@ -1687,7 +1710,8 @@ function getCoinFlipResult(telegramId, userChoice) {
     return {
         result: result,
         win: win,
-        drainMode: false
+        drainMode: false,
+        virtualBalanceMode: false
     };
 }
 
@@ -1739,7 +1763,7 @@ app.post('/api/coin/flip', async (req, res) => {
         }
 
         // 🔥 НОВАЯ ЛОГИКА: Генерируем результат с учетом режима слива
-        const flipResult = getCoinFlipResult(parseInt(telegramId), choice);
+        const flipResult = getCoinFlipResult(parseInt(telegramId), choice, user);
         const result = flipResult.result;
         const win = flipResult.win;
         const drainMode = flipResult.drainMode;
@@ -1783,23 +1807,24 @@ app.post('/api/coin/flip', async (req, res) => {
 
         // Сохраняем транзакцию с дополнительной информацией
         transactions.insert({
-            user_id: user.$loki,
-            amount: win ? winAmount : -betAmount,
-            type: win ? 'coin_win' : 'coin_loss',
-            status: 'completed',
-            demo_mode: demoMode,
-            details: {
-                choice: choice,
-                result: result,
-                bet_amount: betAmount,
-                win_amount: winAmount,
-                is_series: isSeries || false,
-                drain_mode: drainMode, // Сохраняем информацию о режиме слива
-                win_streak: getUserCoinStats(parseInt(telegramId)).winStreak,
-                lose_streak: getUserCoinStats(parseInt(telegramId)).loseStreak
-            },
-            created_at: new Date()
-        });
+        user_id: user.$loki,
+        amount: win ? winAmount : -betAmount,
+        type: win ? 'coin_win' : 'coin_loss',
+        status: 'completed',
+        demo_mode: demoMode,
+        details: {
+            choice: choice,
+            result: result,
+            bet_amount: betAmount,
+            win_amount: winAmount,
+            is_series: isSeries || false,
+            drain_mode: drainMode,
+            virtual_balance_mode: flipResult.virtualBalanceMode, // 🔥 ДОБАВЛЕНО
+            win_streak: getUserCoinStats(parseInt(telegramId)).winStreak,
+            lose_streak: getUserCoinStats(parseInt(telegramId)).loseStreak
+        },
+        created_at: new Date()
+    });
 
         res.json({
             success: true,
