@@ -828,38 +828,9 @@ input[type="text"]:focus {
 
 .promocodes-list {
     max-height: 400px;
-    min-height: 200px;
     overflow-y: auto;
-    overflow-x: hidden;
 }
 
-.promocodes-list-section {
-    height: auto;
-    max-height: 500px;
-}
-.promocodes-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.promocodes-list {
-    max-height: 400px !important;
-    overflow-y: scroll !important;
-    overflow-x: hidden !important;
-}
-
-.promocodes-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 3px;
-}
-
-.promocodes-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.5));
-    border-radius: 3px;
-}
-
-.promocodes-list::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(139, 92, 246, 0.7));
-}
 .promocode-item {
     background: rgba(30, 35, 47, 0.8);
     border-radius: 14px;
