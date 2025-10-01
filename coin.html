@@ -344,10 +344,6 @@ function processSeriesResult(isWin) {
     if (!isSeriesActive) return;
     
     seriesResults.push(isWin);
-
-    if (window.currentVirtualMode) {
-        console.log(`🎯 Виртуальный режим 50/50: результат ${isWin ? 'выигрыш' : 'проигрыш'}`);
-    }
     
     if (isWin) {
         // Увеличиваем счетчик серии
