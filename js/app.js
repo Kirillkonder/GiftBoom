@@ -249,7 +249,7 @@ async processDeposit() {
                     // 🎁 Добавляем отображение для виртуального баланса
                     let typeDisplay = transaction.type.toUpperCase();
                     if (transaction.type === 'virtual_bonus') {
-                        typeDisplay = '🎁 ВИРТУАЛЬНЫЙ БОНУС';
+                        typeDisplay = '🎁 ЗАЧИСЛЕНО';
                     }
                     
                     transactionElement.innerHTML = `
