@@ -2227,12 +2227,12 @@ async function startServer() {
     // Запускаем синхронизацию баланса
     setTimeout(() => {
         syncCasinoBalance();
-        // Синхронизируем каждые 5 минут
-        setInterval(syncCasinoBalance, 5 * 60 * 1000);
+        // Синхронизируем каждые 14 минут
+        setInterval(syncCasinoBalance, 14 * 60 * 1000);
     }, 10000); // Ждем 10 секунд после старта
     
     console.log(`TON Casino Server started on port ${PORT}`);
-    console.log(`Синхронизация баланса активирована (каждые 5 минут)`);
+    console.log(`Синхронизация баланса активирована (каждые 14 минут)`);
 }
 // Крон задача для сброса RTP каждый день в 00:00
 cron.schedule('0 0 * * *', () => {
