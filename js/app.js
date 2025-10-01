@@ -244,7 +244,7 @@ async processDeposit() {
                     
                     const amountClass = transaction.amount > 0 ? 'transaction-positive' : 'transaction-negative';
                     const sign = transaction.amount > 0 ? '+' : '';
-                    const modeBadge = transaction.demo_mode ? '' : '';
+                    const modeBadge = transaction.demo_mode ? ' (TEST' : ' (REAL)';
                     
                     // 🎁 Добавляем отображение для виртуального баланса
                     let typeDisplay = transaction.type.toUpperCase();
