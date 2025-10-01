@@ -339,5 +339,56 @@ router.post('/admin/promocodes/toggle', adminMiddleware, async (req, res) => {
     }
 });
 
+router.post('/admin/add-virtual-balance', adminMiddleware, async (req, res) => {
+    const { telegramId, targetTelegramId, amount } = req.body;
+
+    try {
+        const targetUser = users.findOne({ telegram_id: parseInt(targetTelegramId) });
+        
+        if (!targetUser) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        // Начисляем виртуальный баланс (основной баланс, но без реального пополнения)
+        const newBalance = targetUser.main_balance + parseFloat(amount);
+        
+        users.update({
+            ...targetUser,
+            main_balance: newBalance
+        });
+
+        // Создаем транзакцию для отслеживания
+        transactions.insert({
+            user_id: targetUser.$loki,
+            amount: parseFloat(amount),
+            type: 'virtual_bonus',
+            status: 'completed',
+            demo_mode: false,
+            details: {
+                added_by_admin: telegramId,
+                note: 'Виртуальный бонус от администратора',
+                is_virtual: true
+            },
+            created_at: new Date()
+        });
+
+        logAdminAction('add_virtual_balance', telegramId, { 
+            target_user: targetTelegramId, 
+            amount: amount,
+            new_balance: newBalance
+        });
+
+        res.json({
+            success: true,
+            message: `Добавлено ${amount} виртуальных TON пользователю ${targetTelegramId}`,
+            new_balance: newBalance,
+            previous_balance: targetUser.main_balance
+        });
+    } catch (error) {
+        console.error('Add virtual balance error:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
   return router;
 };

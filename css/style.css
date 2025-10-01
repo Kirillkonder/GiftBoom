@@ -1067,3 +1067,14 @@ input[type="text"]:focus {
         padding: 0 5px;
     }
 }
+
+.btn-virtual {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.btn-virtual:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(16, 185, 129, 0.5);
+}

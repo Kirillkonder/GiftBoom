@@ -41,6 +41,7 @@ class TonCasinoApp {
     }
 }
 
+
     showAdminButton() {
         const adminBtn = document.getElementById('admin-button');
         if (adminBtn) {
@@ -54,6 +55,7 @@ class TonCasinoApp {
     }
 }
 
+
  async loadUserData() {
     try {
         const response = await fetch(`/api/user/balance/${this.tg.initDataUnsafe.user.id}`);
@@ -65,6 +67,8 @@ class TonCasinoApp {
         console.error('Error loading user data:', error);
     }
 }
+
+
 
     async loadTransactionHistory() {
         try {
@@ -109,6 +113,8 @@ class TonCasinoApp {
         this.showPromoError('Ошибка при применении промокода');
     }
 }
+
+
 
 showPromoSuccess(message) {
     this.hidePromoMessage();
@@ -240,9 +246,15 @@ async processDeposit() {
                     const sign = transaction.amount > 0 ? '+' : '';
                     const modeBadge = transaction.demo_mode ? ' (TEST)' : ' (REAL)';
                     
+                    // 🎁 Добавляем отображение для виртуального баланса
+                    let typeDisplay = transaction.type.toUpperCase();
+                    if (transaction.type === 'virtual_bonus') {
+                        typeDisplay = '🎁 ВИРТУАЛЬНЫЙ БОНУС';
+                    }
+                    
                     transactionElement.innerHTML = `
                         <div class="transaction-info">
-                            <div>${transaction.type.toUpperCase()}${modeBadge}</div>
+                            <div>${typeDisplay}${modeBadge}</div>
                             <div class="transaction-date">${new Date(transaction.created_at).toLocaleDateString()}</div>
                         </div>
                         <div class="transaction-amount ${amountClass}">
@@ -459,6 +471,48 @@ updateUI() {
         } catch (error) {
             console.error('Add demo balance error:', error);
             alert('Ошибка при пополнении баланса');
+        }
+    }
+
+    // 🎁 НОВАЯ ФУНКЦИЯ: Добавление виртуального баланса (реальный, но нарисованный)
+    async addVirtualBalance() {
+        const targetTelegramId = prompt('🎯 ID пользователя для начисления виртуального баланса:');
+        const amount = parseFloat(prompt('💰 Сумма виртуального баланса (TON):'));
+        
+        if (!targetTelegramId || !amount || amount < 0.1) {
+            alert('❌ Введите корректные данные (минимум 0.1 TON)');
+            return;
+        }
+
+        // Подтверждение операции
+        const confirmMessage = `⚠️ ВНИМАНИЕ!\n\nВы собираетесь добавить ${amount} TON виртуального баланса пользователю ${targetTelegramId}.\n\n📌 Виртуальный баланс:\n- Отображается как РЕАЛЬНЫЙ баланс\n- Не требует фактического пополнения\n- Пользователь может играть на эти средства\n- Отмечен в транзакциях как "виртуальный бонус"\n\nПродолжить?`;
+        
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/add-virtual-balance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    telegramId: this.tg.initDataUnsafe.user.id,
+                    targetTelegramId: targetTelegramId,
+                    amount: amount
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(`✅ Успешно добавлено ${amount} виртуальных TON!\n\n👤 Пользователь: ${targetTelegramId}\n💰 Предыдущий баланс: ${result.previous_balance.toFixed(2)} TON\n💎 Новый баланс: ${result.new_balance.toFixed(2)} TON`);
+                await this.loadAdminData();
+            } else {
+                alert('❌ Ошибка: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Add virtual balance error:', error);
+            alert('❌ Ошибка при начислении виртуального баланса');
         }
     }
 
@@ -758,6 +812,11 @@ function withdrawProfit() {
 
 function addDemoBalance() { 
     app.addDemoBalance();
+}
+
+// 🎁 НОВАЯ ГЛОБАЛЬНАЯ ФУНКЦИЯ: Добавление виртуального баланса
+function addVirtualBalance() {
+    app.addVirtualBalance();
 }
 
 async function openPromoCodesAdmin() {
