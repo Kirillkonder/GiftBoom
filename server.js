@@ -26,10 +26,9 @@ let db;
 let users, transactions, casinoBank, adminLogs, minesGames, rocketGames, rocketBets;
 let promoCodes;
 // WebSocket сервер для ракетки
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });
-
 const wss = new WebSocket.Server({ server });
 
 // Глобальные переменные для игры Ракетка
