@@ -8,6 +8,8 @@ let rocketPosition = 80;
 let countdownInterval = null;
 let allOnlineUsers = 0;
 let currentBetAmount = 5;
+let onlinePlayers = 50;
+let onlineUpdateInterval = null;
 
 
 
@@ -98,30 +100,94 @@ function initializeGame() {
             lastName: tg.initDataUnsafe.user.last_name
         };
         loadUserData();
+    }
+    initializeOnlineCounter(); // ДОБАВИТЬ ЭТУ СТРОЧКУ
+}
+
+
+function initializeOnlineCounter() {
+    // Устанавливаем начальное значение по времени суток
+    onlinePlayers = getTimeBasedOnlineCount('rocket');
+    updateOnlineCounter(onlinePlayers);
+    
+    // Запускаем обновление каждые 10 секунд
+    onlineUpdateInterval = setInterval(() => {
+        // Случайное изменение от -6 до +6 игроков
+        const change = Math.floor(Math.random() * 13) - 6;
+        onlinePlayers = Math.max(1, onlinePlayers + change);
         
-        // Запускаем обновление онлайн каждые 10 секунд
-        setInterval(() => {
-            fetch('/api/online/rocket')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        allOnlineUsers = data.online;
-                        document.getElementById('playersCount').textContent = allOnlineUsers;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching online:', error);
-                    // Fallback
-                    const change = Math.floor(Math.random() * 6) + 1;
-                    const shouldIncrease = Math.random() > 0.5;
-                    allOnlineUsers = shouldIncrease ? 
-                        allOnlineUsers + change : 
-                        Math.max(1, allOnlineUsers - change);
-                    document.getElementById('playersCount').textContent = allOnlineUsers;
-                });
-        }, 10000);
+        // Корректируем по временному диапазону
+        onlinePlayers = adjustToTimeRange(onlinePlayers, 'rocket');
+        
+        updateOnlineCounter(onlinePlayers);
+    }, 10000); // 10 секунд
+}
+
+function getTimeBasedOnlineCount(gameType) {
+    const hour = new Date().getHours();
+    let baseCount = 0;
+    
+    switch(gameType) {
+        case 'mines':
+            if (hour >= 9 && hour < 14) baseCount = 20;
+            else if (hour >= 14 && hour < 18) baseCount = 67;
+            else if (hour >= 18 && hour < 23) baseCount = 40;
+            else baseCount = 7;
+            break;
+        case 'rocket':
+            if (hour >= 9 && hour < 14) baseCount = 50;
+            else if (hour >= 14 && hour < 18) baseCount = 230;
+            else if (hour >= 18 && hour < 23) baseCount = 140;
+            else baseCount = 23;
+            break;
+        case 'coin':
+            if (hour >= 9 && hour < 14) baseCount = 20;
+            else if (hour >= 14 && hour < 18) baseCount = 42;
+            else if (hour >= 18 && hour < 23) baseCount = 50;
+            else baseCount = 5;
+            break;
+    }
+    
+    // Добавляем случайное отклонение ±30%
+    const variation = Math.floor(baseCount * 0.3 * (Math.random() - 0.5));
+    return Math.max(1, baseCount + variation);
+}
+
+function adjustToTimeRange(currentCount, gameType) {
+    const hour = new Date().getHours();
+    let minCount = 1, maxCount = 300;
+    
+    switch(gameType) {
+        case 'mines':
+            if (hour >= 9 && hour < 14) { minCount = 15; maxCount = 35; }
+            else if (hour >= 14 && hour < 18) { minCount = 50; maxCount = 85; }
+            else if (hour >= 18 && hour < 23) { minCount = 30; maxCount = 60; }
+            else { minCount = 3; maxCount = 15; }
+            break;
+        case 'rocket':
+            if (hour >= 9 && hour < 14) { minCount = 35; maxCount = 70; }
+            else if (hour >= 14 && hour < 18) { minCount = 180; maxCount = 280; }
+            else if (hour >= 18 && hour < 23) { minCount = 100; maxCount = 180; }
+            else { minCount = 15; maxCount = 35; }
+            break;
+        case 'coin':
+            if (hour >= 9 && hour < 14) { minCount = 15; maxCount = 30; }
+            else if (hour >= 14 && hour < 18) { minCount = 35; maxCount = 55; }
+            else if (hour >= 18 && hour < 23) { minCount = 40; maxCount = 65; }
+            else { minCount = 3; maxCount = 10; }
+            break;
+    }
+    
+    return Math.max(minCount, Math.min(maxCount, currentCount));
+}
+
+function updateOnlineCounter(count) {
+    const playersCountElement = document.getElementById('playersCount');
+    if (playersCountElement) {
+        playersCountElement.textContent = count;
     }
 }
+
 async function loadUserData() {
     try {
         const response = await fetch(`/api/user/balance/${currentUser.id}`);

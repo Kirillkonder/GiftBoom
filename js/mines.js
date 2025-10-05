@@ -3,35 +3,85 @@ let isDemoMode = true;
 let userData = null;
 let currentUser = null;
 let isGridReady = false;
-let onlinePlayers = 20;
+let onlinePlayers = 43;
+let onlineUpdateInterval = null;
 
-// ==================== ОБНОВЛЕННЫЙ ФУНКЦИОНАЛ ОНЛАЙНА ====================
+// ==================== НОВЫЙ ФУНКЦИОНАЛ ОНЛАЙНА ====================
 
 function initializeOnlineCounter() {
-    // Устанавливаем начальное значение
+    // Устанавливаем начальное значение по времени суток
+    onlinePlayers = getTimeBasedOnlineCount('mines');
     updateOnlineCounter(onlinePlayers);
     
     // Запускаем обновление каждые 10 секунд
-    setInterval(() => {
-        fetch('/api/online/mines')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    onlinePlayers = data.online;
-                    updateOnlineCounter(onlinePlayers);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching online:', error);
-                // Fallback: случайное изменение от 1 до 6
-                const change = Math.floor(Math.random() * 6) + 1;
-                const shouldIncrease = Math.random() > 0.5;
-                onlinePlayers = shouldIncrease ? 
-                    onlinePlayers + change : 
-                    Math.max(1, onlinePlayers - change);
-                updateOnlineCounter(onlinePlayers);
-            });
+    onlineUpdateInterval = setInterval(() => {
+        // Случайное изменение от -6 до +6 игроков
+        const change = Math.floor(Math.random() * 13) - 6;
+        onlinePlayers = Math.max(1, onlinePlayers + change);
+        
+        // Корректируем по временному диапазону
+        onlinePlayers = adjustToTimeRange(onlinePlayers, 'mines');
+        
+        updateOnlineCounter(onlinePlayers);
     }, 10000); // 10 секунд
+}
+
+function getTimeBasedOnlineCount(gameType) {
+    const hour = new Date().getHours();
+    let baseCount = 0;
+    
+    switch(gameType) {
+        case 'mines':
+            if (hour >= 9 && hour < 14) baseCount = 20;
+            else if (hour >= 14 && hour < 18) baseCount = 67;
+            else if (hour >= 18 && hour < 23) baseCount = 40;
+            else baseCount = 7;
+            break;
+        case 'rocket':
+            if (hour >= 9 && hour < 14) baseCount = 50;
+            else if (hour >= 14 && hour < 18) baseCount = 230;
+            else if (hour >= 18 && hour < 23) baseCount = 140;
+            else baseCount = 23;
+            break;
+        case 'coin':
+            if (hour >= 9 && hour < 14) baseCount = 20;
+            else if (hour >= 14 && hour < 18) baseCount = 42;
+            else if (hour >= 18 && hour < 23) baseCount = 50;
+            else baseCount = 5;
+            break;
+    }
+    
+    // Добавляем случайное отклонение ±30%
+    const variation = Math.floor(baseCount * 0.3 * (Math.random() - 0.5));
+    return Math.max(1, baseCount + variation);
+}
+
+function adjustToTimeRange(currentCount, gameType) {
+    const hour = new Date().getHours();
+    let minCount = 1, maxCount = 300;
+    
+    switch(gameType) {
+        case 'mines':
+            if (hour >= 9 && hour < 14) { minCount = 15; maxCount = 35; }
+            else if (hour >= 14 && hour < 18) { minCount = 50; maxCount = 85; }
+            else if (hour >= 18 && hour < 23) { minCount = 30; maxCount = 60; }
+            else { minCount = 3; maxCount = 15; }
+            break;
+        case 'rocket':
+            if (hour >= 9 && hour < 14) { minCount = 35; maxCount = 70; }
+            else if (hour >= 14 && hour < 18) { minCount = 180; maxCount = 280; }
+            else if (hour >= 18 && hour < 23) { minCount = 100; maxCount = 180; }
+            else { minCount = 15; maxCount = 35; }
+            break;
+        case 'coin':
+            if (hour >= 9 && hour < 14) { minCount = 15; maxCount = 30; }
+            else if (hour >= 14 && hour < 18) { minCount = 35; maxCount = 55; }
+            else if (hour >= 18 && hour < 23) { minCount = 40; maxCount = 65; }
+            else { minCount = 3; maxCount = 10; }
+            break;
+    }
+    
+    return Math.max(minCount, Math.min(maxCount, currentCount));
 }
 
 function updateOnlineCounter(count) {
@@ -41,7 +91,14 @@ function updateOnlineCounter(count) {
     }
 }
 
-// ==================== ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ====================
+function updateOnlineCounter(count) {
+    const playersCountElement = document.getElementById('playersCount');
+    if (playersCountElement) {
+        playersCountElement.textContent = count;
+    }
+}
+
+// ==================== НОВЫЙ ФУНКЦИОНАЛ БАЛАНСА ИЗ ROCKET ====================
 
 function openDepositModal() {
     document.getElementById('deposit-modal').style.display = 'block';
@@ -625,4 +682,28 @@ function resetGameUI() {
     document.getElementById('cashoutBtn').disabled = true;
     
     // Поле будет готово после завершения resetGrid()
+}
+
+async function updateBalance() {
+    try {
+        const tg = window.Telegram.WebApp;
+        const telegramId = tg.initDataUnsafe.user.id;
+        
+        const response = await fetch(`/api/user/balance/${telegramId}`);
+        if (response.ok) {
+            const userData = await response.json();
+            // Исправляем здесь
+            const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
+            document.getElementById('balance').textContent = balance.toFixed(2);
+            
+            // Анимация обновления баланса как в Rocket
+            const balanceElement = document.getElementById('balance');
+            balanceElement.classList.add('balance-updated');
+            setTimeout(() => {
+                balanceElement.classList.remove('balance-updated');
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Error updating balance:', error);
+    }
 }
