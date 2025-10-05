@@ -245,7 +245,7 @@ router.get('/admin/promocodes/:telegramId', adminMiddleware, async (req, res) =>
 
 // API: Создать новый промокод
 router.post('/admin/promocodes/create', adminMiddleware, async (req, res) => {
-    const { telegramId, code, bonusPercent, isPublic, description, maxUses } = req.body;
+    const { telegramId, code, bonusPercent, isPublic, description, maxUses, ownerTelegramId } = req.body;
 
     try {
         // Проверяем, не существует ли уже такой промокод
@@ -262,13 +262,15 @@ router.post('/admin/promocodes/create', adminMiddleware, async (req, res) => {
             used_count: 0,
             max_uses: maxUses ? parseInt(maxUses) : null,
             created_by: parseInt(telegramId),
+            owner_telegram_id: ownerTelegramId ? parseInt(ownerTelegramId) : null, // 🔥 НОВОЕ ПОЛЕ
             created_at: new Date(),
             is_active: true
         });
 
         logAdminAction('create_promocode', telegramId, { 
             code: code.toUpperCase(),
-            bonus_percent: bonusPercent
+            bonus_percent: bonusPercent,
+            owner_telegram_id: ownerTelegramId
         });
 
         res.json({
@@ -278,6 +280,76 @@ router.post('/admin/promocodes/create', adminMiddleware, async (req, res) => {
         });
     } catch (error) {
         console.error('Create promocode error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 🔥 НОВЫЙ API: Получить статистику по промокоду
+router.get('/admin/promocodes/stats/:telegramId/:promoCode', adminMiddleware, async (req, res) => {
+    const { telegramId, promoCode } = req.params;
+
+    try {
+        const promo = promoCodes.findOne({ code: promoCode.toUpperCase() });
+        if (!promo) {
+            return res.status(404).json({ error: 'Промокод не найден' });
+        }
+
+        // Проверяем права доступа к статистике
+        if (promo.owner_telegram_id && parseInt(telegramId) !== promo.owner_telegram_id && !allowedAdmins.includes(parseInt(telegramId))) {
+            return res.status(403).json({ error: 'Нет доступа к статистике этого промокода' });
+        }
+
+        // Находим все транзакции с этим промокодом
+        const promoTransactions = transactions.find({ 
+            promo_code: promoCode.toUpperCase(),
+            status: 'completed',
+            type: 'deposit'
+        });
+
+        // Статистика по депозитам
+        const depositStats = {
+            total_uses: promo.used_count || 0,
+            total_deposits: 0,
+            total_bonus_paid: 0,
+            user_earnings: 0,
+            transactions: []
+        };
+
+        // Собираем детальную статистику
+        promoTransactions.forEach(transaction => {
+            const originalAmount = transaction.original_amount || transaction.amount;
+            const bonusAmount = transaction.bonus_amount || 0;
+            
+            depositStats.total_deposits += originalAmount;
+            depositStats.total_bonus_paid += bonusAmount;
+            
+            // Расчет заработка владельца (например, 10% от бонуса)
+            const ownerEarnings = bonusAmount * 0.1; // 10% от бонуса
+            depositStats.user_earnings += ownerEarnings;
+
+            depositStats.transactions.push({
+                user_id: transaction.user_id,
+                original_amount: originalAmount,
+                bonus_amount: bonusAmount,
+                final_amount: transaction.amount,
+                owner_earnings: ownerEarnings,
+                created_at: transaction.created_at
+            });
+        });
+
+        res.json({
+            success: true,
+            promo_code: promo.code,
+            stats: depositStats,
+            promo_info: {
+                bonus_percent: promo.bonus_percent,
+                owner_telegram_id: promo.owner_telegram_id,
+                is_public: promo.is_public,
+                created_at: promo.created_at
+            }
+        });
+    } catch (error) {
+        console.error('Get promo stats error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

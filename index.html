@@ -40,6 +40,8 @@
             <div class="promo-info-text">
                 💡 Введите промокод при пополнении для получения бонуса
             </div>
+            
+            <!-- 🔥 КНОПКА СТАТИСТИКИ БУДЕТ ДОБАВЛЕНА АВТОМАТИЧЕСКИ -->
         </div>
 
         <div class="deposit-section">
@@ -215,6 +217,13 @@
                     <input type="text" id="new-promo-code" placeholder="Код промокода (например: STREAMER25)" maxlength="20" class="promo-input">
                     <input type="number" id="new-promo-percent" placeholder="Процент бонуса" min="1" max="100" class="promo-input">
                     <input type="text" id="new-promo-description" placeholder="Описание промокода" class="promo-input">
+                    
+                    <!-- 🔥 НОВОЕ ПОЛЕ: ID владельца промокода -->
+                    <input type="number" id="new-promo-owner" placeholder="ID владельца (оставьте пустым для публичного)" class="promo-input">
+                    
+                    <!-- 🔥 НОВОЕ ПОЛЕ: Процент заработка владельца -->
+                    <input type="number" id="new-promo-owner-percent" placeholder="Процент заработка владельца (по умолчанию 10%)" min="1" max="50" value="10" class="promo-input">
+                    
                     <input type="number" id="new-promo-max-uses" placeholder="Лимит использований (оставьте пустым для безлимита)" min="1" class="promo-input">
                     
                     <div class="checkbox-group">
@@ -238,6 +247,11 @@
                     ✕ Закрыть
                 </button>
             </div>
+        </div>
+
+        <!-- 🔥 НОВОЕ МОДАЛЬНОЕ ОКНО: Статистика промокодов -->
+        <div id="promo-stats-modal" class="modal" style="display: none;">
+            <!-- Содержимое будет создано динамически -->
         </div>
 
     </div>
