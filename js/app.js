@@ -4,7 +4,6 @@ class TonCasinoApp {
         this.userData = null;
         this.demoMode = false;
         this.isAdmin = false;
-        this.userPromoCodes = []; // 🔥 НОВОЕ: Промокоды пользователя
         this.init();
     }
 
@@ -42,19 +41,20 @@ class TonCasinoApp {
     }
 }
 
+
     showAdminButton() {
         const adminBtn = document.getElementById('admin-button');
         if (adminBtn) {
             adminBtn.style.display = 'block';
         }
     }
-
     showPromoAdminButton() {
-        const promoAdminBtn = document.getElementById('promo-admin-button');
-        if (promoAdminBtn) {
-            promoAdminBtn.style.display = 'block';
-        }
+    const promoAdminBtn = document.getElementById('promo-admin-button');
+    if (promoAdminBtn) {
+        promoAdminBtn.style.display = 'block';
     }
+}
+
 
  async loadUserData() {
     try {
@@ -62,145 +62,13 @@ class TonCasinoApp {
         this.userData = await response.json();
         this.demoMode = this.userData.demo_mode;
         this.isAdminUser = this.tg.initDataUnsafe.user.id === 842428912 || this.tg.initDataUnsafe.user.id === 1135073023;
-        
-        // 🔥 ПРОВЕРЯЕМ ЕСТЬ ЛИ У ПОЛЬЗОВАТЕЛЯ ПРОМОКОДЫ
-        await this.checkUserPromoCodes();
-        
         this.updateUI();
     } catch (error) {
         console.error('Error loading user data:', error);
     }
 }
 
-// 🔥 НОВЫЙ МЕТОД: Проверка промокодов пользователя
-async checkUserPromoCodes() {
-    try {
-        const response = await fetch(`/api/user/promocodes/${this.tg.initDataUnsafe.user.id}`);
-        const result = await response.json();
-        
-        if (result.success && result.promoCodes.length > 0) {
-            this.userPromoCodes = result.promoCodes;
-            this.showPromoStatsButton();
-        }
-    } catch (error) {
-        console.error('Check user promocodes error:', error);
-    }
-}
 
-// 🔥 НОВЫЙ МЕТОД: Показать кнопку статистики промокодов
-showPromoStatsButton() {
-    const promoSection = document.querySelector('.promo-section');
-    if (!promoSection) return;
-
-    // Удаляем старую кнопку если есть
-    const oldButton = document.getElementById('promo-stats-button');
-    if (oldButton) oldButton.remove();
-
-    const statsButton = document.createElement('button');
-    statsButton.id = 'promo-stats-button';
-    statsButton.className = 'btn btn-primary';
-    statsButton.innerHTML = '📊 Статистика промокодов';
-    statsButton.onclick = () => this.openPromoStatsModal();
-    statsButton.style.marginTop = '10px';
-    statsButton.style.width = '100%';
-    
-    promoSection.appendChild(statsButton);
-}
-
-// 🔥 НОВЫЙ МЕТОД: Открыть модальное окно статистики
-async openPromoStatsModal() {
-    // Создаем модальное окно если его нет
-    let modal = document.getElementById('promo-stats-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'promo-stats-modal';
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="close" onclick="closePromoStatsModal()">&times;</span>
-                <h3>📊 Статистика ваших промокодов</h3>
-                <div id="promo-stats-content">
-                    Загрузка...
-                </div>
-                <button class="btn btn-secondary" onclick="closePromoStatsModal()" style="margin-top: 15px;">
-                    ✕ Закрыть
-                </button>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    modal.style.display = 'block';
-    await this.loadPromoStats();
-}
-
-// 🔥 НОВЫЙ МЕТОД: Загрузить статистику промокодов
-async loadPromoStats() {
-    const content = document.getElementById('promo-stats-content');
-    if (!content) return;
-
-    try {
-        let allStats = [];
-        
-        // Загружаем статистику для каждого промокода пользователя
-        for (const promo of this.userPromoCodes) {
-            const response = await fetch(`/api/admin/promocodes/stats/${this.tg.initDataUnsafe.user.id}/${promo.code}`);
-            const result = await response.json();
-            
-            if (result.success) {
-                allStats.push(result);
-            }
-        }
-
-        if (allStats.length === 0) {
-            content.innerHTML = '<div class="no-stats">Нет данных по промокодам</div>';
-            return;
-        }
-
-        // Формируем HTML с статистикой
-        content.innerHTML = allStats.map(stat => `
-            <div class="promo-stats-item">
-                <div class="promo-stats-header">
-                    <div class="promo-code-badge">${stat.promo_code}</div>
-                    <div class="promo-bonus">+${stat.promo_info.bonus_percent}%</div>
-                </div>
-                <div class="promo-stats-numbers">
-                    <div class="stat-item">
-                        <span class="stat-label">🎯 Использований:</span>
-                        <span class="stat-value">${stat.stats.total_uses}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">💰 Сумма депозитов:</span>
-                        <span class="stat-value">${stat.stats.total_deposits.toFixed(2)} TON</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">🎁 Выплачено бонусов:</span>
-                        <span class="stat-value">${stat.stats.total_bonus_paid.toFixed(2)} TON</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">💎 Ваш заработок:</span>
-                        <span class="stat-value">${stat.stats.user_earnings.toFixed(2)} TON</span>
-                    </div>
-                </div>
-                ${stat.stats.transactions.length > 0 ? `
-                    <div class="transactions-list">
-                        <div class="transactions-title">Последние операции:</div>
-                        ${stat.stats.transactions.slice(0, 5).map(trans => `
-                            <div class="transaction-mini">
-                                <span>+${trans.original_amount.toFixed(2)} TON</span>
-                                <span class="bonus-mini">+${trans.bonus_amount.toFixed(2)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-            </div>
-        `).join('');
-
-    } catch (error) {
-        console.error('Load promo stats error:', error);
-        content.innerHTML = '<div class="error">Ошибка загрузки статистики</div>';
-    }
-}
 
     async loadTransactionHistory() {
         try {
@@ -213,153 +81,156 @@ async loadPromoStats() {
     }
 
     async applyPromoCode() {
-        const promoCodeInput = document.getElementById('promo-code-input');
-        const promoCode = promoCodeInput.value.trim();
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const promoCode = promoCodeInput.value.trim();
+    
+    if (!promoCode) {
+        this.showError('Введите промокод');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/promo/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: this.tg.initDataUnsafe.user.id,
+                promoCode: promoCode
+            })
+        });
         
-        if (!promoCode) {
-            this.showError('Введите промокод');
-            return;
+        const result = await response.json();
+        
+        if (result.success) {
+            // 🔥 ИСПРАВЛЕНО: используем правильное поле bonusPercent
+            this.showPromoSuccess(`Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`);
+            promoCodeInput.value = '';
+        } else {
+            this.showPromoError(result.error);
         }
+    } catch (error) {
+        console.error('Apply promo error:', error);
+        this.showPromoError('Ошибка при применении промокода');
+    }
+}
+
+
+
+showPromoSuccess(message) {
+    this.hidePromoMessage();
+    
+    const successDiv = document.createElement('div');
+    successDiv.className = 'promo-success';
+    successDiv.textContent = message;
+    
+    const promoSection = document.querySelector('.promo-section');
+    promoSection.appendChild(successDiv);
+    
+    setTimeout(() => {
+        this.hidePromoMessage();
+    }, 5000);
+}
+
+showPromoError(message) {
+    this.hidePromoMessage();
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'promo-error';
+    errorDiv.textContent = message;
+    
+    const promoSection = document.querySelector('.promo-section');
+    promoSection.appendChild(errorDiv);
+    
+    setTimeout(() => {
+        this.hidePromoMessage();
+    }, 5000);
+}
+
+hidePromoMessage() {
+    const promoSection = document.querySelector('.promo-section');
+    const successMsg = promoSection.querySelector('.promo-success');
+    const errorMsg = promoSection.querySelector('.promo-error');
+    
+    if (successMsg) successMsg.remove();
+    if (errorMsg) errorMsg.remove();
+}
+
+// 🔥 ИСПРАВЛЕННАЯ функция processDeposit - берет промокод из модалки
+async processDeposit() {
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    
+    // 🔥 Берем промокод из модалки депозита (приоритет) или из секции промокодов
+    const modalPromoInput = document.getElementById('deposit-promo-code');
+    const pagePromoInput = document.getElementById('promo-code-input');
+    const promoCode = (modalPromoInput?.value.trim()) || (pagePromoInput?.value?.trim()) || '';
+    
+    console.log(`💰 Депозит: сумма ${amount}, промокод: "${promoCode}"`);
+
+    if (!amount || amount < 0.3) {
+        this.showError('Минимальный депозит: 0.3 TON');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                telegramId: this.tg.initDataUnsafe.user.id,
+                amount: amount,
+                demoMode: this.demoMode,
+                promoCode: promoCode
+            })
+        });
+
+        const result = await response.json();
         
-        try {
-            const response = await fetch('/api/promo/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    telegramId: this.tg.initDataUnsafe.user.id,
-                    promoCode: promoCode
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.showPromoSuccess(`Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`);
-                promoCodeInput.value = '';
+        console.log('📋 Результат создания инвойса:', result);
+        
+        if (result.success) {
+            if (this.demoMode) {
+                await this.loadUserData();
+                this.tg.showPopup({
+                    title: "✅ Демо-пополнение",
+                    message: `Демо-депозит ${amount} TON успешно зачислен!`,
+                    buttons: [{ type: "ok" }]
+                });
             } else {
-                this.showPromoError(result.error);
-            }
-        } catch (error) {
-            console.error('Apply promo error:', error);
-            this.showPromoError('Ошибка при применении промокода');
-        }
-    }
-
-    showPromoSuccess(message) {
-        this.hidePromoMessage();
-        
-        const successDiv = document.createElement('div');
-        successDiv.className = 'promo-success';
-        successDiv.textContent = message;
-        
-        const promoSection = document.querySelector('.promo-section');
-        promoSection.appendChild(successDiv);
-        
-        setTimeout(() => {
-            this.hidePromoMessage();
-        }, 5000);
-    }
-
-    showPromoError(message) {
-        this.hidePromoMessage();
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'promo-error';
-        errorDiv.textContent = message;
-        
-        const promoSection = document.querySelector('.promo-section');
-        promoSection.appendChild(errorDiv);
-        
-        setTimeout(() => {
-            this.hidePromoMessage();
-        }, 5000);
-    }
-
-    hidePromoMessage() {
-        const promoSection = document.querySelector('.promo-section');
-        const successMsg = promoSection.querySelector('.promo-success');
-        const errorMsg = promoSection.querySelector('.promo-error');
-        
-        if (successMsg) successMsg.remove();
-        if (errorMsg) errorMsg.remove();
-    }
-
-    // 🔥 ИСПРАВЛЕННАЯ функция processDeposit - берет промокод из модалки
-    async processDeposit() {
-        const amount = parseFloat(document.getElementById('deposit-amount').value);
-        
-        // 🔥 Берем промокод из модалки депозита (приоритет) или из секции промокодов
-        const modalPromoInput = document.getElementById('deposit-promo-code');
-        const pagePromoInput = document.getElementById('promo-code-input');
-        const promoCode = (modalPromoInput?.value.trim()) || (pagePromoInput?.value?.trim()) || '';
-        
-        console.log(`💰 Депозит: сумма ${amount}, промокод: "${promoCode}"`);
-
-        if (!amount || amount < 0.3) {
-            this.showError('Минимальный депозит: 0.3 TON');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/create-invoice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    telegramId: this.tg.initDataUnsafe.user.id,
-                    amount: amount,
-                    demoMode: this.demoMode,
-                    promoCode: promoCode
-                })
-            });
-
-            const result = await response.json();
-            
-            console.log('📋 Результат создания инвойса:', result);
-            
-            if (result.success) {
-                if (this.demoMode) {
-                    await this.loadUserData();
-                    this.tg.showPopup({
-                        title: "✅ Демо-пополнение",
-                        message: `Демо-депозит ${amount} TON успешно зачислен!`,
-                        buttons: [{ type: "ok" }]
-                    });
+                let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
+                
+                // 🔥 ИСПРАВЛЕНО: Проверяем правильные поля
+                if (result.bonus_applied && result.bonus_amount > 0) {
+                    message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
+                    message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
+                    
+                    // Очищаем промокод после успешного применения
+                    if (modalPromoInput) modalPromoInput.value = '';
+                    if (pagePromoInput) pagePromoInput.value = '';
+                    
+                    console.log(`✅ Промокод применен: +${result.bonus_amount.toFixed(2)} TON`);
                 } else {
-                    let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
-                    
-                    // 🔥 ИСПРАВЛЕНО: Проверяем правильные поля
-                    if (result.bonus_applied && result.bonus_amount > 0) {
-                        message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
-                        message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
-                        
-                        // Очищаем промокод после успешного применения
-                        if (modalPromoInput) modalPromoInput.value = '';
-                        if (pagePromoInput) pagePromoInput.value = '';
-                        
-                        console.log(`✅ Промокод применен: +${result.bonus_amount.toFixed(2)} TON`);
-                    } else {
-                        console.log('ℹ️ Промокод не применен или бонус 0');
-                    }
-                    
-                    window.open(result.invoice_url, '_blank');
-                    this.tg.showPopup({
-                        title: "Оплата TON",
-                        message: message,
-                        buttons: [{ type: "ok" }]
-                    });
-                    this.checkDepositStatus(result.invoice_id, result.final_amount);
+                    console.log('ℹ️ Промокод не применен или бонус 0');
                 }
                 
-                closeDepositModal();
-            } else {
-                console.log(`❌ Ошибка депозита:`, result.error);
-                this.showError('Ошибка при создании депозита: ' + result.error);
+                window.open(result.invoice_url, '_blank');
+                this.tg.showPopup({
+                    title: "Оплата TON",
+                    message: message,
+                    buttons: [{ type: "ok" }]
+                });
+                this.checkDepositStatus(result.invoice_id, result.final_amount);
             }
-        } catch (error) {
-            console.error('Deposit error:', error);
-            this.showError('Ошибка при создании депозита');
+            
+            closeDepositModal();
+        } else {
+            console.log(`❌ Ошибка депозита:`, result.error);
+            this.showError('Ошибка при создании депозита: ' + result.error);
         }
+    } catch (error) {
+        console.error('Deposit error:', error);
+        this.showError('Ошибка при создании депозита');
     }
+}
 
     updateTransactionHistory(transactions) {
         const transactionsContainer = document.getElementById('transactions');
@@ -401,70 +272,69 @@ async loadPromoStats() {
         }
     }
 
-    updateUI() {
-        if (this.userData) {
-            const headerBalanceElement = document.getElementById('header-balance');
-            const userNameElement = document.getElementById('user-name');
-            const headerDemoBadge = document.getElementById('header-demo-badge');
-            const modeSwitcher = document.querySelector('.mode-switcher');
-            const modeBadgeElement = document.getElementById('mode-badge');
-            const modeInfoElement = document.getElementById('mode-info');
-            const modeButton = document.getElementById('mode-button');
-            const depositModeInfo = document.getElementById('deposit-mode-info');
-            const withdrawModeInfo = document.getElementById('withdraw-mode-info');
-            
-            // Обновляем шапку
-            if (headerBalanceElement) {
-                const balance = this.demoMode ? this.userData.demo_balance : this.userData.main_balance;
-                headerBalanceElement.textContent = balance.toFixed(2);
-            }
-            
-            if (userNameElement && this.tg.initDataUnsafe.user) {
-                const userName = this.tg.initDataUnsafe.user.first_name || this.tg.initDataUnsafe.user.username || 'Пользователь';
-                userNameElement.textContent = userName;
-            }
-            
-            if (headerDemoBadge) {
-                headerDemoBadge.textContent = this.demoMode ? 'TESTNET' : 'MAINNET';
-                headerDemoBadge.style.display = this.demoMode ? 'block' : 'none';
-            }
-            
-            if (modeSwitcher) {
-                modeSwitcher.style.display = this.isAdminUser ? 'block' : 'none';
-            }
-            
-            if (modeBadgeElement && this.isAdminUser) {
-                modeBadgeElement.textContent = this.demoMode ? 'TESTNET' : 'MAINNET';
-                modeBadgeElement.className = this.demoMode ? 'mode-badge testnet' : 'mode-badge mainnet';
-            }
-            
-            if (modeInfoElement && this.isAdminUser) {
-                modeInfoElement.textContent = this.demoMode ? 
-                    '🔧 Тестовый режим - виртуальные TON' : 
-                    '🌐 Реальный режим - настоящие TON';
-            }
-            
-            if (modeButton && this.isAdminUser) {
-                modeButton.textContent = this.demoMode ? 
-                    '🔄 Перейти к реальным TON' : 
-                    '🔄 Перейти к тестовым TON';
-                modeButton.className = this.demoMode ? 'btn btn-testnet' : 'btn btn-mainnet';
-            }
-            
-            if (depositModeInfo) {
-                depositModeInfo.textContent = this.demoMode ? 
-                    'Демо-пополнение (виртуальные TON)' : 
-                    'Пополнение через Crypto Pay';
-            }
-            
-            if (withdrawModeInfo) {
-                withdrawModeInfo.textContent = this.demoMode ? 
-                    'Демо-вывод (виртуальные TON)' : 
-                    '';
-            }
+updateUI() {
+    if (this.userData) {
+        const headerBalanceElement = document.getElementById('header-balance');
+        const userNameElement = document.getElementById('user-name');
+        const headerDemoBadge = document.getElementById('header-demo-badge');
+        const modeSwitcher = document.querySelector('.mode-switcher');
+        const modeBadgeElement = document.getElementById('mode-badge');
+        const modeInfoElement = document.getElementById('mode-info');
+        const modeButton = document.getElementById('mode-button');
+        const depositModeInfo = document.getElementById('deposit-mode-info');
+        const withdrawModeInfo = document.getElementById('withdraw-mode-info');
+        
+        // Обновляем шапку
+        if (headerBalanceElement) {
+            const balance = this.demoMode ? this.userData.demo_balance : this.userData.main_balance;
+            headerBalanceElement.textContent = balance.toFixed(2);
+        }
+        
+        if (userNameElement && this.tg.initDataUnsafe.user) {
+            const userName = this.tg.initDataUnsafe.user.first_name || this.tg.initDataUnsafe.user.username || 'Пользователь';
+            userNameElement.textContent = userName;
+        }
+        
+        if (headerDemoBadge) {
+            headerDemoBadge.textContent = this.demoMode ? 'TESTNET' : 'MAINNET';
+            headerDemoBadge.style.display = this.demoMode ? 'block' : 'none';
+        }
+        
+        if (modeSwitcher) {
+            modeSwitcher.style.display = this.isAdminUser ? 'block' : 'none';
+        }
+        
+        if (modeBadgeElement && this.isAdminUser) {
+            modeBadgeElement.textContent = this.demoMode ? 'TESTNET' : 'MAINNET';
+            modeBadgeElement.className = this.demoMode ? 'mode-badge testnet' : 'mode-badge mainnet';
+        }
+        
+        if (modeInfoElement && this.isAdminUser) {
+            modeInfoElement.textContent = this.demoMode ? 
+                '🔧 Тестовый режим - виртуальные TON' : 
+                '🌐 Реальный режим - настоящие TON';
+        }
+        
+        if (modeButton && this.isAdminUser) {
+            modeButton.textContent = this.demoMode ? 
+                '🔄 Перейти к реальным TON' : 
+                '🔄 Перейти к тестовым TON';
+            modeButton.className = this.demoMode ? 'btn btn-testnet' : 'btn btn-mainnet';
+        }
+        
+        if (depositModeInfo) {
+            depositModeInfo.textContent = this.demoMode ? 
+                'Демо-пополнение (виртуальные TON)' : 
+                'Пополнение через Crypto Pay';
+        }
+        
+        if (withdrawModeInfo) {
+            withdrawModeInfo.textContent = this.demoMode ? 
+                'Демо-вывод (виртуальные TON)' : 
+                '';
         }
     }
-
+}
     updateModeUI() {
         const modeSwitch = document.getElementById('mode-switch');
         if (modeSwitch) {
@@ -512,32 +382,32 @@ async loadPromoStats() {
         document.getElementById('admin-modal').style.display = 'none';
     }
 
-    async loadAdminData() {
-        try {
-            const response = await fetch(`/api/admin/dashboard/${this.tg.initDataUnsafe.user.id}`);
-            const data = await response.json();
-            
-            document.getElementById('admin-bank-balance').textContent = data.bank_balance;
-            document.getElementById('admin-demo-bank-balance').textContent = data.demo_bank_balance;
-            document.getElementById('admin-total-users').textContent = data.total_users;
-            document.getElementById('admin-total-transactions').textContent = data.total_transactions;
-            
-            const bankElements = document.querySelectorAll('.bank-balance');
-            const demoBankElements = document.querySelectorAll('.demo-bank-balance');
-            
-            bankElements.forEach(el => {
-                el.textContent = data.bank_balance;
-            });
-            
-            demoBankElements.forEach(el => {
-                el.textContent = data.demo_bank_balance;
-            });
-            
-        } catch (error) {
-            console.error('Admin data error:', error);
-            alert('Ошибка загрузки админ-панели');
-        }
+  async loadAdminData() {
+    try {
+        const response = await fetch(`/api/admin/dashboard/${this.tg.initDataUnsafe.user.id}`);
+        const data = await response.json();
+        
+        document.getElementById('admin-bank-balance').textContent = data.bank_balance;
+        document.getElementById('admin-demo-bank-balance').textContent = data.demo_bank_balance;
+        document.getElementById('admin-total-users').textContent = data.total_users;
+        document.getElementById('admin-total-transactions').textContent = data.total_transactions;
+        
+        const bankElements = document.querySelectorAll('.bank-balance');
+        const demoBankElements = document.querySelectorAll('.demo-bank-balance');
+        
+        bankElements.forEach(el => {
+            el.textContent = data.bank_balance;
+        });
+        
+        demoBankElements.forEach(el => {
+            el.textContent = data.demo_bank_balance;
+        });
+        
+    } catch (error) {
+        console.error('Admin data error:', error);
+        alert('Ошибка загрузки админ-панели');
     }
+}
 
     async withdrawProfit() {
         const amount = parseFloat(prompt('Сколько TON вывести?'));
@@ -781,51 +651,51 @@ async loadPromoStats() {
     }
 
     async checkDepositStatus(invoiceId, expectedAmount = null) {
-        console.log(`🔍 Проверка статуса инвойса: ${invoiceId}`);
-        
-        const checkInterval = setInterval(async () => {
-            try {
-                const response = await fetch('/api/check-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        invoiceId: invoiceId,
-                        demoMode: this.demoMode
-                    })
+    console.log(`🔍 Проверка статуса инвойса: ${invoiceId}`);
+    
+    const checkInterval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/check-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    invoiceId: invoiceId,
+                    demoMode: this.demoMode
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'paid') {
+                clearInterval(checkInterval);
+                
+                let message = 'Депозит успешно зачислен!';
+                if (result.bonus_amount > 0) {
+                    message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON`;
+                    message += `\n💎 Итого: ${result.amount.toFixed(2)} TON`;
+                }
+                
+                this.tg.showPopup({
+                    title: "✅ Успешно",
+                    message: message,
+                    buttons: [{ type: "ok" }]
                 });
                 
-                const result = await response.json();
-                
-                if (result.status === 'paid') {
-                    clearInterval(checkInterval);
-                    
-                    let message = 'Депозит успешно зачислен!';
-                    if (result.bonus_amount > 0) {
-                        message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON`;
-                        message += `\n💎 Итого: ${result.amount.toFixed(2)} TON`;
-                    }
-                    
-                    this.tg.showPopup({
-                        title: "✅ Успешно",
-                        message: message,
-                        buttons: [{ type: "ok" }]
-                    });
-                    
-                    await this.loadUserData();
-                    await this.loadTransactionHistory();
-                } else if (result.status === 'expired' || result.status === 'cancelled') {
-                    clearInterval(checkInterval);
-                    this.tg.showPopup({
-                        title: "❌ Ошибка",
-                        message: 'Платеж отменен или просрочен',
-                        buttons: [{ type: "ok" }]
-                    });
-                }
-            } catch (error) {
-                console.error('Status check error:', error);
+                await this.loadUserData();
+                await this.loadTransactionHistory();
+            } else if (result.status === 'expired' || result.status === 'cancelled') {
+                clearInterval(checkInterval);
+                this.tg.showPopup({
+                    title: "❌ Ошибка",
+                    message: 'Платеж отменен или просрочен',
+                    buttons: [{ type: "ok" }]
+                });
             }
-        }, 5000);
-    }
+        } catch (error) {
+            console.error('Status check error:', error);
+        }
+    }, 5000);
+}
 
     async processWithdraw() {
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
@@ -884,12 +754,10 @@ async loadPromoStats() {
             const depositModal = document.getElementById('deposit-modal');
             const withdrawModal = document.getElementById('withdraw-modal');
             const adminModal = document.getElementById('admin-modal');
-            const promoStatsModal = document.getElementById('promo-stats-modal');
             
             if (event.target === depositModal) closeDepositModal();
             if (event.target === withdrawModal) closeWithdrawModal();
             if (event.target === adminModal) this.closeAdminPanel();
-            if (event.target === promoStatsModal) closePromoStatsModal();
         }.bind(this);
     }
 }
@@ -993,7 +861,6 @@ function renderPromoCodesList(promoCodes) {
                 <div class="promocode-meta">
                     Создан: ${new Date(promo.created_at).toLocaleDateString()}
                     ${promo.is_public ? '• 📢 Публичный' : '• 🔒 Приватный'}
-                    ${promo.owner_telegram_id ? `• 👤 Владелец: ${promo.owner_telegram_id}` : ''}
                 </div>
             </div>
             <div class="promocode-actions">
@@ -1016,8 +883,6 @@ async function createNewPromoCode() {
     const isPublic = document.getElementById('new-promo-public').checked;
     const description = document.getElementById('new-promo-description').value;
     const maxUses = document.getElementById('new-promo-max-uses').value;
-    const ownerTelegramId = document.getElementById('new-promo-owner').value;
-    const ownerPercent = document.getElementById('new-promo-owner-percent').value || '10';
 
     if (!code || !bonusPercent) {
         alert('Заполните код и процент бонуса');
@@ -1034,9 +899,7 @@ async function createNewPromoCode() {
                 bonusPercent: bonusPercent,
                 isPublic: isPublic,
                 description: description,
-                maxUses: maxUses || null,
-                ownerTelegramId: ownerTelegramId || null,
-                ownerPercent: ownerPercent
+                maxUses: maxUses || null
             })
         });
 
@@ -1048,8 +911,6 @@ async function createNewPromoCode() {
             document.getElementById('new-promo-percent').value = '';
             document.getElementById('new-promo-description').value = '';
             document.getElementById('new-promo-max-uses').value = '';
-            document.getElementById('new-promo-owner').value = '';
-            document.getElementById('new-promo-owner-percent').value = '10';
             await loadPromoCodesAdmin();
         } else {
             alert('Ошибка: ' + result.error);
@@ -1117,14 +978,6 @@ function closePromoCodesAdmin() {
 
 function applyPromoCode() {
     app.applyPromoCode();
-}
-
-// 🔥 НОВАЯ ГЛОБАЛЬНАЯ ФУНКЦИЯ: Закрыть модальное окно статистики
-function closePromoStatsModal() {
-    const modal = document.getElementById('promo-stats-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
