@@ -404,25 +404,25 @@ function initDatabase() {
                 // Добавьте этот блок для promoCodes:
                 // В функции initDatabase() обновляем создание промокодов:
                     if (!promoCodes) {
-                        promoCodes = db.addCollection('promo_codes', {
-                            indices: ['code', 'created_by', 'owner_telegram_id'],
-                            unique: ['code']
-                        });
-                        
-                        // Создаем дефолтные промокоды
-                        promoCodes.insert({
-                            code: 'BOOM10',
-                            bonus_percent: 10,
-                            is_public: true,
-                            description: 'Публичный промокод +10% к депозиту',
-                            used_count: 0,
-                            max_uses: null,
-                            created_by: 842428912,
-                            owner_telegram_id: null, // 🔥 НОВОЕ ПОЛЕ: null для публичных промокодов
-                            created_at: new Date(),
-                            is_active: true
-                        });
-                    }
+                    promoCodes = db.addCollection('promo_codes', {
+                        indices: ['code', 'created_by', 'owner_telegram_id'],
+                        unique: ['code']
+                    });
+                    
+                    // Создаем дефолтные промокоды
+                    promoCodes.insert({
+                        code: 'BOOM10',
+                        bonus_percent: 10,
+                        is_public: true,
+                        description: 'Публичный промокод +10% к депозиту',
+                        used_count: 0,
+                        max_uses: null,
+                        created_by: 842428912,
+                        owner_telegram_id: null, // 🔥 НОВОЕ ПОЛЕ: null для публичных промокодов
+                        created_at: new Date(),
+                        is_active: true
+                    });
+                }
                 console.log('LokiJS database initialized');
                 resolve(true);
             },

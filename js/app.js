@@ -4,6 +4,8 @@ class TonCasinoApp {
         this.userData = null;
         this.demoMode = false;
         this.isAdmin = false;
+        this.isAdminUser = false;
+        this.userPromoCodes = [];
         this.init();
     }
 
@@ -13,6 +15,7 @@ class TonCasinoApp {
         
         await this.loadUserData();
         this.checkAdminStatus();
+        await this.checkPromoStatsAccess();
         this.setupEventListeners();
         this.loadTransactionHistory();
         this.updateModeUI();
@@ -38,6 +41,85 @@ class TonCasinoApp {
         }
     } catch (error) {
         console.error('Admin check error:', error);
+    }
+}
+
+async checkPromoStatsAccess() {
+    try {
+        const response = await fetch(`/api/admin/promocodes/${this.tg.initDataUnsafe.user.id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const userPromoCodes = result.promoCodes.filter(promo => 
+                promo.owner_telegram_id === this.tg.initDataUnsafe.user.id
+            );
+            
+            if (userPromoCodes.length > 0) {
+                this.showPromoStatsButton();
+                this.userPromoCodes = userPromoCodes;
+            }
+        }
+    } catch (error) {
+        console.error('Check promo stats access error:', error);
+    }
+}
+
+showPromoStatsButton() {
+    const statsSection = document.getElementById('promocodes-stats-section');
+    if (statsSection) {
+        statsSection.style.display = 'block';
+    }
+}
+
+async loadPromoCodesStats() {
+    try {
+        const statsList = document.getElementById('promocodes-stats-list');
+        if (!statsList) return;
+
+        let statsHTML = '';
+        
+        for (const promo of this.userPromoCodes) {
+            const response = await fetch(`/api/admin/promocodes/stats/${this.tg.initDataUnsafe.user.id}/${promo.code}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const stats = result.stats;
+                statsHTML += `
+                    <div class="promo-stats-item">
+                        <div class="promo-stats-header">
+                            <div class="promo-stats-code">${promo.code}</div>
+                            <div class="promo-stats-bonus">+${promo.bonus_percent}%</div>
+                        </div>
+                        <div class="promo-stats-details">
+                            <div class="stat-row">
+                                <span>👥 Использований:</span>
+                                <span class="stat-value">${stats.total_uses}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>💰 Сумма депозитов:</span>
+                                <span class="stat-value">${stats.total_deposits.toFixed(2)} TON</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>🎁 Выплачено бонусов:</span>
+                                <span class="stat-value">${stats.total_bonus_paid.toFixed(2)} TON</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>💎 Ваш заработок (10%):</span>
+                                <span class="stat-value earnings">${stats.user_earnings.toFixed(2)} TON</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        if (statsHTML === '') {
+            statsHTML = '<div class="no-stats">Нет статистики по вашим промокодам</div>';
+        }
+
+        statsList.innerHTML = statsHTML;
+    } catch (error) {
+        console.error('Load promo stats error:', error);
     }
 }
 
@@ -102,7 +184,6 @@ class TonCasinoApp {
         const result = await response.json();
         
         if (result.success) {
-            // 🔥 ИСПРАВЛЕНО: используем правильное поле bonusPercent
             this.showPromoSuccess(`Промокод активирован! +${result.promo.bonusPercent}% к следующему депозиту`);
             promoCodeInput.value = '';
         } else {
@@ -155,11 +236,9 @@ hidePromoMessage() {
     if (errorMsg) errorMsg.remove();
 }
 
-// 🔥 ИСПРАВЛЕННАЯ функция processDeposit - берет промокод из модалки
 async processDeposit() {
     const amount = parseFloat(document.getElementById('deposit-amount').value);
     
-    // 🔥 Берем промокод из модалки депозита (приоритет) или из секции промокодов
     const modalPromoInput = document.getElementById('deposit-promo-code');
     const pagePromoInput = document.getElementById('promo-code-input');
     const promoCode = (modalPromoInput?.value.trim()) || (pagePromoInput?.value?.trim()) || '';
@@ -198,12 +277,10 @@ async processDeposit() {
             } else {
                 let message = `Откройте Crypto Bot для оплаты ${amount} TON`;
                 
-                // 🔥 ИСПРАВЛЕНО: Проверяем правильные поля
                 if (result.bonus_applied && result.bonus_amount > 0) {
                     message += `\n\n🎁 Бонус: +${result.bonus_amount.toFixed(2)} TON (${result.promo_code})`;
                     message += `\n💎 Итого будет зачислено: ${result.final_amount.toFixed(2)} TON`;
                     
-                    // Очищаем промокод после успешного применения
                     if (modalPromoInput) modalPromoInput.value = '';
                     if (pagePromoInput) pagePromoInput.value = '';
                     
@@ -246,7 +323,6 @@ async processDeposit() {
                     const sign = transaction.amount > 0 ? '+' : '';
                     const modeBadge = transaction.demo_mode ? ' (TEST' : ' (REAL)';
                     
-                    // 🎁 Добавляем отображение для виртуального баланса
                     let typeDisplay = transaction.type.toUpperCase();
                     if (transaction.type === 'virtual_bonus') {
                         typeDisplay = '🎁 ЗАЧИСЛЕНО';
@@ -284,7 +360,6 @@ updateUI() {
         const depositModeInfo = document.getElementById('deposit-mode-info');
         const withdrawModeInfo = document.getElementById('withdraw-mode-info');
         
-        // Обновляем шапку
         if (headerBalanceElement) {
             const balance = this.demoMode ? this.userData.demo_balance : this.userData.main_balance;
             headerBalanceElement.textContent = balance.toFixed(2);
@@ -474,7 +549,6 @@ updateUI() {
         }
     }
 
-    // 🎁 НОВАЯ ФУНКЦИЯ: Добавление виртуального баланса (реальный, но нарисованный)
     async addVirtualBalance() {
         const targetTelegramId = prompt('🎯 ID пользователя для начисления виртуального баланса:');
         const amount = parseFloat(prompt('💰 Сумма виртуального баланса (TON):'));
@@ -484,7 +558,6 @@ updateUI() {
             return;
         }
 
-        // Подтверждение операции
         const confirmMessage = `⚠️ ВНИМАНИЕ!\n\nВы собираетесь добавить ${amount} TON виртуального баланса пользователю ${targetTelegramId}.\n\n📌 Виртуальный баланс:\n- Отображается как РЕАЛЬНЫЙ баланс\n- Не требует фактического пополнения\n- Пользователь может играть на эти средства\n- Отмечен в транзакциях как "виртуальный бонус"\n\nПродолжить?`;
         
         if (!confirm(confirmMessage)) {
@@ -762,7 +835,6 @@ updateUI() {
     }
 }
 
-// Глобальные функции
 let app;
 
 function openDepositModal() {
@@ -814,7 +886,6 @@ function addDemoBalance() {
     app.addDemoBalance();
 }
 
-// 🎁 НОВАЯ ГЛОБАЛЬНАЯ ФУНКЦИЯ: Добавление виртуального баланса
 function addVirtualBalance() {
     app.addVirtualBalance();
 }
@@ -822,6 +893,7 @@ function addVirtualBalance() {
 async function openPromoCodesAdmin() {
     document.getElementById('promocodes-admin-modal').style.display = 'block';
     await loadPromoCodesAdmin();
+    await app.loadPromoCodesStats();
 }
 
 async function loadPromoCodesAdmin() {
@@ -861,6 +933,7 @@ function renderPromoCodesList(promoCodes) {
                 <div class="promocode-meta">
                     Создан: ${new Date(promo.created_at).toLocaleDateString()}
                     ${promo.is_public ? '• 📢 Публичный' : '• 🔒 Приватный'}
+                    ${promo.owner_telegram_id ? `• 👤 Владелец: ${promo.owner_telegram_id}` : ''}
                 </div>
             </div>
             <div class="promocode-actions">
@@ -883,6 +956,7 @@ async function createNewPromoCode() {
     const isPublic = document.getElementById('new-promo-public').checked;
     const description = document.getElementById('new-promo-description').value;
     const maxUses = document.getElementById('new-promo-max-uses').value;
+    const ownerId = document.getElementById('new-promo-owner-id').value;
 
     if (!code || !bonusPercent) {
         alert('Заполните код и процент бонуса');
@@ -899,7 +973,8 @@ async function createNewPromoCode() {
                 bonusPercent: bonusPercent,
                 isPublic: isPublic,
                 description: description,
-                maxUses: maxUses || null
+                maxUses: maxUses || null,
+                ownerTelegramId: ownerId || null
             })
         });
 
@@ -911,6 +986,7 @@ async function createNewPromoCode() {
             document.getElementById('new-promo-percent').value = '';
             document.getElementById('new-promo-description').value = '';
             document.getElementById('new-promo-max-uses').value = '';
+            document.getElementById('new-promo-owner-id').value = '';
             await loadPromoCodesAdmin();
         } else {
             alert('Ошибка: ' + result.error);
