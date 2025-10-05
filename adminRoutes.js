@@ -461,18 +461,16 @@ router.post('/admin/add-virtual-balance', adminMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
+// API: Получить статистику по промокодам пользователя
 router.get('/admin/user-promocodes/:telegramId', adminMiddleware, async (req, res) => {
     const { telegramId } = req.params;
 
     try {
-        // Находим все промокоды, где пользователь является владельцем
         const userPromoCodes = promoCodes.find({ 
             owner_telegram_id: parseInt(telegramId) 
         });
 
-        // Собираем статистику для каждого промокода
         const promoCodesWithStats = userPromoCodes.map(promo => {
-            // Находим транзакции с этим промокодом
             const promoTransactions = transactions.find({ 
                 promo_code: promo.code,
                 status: 'completed',
@@ -482,30 +480,14 @@ router.get('/admin/user-promocodes/:telegramId', adminMiddleware, async (req, re
             const stats = {
                 total_uses: promo.used_count || 0,
                 total_deposits: 0,
-                total_bonus_paid: 0,
-                user_earnings: 0,
-                total_deposits_without_bonus: 0, // 🔥 НОВОЕ: Общая сумма депозитов без бонуса
-                streamer_earnings_10_percent: 0 // 🔥 НОВОЕ: 10% заработок стримера
+                streamer_earnings: 0
             };
 
             promoTransactions.forEach(transaction => {
                 const originalAmount = transaction.original_amount || 0;
-                const bonusAmount = transaction.bonus_amount || 0;
-                const finalAmount = transaction.amount || 0;
                 
-                // 🔥 РАСЧЕТ ОБЩЕЙ СУММЫ ДЕПОЗИТОВ (без бонуса)
-                stats.total_deposits_without_bonus += originalAmount;
-                
-                stats.total_deposits += finalAmount;
-                stats.total_bonus_paid += bonusAmount;
-                
-                // 🔥 РАСЧЕТ ЗАРАБОТКА СТРИМЕРА (10% от суммы депозитов без бонуса)
-                const streamerEarnings = originalAmount * 0.1;
-                stats.streamer_earnings_10_percent += streamerEarnings;
-                
-                // Старый расчет (10% от бонуса) - оставляем для совместимости
-                const ownerEarnings = bonusAmount * 0.1;
-                stats.user_earnings += ownerEarnings;
+                stats.total_deposits += originalAmount;
+                stats.streamer_earnings += originalAmount * 0.1;
             });
 
             return {
@@ -514,24 +496,23 @@ router.get('/admin/user-promocodes/:telegramId', adminMiddleware, async (req, re
             };
         });
 
-        // 🔥 ОБЩАЯ СТАТИСТИКА ПО ВСЕМ ПРОМОКОДАМ
         const totalStats = {
             total_promocodes: promoCodesWithStats.length,
             total_uses_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.total_uses, 0),
-            total_deposits_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.total_deposits_without_bonus, 0),
-            total_streamer_earnings_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.streamer_earnings_10_percent, 0)
+            total_deposits_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.total_deposits, 0),
+            total_streamer_earnings_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.streamer_earnings, 0)
         };
 
         res.json({
             success: true,
             promoCodes: promoCodesWithStats,
-            totalStats: totalStats // 🔥 ДОБАВЛЕНО: Общая статистика
+            totalStats: totalStats
         });
     } catch (error) {
         console.error('Get user promocodes error:', error);
         res.status(500).json({ error: 'Server error' });
     }
-});
+});;
 
   return router;
 };
