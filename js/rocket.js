@@ -110,16 +110,9 @@ function initializeOnlineCounter() {
     onlinePlayers = getTimeBasedOnlineCount('rocket');
     updateOnlineCounter(onlinePlayers);
     
-    // Запускаем обновление каждые 10 секунд
+    // 🔥 ОБНОВЛЕНО: Запускаем обновление каждые 10 секунд с синхронизацией
     onlineUpdateInterval = setInterval(() => {
-        // Случайное изменение от -6 до +6 игроков
-        const change = Math.floor(Math.random() * 13) - 6;
-        onlinePlayers = Math.max(1, onlinePlayers + change);
-        
-        // Корректируем по временному диапазону
-        onlinePlayers = adjustToTimeRange(onlinePlayers, 'rocket');
-        
-        updateOnlineCounter(onlinePlayers);
+        syncOnlineWithServer();
     }, 10000); // 10 секунд
 }
 
@@ -151,6 +144,27 @@ function getTimeBasedOnlineCount(gameType) {
     // Добавляем случайное отклонение ±30%
     const variation = Math.floor(baseCount * 0.3 * (Math.random() - 0.5));
     return Math.max(1, baseCount + variation);
+}
+
+function syncOnlineWithServer() {
+    if (!rocketGame || !rocketGame.players) return;
+    
+    // Считаем реальных игроков (не ботов)
+    const realPlayersCount = rocketGame.players.filter(p => !p.isBot).length;
+    
+    // Обновляем онлайн счетчик на основе реальных игроков + случайная вариация
+    const baseOnline = Math.max(1, realPlayersCount * 3); // Умножаем для реалистичности
+    const variation = Math.floor(Math.random() * 13) - 6;
+    onlinePlayers = Math.max(1, baseOnline + variation);
+    
+    // Корректируем по временному диапазону
+    onlinePlayers = adjustToTimeRange(onlinePlayers, 'rocket');
+    
+    updateOnlineCounter(onlinePlayers);
+    
+    // 🔥 ВАЖНО: Отправляем онлайн-статистику на сервер для обновления ботов
+    // (сервер сам определит нужно ли добавлять/убирать ботов)
+    console.log(`🔄 Синхронизация онлайн: реальные игроки=${realPlayersCount}, онлайн=${onlinePlayers}`);
 }
 
 function adjustToTimeRange(currentCount, gameType) {
@@ -233,6 +247,7 @@ function connectWebSocket() {
 
 function updateGameState(gameState) {
     // Добавляем флаг для определения, что игра только что завершилась
+    syncOnlineWithServer();
     const wasCrashed = rocketGame.status === 'crashed';
     rocketGame = gameState;
     rocketGame.justCrashed = (gameState.status === 'crashed' && !wasCrashed);
