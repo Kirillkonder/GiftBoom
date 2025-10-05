@@ -402,10 +402,9 @@ function initDatabase() {
                 }
 
                 // Добавьте этот блок для promoCodes:
-                // В функции initDatabase() обновляем создание промокодов:
-                    if (!promoCodes) {
+                if (!promoCodes) {
                     promoCodes = db.addCollection('promo_codes', {
-                        indices: ['code', 'created_by', 'owner_telegram_id'],
+                        indices: ['code', 'created_by'],
                         unique: ['code']
                     });
                     
@@ -418,11 +417,13 @@ function initDatabase() {
                         used_count: 0,
                         max_uses: null,
                         created_by: 842428912,
-                        owner_telegram_id: null, // 🔥 НОВОЕ ПОЛЕ: null для публичных промокодов
                         created_at: new Date(),
                         is_active: true
                     });
+                    
+                    
                 }
+                
                 console.log('LokiJS database initialized');
                 resolve(true);
             },
