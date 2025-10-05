@@ -171,38 +171,6 @@ const rocketBots = [
   { name: "risk_taker", minBet: 8, maxBet: 35, risk: "high" }
 ];
 
-
-let dynamicBots = [];
-
-function updateDynamicBots(onlineCount) {
-    const targetBotCount = Math.min(Math.max(3, Math.floor(onlineCount * 0.3)), 15); // 30% от онлайна, но не меньше 3 и не больше 15
-    
-    console.log(`🔄 Обновление ботов: онлайн=${onlineCount}, нужно ботов=${targetBotCount}, сейчас=${dynamicBots.length}`);
-    
-    // Добавляем ботов если нужно больше
-    while (dynamicBots.length < targetBotCount) {
-        const availableBots = rocketBots.filter(bot => !dynamicBots.includes(bot.name));
-        if (availableBots.length > 0) {
-            const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
-            dynamicBots.push(randomBot.name);
-            console.log(`🤖 Добавлен бот: ${randomBot.name}`);
-        } else {
-            break;
-        }
-    }
-    
-    // Убираем ботов если нужно меньше
-    while (dynamicBots.length > targetBotCount) {
-        const removedBot = dynamicBots.pop();
-        console.log(`🤖 Удален бот: ${removedBot}`);
-    }
-}
-
-// Функция для получения текущих активных ботов
-function getActiveBots() {
-    return rocketBots.filter(bot => dynamicBots.includes(bot.name));
-}
-
 function getUserDisplayName(userData) {
     // Получаем данные пользователя из Telegram WebApp
     const tg = global.Telegram?.WebApp;
@@ -939,10 +907,6 @@ function startRocketGame() {
     rocketGame.endBetTime = Date.now() + 5000; // 5 секунд на ставки
     rocketGame.players = [];
     
-    // 🔥 ОБНОВЛЕНО: Используем динамических ботов на основе онлайн-счетчика
-    const onlineCount = rocketGame.players.filter(p => !p.isBot).length;
-    updateDynamicBots(onlineCount);
-    
     // Генерируем crashPoint после завершения времени на ставки
     setTimeout(() => {
         // Передаем всех игроков для анализа
@@ -954,10 +918,9 @@ function startRocketGame() {
         console.log(`Демо банк RTP: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
     }, 5000);
 
-    // 🔥 ОБНОВЛЕНО: Используем динамических ботов
+    // Добавляем ставки ботов с небольшой задержкой для реалистичности
     setTimeout(() => {
-        const activeBots = getActiveBots();
-        activeBots.forEach(bot => {
+        rocketBots.forEach(bot => {
             const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
             const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
                                bot.risk === 'medium' ? 5 + Math.random() * 10 : 
