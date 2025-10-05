@@ -98,9 +98,30 @@ function initializeGame() {
             lastName: tg.initDataUnsafe.user.last_name
         };
         loadUserData();
+        
+        // Запускаем обновление онлайн каждые 10 секунд
+        setInterval(() => {
+            fetch('/api/online/rocket')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        allOnlineUsers = data.online;
+                        document.getElementById('playersCount').textContent = allOnlineUsers;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching online:', error);
+                    // Fallback
+                    const change = Math.floor(Math.random() * 6) + 1;
+                    const shouldIncrease = Math.random() > 0.5;
+                    allOnlineUsers = shouldIncrease ? 
+                        allOnlineUsers + change : 
+                        Math.max(1, allOnlineUsers - change);
+                    document.getElementById('playersCount').textContent = allOnlineUsers;
+                });
+        }, 10000);
     }
 }
-
 async function loadUserData() {
     try {
         const response = await fetch(`/api/user/balance/${currentUser.id}`);

@@ -43,6 +43,96 @@ let rocketGame = {
 
 let plinkoGames, plinkoBets;
 
+
+// Динамический онлайн для всех игр
+function initializeDynamicOnline() {
+    // Базовые онлайн-статистики по времени суток
+    const timeBasedOnline = {
+        'night': { // 23-9
+            mines: 7,
+            rocket: 23, 
+            coin: 5
+        },
+        'morning': { // 9-14
+            mines: 20,
+            rocket: 50,
+            coin: 20
+        },
+        'afternoon': { // 14-18
+            mines: 67,
+            rocket: 230,
+            coin: 42
+        },
+        'evening': { // 18-23
+            mines: 40,
+            rocket: 140,
+            coin: 50
+        }
+    };
+
+    // Глобальные счетчики онлайн
+    let globalOnline = {
+        mines: 20,
+        rocket: 50,
+        coin: 20
+    };
+
+    // Функция получения текущего времени суток
+    function getCurrentTimePeriod() {
+        const hour = new Date().getHours();
+        if (hour >= 9 && hour < 14) return 'morning';
+        if (hour >= 14 && hour < 18) return 'afternoon';
+        if (hour >= 18 && hour < 23) return 'evening';
+        return 'night';
+    }
+
+    // Обновление базовых значений по времени
+    function updateBaseOnline() {
+        const period = getCurrentTimePeriod();
+        const base = timeBasedOnline[period];
+        
+        globalOnline.mines = base.mines;
+        globalOnline.rocket = base.rocket;
+        globalOnline.coin = base.coin;
+        
+        console.log(`🕒 Обновлен онлайн по времени (${period}): Mines: ${base.mines}, Rocket: ${base.rocket}, Coin: ${base.coin}`);
+    }
+
+    // Функция случайного изменения онлайн
+    function updateDynamicOnline() {
+        const change = () => Math.floor(Math.random() * 6) + 1; // 1-6
+        
+        // Случайно решаем увеличивать или уменьшать
+        const shouldIncrease = Math.random() > 0.5;
+        
+        if (shouldIncrease) {
+            globalOnline.mines += change();
+            globalOnline.rocket += change();
+            globalOnline.coin += change();
+        } else {
+            globalOnline.mines = Math.max(1, globalOnline.mines - change());
+            globalOnline.rocket = Math.max(1, globalOnline.rocket - change());
+            globalOnline.coin = Math.max(1, globalOnline.coin - change());
+        }
+        
+        console.log(`🔄 Динамический онлайн: Mines: ${globalOnline.mines}, Rocket: ${globalOnline.rocket}, Coin: ${globalOnline.coin}`);
+    }
+
+    // Запускаем обновление базовых значений каждую минуту
+    setInterval(updateBaseOnline, 60000);
+    
+    // Запускаем динамическое изменение каждые 10 секунд
+    setInterval(updateDynamicOnline, 10000);
+    
+    // Инициализация при старте
+    updateBaseOnline();
+    
+    return globalOnline;
+}
+
+// Запускаем систему онлайн-статистики
+const globalOnline = initializeDynamicOnline();
+
 // RTP система - отслеживание доходности за день
 let rtpSystem = {
   realBank: {
@@ -2208,6 +2298,26 @@ app.get('/api/plinko/history/:telegramId', async (req, res) => {
     }
 });
 
+app.get('/api/online/mines', (req, res) => {
+    res.json({
+        success: true,
+        online: globalOnline.mines
+    });
+});
+
+app.get('/api/online/rocket', (req, res) => {
+    res.json({
+        success: true,
+        online: globalOnline.rocket
+    });
+});
+
+app.get('/api/online/coin', (req, res) => {
+    res.json({
+        success: true,
+        online: globalOnline.coin
+    });
+});
 
 // Запуск сервера
 async function startServer() {

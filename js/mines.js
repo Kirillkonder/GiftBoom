@@ -3,22 +3,35 @@ let isDemoMode = true;
 let userData = null;
 let currentUser = null;
 let isGridReady = false;
-let onlinePlayers = 43;
-let onlineUpdateInterval = null;
+let onlinePlayers = 20;
 
-// ==================== НОВЫЙ ФУНКЦИОНАЛ ОНЛАЙНА ====================
+// ==================== ОБНОВЛЕННЫЙ ФУНКЦИОНАЛ ОНЛАЙНА ====================
 
 function initializeOnlineCounter() {
     // Устанавливаем начальное значение
     updateOnlineCounter(onlinePlayers);
     
-    // Запускаем обновление каждые 5 минут (300000 мс)
-    onlineUpdateInterval = setInterval(() => {
-        // Случайное изменение от -10 до +10 игроков
-        const change = Math.floor(Math.random() * 21) - 10;
-        onlinePlayers = Math.max(3, onlinePlayers + change);
-        updateOnlineCounter(onlinePlayers);
-    }, 300000); // 5 минут
+    // Запускаем обновление каждые 10 секунд
+    setInterval(() => {
+        fetch('/api/online/mines')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    onlinePlayers = data.online;
+                    updateOnlineCounter(onlinePlayers);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching online:', error);
+                // Fallback: случайное изменение от 1 до 6
+                const change = Math.floor(Math.random() * 6) + 1;
+                const shouldIncrease = Math.random() > 0.5;
+                onlinePlayers = shouldIncrease ? 
+                    onlinePlayers + change : 
+                    Math.max(1, onlinePlayers - change);
+                updateOnlineCounter(onlinePlayers);
+            });
+    }, 10000); // 10 секунд
 }
 
 function updateOnlineCounter(count) {
@@ -28,7 +41,7 @@ function updateOnlineCounter(count) {
     }
 }
 
-// ==================== НОВЫЙ ФУНКЦИОНАЛ БАЛАНСА ИЗ ROCKET ====================
+// ==================== ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ ====================
 
 function openDepositModal() {
     document.getElementById('deposit-modal').style.display = 'block';
@@ -612,28 +625,4 @@ function resetGameUI() {
     document.getElementById('cashoutBtn').disabled = true;
     
     // Поле будет готово после завершения resetGrid()
-}
-
-async function updateBalance() {
-    try {
-        const tg = window.Telegram.WebApp;
-        const telegramId = tg.initDataUnsafe.user.id;
-        
-        const response = await fetch(`/api/user/balance/${telegramId}`);
-        if (response.ok) {
-            const userData = await response.json();
-            // Исправляем здесь
-            const balance = userData.demo_mode ? userData.demo_balance : userData.main_balance;
-            document.getElementById('balance').textContent = balance.toFixed(2);
-            
-            // Анимация обновления баланса как в Rocket
-            const balanceElement = document.getElementById('balance');
-            balanceElement.classList.add('balance-updated');
-            setTimeout(() => {
-                balanceElement.classList.remove('balance-updated');
-            }, 1000);
-        }
-    } catch (error) {
-        console.error('Error updating balance:', error);
-    }
 }
