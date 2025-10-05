@@ -824,49 +824,16 @@ input[type="text"]:focus {
 .promocodes-list-section h4 {
     margin-bottom: 15px;
     color: #f0f0f0;
-    flex-shrink: 0; /* Заголовок не сжимается */
-}
-
-#promocodes-admin-modal .modal-content {
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.promocodes-list-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0; /* Важно для правильной работы flex в контейнере */
+    min-height: auto;
 }
 
 .promocodes-list {
-    max-height: 400px;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: scroll;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     position: relative;
-    padding-right: 5px; /* Добавляем отступ для скроллбара */
 }
-.promocodes-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.promocodes-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-}
-
-.promocodes-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.6));
-    border-radius: 3px;
-}
-
-.promocodes-list::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8));
-}
-
 
 .promocode-item {
     background: rgba(30, 35, 47, 0.8);
