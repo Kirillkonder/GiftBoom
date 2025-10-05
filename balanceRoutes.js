@@ -129,18 +129,17 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
             if (invoice.ok && invoice.result) {
                 // Сохраняем транзакцию как pending
                 transactions.insert({
-                    user_id: user.$loki,
-                    amount: finalAmount,
-                    original_amount: amt,
-                    bonus_amount: bonusAmount,
-                    type: 'deposit',
-                    status: 'pending',
-                    invoice_id: invoice.result.invoice_id,
-                    demo_mode: demoMode,
-                    promo_code: appliedPromoCode,
-                    created_at: new Date()
-                });
-
+                user_id: user.$loki,
+                amount: finalAmount, // Общая сумма с бонусом
+                original_amount: amt, // 🔥 Оригинальная сумма без бонуса
+                bonus_amount: bonusAmount, // 🔥 Сумма бонуса
+                type: 'deposit',
+                status: 'pending',
+                invoice_id: invoice.result.invoice_id,
+                demo_mode: demoMode,
+                promo_code: appliedPromoCode, // 🔥 Промокод
+                created_at: new Date()
+            });
                 console.log(`✅ Инвойс создан: ${invoice.result.invoice_id}`);
                 
                 res.json({

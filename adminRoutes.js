@@ -483,17 +483,27 @@ router.get('/admin/user-promocodes/:telegramId', adminMiddleware, async (req, re
                 total_uses: promo.used_count || 0,
                 total_deposits: 0,
                 total_bonus_paid: 0,
-                user_earnings: 0
+                user_earnings: 0,
+                total_deposits_without_bonus: 0, // 🔥 НОВОЕ: Общая сумма депозитов без бонуса
+                streamer_earnings_10_percent: 0 // 🔥 НОВОЕ: 10% заработок стримера
             };
 
             promoTransactions.forEach(transaction => {
-                const originalAmount = transaction.original_amount || transaction.amount;
+                const originalAmount = transaction.original_amount || 0;
                 const bonusAmount = transaction.bonus_amount || 0;
+                const finalAmount = transaction.amount || 0;
                 
-                stats.total_deposits += originalAmount;
+                // 🔥 РАСЧЕТ ОБЩЕЙ СУММЫ ДЕПОЗИТОВ (без бонуса)
+                stats.total_deposits_without_bonus += originalAmount;
+                
+                stats.total_deposits += finalAmount;
                 stats.total_bonus_paid += bonusAmount;
                 
-                // Расчет заработка владельца (10% от бонуса)
+                // 🔥 РАСЧЕТ ЗАРАБОТКА СТРИМЕРА (10% от суммы депозитов без бонуса)
+                const streamerEarnings = originalAmount * 0.1;
+                stats.streamer_earnings_10_percent += streamerEarnings;
+                
+                // Старый расчет (10% от бонуса) - оставляем для совместимости
                 const ownerEarnings = bonusAmount * 0.1;
                 stats.user_earnings += ownerEarnings;
             });
@@ -504,9 +514,18 @@ router.get('/admin/user-promocodes/:telegramId', adminMiddleware, async (req, re
             };
         });
 
+        // 🔥 ОБЩАЯ СТАТИСТИКА ПО ВСЕМ ПРОМОКОДАМ
+        const totalStats = {
+            total_promocodes: promoCodesWithStats.length,
+            total_uses_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.total_uses, 0),
+            total_deposits_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.total_deposits_without_bonus, 0),
+            total_streamer_earnings_all: promoCodesWithStats.reduce((sum, promo) => sum + promo.stats.streamer_earnings_10_percent, 0)
+        };
+
         res.json({
             success: true,
-            promoCodes: promoCodesWithStats
+            promoCodes: promoCodesWithStats,
+            totalStats: totalStats // 🔥 ДОБАВЛЕНО: Общая статистика
         });
     } catch (error) {
         console.error('Get user promocodes error:', error);

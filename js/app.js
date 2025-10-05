@@ -1022,7 +1022,7 @@ async function loadPromoStats() {
         const result = await response.json();
         
         if (result.success) {
-            renderPromoStats(result.promoCodes);
+            renderPromoStats(result.promoCodes, result.totalStats); // 🔥 ПЕРЕДАЕМ ОБЩУЮ СТАТИСТИКУ
         }
     } catch (error) {
         console.error('Load promo stats error:', error);
@@ -1030,7 +1030,7 @@ async function loadPromoStats() {
     }
 }
 
-function renderPromoStats(promoCodes) {
+function renderPromoStats(promoCodes, totalStats) {
     const container = document.getElementById('promo-stats-list');
     if (!container) return;
 
@@ -1039,7 +1039,33 @@ function renderPromoStats(promoCodes) {
         return;
     }
 
-    container.innerHTML = promoCodes.map(promo => `
+    // 🔥 ОБЩАЯ СТАТИСТИКА
+    let html = `
+        <div class="total-stats-section">
+            <h4>📈 Общая статистика по всем промокодам</h4>
+            <div class="total-stats-grid">
+                <div class="total-stat-item">
+                    <div class="total-stat-label">Всего промокодов</div>
+                    <div class="total-stat-value">${totalStats.total_promocodes}</div>
+                </div>
+                <div class="total-stat-item">
+                    <div class="total-stat-label">Общее использование</div>
+                    <div class="total-stat-value">${totalStats.total_uses_all} раз</div>
+                </div>
+                <div class="total-stat-item">
+                    <div class="total-stat-label">Общая сумма депозитов</div>
+                    <div class="total-stat-value">${totalStats.total_deposits_all.toFixed(2)} TON</div>
+                </div>
+                <div class="total-stat-item earnings">
+                    <div class="total-stat-label">Ваш заработок (10%)</div>
+                    <div class="total-stat-value">${totalStats.total_streamer_earnings_all.toFixed(2)} TON</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 🔥 СТАТИСТИКА ПО КАЖДОМУ ПРОМОКОДУ
+    html += promoCodes.map(promo => `
         <div class="promo-stats-item">
             <div class="promo-stats-header">
                 <div class="promo-stats-code">${promo.code}</div>
@@ -1060,8 +1086,8 @@ function renderPromoStats(promoCodes) {
                 </div>
                 <div class="stats-row">
                     <div class="stat-item">
-                        <div class="stat-label">Общие депозиты</div>
-                        <div class="stat-value">${promo.stats.total_deposits.toFixed(2)} TON</div>
+                        <div class="stat-label">Сумма депозитов</div>
+                        <div class="stat-value">${promo.stats.total_deposits_without_bonus.toFixed(2)} TON</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Выплачено бонусов</div>
@@ -1069,9 +1095,9 @@ function renderPromoStats(promoCodes) {
                     </div>
                 </div>
                 <div class="stats-row">
-                    <div class="stat-item">
+                    <div class="stat-item earnings">
                         <div class="stat-label">Ваш заработок (10%)</div>
-                        <div class="stat-value earnings">${promo.stats.user_earnings.toFixed(2)} TON</div>
+                        <div class="stat-value">${promo.stats.streamer_earnings_10_percent.toFixed(2)} TON</div>
                     </div>
                 </div>
                 ${promo.max_uses ? `
@@ -1094,6 +1120,8 @@ function renderPromoStats(promoCodes) {
             </div>
         </div>
     `).join('');
+
+    container.innerHTML = html;
 }
 
 function closePromoStatsModal() {
