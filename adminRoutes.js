@@ -461,6 +461,58 @@ router.post('/admin/add-virtual-balance', adminMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Ошибка сервера' });
     }
 });
+router.get('/admin/user-promocodes/:telegramId', adminMiddleware, async (req, res) => {
+    const { telegramId } = req.params;
+
+    try {
+        // Находим все промокоды, где пользователь является владельцем
+        const userPromoCodes = promoCodes.find({ 
+            owner_telegram_id: parseInt(telegramId) 
+        });
+
+        // Собираем статистику для каждого промокода
+        const promoCodesWithStats = userPromoCodes.map(promo => {
+            // Находим транзакции с этим промокодом
+            const promoTransactions = transactions.find({ 
+                promo_code: promo.code,
+                status: 'completed',
+                type: 'deposit'
+            });
+
+            const stats = {
+                total_uses: promo.used_count || 0,
+                total_deposits: 0,
+                total_bonus_paid: 0,
+                user_earnings: 0
+            };
+
+            promoTransactions.forEach(transaction => {
+                const originalAmount = transaction.original_amount || transaction.amount;
+                const bonusAmount = transaction.bonus_amount || 0;
+                
+                stats.total_deposits += originalAmount;
+                stats.total_bonus_paid += bonusAmount;
+                
+                // Расчет заработка владельца (10% от бонуса)
+                const ownerEarnings = bonusAmount * 0.1;
+                stats.user_earnings += ownerEarnings;
+            });
+
+            return {
+                ...promo,
+                stats: stats
+            };
+        });
+
+        res.json({
+            success: true,
+            promoCodes: promoCodesWithStats
+        });
+    } catch (error) {
+        console.error('Get user promocodes error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
   return router;
 };

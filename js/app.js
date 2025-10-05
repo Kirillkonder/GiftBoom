@@ -13,6 +13,7 @@ class TonCasinoApp {
         
         await this.loadUserData();
         this.checkAdminStatus();
+        this.checkUserPromoCodes();
         this.setupEventListeners();
         this.loadTransactionHistory();
         this.updateModeUI();
@@ -41,20 +42,27 @@ class TonCasinoApp {
     }
 }
 
-
     showAdminButton() {
         const adminBtn = document.getElementById('admin-button');
         if (adminBtn) {
             adminBtn.style.display = 'block';
         }
     }
+
     showPromoAdminButton() {
-    const promoAdminBtn = document.getElementById('promo-admin-button');
-    if (promoAdminBtn) {
-        promoAdminBtn.style.display = 'block';
+        const promoAdminBtn = document.getElementById('promo-admin-button');
+        if (promoAdminBtn) {
+            promoAdminBtn.style.display = 'block';
+        }
+    }
+
+    // 🔥 НОВАЯ ФУНКЦИЯ: Показать кнопку статистики промокодов для владельцев
+    showPromoStatsButton() {
+    const promoStatsBtn = document.getElementById('promo-stats-button');
+    if (promoStatsBtn) {
+        promoStatsBtn.style.display = 'block';
     }
 }
-
 
  async loadUserData() {
     try {
@@ -63,12 +71,27 @@ class TonCasinoApp {
         this.demoMode = this.userData.demo_mode;
         this.isAdminUser = this.tg.initDataUnsafe.user.id === 842428912 || this.tg.initDataUnsafe.user.id === 1135073023;
         this.updateUI();
+        
+        // 🔥 Проверяем, есть ли у пользователя промокоды для отображения статистики
+        this.checkUserPromoCodes();
     } catch (error) {
         console.error('Error loading user data:', error);
     }
 }
 
-
+// 🔥 НОВАЯ ФУНКЦИЯ: Проверка промокодов пользователя
+async checkUserPromoCodes() {
+    try {
+        const response = await fetch(`/api/admin/user-promocodes/${this.tg.initDataUnsafe.user.id}`);
+        const result = await response.json();
+        
+        if (result.success && result.promoCodes.length > 0) {
+            this.showPromoStatsButton();
+        }
+    } catch (error) {
+        console.error('Check user promocodes error:', error);
+    }
+}
 
     async loadTransactionHistory() {
         try {
@@ -113,8 +136,6 @@ class TonCasinoApp {
         this.showPromoError('Ошибка при применении промокода');
     }
 }
-
-
 
 showPromoSuccess(message) {
     this.hidePromoMessage();
@@ -335,6 +356,7 @@ updateUI() {
         }
     }
 }
+
     updateModeUI() {
         const modeSwitch = document.getElementById('mode-switch');
         if (modeSwitch) {
@@ -754,10 +776,14 @@ updateUI() {
             const depositModal = document.getElementById('deposit-modal');
             const withdrawModal = document.getElementById('withdraw-modal');
             const adminModal = document.getElementById('admin-modal');
+            const promocodesModal = document.getElementById('promocodes-admin-modal');
+            const promoStatsModal = document.getElementById('promo-stats-modal');
             
             if (event.target === depositModal) closeDepositModal();
             if (event.target === withdrawModal) closeWithdrawModal();
             if (event.target === adminModal) this.closeAdminPanel();
+            if (event.target === promocodesModal) closePromoCodesAdmin();
+            if (event.target === promoStatsModal) closePromoStatsModal();
         }.bind(this);
     }
 }
@@ -861,6 +887,7 @@ function renderPromoCodesList(promoCodes) {
                 <div class="promocode-meta">
                     Создан: ${new Date(promo.created_at).toLocaleDateString()}
                     ${promo.is_public ? '• 📢 Публичный' : '• 🔒 Приватный'}
+                    ${promo.owner_telegram_id ? `• 👤 Владелец: ${promo.owner_telegram_id}` : ''}
                 </div>
             </div>
             <div class="promocode-actions">
@@ -883,6 +910,7 @@ async function createNewPromoCode() {
     const isPublic = document.getElementById('new-promo-public').checked;
     const description = document.getElementById('new-promo-description').value;
     const maxUses = document.getElementById('new-promo-max-uses').value;
+    const ownerTelegramId = document.getElementById('new-promo-owner-id').value;
 
     if (!code || !bonusPercent) {
         alert('Заполните код и процент бонуса');
@@ -899,7 +927,8 @@ async function createNewPromoCode() {
                 bonusPercent: bonusPercent,
                 isPublic: isPublic,
                 description: description,
-                maxUses: maxUses || null
+                maxUses: maxUses || null,
+                ownerTelegramId: ownerTelegramId || null
             })
         });
 
@@ -911,6 +940,7 @@ async function createNewPromoCode() {
             document.getElementById('new-promo-percent').value = '';
             document.getElementById('new-promo-description').value = '';
             document.getElementById('new-promo-max-uses').value = '';
+            document.getElementById('new-promo-owner-id').value = '';
             await loadPromoCodesAdmin();
         } else {
             alert('Ошибка: ' + result.error);
@@ -980,6 +1010,97 @@ function applyPromoCode() {
     app.applyPromoCode();
 }
 
+// 🔥 НОВЫЕ ФУНКЦИИ ДЛЯ СТАТИСТИКИ ПРОМОКОДОВ
+async function openPromoStatsModal() {
+    document.getElementById('promo-stats-modal').style.display = 'block';
+    await loadPromoStats();
+}
+
+async function loadPromoStats() {
+    try {
+        const response = await fetch(`/api/admin/user-promocodes/${app.tg.initDataUnsafe.user.id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            renderPromoStats(result.promoCodes);
+        }
+    } catch (error) {
+        console.error('Load promo stats error:', error);
+        alert('Ошибка загрузки статистики промокодов');
+    }
+}
+
+function renderPromoStats(promoCodes) {
+    const container = document.getElementById('promo-stats-list');
+    if (!container) return;
+
+    if (promoCodes.length === 0) {
+        container.innerHTML = '<div class="no-promocodes">У вас нет промокодов для отслеживания статистики</div>';
+        return;
+    }
+
+    container.innerHTML = promoCodes.map(promo => `
+        <div class="promo-stats-item">
+            <div class="promo-stats-header">
+                <div class="promo-stats-code">${promo.code}</div>
+                <div class="promo-stats-status ${promo.is_active ? 'active' : 'inactive'}">
+                    ${promo.is_active ? '🟢 Активен' : '🔴 Неактивен'}
+                </div>
+            </div>
+            <div class="promo-stats-details">
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-label">Бонус</div>
+                        <div class="stat-value">+${promo.bonus_percent}%</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Использований</div>
+                        <div class="stat-value">${promo.stats.total_uses}</div>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-label">Общие депозиты</div>
+                        <div class="stat-value">${promo.stats.total_deposits.toFixed(2)} TON</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Выплачено бонусов</div>
+                        <div class="stat-value">${promo.stats.total_bonus_paid.toFixed(2)} TON</div>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-label">Ваш заработок (10%)</div>
+                        <div class="stat-value earnings">${promo.stats.user_earnings.toFixed(2)} TON</div>
+                    </div>
+                </div>
+                ${promo.max_uses ? `
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-label">Лимит использований</div>
+                            <div class="stat-value">${promo.max_uses}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Осталось</div>
+                            <div class="stat-value">${promo.max_uses - promo.stats.total_uses}</div>
+                        </div>
+                    </div>
+                ` : ''}
+                <div class="promo-stats-description">${promo.description || 'Нет описания'}</div>
+                <div class="promo-stats-meta">
+                    Создан: ${new Date(promo.created_at).toLocaleDateString()}
+                    ${promo.is_public ? '• 📢 Публичный' : '• 🔒 Приватный'}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function closePromoStatsModal() {
+    document.getElementById('promo-stats-modal').style.display = 'none';
+}
+
+// Инициализация приложения
 document.addEventListener('DOMContentLoaded', function() {
     app = new TonCasinoApp();
 });

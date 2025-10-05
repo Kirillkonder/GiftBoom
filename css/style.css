@@ -1146,3 +1146,79 @@ input[type="text"]:focus {
     color: #ccc;
     margin-top: 5px;
 }
+
+.promo-stats-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.promo-stats-item {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.promo-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.promo-stats-code {
+    font-weight: bold;
+    font-size: 18px;
+    color: var(--accent-color);
+}
+
+.promo-stats-status.active {
+    color: #00d26a;
+    font-weight: bold;
+}
+
+.promo-stats-status.inactive {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.stat-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.stat-value.earnings {
+    color: #00d26a;
+}
+
+.promo-stats-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.promo-stats-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+}
