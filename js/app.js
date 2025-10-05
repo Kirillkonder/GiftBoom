@@ -1039,7 +1039,6 @@ function renderPromoStats(promoCodes, totalStats) {
         return;
     }
 
-    // 🔥 ОБЩАЯ СТАТИСТИКА
     let html = `
         <div class="total-stats-section">
             <h4>📈 Общая статистика по всем промокодам</h4>
@@ -1064,7 +1063,6 @@ function renderPromoStats(promoCodes, totalStats) {
         </div>
     `;
 
-    // 🔥 СТАТИСТИКА ПО КАЖДОМУ ПРОМОКОДУ
     html += promoCodes.map(promo => `
         <div class="promo-stats-item">
             <div class="promo-stats-header">
@@ -1087,17 +1085,13 @@ function renderPromoStats(promoCodes, totalStats) {
                 <div class="stats-row">
                     <div class="stat-item">
                         <div class="stat-label">Сумма депозитов</div>
-                        <div class="stat-value">${promo.stats.total_deposits_without_bonus.toFixed(2)} TON</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Выплачено бонусов</div>
-                        <div class="stat-value">${promo.stats.total_bonus_paid.toFixed(2)} TON</div>
+                        <div class="stat-value">${promo.stats.total_deposits.toFixed(2)} TON</div>
                     </div>
                 </div>
                 <div class="stats-row">
                     <div class="stat-item earnings">
                         <div class="stat-label">Ваш заработок (10%)</div>
-                        <div class="stat-value">${promo.stats.streamer_earnings_10_percent.toFixed(2)} TON</div>
+                        <div class="stat-value">${promo.stats.streamer_earnings.toFixed(2)} TON</div>
                     </div>
                 </div>
                 ${promo.max_uses ? `
