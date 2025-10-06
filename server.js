@@ -41,6 +41,52 @@ let rocketGame = {
   history: []
 };
 
+// ============= СИСТЕМА БОТОВ С ВРЕМЕННЫМИ ЗОНАМИ =============
+let onlineBots = {
+  currentCount: 0,
+  targetCount: 50,
+  realPlayers: 0,
+  lastUpdate: Date.now()
+};
+
+function getTargetBotsCount() {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  if (hour >= 9 && hour < 14) return 50;
+  else if (hour >= 14 && hour < 18) return 230;
+  else if (hour >= 18 && hour < 23) return 140;
+  else return 23;
+}
+
+function updateBotsCount() {
+  const target = getTargetBotsCount();
+  const change = Math.floor(Math.random() * 6) + 1;
+  const shouldIncrease = Math.random() > 0.5;
+  
+  if (shouldIncrease) {
+    onlineBots.currentCount = Math.min(target + 50, onlineBots.currentCount + change);
+  } else {
+    onlineBots.currentCount = Math.max(target - 50, onlineBots.currentCount - change);
+  }
+  
+  if (Math.abs(onlineBots.currentCount - target) > 50) {
+    if (onlineBots.currentCount < target) {
+      onlineBots.currentCount += Math.floor((target - onlineBots.currentCount) / 10);
+    } else {
+      onlineBots.currentCount -= Math.floor((onlineBots.currentCount - target) / 10);
+    }
+  }
+  
+  onlineBots.targetCount = target;
+  onlineBots.lastUpdate = Date.now();
+  console.log(`🤖 Боты онлайн: ${onlineBots.currentCount} (цель: ${target}, час: ${new Date().getHours()})`);
+}
+
+onlineBots.currentCount = getTargetBotsCount();
+setInterval(updateBotsCount, 30000);
+// ============= КОНЕЦ СИСТЕМЫ БОТОВ =============
+
 let plinkoGames, plinkoBets;
 
 // RTP система - отслеживание доходности за день
@@ -1175,9 +1221,18 @@ function processRocketGameEnd() {
 
 
 function broadcastRocketUpdate() {
+    const realPlayersInGame = rocketGame.players.filter(p => !p.isBot).length;
+    onlineBots.realPlayers = realPlayersInGame;
+    const totalOnline = realPlayersInGame + onlineBots.currentCount;
+    
     const data = JSON.stringify({
         type: 'rocket_update',
-        game: rocketGame
+        game: {
+            ...rocketGame,
+            totalOnlineUsers: totalOnline,
+            realPlayers: realPlayersInGame,
+            botsOnline: onlineBots.currentCount
+        }
     });
 
     wss.clients.forEach(client => {
@@ -1190,10 +1245,17 @@ function broadcastRocketUpdate() {
 wss.on('connection', function connection(ws) {
   console.log('Rocket game client connected');
   
-  // Отправляем текущее состояние игры при подключении
+  const realPlayersInGame = rocketGame.players.filter(p => !p.isBot).length;
+  onlineBots.realPlayers = realPlayersInGame;
+  
   ws.send(JSON.stringify({
     type: 'rocket_update',
-    game: rocketGame
+    game: {
+      ...rocketGame,
+      totalOnlineUsers: realPlayersInGame + onlineBots.currentCount,
+      realPlayers: realPlayersInGame,
+      botsOnline: onlineBots.currentCount
+    }
   }));
 
   ws.on('close', () => {
