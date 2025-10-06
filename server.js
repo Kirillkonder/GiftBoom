@@ -171,142 +171,67 @@ const rocketBots = [
   { name: "risk_taker", minBet: 8, maxBet: 35, risk: "high" }
 ];
 
-// Динамическое управление ботами
-function getTimeBasedBotCount() {
-    const hour = new Date().getHours();
+const botSchedule = {
+  getCurrentBotCount: function() {
+    const now = new Date();
+    const hour = now.getHours();
     
-    if (hour >= 9 && hour < 14) {
-        return 50;    // 9:00-14:00 - 50 ботов
-    } else if (hour >= 14 && hour < 18) {
-        return 230;   // 14:00-18:00 - 230 ботов
-    } else if (hour >= 18 && hour < 23) {
-        return 140;   // 18:00-23:00 - 140 ботов
-    } else {
-        return 23;    // 23:00-9:00 - 23 бота
-    }
-}
-
-// Функция для получения случайного количества ботов для изменения (1-6)
-function getRandomBotChange() {
-    return Math.floor(Math.random() * 6) + 1; // 1-6 ботов
-}
-
-// Функция для обновления количества ботов в текущей игре
-function updateBotsInGame() {
-    if (rocketGame.status !== 'waiting' && rocketGame.status !== 'counting') {
-        return; // Обновляем только между играми или во время ставок
-    }
+    if (hour >= 9 && hour < 14) return 50;    // 9:00-14:00 - 50 ботов
+    if (hour >= 14 && hour < 18) return 230;  // 14:00-18:00 - 230 ботов
+    if (hour >= 18 && hour < 23) return 140;  // 18:00-23:00 - 140 ботов
+    return 23; // 23:00-9:00 - 23 бота
+  },
+  
+  getRandomBotChange: function() {
+    // Случайное изменение от -6 до +6 ботов
+    return Math.floor(Math.random() * 13) - 6;
+  },
+  
+  updateBotCount: function() {
+    const baseCount = this.getCurrentBotCount();
+    const change = this.getRandomBotChange();
+    const newCount = Math.max(1, baseCount + change); // Минимум 1 бот
     
-    const targetBotCount = getTimeBasedBotCount();
-    const currentBotCount = rocketGame.players.filter(p => p.isBot).length;
-    const difference = targetBotCount - currentBotCount;
-    
-    if (difference === 0) {
-        // Случайное изменение количества ботов
-        const change = getRandomBotChange();
-        const shouldAdd = Math.random() > 0.5;
-        
-        if (shouldAdd && rocketGame.players.length + change <= 300) {
-            // Добавляем ботов
-            for (let i = 0; i < change; i++) {
-                addRandomBot();
-            }
-            console.log(`🤖 Добавлено ${change} ботов. Всего ботов: ${rocketGame.players.filter(p => p.isBot).length}`);
-        } else if (!shouldAdd && currentBotCount > change) {
-            // Удаляем ботов
-            removeRandomBots(change);
-            console.log(`🤖 Удалено ${change} ботов. Всего ботов: ${rocketGame.players.filter(p => p.isBot).length}`);
-        }
-    } else if (difference > 0) {
-        // Нужно добавить ботов
-        const botsToAdd = Math.min(difference, 6); // Максимум 6 за раз
-        for (let i = 0; i < botsToAdd; i++) {
-            addRandomBot();
-        }
-        console.log(`🤖 Добавлено ${botsToAdd} ботов для соответствия расписанию. Всего ботов: ${rocketGame.players.filter(p => p.isBot).length}`);
-    } else {
-        // Нужно удалить ботов
-        const botsToRemove = Math.min(Math.abs(difference), 6); // Максимум 6 за раз
-        removeRandomBots(botsToRemove);
-        console.log(`🤖 Удалено ${botsToRemove} ботов для соответствия расписанию. Всего ботов: ${rocketGame.players.filter(p => p.isBot).length}`);
-    }
-    
-    broadcastRocketUpdate();
-}
-
-// Функция для добавления случайного бота
-function addRandomBot() {
-    const availableBots = rocketBots.filter(bot => 
-        !rocketGame.players.some(p => p.name === bot.name && p.isBot)
-    );
-    
-    if (availableBots.length === 0) {
-        // Если все боты из массива уже в игре, создаем нового
-        const newBot = {
-            name: `bot_${Math.random().toString(36).substr(2, 5)}`,
-            minBet: 0.5 + Math.random() * 2,
-            maxBet: 5 + Math.random() * 30,
-            risk: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)]
-        };
-        
-        const betAmount = newBot.minBet + Math.random() * (newBot.maxBet - newBot.minBet);
-        const autoCashout = newBot.risk === 'low' ? 2 + Math.random() * 3 : 
-                           newBot.risk === 'medium' ? 5 + Math.random() * 10 : 
-                           10 + Math.random() * 30;
-        
-        rocketGame.players.push({
-            name: newBot.name,
-            betAmount: parseFloat(betAmount.toFixed(2)),
-            autoCashout: parseFloat(autoCashout.toFixed(2)),
-            isBot: true,
-            cashedOut: false,
-            winAmount: 0
-        });
-    } else {
-        // Добавляем случайного бота из доступных
-        const bot = availableBots[Math.floor(Math.random() * availableBots.length)];
-        const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
-        const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
-                           bot.risk === 'medium' ? 5 + Math.random() * 10 : 
-                           10 + Math.random() * 30;
-        
-        rocketGame.players.push({
-            name: bot.name,
-            betAmount: parseFloat(betAmount.toFixed(2)),
-            autoCashout: parseFloat(autoCashout.toFixed(2)),
-            isBot: true,
-            cashedOut: false,
-            winAmount: 0
-        });
-    }
-}
-
-// Функция для удаления случайных ботов
-function removeRandomBots(count) {
-    const bots = rocketGame.players.filter(p => p.isBot);
-    const botsToRemove = bots.slice(0, count);
-    
-    botsToRemove.forEach(bot => {
-        const index = rocketGame.players.findIndex(p => p.name === bot.name && p.isBot);
-        if (index !== -1) {
-            rocketGame.players.splice(index, 1);
-        }
-    });
-}
-
-// Запускаем периодическое обновление ботов каждые 30 секунд
-setInterval(updateBotsInGame, 30000);
-
-// Также обновляем ботов при старте каждой новой игры
-const originalStartRocketGame = startRocketGame;
-startRocketGame = function() {
-    originalStartRocketGame();
-    // Обновляем ботов после старта игры
-    setTimeout(updateBotsInGame, 1000);
+    console.log(`🤖 Обновление ботов: ${baseCount} + ${change} = ${newCount} ботов`);
+    return newCount;
+  }
 };
 
-// Инициализация ботов при запуске сервера
-setTimeout(updateBotsInGame, 5000);
+// Функция для получения текущего количества активных ботов
+function getActiveBotsCount() {
+  return botSchedule.updateBotCount();
+}
+
+// Функция для получения массива ботов для текущей игры
+function getBotsForGame() {
+  const botCount = getActiveBotsCount();
+  const availableBots = [...rocketBots];
+  
+  // Если нужно больше ботов чем есть в базовом массиве, создаем дополнительные
+  if (botCount > availableBots.length) {
+    const additionalBotsNeeded = botCount - availableBots.length;
+    
+    for (let i = 0; i < additionalBotsNeeded; i++) {
+      const baseBot = availableBots[i % availableBots.length]; // Берем бота по кругу
+      availableBots.push({
+        name: `bot_${Date.now()}_${i}`,
+        minBet: baseBot.minBet * (0.8 + Math.random() * 0.4), // Случайные вариации
+        maxBet: baseBot.maxBet * (0.8 + Math.random() * 0.4),
+        risk: baseBot.risk
+      });
+    }
+  }
+  
+  // Возвращаем нужное количество ботов
+  return availableBots.slice(0, botCount);
+}
+
+// Запускаем обновление количества ботов каждые 30 секунд
+setInterval(() => {
+  // Просто логируем изменение, реальное применение будет в следующей игре
+  const newCount = botSchedule.updateBotCount();
+  console.log(`🔄 Следующая игра будет с ${newCount} ботами`);
+}, 30000); // 30 секунд
 
 
 
@@ -1059,23 +984,23 @@ function startRocketGame() {
 
     // Добавляем ставки ботов с небольшой задержкой для реалистичности
     setTimeout(() => {
-        rocketBots.forEach(bot => {
-            const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
-            const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
-                               bot.risk === 'medium' ? 5 + Math.random() * 10 : 
-                               10 + Math.random() * 30;
-            
-            rocketGame.players.push({
-                name: bot.name,
-                betAmount: parseFloat(betAmount.toFixed(2)),
-                autoCashout: parseFloat(autoCashout.toFixed(2)),
-                isBot: true,
-                cashedOut: false,
-                winAmount: 0
-            });
+    rocketBots.forEach(bot => {
+        const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
+        const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
+                           bot.risk === 'medium' ? 5 + Math.random() * 10 : 
+                           10 + Math.random() * 30;
+        
+        rocketGame.players.push({
+            name: bot.name,
+            betAmount: parseFloat(betAmount.toFixed(2)),
+            autoCashout: parseFloat(autoCashout.toFixed(2)),
+            isBot: true,
+            cashedOut: false,
+            winAmount: 0
         });
-        broadcastRocketUpdate();
-    }, 1000); // Задержка 1 секунда перед добавлением ботов
+    });
+    broadcastRocketUpdate();
+}, 1000); // Задержка 1 секунда перед добавлением ботов
 
     // ФИКС: Отправляем начальное значение 5 секунд
     rocketGame.timeLeft = 5;
