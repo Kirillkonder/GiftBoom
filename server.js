@@ -171,6 +171,63 @@ const rocketBots = [
   { name: "risk_taker", minBet: 8, maxBet: 35, risk: "high" }
 ];
 
+function getTimeBasedOnlineCount() {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    if (hour >= 9 && hour < 14) {
+        return 50;    // 9:00-14:00
+    } else if (hour >= 14 && hour < 18) {
+        return 230;   // 14:00-18:00
+    } else if (hour >= 18 && hour < 23) {
+        return 140;   // 18:00-23:00
+    } else {
+        return 23;    // 23:00-9:00
+    }
+}
+
+function updateDynamicOnline() {
+    const change = Math.floor(Math.random() * 6) + 1; // 1-6
+    const shouldAdd = Math.random() > 0.5; // 50% шанс добавить или убрать
+    
+    // Получаем базовый онлайн по времени
+    let baseOnline = getTimeBasedOnlineCount();
+    
+    // Применяем случайное изменение
+    if (shouldAdd) {
+        baseOnline += change;
+    } else {
+        baseOnline = Math.max(1, baseOnline - change); // Не меньше 1
+    }
+    
+    return baseOnline;
+}
+
+// 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ broadcastRocketUpdate: добавляем динамический онлайн
+function broadcastRocketUpdate() {
+    // Обновляем онлайн каждую трансляцию
+    const dynamicOnline = updateDynamicOnline();
+    
+    const data = JSON.stringify({
+        type: 'rocket_update',
+        game: rocketGame,
+        totalOnlineUsers: dynamicOnline // 🔥 ДОБАВЛЕНО: Динамический онлайн
+    });
+
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(data);
+        }
+    });
+}
+
+setInterval(() => {
+    // Принудительно обновляем трансляцию для всех клиентов
+    if (rocketGame.status !== 'waiting') {
+        broadcastRocketUpdate();
+    }
+}, 30000); //
+
 function getUserDisplayName(userData) {
     // Получаем данные пользователя из Telegram WebApp
     const tg = global.Telegram?.WebApp;
