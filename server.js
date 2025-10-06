@@ -41,6 +41,14 @@ let rocketGame = {
   history: []
 };
 
+// ============= ФУНКЦИЯ ДЛЯ МОСКОВСКОГО ВРЕМЕНИ =============
+function getMoscowDate() {
+  const now = new Date();
+  // Получаем время в UTC и добавляем 3 часа для Москвы (UTC+3)
+  const moscowTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
+  return moscowTime;
+}
+
 // ============= СИСТЕМА БОТОВ С ВРЕМЕННЫМИ ЗОНАМИ =============
 let onlineBots = {
   currentCount: 0,
@@ -50,7 +58,7 @@ let onlineBots = {
 };
 
 function getTargetBotsCount() {
-  const now = new Date();
+  const now = getMoscowDate();
   const hour = now.getHours();
   
   if (hour >= 9 && hour < 14) return 50;
@@ -80,7 +88,8 @@ function updateBotsCount() {
   
   onlineBots.targetCount = target;
   onlineBots.lastUpdate = Date.now();
-  console.log(`🤖 Боты онлайн: ${onlineBots.currentCount} (цель: ${target}, час: ${new Date().getHours()})`);
+  const moscowHour = getMoscowDate().getHours();
+  console.log(`🤖 Боты онлайн: ${onlineBots.currentCount} (цель: ${target}, московское время: ${moscowHour}:${getMoscowDate().getMinutes().toString().padStart(2, '0')})`);
 }
 
 onlineBots.currentCount = getTargetBotsCount();
@@ -96,14 +105,14 @@ let rtpSystem = {
     dailyPayouts: 0,       // Общие выплаты за день
     currentRTP: 0,         // Текущий RTP в процентах
     targetRTP: 70,         // Целевой RTP 70% (было 50)
-    lastResetDate: new Date().toDateString()
+    lastResetDate: getMoscowDate().toDateString()
   },
   demoBank: {
     dailyDeposits: 0,
     dailyPayouts: 0,
     currentRTP: 0,
     targetRTP: 70,         // Целевой RTP 70% (было 50)
-    lastResetDate: new Date().toDateString()
+    lastResetDate: getMoscowDate().toDateString()
   }
 };
 
