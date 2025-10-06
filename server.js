@@ -176,15 +176,17 @@ function getTimeBasedOnlineCount() {
     const hour = now.getHours();
     
     if (hour >= 9 && hour < 14) {
-        return 50;    // 9:00-14:00
+        return 50 + Math.floor(Math.random() * 10); // 50-60
     } else if (hour >= 14 && hour < 18) {
-        return 230;   // 14:00-18:00
+        return 230 + Math.floor(Math.random() * 20); // 230-250
     } else if (hour >= 18 && hour < 23) {
-        return 140;   // 18:00-23:00
+        return 140 + Math.floor(Math.random() * 15); // 140-155
     } else {
-        return 23;    // 23:00-9:00
+        return 23 + Math.floor(Math.random() * 5); // 23-28
     }
 }
+
+let currentDynamicOnline = getTimeBasedOnlineCount();
 
 function updateDynamicOnline() {
     const change = Math.floor(Math.random() * 6) + 1; // 1-6
@@ -195,12 +197,12 @@ function updateDynamicOnline() {
     
     // Применяем случайное изменение
     if (shouldAdd) {
-        baseOnline += change;
+        currentDynamicOnline = Math.min(baseOnline + 10, currentDynamicOnline + change);
     } else {
-        baseOnline = Math.max(1, baseOnline - change); // Не меньше 1
+        currentDynamicOnline = Math.max(baseOnline - 10, currentDynamicOnline - change);
     }
     
-    return baseOnline;
+    return currentDynamicOnline;
 }
 
 // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ broadcastRocketUpdate: добавляем динамический онлайн
@@ -964,20 +966,35 @@ function startRocketGame() {
     rocketGame.endBetTime = Date.now() + 5000; // 5 секунд на ставки
     rocketGame.players = [];
     
+    // 🔥 ОБНОВЛЕНО: Динамическое количество ботов по времени суток
+    const getBotsCountByTime = () => {
+        const now = new Date();
+        const hour = now.getHours();
+        
+        if (hour >= 9 && hour < 14) return 35;    // 9:00-14:00: 35 ботов
+        else if (hour >= 14 && hour < 18) return 180; // 14:00-18:00: 180 ботов
+        else if (hour >= 18 && hour < 23) return 110; // 18:00-23:00: 110 ботов
+        else return 18; // 23:00-9:00: 18 ботов
+    };
+
+    const targetBotsCount = getBotsCountByTime();
+    
     // Генерируем crashPoint после завершения времени на ставки
     setTimeout(() => {
-        // Передаем всех игроков для анализа
         rocketGame.crashPoint = generateCrashPoint(rocketGame.players);
         console.log(`Краш-поинт: ${rocketGame.crashPoint.toFixed(2)}x`);
-        
-        // Выводим RTP статистику
-        console.log(`Реальный банк RTP: ${rtpSystem.realBank.currentRTP.toFixed(2)}%`);
-        console.log(`Демо банк RTP: ${rtpSystem.demoBank.currentRTP.toFixed(2)}%`);
+        console.log(`Ботов в игре: ${rocketGame.players.filter(p => p.isBot).length}`);
     }, 5000);
 
-    // Добавляем ставки ботов с небольшой задержкой для реалистичности
+    // 🔥 ОБНОВЛЕНО: Добавляем динамическое количество ботов
     setTimeout(() => {
-        rocketBots.forEach(bot => {
+        const currentBotsCount = Math.min(targetBotsCount, rocketBots.length);
+        
+        // Выбираем случайных ботов из списка
+        const shuffledBots = [...rocketBots].sort(() => Math.random() - 0.5);
+        const selectedBots = shuffledBots.slice(0, currentBotsCount);
+        
+        selectedBots.forEach(bot => {
             const betAmount = bot.minBet + Math.random() * (bot.maxBet - bot.minBet);
             const autoCashout = bot.risk === 'low' ? 2 + Math.random() * 3 : 
                                bot.risk === 'medium' ? 5 + Math.random() * 10 : 
@@ -992,8 +1009,10 @@ function startRocketGame() {
                 winAmount: 0
             });
         });
+        
+        console.log(`🤖 Добавлено ${currentBotsCount} ботов (время: ${new Date().getHours()}:00)`);
         broadcastRocketUpdate();
-    }, 1000); // Задержка 1 секунда перед добавлением ботов
+    }, 1000);
 
     // ФИКС: Отправляем начальное значение 5 секунд
     rocketGame.timeLeft = 5;
