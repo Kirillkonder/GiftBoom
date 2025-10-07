@@ -2774,5 +2774,5 @@ cron.schedule('0 0 * * *', () => {
     resetDailyRTP();
     console.log('RTP сброшен на новый день');
 });
-
+//adad
 startServer()
