@@ -1,7 +1,7 @@
 // balanceRoutes.js - ПОЛНОСТЬЮ ЗАМЕНИ СОДЕРЖИМОЕ
 const express = require('express');
 const router = express.Router();
-const { User, Transaction, PromoCode } = require('./database');
+const { User, Transaction, PromoCode } = require('./db.js (');
 
 module.exports = function(db, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
 

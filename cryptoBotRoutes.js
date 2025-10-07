@@ -1,7 +1,7 @@
 // cryptoBotRoutes.js - ПОЛНОСТЬЮ ЗАМЕНИ СОДЕРЖИМОЕ
 const express = require('express');
 const router = express.Router();
-const { User, Transaction } = require('./database');
+const { User, Transaction } = require('./db.js (');
 
 module.exports = function(cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
 

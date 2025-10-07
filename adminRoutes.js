@@ -1,7 +1,7 @@
 // adminRoutes.js - ПОЛНОСТЬЮ ЗАМЕНИ СОДЕРЖИМОЕ
 const express = require('express');
 const router = express.Router();
-const { User, Transaction, CasinoBank, CasinoDemoBank, MinesGame, RocketGame, RocketBet, PromoCode, AdminLog } = require('./database');
+const { User, Transaction, CasinoBank, CasinoDemoBank, MinesGame, RocketGame, RocketBet, PromoCode, AdminLog } = require('./db.js (');
 
 // Функция логирования админских действий
 async function logAdminAction(action, telegramId, details = {}) {
