@@ -1,16 +1,20 @@
 const express = require('express');
 const router = express.Router();
 
-module.exports = function(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats) {
+module.exports = function(db, dbFunctions) {
+    const {
+        findUserByTelegramId, createUser, updateUserBalance, toggleDemoMode,
+        createTransaction, findTransactionByInvoiceId, updateTransactionStatus, getUserTransactions,
+        getCasinoBank, getCasinoDemoBank, updateCasinoBank, updateCasinoDemoBank,
+        findPromoCode, updatePromoCodeUsedCount,
+        updateRTPStats
+    } = dbFunctions;
 
-    // 🔥 ИСПРАВЛЕННАЯ функция расчета промокода (БЕЗ инкремента used_count)
-    function calculatePromoCode(telegramId, promoCode, depositAmount) {
+    // 🔥 ИСПРАВЛЕННАЯ функция расчета промокода
+    async function calculatePromoCode(telegramId, promoCode, depositAmount) {
         console.log(`🔍 Поиск промокода: ${promoCode} для пользователя ${telegramId}`);
         
-        const promo = db.getCollection('promo_codes').findOne({ 
-            code: promoCode.toUpperCase(),
-            is_active: true 
-        });
+        const promo = await findPromoCode(promoCode);
         
         if (!promo) {
             console.log(`❌ Промокод ${promoCode} не найден или неактивен`);
@@ -26,17 +30,17 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
         }
 
         // Находим пользователя
-        const user = users.findOne({ telegram_id: parseInt(telegramId) });
+        const user = await findUserByTelegramId(telegramId);
         if (!user) {
             return { success: false, error: 'Пользователь не найден' };
         }
 
         // Проверяем, не использовал ли уже пользователь этот промокод в завершенных транзакциях
-        const userUsedPromo = transactions.findOne({
-            user_id: user.$loki,
-            promo_code: promo.code,
-            status: 'completed'
-        });
+        // Для этого нужно получить все транзакции пользователя и проверить
+        const userTransactions = await getUserTransactions(user.id);
+        const userUsedPromo = userTransactions.find(t => 
+            t.promo_code === promo.code && t.status === 'completed'
+        );
 
         if (userUsedPromo) {
             console.log(`❌ Пользователь ${telegramId} уже использовал промокод ${promo.code}`);
@@ -75,10 +79,10 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
         console.log(`💰 Создание инвойса: пользователь ${telegramId}, сумма ${amount}, демо: ${demoMode}, промокод: ${promoCode}`);
 
         try {
-            const user = users.findOne({ telegram_id: parseInt(telegramId) });
+            let user = await findUserByTelegramId(parseInt(telegramId));
             
             if (!user) {
-                return res.status(404).json({ error: 'User not found' });
+                user = await createUser(parseInt(telegramId));
             }
 
             const amt = Number(amount);
@@ -94,7 +98,7 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
             // 🔥 ПРИМЕНЯЕМ ПРОМОКОД (только расчет, used_count не трогаем)
             if (promoCode && !demoMode) {
                 console.log(`🎁 Применение промокода: ${promoCode}`);
-                promoResult = calculatePromoCode(telegramId, promoCode, amt);
+                promoResult = await calculatePromoCode(telegramId, promoCode, amt);
                 if (promoResult.success) {
                     finalAmount = promoResult.totalAmount;
                     bonusAmount = promoResult.bonusAmount;
@@ -128,18 +132,18 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
 
             if (invoice.ok && invoice.result) {
                 // Сохраняем транзакцию как pending
-                transactions.insert({
-                user_id: user.$loki,
-                amount: finalAmount, // Общая сумма с бонусом
-                original_amount: amt, // 🔥 Оригинальная сумма без бонуса
-                bonus_amount: bonusAmount, // 🔥 Сумма бонуса
-                type: 'deposit',
-                status: 'pending',
-                invoice_id: invoice.result.invoice_id,
-                demo_mode: demoMode,
-                promo_code: appliedPromoCode, // 🔥 Промокод
-                created_at: new Date()
-            });
+                await createTransaction({
+                    user_id: user.id,
+                    amount: finalAmount,
+                    original_amount: amt,
+                    bonus_amount: bonusAmount,
+                    type: 'deposit',
+                    status: 'pending',
+                    invoice_id: invoice.result.invoice_id,
+                    demo_mode: demoMode,
+                    promo_code: appliedPromoCode
+                });
+
                 console.log(`✅ Инвойс создан: ${invoice.result.invoice_id}`);
                 
                 res.json({
@@ -162,7 +166,7 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
         }
     });
 
-    // API: Проверить статус инвойса (🔥 ЗДЕСЬ увеличиваем used_count при оплате)
+    // API: Проверить статус инвойса
     router.post('/check-invoice', async (req, res) => {
         const { invoiceId, demoMode } = req.body;
 
@@ -175,32 +179,20 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
                 const invoiceData = invoice.result.items[0];
                 
                 if (invoiceData.status === 'paid') {
-                    const transaction = transactions.findOne({ invoice_id: invoiceId });
+                    const transaction = await findTransactionByInvoiceId(invoiceId);
                     
                     if (transaction && transaction.status === 'pending') {
-                        const user = users.get(transaction.user_id);
+                        const user = await findUserByTelegramId(transaction.user_id);
                         const depositAmount = transaction.amount || 0;
                         
                         if (demoMode) {
-                            users.update({
-                                ...user,
-                                demo_balance: user.demo_balance + depositAmount,
-                                total_deposits: (user.total_deposits || 0) + depositAmount
-                            });
+                            await updateUserBalance(user.telegram_id, user.main_balance, user.demo_balance + depositAmount, user.total_deposits + depositAmount);
                         } else {
-                            users.update({
-                                ...user,
-                                main_balance: user.main_balance + depositAmount,
-                                total_deposits: (user.total_deposits || 0) + depositAmount
-                            });
+                            await updateUserBalance(user.telegram_id, user.main_balance + depositAmount, user.demo_balance, user.total_deposits + depositAmount);
                         }
 
                         // Обновляем статус транзакции
-                        transactions.update({
-                            ...transaction,
-                            status: 'completed',
-                            updated_at: new Date()
-                        });
+                        await updateTransactionStatus(transaction.id, 'completed');
 
                         // 🔥 ОБНОВЛЯЕМ RTP СТАТИСТИКУ
                         if (!demoMode) {
@@ -209,17 +201,8 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
 
                         // 🔥 ИНКРЕМЕНТ ПРОМОКОДА ТОЛЬКО ПРИ УСПЕШНОЙ ОПЛАТЕ
                         if (!demoMode && transaction.promo_code) {
-                            const promoCodesCollection = db.getCollection('promo_codes');
-                            const promo = promoCodesCollection.findOne({ code: transaction.promo_code });
-                            
-                            if (promo) {
-                                const newUsedCount = (promo.used_count || 0) + 1;
-                                promoCodesCollection.update({
-                                    ...promo,
-                                    used_count: newUsedCount
-                                });
-                                console.log(`🎁 Промокод ${promo.code} использован! Счетчик: ${newUsedCount}/${promo.max_uses || '∞'}`);
-                            }
+                            await updatePromoCodeUsedCount(transaction.promo_code);
+                            console.log(`🎁 Промокод ${transaction.promo_code} использован!`);
                         }
 
                         res.json({ 
@@ -249,7 +232,7 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
         const { telegramId, amount, address, demoMode } = req.body;
 
         try {
-            const user = users.findOne({ telegram_id: parseInt(telegramId) });
+            const user = await findUserByTelegramId(parseInt(telegramId));
             
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
@@ -265,149 +248,69 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
             const totalDeposits = user.total_deposits || 0;
             const requiredWager = totalDeposits * 3;
             
-            const userTransactions = transactions.find({ 
-                user_id: user.$loki, 
-                demo_mode: demoMode,
-                status: 'completed'
-            });
-            
-            const totalWagered = userTransactions
-                .filter(t => t.type.includes('loss') || t.type.includes('bet'))
-                .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            const userTransactions = await getUserTransactions(user.id);
+            const totalWager = userTransactions
+                .filter(t => t.type === 'bet' && !t.demo_mode)
+                .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-            if (totalWagered < requiredWager) {
-                const remaining = requiredWager - totalWagered;
+            if (!demoMode && totalWager < requiredWager) {
+                const remaining = requiredWager - totalWager;
                 return res.status(400).json({ 
-                    error: 'Недостаточно отыгрыша',
-                    wagered: totalWagered,
-                    required: requiredWager,
-                    remaining: remaining,
-                    message: `Необходимо отыграть еще ${remaining.toFixed(2)} TON (x3 от депозитов)`
+                    error: `Необходимо отыграть еще ${remaining.toFixed(2)} TON для вывода` 
                 });
             }
 
+            // Создаем транзакцию вывода
+            const transaction = await createTransaction({
+                user_id: user.id,
+                amount: -amount,
+                type: 'withdrawal',
+                status: 'pending',
+                demo_mode: demoMode,
+                details: { address }
+            });
+
+            // Обновляем баланс пользователя
             if (demoMode) {
-                users.update({
-                    ...user,
-                    demo_balance: user.demo_balance - amount
-                });
-
-                transactions.insert({
-                    user_id: user.$loki,
-                    amount: -amount,
-                    type: 'withdrawal',
-                    status: 'completed',
-                    demo_mode: true,
-                    address: address,
-                    created_at: new Date()
-                });
-
-                res.json({
-                    success: true,
-                    message: 'Withdrawal completed (demo mode)',
-                    new_balance: user.demo_balance - amount
-                });
+                await updateUserBalance(user.telegram_id, user.main_balance, user.demo_balance - amount);
             } else {
-                const transfer = await cryptoPayRequest('transfer', {
-                    user_id: telegramId,
-                    asset: 'TON',
-                    amount: amount.toString(),
-                    spend_id: `withdrawal_${Date.now()}_${telegramId}`
-                }, false);
-
-                if (transfer.ok && transfer.result) {
-                    users.update({
-                        ...user,
-                        main_balance: user.main_balance - amount
-                    });
-                    
-                    updateCasinoBank(-amount);
-
-                    transactions.insert({
-                        user_id: user.$loki,
-                        amount: -amount,
-                        type: 'withdrawal',
-                        status: 'completed',
-                        demo_mode: false,
-                        address: address,
-                        hash: transfer.result.hash,
-                        created_at: new Date()
-                    });
-
-                    res.json({
-                        success: true,
-                        message: 'Withdrawal completed',
-                        hash: transfer.result.hash,
-                        new_balance: user.main_balance - amount
-                    });
-                } else {
-                    res.status(500).json({ error: 'Withdrawal failed' });
-                }
+                await updateUserBalance(user.telegram_id, user.main_balance - amount, user.demo_balance);
             }
+
+            res.json({ 
+                success: true, 
+                transaction_id: transaction.id,
+                new_balance: demoMode ? user.demo_balance - amount : user.main_balance - amount
+            });
         } catch (error) {
             console.error('Create withdrawal error:', error);
             res.status(500).json({ error: 'Server error' });
         }
     });
 
-    // API: Получить транзакции пользователя
-    router.get('/transactions/:telegramId', async (req, res) => {
-        const telegramId = parseInt(req.params.telegramId);
-
-        try {
-            const user = users.findOne({ telegram_id: telegramId });
-            
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            const userTransactions = transactions.find({ user_id: user.$loki })
-                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                .slice(0, 50);
-
-            res.json(userTransactions);
-        } catch (error) {
-            console.error('Get transactions error:', error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    });
-
     // API: Получить баланс пользователя
-    router.get('/user/balance/:telegramId', async (req, res) => {
+    router.get('/balance/:telegramId', async (req, res) => {
         const telegramId = parseInt(req.params.telegramId);
-        const isAdminUser = telegramId === 842428912 || telegramId === 1135073023;
 
         try {
-            const user = users.findOne({ telegram_id: telegramId });
+            let user = await findUserByTelegramId(telegramId);
             
             if (!user) {
-                const newUser = users.insert({
-                    telegram_id: telegramId,
-                    main_balance: 0,
-                    demo_balance: isAdminUser ? 50 : 0,
-                    total_deposits: 0,
-                    created_at: new Date(),
-                    demo_mode: false,
-                    is_admin: telegramId === parseInt(process.env.OWNER_TELEGRAM_ID) || telegramId === 1135073023
-                });
-
-                return res.json({
-                    telegram_id: newUser.telegram_id,
-                    main_balance: newUser.main_balance,
-                    demo_balance: newUser.demo_balance,
-                    demo_mode: newUser.demo_mode,
-                    is_admin: newUser.is_admin,
-                    total_deposits: 0
-                });
+                user = await createUser(telegramId);
             }
+
+            const realBank = await getCasinoBank();
+            const demoBank = await getCasinoDemoBank();
 
             res.json({
-                telegram_id: user.telegram_id,
+                success: true,
                 main_balance: user.main_balance || 0,
                 demo_balance: user.demo_balance || 0,
+                total_deposits: user.total_deposits || 0,
                 demo_mode: user.demo_mode || false,
                 is_admin: user.is_admin || false,
-                total_deposits: user.total_deposits || 0
+                casino_bank: realBank ? realBank.total_balance : 0,
+                casino_demo_bank: demoBank ? demoBank.total_balance : 0
             });
         } catch (error) {
             console.error('Get balance error:', error);
@@ -416,29 +319,47 @@ module.exports = function(db, users, transactions, cryptoPayRequest, updateCasin
     });
 
     // API: Переключить демо-режим
-    router.post('/user/toggle-demo-mode', async (req, res) => {
+    router.post('/toggle-demo', async (req, res) => {
         const { telegramId } = req.body;
 
         try {
-            const user = users.findOne({ telegram_id: parseInt(telegramId) });
+            const demoMode = await toggleDemoMode(parseInt(telegramId));
+            res.json({ success: true, demo_mode: demoMode });
+        } catch (error) {
+            console.error('Toggle demo error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    });
+
+    // API: Получить историю транзакций
+    router.get('/transactions/:telegramId', async (req, res) => {
+        const telegramId = parseInt(req.params.telegramId);
+        const limit = parseInt(req.query.limit) || 50;
+
+        try {
+            const user = await findUserByTelegramId(telegramId);
             
             if (!user) {
-                return res.status(404).json({ error: 'User not found' });
+                return res.json({ success: true, transactions: [] });
             }
 
-            const newDemoMode = !user.demo_mode;
-            
-            users.update({
-                ...user,
-                demo_mode: newDemoMode
-            });
-
-            res.json({
-                success: true,
-                demo_mode: newDemoMode
-            });
+            const transactions = await getUserTransactions(user.id, limit);
+            res.json({ success: true, transactions });
         } catch (error) {
-            console.error('Toggle demo mode error:', error);
+            console.error('Get transactions error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    });
+
+    // API: Проверить промокод
+    router.post('/check-promo', async (req, res) => {
+        const { telegramId, promoCode, depositAmount } = req.body;
+
+        try {
+            const result = await calculatePromoCode(telegramId, promoCode, depositAmount);
+            res.json(result);
+        } catch (error) {
+            console.error('Check promo error:', error);
             res.status(500).json({ error: 'Server error' });
         }
     });

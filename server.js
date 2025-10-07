@@ -5,7 +5,7 @@ const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const cron = require('node-cron');
-const Loki = require('lokijs');
+const sqlite3 = require('sqlite3').verbose();
 const WebSocket = require('ws');
 
 const app = express();
@@ -16,15 +16,12 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('.'));
 
-// Для Render сохраняем базу данных в памяти
+// SQLite база данных
 const dbPath = process.env.NODE_ENV === 'production' ? 
     path.join('/tmp', 'ton-casino.db') : 
     'ton-casino.db';
 
-// LokiJS база данных
 let db;
-let users, transactions, casinoBank, adminLogs, minesGames, rocketGames, rocketBets;
-let promoCodes;
 // WebSocket сервер для ракетки
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
@@ -268,14 +265,15 @@ const referralSystem = {
 
 
 // Функция проверки промокода
-function validatePromoCode(promoCode) {
-    const promo = promoCodes.findOne({ 
-        code: promoCode.toUpperCase(),
-        is_active: true 
-    });
+async function validatePromoCode(promoCode) {
+    const promo = await findPromoCode(promoCode.toUpperCase());
     
     if (!promo) {
         return { valid: false, error: 'Промокод не найден' };
+    }
+
+    if (!promo.is_active) {
+        return { valid: false, error: 'Промокод неактивен' };
     }
 
     // Проверяем лимит использований
@@ -360,130 +358,594 @@ app.get('/api/promo/info', async (req, res) => {
     }
 });
 
+// Инициализация базы данных
 function initDatabase() {
-    return new Promise((resolve) => {
-        db = new Loki(dbPath, {
-            autoload: true,
-            autoloadCallback: () => {
-                users = db.getCollection('users');
-                transactions = db.getCollection('transactions');
-                casinoBank = db.getCollection('casino_bank');
-                casinoDemoBank = db.getCollection('casino_demo_bank');
-                adminLogs = db.getCollection('admin_logs');
-                minesGames = db.getCollection('mines_games');
-                rocketGames = db.getCollection('rocket_games');
-                rocketBets = db.getCollection('rocket_bets');
-                // Добавьте эту строку:
-                promoCodes = db.getCollection('promo_codes');
+    return new Promise((resolve, reject) => {
+        db = new sqlite3.Database(dbPath, (err) => {
+            if (err) {
+                console.error('Error opening database:', err);
+                reject(err);
+                return;
+            }
+            console.log('Connected to SQLite database');
+            
+            // Создаем таблицы
+            createTables().then(() => {
+                console.log('Database tables initialized');
+                resolve(true);
+            }).catch(reject);
+        });
+    });
+}
 
-                if (!users) {
-                    users = db.addCollection('users', { 
-                        unique: ['telegram_id'],
-                        indices: ['telegram_id']
-                    });
-                    
+// Создание таблиц
+function createTables() {
+    return new Promise((resolve, reject) => {
+        const tables = [
+            `CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id INTEGER UNIQUE,
+                main_balance REAL DEFAULT 0,
+                demo_balance REAL DEFAULT 0,
+                total_deposits REAL DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                demo_mode BOOLEAN DEFAULT FALSE,
+                is_admin BOOLEAN DEFAULT FALSE
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                amount REAL,
+                original_amount REAL,
+                bonus_amount REAL,
+                type TEXT,
+                status TEXT,
+                invoice_id TEXT,
+                demo_mode BOOLEAN DEFAULT FALSE,
+                promo_code TEXT,
+                details TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS casino_bank (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                total_balance REAL DEFAULT 0,
+                owner_telegram_id INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS casino_demo_bank (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                total_balance REAL DEFAULT 0,
+                owner_telegram_id INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS admin_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                action TEXT,
+                telegram_id INTEGER,
+                details TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS mines_games (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                bet_amount REAL,
+                mines_count INTEGER,
+                actual_mines_count INTEGER,
+                mines TEXT,
+                revealed_cells TEXT,
+                game_over BOOLEAN DEFAULT FALSE,
+                win BOOLEAN DEFAULT FALSE,
+                current_multiplier REAL DEFAULT 1,
+                win_amount REAL DEFAULT 0,
+                demo_mode BOOLEAN DEFAULT FALSE,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS rocket_games (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                crashPoint REAL,
+                maxMultiplier REAL,
+                startTime DATETIME,
+                endTime DATETIME,
+                playerCount INTEGER,
+                botCount INTEGER,
+                totalBets REAL,
+                totalPayouts REAL,
+                botWins INTEGER,
+                botLosses INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS rocket_bets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id INTEGER,
+                user_id INTEGER,
+                bet_amount REAL,
+                cashout_multiplier REAL,
+                win_amount REAL,
+                demo_mode BOOLEAN DEFAULT FALSE,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (game_id) REFERENCES rocket_games (id),
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS plinko_games (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                bet_amount REAL,
+                rows INTEGER,
+                demo_mode BOOLEAN DEFAULT FALSE,
+                difficulty_mode TEXT,
+                status TEXT,
+                multiplier REAL,
+                win_amount REAL,
+                final_slot INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                completed_at DATETIME,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS plinko_bets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_id INTEGER,
+                user_id INTEGER,
+                bet_amount REAL,
+                multiplier REAL,
+                win_amount REAL,
+                demo_mode BOOLEAN DEFAULT FALSE,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (game_id) REFERENCES plinko_games (id),
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS promo_codes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT UNIQUE,
+                bonus_percent INTEGER,
+                is_public BOOLEAN DEFAULT FALSE,
+                description TEXT,
+                used_count INTEGER DEFAULT 0,
+                max_uses INTEGER,
+                created_by INTEGER,
+                owner_telegram_id INTEGER,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                is_active BOOLEAN DEFAULT TRUE
+            )`
+        ];
+
+        let completed = 0;
+        tables.forEach((sql, index) => {
+            db.run(sql, (err) => {
+                if (err) {
+                    console.error(`Error creating table ${index}:`, err);
+                    reject(err);
+                    return;
+                }
+                completed++;
+                if (completed === tables.length) {
                     // Создаем администратора по умолчанию
-                    users.insert({
-                        telegram_id: parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912,
-                        main_balance: 0,
-                        demo_balance: 50,
-                        total_deposits: 0,
-                        created_at: new Date(),
-                        demo_mode: false,
-                        is_admin: true
-                    });
+                    createDefaultAdmin().then(resolve).catch(reject);
                 }
-                
-                if (!transactions) {
-                    transactions = db.addCollection('transactions', {
-                        indices: ['user_id', 'created_at', 'demo_mode']
-                    });
-                }
+            });
+        });
+    });
+}
 
-                if (!casinoBank) {
-                    casinoBank = db.addCollection('casino_bank');
-                    casinoBank.insert({
-                        total_balance: 0,
-                        owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
-                        created_at: new Date(),
-                        updated_at: new Date()
-                    });
-                }
-
-                if (!casinoDemoBank) {
-                    casinoDemoBank = db.addCollection('casino_demo_bank');
-                    casinoDemoBank.insert({
-                        total_balance: 500,
-                        owner_telegram_id: process.env.OWNER_TELEGRAM_ID || 842428912,
-                        created_at: new Date(),
-                        updated_at: new Date()
-                    });
-                }
-
-                if (!adminLogs) {
-                    adminLogs = db.addCollection('admin_logs', {
-                        indices: ['created_at']
-                    });
-                }
-
-                if (!minesGames) {
-                    minesGames = db.addCollection('mines_games', {
-                        indices: ['user_id', 'created_at', 'demo_mode']
-                    });
-                }
-
-                if (!rocketGames) {
-                    rocketGames = db.addCollection('rocket_games', {
-                        indices: ['created_at', 'crashed_at']
-                    });
-                }
-
-                if (!plinkoGames) {
-                    plinkoGames = db.addCollection('plinko_games', {
-                        indices: ['user_id', 'created_at', 'demo_mode']
-                    });
-                }
-
-                if (!plinkoBets) {
-                    plinkoBets = db.addCollection('plinko_bets', {
-                        indices: ['game_id', 'user_id', 'created_at']
-                    });
-                }
-
-                if (!rocketBets) {
-                    rocketBets = db.addCollection('rocket_bets', {
-                        indices: ['game_id', 'user_id', 'created_at']
-                    });
-                }
-
-                // Добавьте этот блок для promoCodes:
-                if (!promoCodes) {
-                    promoCodes = db.addCollection('promo_codes', {
-                        indices: ['code', 'created_by'],
-                        unique: ['code']
-                    });
+// Создание администратора по умолчанию
+function createDefaultAdmin() {
+    return new Promise((resolve, reject) => {
+        const adminTelegramId = parseInt(process.env.OWNER_TELEGRAM_ID) || 842428912;
+        
+        db.get("SELECT * FROM users WHERE telegram_id = ?", [adminTelegramId], (err, row) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            
+            if (!row) {
+                db.run(`INSERT INTO users (telegram_id, main_balance, demo_balance, total_deposits, created_at, demo_mode, is_admin) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                        [adminTelegramId, 0, 50, 0, new Date(), false, true], (err) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    
+                    // Создаем банки казино
+                    db.run("INSERT INTO casino_bank (total_balance, owner_telegram_id, created_at, updated_at) VALUES (?, ?, ?, ?)", 
+                           [0, adminTelegramId, new Date(), new Date()]);
+                    
+                    db.run("INSERT INTO casino_demo_bank (total_balance, owner_telegram_id, created_at, updated_at) VALUES (?, ?, ?, ?)", 
+                           [500, adminTelegramId, new Date(), new Date()]);
                     
                     // Создаем дефолтные промокоды
-                    promoCodes.insert({
-                        code: 'BOOM10',
-                        bonus_percent: 10,
-                        is_public: true,
-                        description: 'Публичный промокод +10% к депозиту',
-                        used_count: 0,
-                        max_uses: null,
-                        created_by: 842428912,
-                        created_at: new Date(),
-                        is_active: true
-                    });
+                    db.run(`INSERT OR IGNORE INTO promo_codes (code, bonus_percent, is_public, description, used_count, max_uses, created_by, created_at, is_active) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                            ['BOOM10', 10, true, 'Публичный промокод +10% к депозиту', 0, null, adminTelegramId, new Date(), true]);
                     
-                    
+                    resolve();
+                });
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+// Функции для работы с пользователями
+function findUserByTelegramId(telegramId) {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM users WHERE telegram_id = ?", [telegramId], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function createUser(telegramId, isAdmin = false) {
+    return new Promise((resolve, reject) => {
+        const demoBalance = isAdmin ? 50 : 0;
+        db.run(`INSERT INTO users (telegram_id, main_balance, demo_balance, total_deposits, created_at, demo_mode, is_admin) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [telegramId, 0, demoBalance, 0, new Date(), false, isAdmin], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID, telegram_id: telegramId, main_balance: 0, demo_balance: demoBalance });
+        });
+    });
+}
+
+function updateUserBalance(telegramId, mainBalance, demoBalance, totalDeposits = null) {
+    return new Promise((resolve, reject) => {
+        let sql = "UPDATE users SET main_balance = ?, demo_balance = ?";
+        let params = [mainBalance, demoBalance];
+        
+        if (totalDeposits !== null) {
+            sql += ", total_deposits = ?";
+            params.push(totalDeposits);
+        }
+        
+        sql += " WHERE telegram_id = ?";
+        params.push(telegramId);
+        
+        db.run(sql, params, function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+function toggleDemoMode(telegramId) {
+    return new Promise((resolve, reject) => {
+        db.run("UPDATE users SET demo_mode = NOT demo_mode WHERE telegram_id = ?", [telegramId], function(err) {
+            if (err) reject(err);
+            else {
+                db.get("SELECT demo_mode FROM users WHERE telegram_id = ?", [telegramId], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row.demo_mode);
+                });
+            }
+        });
+    });
+}
+
+// Функции для транзакций
+function createTransaction(transactionData) {
+    return new Promise((resolve, reject) => {
+        const { user_id, amount, type, status, demo_mode, invoice_id, promo_code, details, original_amount, bonus_amount } = transactionData;
+        
+        db.run(`INSERT INTO transactions (user_id, amount, original_amount, bonus_amount, type, status, demo_mode, invoice_id, promo_code, details, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                [user_id, amount, original_amount, bonus_amount, type, status, demo_mode, invoice_id, promo_code, 
+                 details ? JSON.stringify(details) : null, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function findTransactionByInvoiceId(invoiceId) {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM transactions WHERE invoice_id = ?", [invoiceId], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function updateTransactionStatus(transactionId, status) {
+    return new Promise((resolve, reject) => {
+        db.run("UPDATE transactions SET status = ?, updated_at = ? WHERE id = ?", 
+               [status, new Date(), transactionId], function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+function getUserTransactions(userId, limit = 50) {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?", 
+               [userId, limit], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
+
+// Функции для банка казино
+function getCasinoBank() {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM casino_bank ORDER BY id DESC LIMIT 1", (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function getCasinoDemoBank() {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM casino_demo_bank ORDER BY id DESC LIMIT 1", (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function updateCasinoBank(amount) {
+    return new Promise((resolve, reject) => {
+        db.run("UPDATE casino_bank SET total_balance = total_balance + ?, updated_at = ? WHERE id = (SELECT id FROM casino_bank ORDER BY id DESC LIMIT 1)", 
+               [amount, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+function updateCasinoDemoBank(amount) {
+    return new Promise((resolve, reject) => {
+        db.run("UPDATE casino_demo_bank SET total_balance = total_balance + ?, updated_at = ? WHERE id = (SELECT id FROM casino_demo_bank ORDER BY id DESC LIMIT 1)", 
+               [amount, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+// Функции для игр
+function createMinesGame(gameData) {
+    return new Promise((resolve, reject) => {
+        const { user_id, bet_amount, mines_count, demo_mode } = gameData;
+        
+        db.run(`INSERT INTO mines_games (user_id, bet_amount, mines_count, revealed_cells, game_over, win, current_multiplier, demo_mode, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                [user_id, bet_amount, mines_count, JSON.stringify([]), false, false, 1, demo_mode, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function getMinesGame(gameId) {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM mines_games WHERE id = ?", [gameId], (err, row) => {
+            if (err) reject(err);
+            else {
+                if (row) {
+                    row.revealed_cells = JSON.parse(row.revealed_cells || '[]');
+                    if (row.mines) row.mines = JSON.parse(row.mines);
                 }
-                
-                console.log('LokiJS database initialized');
-                resolve(true);
-            },
-            autosave: true,
-            autosaveInterval: 4000
+                resolve(row);
+            }
+        });
+    });
+}
+
+function updateMinesGame(gameId, updates) {
+    return new Promise((resolve, reject) => {
+        const fields = [];
+        const values = [];
+        
+        Object.keys(updates).forEach(key => {
+            if (key === 'revealed_cells' || key === 'mines') {
+                fields.push(`${key} = ?`);
+                values.push(JSON.stringify(updates[key]));
+            } else {
+                fields.push(`${key} = ?`);
+                values.push(updates[key]);
+            }
+        });
+        
+        values.push(gameId);
+        
+        db.run(`UPDATE mines_games SET ${fields.join(', ')} WHERE id = ?`, values, function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+// Функции для промокодов
+function findPromoCode(code) {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM promo_codes WHERE code = ?", [code.toUpperCase()], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function updatePromoCodeUsedCount(code) {
+    return new Promise((resolve, reject) => {
+        db.run("UPDATE promo_codes SET used_count = used_count + 1 WHERE code = ?", [code.toUpperCase()], function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+function getAllPromoCodes() {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM promo_codes ORDER BY created_at DESC", (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
+
+function createPromoCode(promoData) {
+    return new Promise((resolve, reject) => {
+        const { code, bonus_percent, is_public, description, max_uses, created_by, owner_telegram_id } = promoData;
+        
+        db.run(`INSERT INTO promo_codes (code, bonus_percent, is_public, description, used_count, max_uses, created_by, owner_telegram_id, created_at, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                [code.toUpperCase(), bonus_percent, is_public, description, 0, max_uses, created_by, owner_telegram_id, new Date(), true], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function deletePromoCode(code) {
+    return new Promise((resolve, reject) => {
+        db.run("DELETE FROM promo_codes WHERE code = ?", [code.toUpperCase()], function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+function togglePromoCodeActive(code) {
+    return new Promise((resolve, reject) => {
+        db.run("UPDATE promo_codes SET is_active = NOT is_active WHERE code = ?", [code.toUpperCase()], function(err) {
+            if (err) reject(err);
+            else {
+                db.get("SELECT is_active FROM promo_codes WHERE code = ?", [code.toUpperCase()], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row.is_active);
+                });
+            }
+        });
+    });
+}
+
+// Функции для ракетных игр
+function createRocketGame(gameData) {
+    return new Promise((resolve, reject) => {
+        const { crashPoint, maxMultiplier, startTime, endTime, playerCount, botCount, totalBets, totalPayouts, botWins, botLosses } = gameData;
+        
+        db.run(`INSERT INTO rocket_games (crashPoint, maxMultiplier, startTime, endTime, playerCount, botCount, totalBets, totalPayouts, botWins, botLosses, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+                [crashPoint, maxMultiplier, startTime, endTime, playerCount, botCount, totalBets, totalPayouts, botWins, botLosses, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function createRocketBet(betData) {
+    return new Promise((resolve, reject) => {
+        const { game_id, user_id, bet_amount, cashout_multiplier, win_amount, demo_mode } = betData;
+        
+        db.run(`INSERT INTO rocket_bets (game_id, user_id, bet_amount, cashout_multiplier, win_amount, demo_mode, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [game_id, user_id, bet_amount, cashout_multiplier, win_amount, demo_mode, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+// Функции для plinko игр
+function createPlinkoGame(gameData) {
+    return new Promise((resolve, reject) => {
+        const { user_id, bet_amount, rows, demo_mode, difficulty_mode, status } = gameData;
+        
+        db.run(`INSERT INTO plinko_games (user_id, bet_amount, rows, demo_mode, difficulty_mode, status, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [user_id, bet_amount, rows, demo_mode, difficulty_mode, status, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function getPlinkoGame(gameId) {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM plinko_games WHERE id = ?", [gameId], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function updatePlinkoGame(gameId, updates) {
+    return new Promise((resolve, reject) => {
+        const fields = [];
+        const values = [];
+        
+        Object.keys(updates).forEach(key => {
+            fields.push(`${key} = ?`);
+            values.push(updates[key]);
+        });
+        
+        values.push(gameId);
+        
+        db.run(`UPDATE plinko_games SET ${fields.join(', ')} WHERE id = ?`, values, function(err) {
+            if (err) reject(err);
+            else resolve({ changes: this.changes });
+        });
+    });
+}
+
+function createPlinkoBet(betData) {
+    return new Promise((resolve, reject) => {
+        const { game_id, user_id, bet_amount, multiplier, win_amount, demo_mode } = betData;
+        
+        db.run(`INSERT INTO plinko_bets (game_id, user_id, bet_amount, multiplier, win_amount, demo_mode, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                [game_id, user_id, bet_amount, multiplier, win_amount, demo_mode, new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function getPlinkoBetsByUser(userId, limit = 20) {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM plinko_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT ?", 
+               [userId, limit], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
+
+// Функции для админ логов
+function logAdminAction(action, telegramId, details = {}) {
+    return new Promise((resolve, reject) => {
+        db.run("INSERT INTO admin_logs (action, telegram_id, details, created_at) VALUES (?, ?, ?, ?)", 
+               [action, telegramId, JSON.stringify(details), new Date()], function(err) {
+            if (err) reject(err);
+            else resolve({ id: this.lastID });
+        });
+    });
+}
+
+function getAdminLogs(limit = 100) {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT ?", [limit], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
         });
     });
 }
@@ -514,42 +976,22 @@ async function cryptoPayRequest(method, data = {}, demoMode = false) {
   }
 }
 
-// Функция логирования админских действий
-function logAdminAction(action, telegramId, details = {}) {
-  adminLogs.insert({
-    action: action,
-    telegram_id: telegramId,
-    details: details,
-    created_at: new Date()
-  });
+// Получить банк казино (обновленная асинхронная версия)
+async function getCasinoBankSync() {
+    return await getCasinoBank();
 }
 
-// Получить банк казино
-function getCasinoBank() {
-    return casinoBank.findOne({});
+async function getCasinoDemoBankSync() {
+    return await getCasinoDemoBank();
 }
 
-function getCasinoDemoBank() {
-    return casinoDemoBank.findOne({});
+// Обновить банк казино (обновленная асинхронная версия)
+async function updateCasinoBankSync(amount) {
+    return await updateCasinoBank(amount);
 }
 
-// Обновить банк казино
-function updateCasinoBank(amount) {
-    const bank = getCasinoBank();
-    casinoBank.update({
-        ...bank,
-        total_balance: bank.total_balance + amount,
-        updated_at: new Date()
-    });
-}
-
-function updateCasinoDemoBank(amount) {
-    const bank = getCasinoDemoBank();
-    casinoDemoBank.update({
-        ...bank,
-        total_balance: bank.total_balance + amount,
-        updated_at: new Date()
-    });
+async function updateCasinoDemoBankSync(amount) {
+    return await updateCasinoDemoBank(amount);
 }
 
 // Функция синхронизации баланса с реальным Crypto Bot
@@ -568,7 +1010,7 @@ async function syncCasinoBalance() {
             const tonBalance = response.data.result.find(asset => asset.currency_code === 'TON');
             if (tonBalance) {
                 const realBalance = parseFloat(tonBalance.available);
-                const currentBank = getCasinoBank();
+                const currentBank = await getCasinoBank();
                 
                 // Логируем для отладки
                 console.log(`💰 Crypto Bot баланс: ${realBalance} TON`);
@@ -578,11 +1020,8 @@ async function syncCasinoBalance() {
                 if (Math.abs(currentBank.total_balance - realBalance) > 0.01) {
                     console.log(`🔄 Синхронизация: ${currentBank.total_balance} → ${realBalance} TON`);
                     
-                    casinoBank.update({
-                        ...currentBank,
-                        total_balance: realBalance,
-                        updated_at: new Date()
-                    });
+                    await db.run("UPDATE casino_bank SET total_balance = ?, updated_at = ? WHERE id = ?",
+                        [realBalance, new Date(), currentBank.id]);
                     
                     console.log('✅ Баланс синхронизирован');
                 } else {
@@ -821,7 +1260,7 @@ function generateRandomBotCrashPoint() {
 }
 
 // Главная функция генерации краш-поинта
-function generateCrashPoint(players) {
+async function generateCrashPoint(players) {
     // Разделяем игроков на типы
     const realPlayers = players.filter(p => !p.isBot && !p.demoMode);
     const demoPlayers = players.filter(p => !p.isBot && p.demoMode);
@@ -837,7 +1276,7 @@ function generateCrashPoint(players) {
     
     if (totalRealBet > 0) {
         // Реальные ставки
-        const realBank = getCasinoBank();
+        const realBank = await getCasinoBank();
         crashPoint = generateRandomRealBankCrashPoint(totalRealBet, realBank.total_balance);
         
         // Обновляем статистику выплат
@@ -2283,25 +2722,50 @@ app.get('/api/plinko/history/:telegramId', async (req, res) => {
 // Запуск сервера
 async function startServer() {
     await initDatabase();
-    const balanceRoutes = require('./balanceRoutes')(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats);
+    
+    // Передаем функции работы с БД в роуты
+    const balanceRoutes = require('./balanceRoutes')(db, { 
+        findUserByTelegramId, createUser, updateUserBalance, toggleDemoMode,
+        createTransaction, findTransactionByInvoiceId, updateTransactionStatus, getUserTransactions,
+        getCasinoBank, getCasinoDemoBank, updateCasinoBank, updateCasinoDemoBank,
+        findPromoCode, updatePromoCodeUsedCount,
+        updateRTPStats,
+        cryptoPayRequest
+    });
     app.use('/api', balanceRoutes);
 
-    const cryptoBotRoutes = require('./cryptoBotRoutes')(db, users, transactions, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, updateRTPStats);
+    const cryptoBotRoutes = require('./cryptoBotRoutes')(db, { 
+        findUserByTelegramId, createUser, updateUserBalance,
+        createTransaction, findTransactionByInvoiceId, updateTransactionStatus,
+        getCasinoBank, updateCasinoBank, updateCasinoDemoBank,
+        updateRTPStats,
+        cryptoPayRequest
+    });
     app.use('/api/crypto', cryptoBotRoutes);
 
-    const adminRoutes = require('./adminRoutes')(db, users, transactions, casinoBank, casinoDemoBank, adminLogs, minesGames, rocketGames, rocketBets, cryptoPayRequest, updateCasinoBank, updateCasinoDemoBank, syncCasinoBalance, promoCodes);
+    const adminRoutes = require('./adminRoutes')(db, { 
+        findUserByTelegramId, createUser, updateUserBalance,
+        createTransaction, getUserTransactions,
+        getCasinoBank, getCasinoDemoBank, updateCasinoBank, updateCasinoDemoBank,
+        logAdminAction, getAdminLogs,
+        createMinesGame, getMinesGame, updateMinesGame,
+        createRocketGame, createRocketBet,
+        findPromoCode, getAllPromoCodes, createPromoCode, deletePromoCode, togglePromoCodeActive,
+        syncCasinoBalance,
+        cryptoPayRequest
+    });
     app.use('/api', adminRoutes);
+    
     resetDailyRTP();
     startRocketGame();
     
-    // Запускаем синхронизацию баланса
     setTimeout(() => {
         syncCasinoBalance();
-        // Синхронизируем каждые 14 минут
         setInterval(syncCasinoBalance, 14 * 60 * 1000);
-    }, 10000); // Ждем 10 секунд после старта
+    }, 10000);
     
     console.log(`TON Casino Server started on port ${PORT}`);
+    console.log(`SQLite3 database activated`);
     console.log(`Синхронизация баланса активирована (каждые 14 минут)`);
 }
 // Крон задача для сброса RTP каждый день в 00:00
